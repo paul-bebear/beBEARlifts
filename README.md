@@ -18,7 +18,8 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - `SubscriptionPlan_derive` reports "Free access", so no screen shows the purchase pitch. The Apple and Google receipt cleanups return before they call a server.
 - The offline build skips the startup cloud sync, the sign-up prompt, the "How'd you hear about us?" survey, the "I have an account" button, and the Account, Nickname, API Keys and Discord rows in Settings.
 - The tab bar hides during a live workout.
-- Four exercises come from other forks: Shoulder Press with a kettlebell, Squat Hops, Split Squat Hops and Calf Jump. They have no pictures yet.
+- Four exercises come from other forks: Shoulder Press with a kettlebell, Squat Hops, Split Squat Hops and Calf Jump. They have no pictures yet, so the picker shows a text tile for them.
+- The service worker caches only successful responses, so a missing image or a server error is not kept until the next deploy.
 - `.claude/hooks/session-start.sh` installs dependencies, runs the codegen steps and installs Playwright's Chromium in Claude Code cloud sessions.
 - `src/webpushr-sw.ts` precaches the files the app loads (`/app.js`, `/app.css`, `/app/`). It caches lazy chunks, program data and images on first use. One missing file no longer breaks the install.
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
@@ -84,7 +85,7 @@ git push origin master        # Vercel redeploys
 
 The GitHub "Sync fork" button does the same merge when it has no conflicts. It does not run the build, so check the Vercel deploy log afterwards.
 
-Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/subscriptionPlan.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/models/exercise.ts`, `src/models/exerciseDescriptions.ts`, `src/types.ts`, `llms/exercises.md`, `.claude/settings.json`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check. `src/models/exerciseDescriptions.ts` is generated: after a conflict there, run `npm run build:exercises`.
+Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/subscriptionPlan.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/models/exercise.ts`, `src/models/exerciseImage.ts`, `src/models/exerciseDescriptions.ts`, `src/types.ts`, `llms/exercises.md`, `.claude/settings.json`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check. `src/models/exerciseDescriptions.ts` is generated: after a conflict there, run `npm run build:exercises`.
 
 ## Credits
 
