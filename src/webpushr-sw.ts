@@ -4,6 +4,13 @@ declare let __COMMIT_HASH__: string;
 const cacheName = `liftosaur-sw-${__COMMIT_HASH__}`;
 
 const filesToCache = [
+  `/app.css?version=${__COMMIT_HASH__}`,
+  `/app.js?version=${__COMMIT_HASH__}`,
+  "/app/",
+  "/manifest.webmanifest",
+  /\/chunks\/.*\.js$/,
+  /\/programdata\//,
+  /\/images\//,
   `/main.css?version=${__COMMIT_HASH__}`,
   `/main.js?version=${__COMMIT_HASH__}`,
   `/vendors.css?vendor=${__COMMIT_HASH__}`,
@@ -35,8 +42,11 @@ function cacheRequest(request: Request, response: Response): Promise<Response> {
 function initialize(service: ServiceWorkerGlobalScope): void {
   service.addEventListener("install", (event) => {
     event.waitUntil(
+      // One file at a time: cache.addAll rejects the whole install if any single file 404s
+      // (e.g. /vendors.css, which the current build does not emit), and then nothing works offline.
       caches.open(cacheName).then((cache) => {
-        return cache.addAll(filesToCache.filter((f) => typeof f === "string") as string[]);
+        const urls = filesToCache.filter((f) => typeof f === "string") as string[];
+        return Promise.all(urls.map((u) => cache.add(u).catch((err) => console.warn("[Service Worker] Skip", u, err))));
       })
     );
   });
@@ -45,7 +55,10 @@ function initialize(service: ServiceWorkerGlobalScope): void {
     const url = UrlUtils_build(e.request.url);
     if (
       e.request.method === "GET" &&
-      (url.pathname === "/" || url.pathname === "index.html" || url.pathname === "/app")
+      (e.request.mode === "navigate" ||
+        url.pathname === "/" ||
+        url.pathname === "index.html" ||
+        url.pathname === "/app")
     ) {
       console.log("[Service Worker] Fetching " + e.request.url);
       e.respondWith(
