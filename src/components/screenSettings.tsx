@@ -81,7 +81,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
           props.dispatch(Thunk_pushScreen("programs"));
         }}
       />
-      <GroupHeader name="Account" topPadding={true} />
+      {!OfflineOnly_isEnabled() && <GroupHeader name="Account" topPadding={true} />}
       {!OfflineOnly_isEnabled() && (
         <MenuItem
           name="Account"
@@ -98,25 +98,27 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
           onClick={() => props.dispatch(Thunk_pushScreen("account"))}
         />
       )}
-      <MenuItemEditable
-        type="text"
-        name="Nickname"
-        value={props.settings.nickname || ""}
-        nextLine={
-          <View className="pb-1" style={{ marginTop: -8 }}>
-            <Text className="text-xs text-text-secondary">Used for profile page if you have an account</Text>
-          </View>
-        }
-        onChange={(newValue) => {
-          props.dispatch({
-            type: "UpdateSettings",
-            lensRecording: lb<ISettings>()
-              .p("nickname")
-              .record(newValue ? newValue : undefined),
-            desc: "Update nickname",
-          });
-        }}
-      />
+      {!OfflineOnly_isEnabled() && (
+        <MenuItemEditable
+          type="text"
+          name="Nickname"
+          value={props.settings.nickname || ""}
+          nextLine={
+            <View className="pb-1" style={{ marginTop: -8 }}>
+              <Text className="text-xs text-text-secondary">Used for profile page if you have an account</Text>
+            </View>
+          }
+          onChange={(newValue) => {
+            props.dispatch({
+              type: "UpdateSettings",
+              lensRecording: lb<ISettings>()
+                .p("nickname")
+                .record(newValue ? newValue : undefined),
+              desc: "Update nickname",
+            });
+          }}
+        />
+      )}
       {props.user && (
         <MenuItemEditable
           type="boolean"
@@ -520,17 +522,19 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       >
         <Text className="text-base text-text-primary">Contact Us</Text>
       </Pressable>
-      <Pressable
-        className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://discord.com/invite/AAh3cvdBRs")}
-      >
-        <View className="flex-row items-center">
-          <View className="pr-2">
-            <IconDiscord />
+      {!OfflineOnly_isEnabled() && (
+        <Pressable
+          className="py-3 border-b border-border-neutral"
+          onPress={() => openExternal("https://discord.com/invite/AAh3cvdBRs")}
+        >
+          <View className="flex-row items-center">
+            <View className="pr-2">
+              <IconDiscord />
+            </View>
+            <Text className="text-base text-text-primary">Discord Server</Text>
           </View>
-          <Text className="text-base text-text-primary">Discord Server</Text>
-        </View>
-      </Pressable>
+        </Pressable>
+      )}
       <Pressable
         className="py-3 border-b border-border-neutral"
         onPress={() => openExternal("https://www.liftosaur.com/privacy.html")}
