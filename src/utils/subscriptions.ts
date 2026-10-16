@@ -10,9 +10,13 @@ import { Thunk_postevent } from "../ducks/thunks";
 
 const FORK_UNLOCKS_PREMIUM = true;
 
+export function Subscriptions_isUnlockedByFork(): boolean {
+  return FORK_UNLOCKS_PREMIUM;
+}
+
 export function Subscriptions_hasSubscription(subscription: ISubscription): boolean {
   // beBEARlifts fork: every premium feature is unlocked. This is the single gate all call sites read.
-  if (FORK_UNLOCKS_PREMIUM) {
+  if (Subscriptions_isUnlockedByFork()) {
     return true;
   }
   if (subscription.key && subscription.key !== "unclaimed") {
@@ -111,6 +115,9 @@ export function Subscriptions_cleanupOutdatedAppleReceipts(
   service: Service,
   subscription: ISubscription
 ): Promise<void> {
+  if (Subscriptions_isUnlockedByFork()) {
+    return Promise.resolve();
+  }
   return Promise.all(
     subscription.apple.map<Promise<[string, boolean]>>(async (value) => {
       return [value.value, await Subscriptions_verifyAppleReceipt(userId, service, value.value)];
@@ -137,6 +144,9 @@ export function Subscriptions_cleanupOutdatedGooglePurchaseTokens(
   service: Service,
   subscription: ISubscription
 ): Promise<void> {
+  if (Subscriptions_isUnlockedByFork()) {
+    return Promise.resolve();
+  }
   return Promise.all(
     subscription.google.map<Promise<[string, boolean]>>(async (token) => {
       return [token.id, await Subscriptions_verifyGooglePurchaseToken(service, userId, token.value)];
