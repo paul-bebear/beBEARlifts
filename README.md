@@ -1,3 +1,91 @@
+# beBEARlifts
+
+beBEARlifts is a personal fork of [Liftosaur](https://github.com/astashov/liftosaur) by Anton Astashov. It runs as an offline-only web app on an iPhone Home Screen. It has no server, no account and no subscription.
+
+All credit for the app goes to the Liftosaur authors. The license stays AGPL-3.0 (see `LICENSE`). This fork is public, and Settings → "Source Code on Github" links to it, as AGPL section 13 asks of a network-served modified version.
+
+The original Liftosaur README follows below, after the fork notes.
+
+## What this fork changes
+
+Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modified version to list them.
+
+- The build flag `LFT_OFFLINE_ONLY=1` makes a no-backend build. `npm run build:pwa` sets it. Without the flag, the code builds the same as upstream.
+- In that build, `src/utils/offlineOnly.ts` rejects every `fetch` to another origin. The app sees the same error as a phone with no signal, and takes its existing offline path.
+- `__API_HOST__` becomes `https://api.offline.invalid`. The `.invalid` TLD never resolves. `__HOST__` becomes the page's own origin, so built-in programs load from the same site.
+- `src/index.html` no longer loads Rollbar, Google Analytics, the consent script or Apple sign-in. A two-line stub stands in for the global `Rollbar`.
+- `Subscriptions_hasSubscription` in `src/utils/subscriptions.ts` always returns true. Every premium feature reads that one function.
+- The offline build skips the startup cloud sync, the sign-up prompt, the "How'd you hear about us?" survey, the "I have an account" button, and the Account and API Keys rows in Settings.
+- `src/webpushr-sw.ts` precaches the files the app loads (`/app.js`, `/app.css`, `/app/`). It caches lazy chunks, program data and images on first use. One missing file no longer breaks the install.
+- On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
+- A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
+- `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket and sets `Content-Security-Policy: connect-src 'self' blob: data:`.
+
+## Run it locally
+
+```bash
+npm ci
+npm run build:pwa
+npx serve dist   # or any static server, then open http://localhost:3000/app/
+```
+
+`npm run start:offline` runs the webpack dev server with the same flag.
+
+## Deploy on Vercel (free)
+
+1. Sign in at vercel.com with GitHub. The free Hobby plan covers personal, non-commercial use.
+2. Click "Add New… → Project" and import `paul-bebear/beBEARlifts`.
+3. Leave "Framework Preset" on "Other". `vercel.json` sets the install command (`npm ci`), the build command (`npm run build:pwa`) and the output folder (`dist`).
+4. Under "Build and Output Settings", check that Node.js is 22.x. The repo's `.nvmrc` asks for `lts/jod`, which is Node 22.
+5. Click "Deploy". The first build takes about 5 minutes. You get `https://<project>.vercel.app` with HTTPS.
+6. Every push to `master` redeploys. Other branches get preview URLs. Data saved on a preview URL lives apart from data saved on the production URL.
+
+The repo has a git submodule (`lambda/scripts`) that points at a private SSH URL. If Vercel warns that it cannot clone it, ignore the warning. The web build does not use it.
+
+## Install on iPhone
+
+1. Open `https://<project>.vercel.app/app/` in Safari.
+2. Tap Share → "Add to Home Screen" → Add.
+3. Always open the app from the Home Screen icon. Safari tabs and the Home Screen app keep separate storage.
+4. Open the app once with a signal, so the service worker caches it. After that it starts in airplane mode.
+
+## Your data and backups
+
+Your data lives only in the phone's IndexedDB, under the origin you installed from. There is no cloud copy.
+
+- iOS does not apply Safari's 7-day storage cap to Home Screen apps. It can still clear data when the phone runs very low on storage. Deleting the Home Screen icon also deletes the data.
+- The app asks the browser for persistent storage (`navigator.storage.persist()`) on every launch.
+- Changing the URL (a new Vercel project name, a custom domain) starts with empty storage. Export first, then import on the new URL.
+- To back up, open Me → "Export data to JSON file" → "Save to Files" (pick iCloud Drive).
+- To restore, open Me → "Import data from JSON file" and pick the file. Import replaces all current data.
+- "Export history to CSV file" gives a spreadsheet copy, but only the JSON file can be imported back.
+
+## Pull updates from upstream Liftosaur
+
+One-time setup on your computer:
+
+```bash
+git remote add upstream https://github.com/astashov/liftosaur.git
+```
+
+Each update:
+
+```bash
+git checkout master
+git fetch upstream
+git merge upstream/master
+npm ci && npm run build:pwa   # must pass before you push
+git push origin master        # Vercel redeploys
+```
+
+The GitHub "Sync fork" button does the same merge when it has no conflicts. It does not run the build, so check the Vercel deploy log afterwards.
+
+Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check.
+
+Export a backup before you open the app on a new version. A storage migration in an upstream release runs on your only copy.
+
+---
+
 # 🏋 Liftosaur: Open-source powerful weight lifting tracker PWA for coders.
 
 * Link: https://www.liftosaur.com

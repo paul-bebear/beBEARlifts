@@ -82,6 +82,7 @@ logs/
 !/babel.config.web.json
 !/cdk.json
 !/grasp.json
+!/vercel.json
 !/logic.txt
 !/package-lock.json
 !/package.json

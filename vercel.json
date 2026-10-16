@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:pwa",
+  "outputDirectory": "dist",
+  "redirects": [{ "source": "/", "destination": "/app/", "permanent": false }],
+  "rewrites": [
+    { "source": "/app", "destination": "/app/index.html" },
+    {
+      "source": "/externalimages/:path*",
+      "destination": "https://liftosaurimages2.s3-us-west-2.amazonaws.com/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "connect-src 'self' blob: data:" },
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "source": "/webpushr-sw.js",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ]
+}
