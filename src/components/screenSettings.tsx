@@ -36,6 +36,7 @@ import { TextSize_apply } from "../utils/textSize";
 import { useOsFontScale } from "../utils/fontScale";
 import { LinkButton } from "./linkButton";
 import { Features_isEnabled } from "../utils/features";
+import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offlineOnly";
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 
@@ -81,20 +82,22 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         }}
       />
       <GroupHeader name="Account" topPadding={true} />
-      <MenuItem
-        name="Account"
-        value={
-          props.user?.email == null ? (
-            <Text className="text-text-error">Not signed in</Text>
-          ) : props.user?.email === "noemail@example.com" ? (
-            "Signed In"
-          ) : (
-            StringUtils_truncate(props.user?.email || "", 30)
-          )
-        }
-        shouldShowRightArrow={true}
-        onClick={() => props.dispatch(Thunk_pushScreen("account"))}
-      />
+      {!OfflineOnly_isEnabled() && (
+        <MenuItem
+          name="Account"
+          value={
+            props.user?.email == null ? (
+              <Text className="text-text-error">Not signed in</Text>
+            ) : props.user?.email === "noemail@example.com" ? (
+              "Signed In"
+            ) : (
+              StringUtils_truncate(props.user?.email || "", 30)
+            )
+          }
+          shouldShowRightArrow={true}
+          onClick={() => props.dispatch(Thunk_pushScreen("account"))}
+        />
+      )}
       <MenuItemEditable
         type="text"
         name="Nickname"
@@ -163,11 +166,13 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         />
       )}
 
-      <MenuItem
-        name="API Keys"
-        shouldShowRightArrow={true}
-        onClick={() => props.dispatch(Thunk_pushScreen("apiKeys"))}
-      />
+      {!OfflineOnly_isEnabled() && (
+        <MenuItem
+          name="API Keys"
+          shouldShowRightArrow={true}
+          onClick={() => props.dispatch(Thunk_pushScreen("apiKeys"))}
+        />
+      )}
 
       <GroupHeader name="My Measurements" topPadding={true} />
       {currentBodyweight && (
@@ -552,7 +557,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       </Pressable>
       <Pressable
         className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://github.com/astashov/liftosaur")}
+        onPress={() => openExternal(OfflineOnly_sourceCodeUrl())}
       >
         <Text className="text-base text-text-primary">Source Code on Github</Text>
       </Pressable>

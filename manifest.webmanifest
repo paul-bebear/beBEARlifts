@@ -1,7 +1,7 @@
 {
-  "short_name": "Liftosaur",
-  "name": "Liftosaur: Weight lifting tracking app",
-  "description": "Weather forecast information",
+  "short_name": "beBEARlifts",
+  "name": "beBEARlifts: personal weight lifting tracker",
+  "description": "Offline-only fork of the Liftosaur weightlifting tracker",
   "icons": [
     {
       "src": "/icons/icon192.png",
@@ -24,12 +24,5 @@
   "background_color": "#ffffff",
   "display": "fullscreen",
   "scope": "/",
-  "prefer_related_applications": true,
-  "related_applications": [
-    {
-      "platform": "play",
-      "id": "com.liftosaur.www.twa"
-    }
-  ],
   "theme_color": "#ffffff"
 }

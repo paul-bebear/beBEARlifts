@@ -19,6 +19,11 @@ import { ImagePreloader_uri } from "../utils/imagePreloader";
 import { Tailwind_colors, Tailwind_semantic } from "../utils/tailwindConfig";
 import { ILensDispatch } from "../utils/useLensReducer";
 import { navigateToModal } from "../navigation/navigationService";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+
+function afterEquipmentScreen(): "programselect" | "hearaboutus" {
+  return OfflineOnly_isEnabled() ? "programselect" : "hearaboutus";
+}
 
 function getFooterShadowStyle(): Record<string, unknown> {
   const semantic = Tailwind_semantic();
@@ -150,7 +155,7 @@ export function ScreenSetupEquipment(props: IScreenSetupEquipmentProps): JSX.Ele
             buttonSize="lg"
             data-testid="setup-equipment-skip"
             testID="setup-equipment-skip"
-            onClick={() => props.dispatch(Thunk_pushScreen("hearaboutus"))}
+            onClick={() => props.dispatch(Thunk_pushScreen(afterEquipmentScreen()))}
           >
             Skip
           </Button>
@@ -314,7 +319,7 @@ export function ScreenSetupPlates(props: IScreenSetupPlatesProps): JSX.Element {
           name="setup-plates-continue"
           kind="purple"
           buttonSize="lg"
-          onClick={() => props.dispatch(Thunk_pushScreen("hearaboutus"))}
+          onClick={() => props.dispatch(Thunk_pushScreen(afterEquipmentScreen()))}
           data-testid="setup-plates-continue"
           testID="setup-plates-continue"
         >
