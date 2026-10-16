@@ -55,6 +55,8 @@ Cable Twist
 Cable Twist, Band
 Cable Twist, Bodyweight
 Cable Twist, Leverage Machine
+Calf Jump
+Calf Jump, Bodyweight
 Calf Press on Leg Press
 Calf Press on Seated Leg Press
 Chest Dip
@@ -316,6 +318,8 @@ Split Squat
 Split Squat, Band
 Split Squat, Kettlebell
 Split Squat, Bodyweight
+Split Squat Hops
+Squat Hops
 Squat
 Squat, Dumbbell
 Squat, Smith Machine
