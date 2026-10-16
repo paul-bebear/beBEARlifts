@@ -8,7 +8,13 @@ import { CollectionUtils_removeBy } from "./collection";
 import { SubscriptionReceipts_cleanupApple } from "./subscriptionReceipts";
 import { Thunk_postevent } from "../ducks/thunks";
 
+const FORK_UNLOCKS_PREMIUM = true;
+
 export function Subscriptions_hasSubscription(subscription: ISubscription): boolean {
+  // beBEARlifts fork: every premium feature is unlocked. This is the single gate all call sites read.
+  if (FORK_UNLOCKS_PREMIUM) {
+    return true;
+  }
   if (subscription.key && subscription.key !== "unclaimed") {
     return true;
   }
