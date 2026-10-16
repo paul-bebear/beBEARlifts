@@ -67,11 +67,11 @@ describe("Native effects", () => {
     expect(types(effects)).to.eql(["startTimer", "resumeWorkout", "updateLiveActivity"]);
   });
 
-  it("gives a free user no rest notification and no live activity", () => {
+  it("gives a free user the premium rest notification and live activity (beBEARlifts unlocks premium)", () => {
     const progress = buildProgress(`# Week 1\n## Day 1\nSquat / 3x5 100lb / 60s\n`);
     const effects: INativeEffect[] = [];
     completeSet(effects, progress, 0, 0, Settings_build(), free);
-    expect(types(effects)).to.eql(["resumeWorkout"]);
+    expect(types(effects)).to.eql(["startTimer", "resumeWorkout", "updateLiveActivity"]);
   });
 
   it("carries the rest duration and the next set's text into the startTimer payload", () => {

@@ -19,6 +19,16 @@ import { Service } from "./api/service";
 import { UrlUtils_build } from "./utils/url";
 import { AsyncQueue } from "./utils/asyncQueue";
 import { DeviceId_get } from "./utils/deviceId";
+import {
+  OfflineOnly_isEnabled,
+  OfflineOnly_installFetchGuard,
+  OfflineOnly_requestPersistentStorage,
+} from "./utils/offlineOnly";
+
+if (OfflineOnly_isEnabled()) {
+  OfflineOnly_installFetchGuard(window);
+  OfflineOnly_requestPersistentStorage(navigator).then((persisted) => console.log("Persistent storage:", persisted));
+}
 
 IndexedDBUtils_initializeForSafari();
 

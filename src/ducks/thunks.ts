@@ -157,6 +157,13 @@ import {
 } from "../utils/liveActivityManager";
 import { IAuthToken } from "../utils/keychain";
 import { Analytics_trackPurchase, Analytics_trackSignUp } from "../utils/analytics";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { BackupReminder_isDue, BackupReminder_message } from "../models/backupReminder";
+import {
+  BackupReminderMarks_read,
+  BackupReminderMarks_recordBackup,
+  BackupReminderMarks_recordReminder,
+} from "../utils/backupReminderMarks";
 
 declare let Rollbar: RB;
 
@@ -767,7 +774,12 @@ export function Thunk_sync2(args?: { force?: boolean; cb?: () => void; log?: boo
     }
     try {
       const state = getState();
-      if (state.errors.corruptedstorage == null && !state.nosync && (state.user != null || args?.force)) {
+      if (
+        !OfflineOnly_isEnabled() &&
+        state.errors.corruptedstorage == null &&
+        !state.nosync &&
+        (state.user != null || args?.force)
+      ) {
         await env.queue.enqueue(
           async (args2, signal) => {
             await load(dispatch, "Sync", async () => {
@@ -1472,6 +1484,7 @@ export function Thunk_maybeRequestSignup(): IThunk {
       const signupRequests = state.storage.signupRequests;
       const lastsignupRequest = signupRequests[signupRequests.length - 1];
       if (
+        !OfflineOnly_isEnabled() &&
         state.user?.id == null &&
         history.length >= 3 &&
         signupRequests.length < 3 &&
@@ -1495,9 +1508,26 @@ export function Thunk_maybeShowOnloadModal(): IThunk {
         updateState(dispatch, [lb<IState>().p("showWhatsNew").record(true)], "Show what's new on load");
       } else if (next === "hearaboutus") {
         dispatch(Thunk_maybeRequestHearAboutUs());
+      } else {
+        dispatch(Thunk_maybeRemindBackup());
       }
     } catch (error) {
       Rollbar.error(error as Error);
+    }
+  };
+}
+
+// Offline-only builds have no cloud copy, so the JSON export is the only backup.
+export function Thunk_maybeRemindBackup(): IThunk {
+  return async (dispatch, getState) => {
+    const now = Date.now();
+    const marks = BackupReminderMarks_read();
+    if (!OfflineOnly_isEnabled() || !BackupReminder_isDue(marks, getState().storage.history.length, now)) {
+      return;
+    }
+    BackupReminderMarks_recordReminder(now);
+    if (await Dialog_confirm(BackupReminder_message(marks.lastBackupAt, now))) {
+      dispatch(Thunk_pushScreen("settings", undefined, { tab: "me" }));
     }
   };
 }
@@ -1713,6 +1743,7 @@ export function Thunk_exportStorage(): IThunk {
   return async (dispatch, getState, env) => {
     dispatch(Thunk_postevent("export-storage-to-json"));
     ImportExporter_exportStorage(getState().storage);
+    BackupReminderMarks_recordBackup(Date.now());
   };
 }
 

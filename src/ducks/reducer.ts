@@ -87,6 +87,7 @@ import { PerfEnabled_isEnabled, PerfEnabled_tier2 } from "../utils/perfEnabled";
 import { PerfProbe_onAction } from "../utils/perfSetCompleteProbe";
 import { HermesProfile_captureOnce } from "../utils/hermesProfile";
 import { PerfScorecard_recordAction } from "../utils/perfScorecard";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 
 declare let __COMMIT_HASH__: string;
 
@@ -144,6 +145,10 @@ export async function getInitialState(
     const errors: IStateErrors = {};
     if (maybeStorage.success) {
       finalStorage = maybeStorage.data;
+    } else if (OfflineOnly_isEnabled()) {
+      const userid = (storage.storage?.tempUserId || `missing-${UidFactory_generateUid(8)}`) as string;
+      errors.corruptedstorage = { userid, backup: false, confirmed: false, local: true };
+      finalStorage = Storage_getDefault();
     } else {
       const service = new Service(client);
       const userid = (storage.storage?.tempUserId || `missing-${UidFactory_generateUid(8)}`) as string;

@@ -32,6 +32,29 @@ const local = `https://${localdomain}.liftosaur.com:${localport}/`;
 
 const isDev = process.env.NODE_ENV !== "production";
 
+// Self-hosted, no-backend build (the beBEARlifts fork). See "Running this fork" in README.md.
+const isOfflineOnly = process.env.LFT_OFFLINE_ONLY === "1";
+const offlineOnlyEntries = ["app", "webpushr-sw"];
+const offlineOnlyApiHost = "https://api.offline.invalid";
+const sourceCodeUrl =
+  process.env.LFT_SOURCE_CODE_URL ||
+  (process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG
+    ? `https://github.com/${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
+    : "");
+
+function pickEntries(entries) {
+  if (!isOfflineOnly) {
+    return entries;
+  }
+  return Object.fromEntries(Object.entries(entries).filter(([name]) => offlineOnlyEntries.includes(name)));
+}
+
+// Spread last into DefinePlugin, so these override upstream's liftosaur.com hosts.
+// __HOST__ becomes the page's own origin at runtime. __API_HOST__ uses the .invalid TLD, which never resolves.
+const offlineOnlyDefines = isOfflineOnly
+  ? { __API_HOST__: JSON.stringify(offlineOnlyApiHost), __HOST__: "window.location.origin" }
+  : {};
+
 const uniwindRnRewrite = new NormalModuleReplacementPlugin(/^react-native$/, (resource) => {
   const issuer = (resource.contextInfo && resource.contextInfo.issuer) || resource.context || "";
   if (issuer.includes(`${require("path").sep}uniwind${require("path").sep}`)) {
@@ -145,7 +168,7 @@ const mainConfig = {
       message: /unstable_batchedUpdates/,
     },
   ],
-  entry: {
+  entry: pickEntries({
     main: ["./src/main.tsx", "./src/index.css"],
     login: ["./src/login.tsx", "./src/index.css"],
     resetpassword: ["./src/resetPassword.tsx", "./src/index.css"],
@@ -178,7 +201,7 @@ const mainConfig = {
     paymentsdashboard: ["./src/paymentsdashboard.tsx", "./src/page.css", "./src/index.css"],
     "webpushr-sw": "./src/webpushr-sw.ts",
     consent: "./src/consent/consentEntry.ts",
-  },
+  }),
   output: {
     filename: "[name].js",
     chunkFilename: "chunks/[name].[contenthash].js",
@@ -264,6 +287,9 @@ const mainConfig = {
             : "https://www.liftosaur.com"
           : `https://${localdomain}.liftosaur.com:${localport}`
       ),
+      __OFFLINE_ONLY__: JSON.stringify(isOfflineOnly),
+      __SOURCE_CODE_URL__: JSON.stringify(sourceCodeUrl),
+      ...offlineOnlyDefines,
     }),
     new CopyPlugin([
       {
@@ -657,4 +683,4 @@ const mainConfig = {
   },
 };
 
-module.exports = [mainConfig, watchConfig];
+module.exports = isOfflineOnly ? [mainConfig] : [mainConfig, watchConfig];
