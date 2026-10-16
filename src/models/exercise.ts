@@ -3335,7 +3335,7 @@ export const metadata: Record<IExerciseId, IMetaExercises> = {
       "Triceps Brachii",
     ],
     bodyParts: ["Shoulders"],
-    sortedEquipment: ["cable", "dumbbell", "leverageMachine", "band", "smith"],
+    sortedEquipment: ["cable", "dumbbell", "leverageMachine", "band", "smith", "kettlebell"],
   },
   shoulderPressParallelGrip: {
     targetMuscles: ["Deltoid Anterior"],

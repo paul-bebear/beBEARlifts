@@ -272,6 +272,7 @@ Shoulder Press
 Shoulder Press, Smith Machine
 Shoulder Press, Band
 Shoulder Press, Leverage Machine
+Shoulder Press, Kettlebell
 Shoulder Pass Through
 Shoulder Press Parallel Grip
 Shrimp Squat
