@@ -93,8 +93,10 @@ Not started. When we start, compare these three options. The Docker option is th
 - New exercises: the four exercises added from other forks have no images in the bucket. Once the images live in the fork, we can add our own pictures for them.
 - Effort: 2 hours for the download script and the build copy, once the licence question is settled.
 
-## Apple-style monochrome theme (candidate)
+## Apple-style monochrome theme (built 2026-10-17 as an option)
 
+- Built: Settings → Appearance → Monochrome. It works with Light, Dark and System. It overrides 7 accent variables and adds a root `grayscale(1)` filter in `src/index.html`, so upstream's token files stay as they are.
+- Not done: a full generated grey token set. Icons that read colours from JS (`Tailwind_colors()`, `Tailwind_semantic()`) go grey through the filter, so they turn mid-grey, not pure black. A generated token set would fix that, for about 1 day of work.
 - Source: yeivier/liftosaur-javier- (AGPL-3.0), commit fd3fe898e.
 - What it does: every colour token in `tailwind.semantic.json` and `tailwind.colors.json` becomes a grey of the same lightness. Active controls are pure black (light mode) or white (dark mode). On web the font becomes the system font stack, which is San Francisco on iPhone. A `grayscale(1)` filter on `<html>` turns the illustrations grey.
 - Merge cost: it rewrites the two token files (876 lines added, 464 removed). Upstream edits those files often, so every upstream merge would conflict there.
