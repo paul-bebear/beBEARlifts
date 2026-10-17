@@ -1662,6 +1662,7 @@ export interface ISettings {
   starredExercises?: Record<string, boolean | undefined>;
   recentExercises?: Partial<Record<string, string[]>>;
   theme?: "dark" | "light";
+  monochrome?: boolean;
   currentBodyweight?: IWeight;
   affiliateEnabled?: boolean;
 }
@@ -1713,6 +1714,7 @@ const _VSettings = v.object({
   starredExercises: v.optional(v.record(VExerciseId, v.optional(v.boolean()))),
   recentExercises: v.optional(v.record(VExerciseId, v.optional(v.array(VExerciseId)))),
   theme: v.optional(v.union([v.literal("dark"), v.literal("light")])),
+  monochrome: v.optional(v.boolean()),
   currentBodyweight: v.optional(VWeight),
   affiliateEnabled: v.optional(v.boolean()),
 });

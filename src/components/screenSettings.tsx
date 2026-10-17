@@ -464,6 +464,22 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
           });
         }}
       />
+      {OfflineOnly_isEnabled() && Platform.OS === "web" && (
+        <MenuItemEditable
+          type="boolean"
+          name="Monochrome"
+          value={props.settings.monochrome ? "true" : "false"}
+          onChange={(newValue) => {
+            props.dispatch({
+              type: "UpdateSettings",
+              lensRecording: lb<ISettings>()
+                .p("monochrome")
+                .record(newValue === "true" ? true : undefined),
+              desc: "Toggle monochrome theme",
+            });
+          }}
+        />
+      )}
       {Features_isEnabled("affiliates", props.user?.id ?? props.tempUserId) && (
         <>
           <GroupHeader name="Earn money with Liftosaur" topPadding={true} />

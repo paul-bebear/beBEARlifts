@@ -24,6 +24,10 @@ export function useSystemTheme(): "dark" | "light" {
   return theme;
 }
 
+export function Theme_applyMonochrome(isMonochrome: boolean): void {
+  document.documentElement.classList.toggle("mono", isMonochrome);
+}
+
 export function Theme_apply(theme: "dark" | "light" | undefined): void {
   const root = document.documentElement;
   if ((theme ?? Theme_system()) === "dark") {
