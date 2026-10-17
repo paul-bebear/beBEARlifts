@@ -6666,6 +6666,31 @@ export const exerciseDescriptions: Record<
       },
     ],
   },
+  shoulderpress_kettlebell: {
+    content:
+      "## Setup\n1. **Starting Position**: Stand with your feet shoulder-width apart. Clean two kettlebells to the rack position — hold one in each hand at shoulder height, elbows tucked close to your body, and palms facing inward or slightly turned in.\n\n## Execution\n2. **Grip & Stance**: Keep your wrists straight and core engaged. Ensure your back is neutral and feet are firmly planted.\n3. **Press**: Press both kettlebells overhead in a controlled motion, rotating your palms to face forward as you extend your arms. Stop just before your elbows lock out.\n4. **Return**: Slowly lower the kettlebells back to the rack position with control, preparing for the next repetition.\n\n## Form Tips\n- **Elbow Path**: Keep elbows slightly forward, not flared out to the sides.\n- **Neutral Spine**: Avoid leaning back. Maintain a tall, upright torso.\n- **Controlled Breathing**: Exhale as you press the kettlebells up; inhale as you lower them down.\n- **Shoulder Stability**: Pack your shoulders down and back throughout the movement to protect your joints.\n\n## Common Mistakes\n- **Overarching the Lower Back**: Engage your glutes and core to avoid hyperextension.\n- **Pressing Too Fast**: Don’t rely on momentum — focus on slow, deliberate presses.\n- **Losing Rack Position**: Make sure the kettlebells stay close to your forearms in the rack.",
+    video: "X-uFqWtjpGI",
+    description:
+      "Build your anterior deltoids and triceps with the Kettlebell Shoulder Press, pressing two kettlebells from the rack position to full overhead extension.",
+    howto: [
+      {
+        name: "Set the Rack Position",
+        text: "Stand with feet shoulder-width apart. Clean two kettlebells to shoulder height, elbows tucked and wrists straight.",
+      },
+      {
+        name: "Press Overhead",
+        text: "Press both kettlebells up and rotate your palms to face forward. Stop just before your elbows lock.",
+      },
+      {
+        name: "Lower to the Rack",
+        text: "Lower the kettlebells back to the rack position with control. Keep them close to your forearms.",
+      },
+      {
+        name: "Keep Your Torso Tall",
+        text: "Brace your core and glutes so your lower back does not arch. Exhale on the press and inhale on the way down.",
+      },
+    ],
+  },
   shoulderpress_leveragemachine: {
     content:
       "## Setup\n1. **Adjust the Seat:** Set the seat height so that the handles are at shoulder level when seated.\n2. **Secure Your Back:** Sit with your back firmly against the backrest.\n3. **Foot Placement:** Position your feet flat on the ground, ensuring they are stable.\n\n## Execution\n1. **Grip Handles:** Grasp the handles with a neutral grip (palms facing each other).\n2. **Starting Position:** Keep elbows slightly below shoulder level and aligned with your wrists.\n3. **Press Upward:** Push the handles upward in a controlled manner until your arms are fully extended.\n4. **Pause at the Top:** Briefly hold the position without locking your elbows.\n5. **Lower the Weight:** Slowly lower the handles back to the starting position, keeping control throughout.\n\n## Tips for Proper Form\n- **Posture:** Maintain a straight back and avoid leaning forward.\n- **Core Engagement:** Keep your core tight to support your back.\n- **Breathing:** Exhale while pressing up, and inhale while lowering the weight.\n\n## Common Mistakes\n- **Overextending Arms:** Don’t lock your elbows at the top to avoid joint strain.\n- **Incomplete Range of Motion:** Ensure you go through the full motion for maximum effectiveness.\n\nBy following these guidelines, you'll maximize the benefits of the leverage machine shoulder press while minimizing the risk of injury.",

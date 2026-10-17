@@ -15,7 +15,12 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - `__API_HOST__` becomes `https://api.offline.invalid`. The `.invalid` TLD never resolves. `__HOST__` becomes the page's own origin, so built-in programs load from the same site.
 - `src/index.html` no longer loads Rollbar, Google Analytics, the consent script or Apple sign-in. A two-line stub stands in for the global `Rollbar`.
 - `Subscriptions_hasSubscription` in `src/utils/subscriptions.ts` always returns true. Every premium feature reads that one function.
-- The offline build skips the startup cloud sync, the sign-up prompt, the "How'd you hear about us?" survey, the "I have an account" button, and the Account and API Keys rows in Settings.
+- `SubscriptionPlan_derive` reports "Free access", so no screen shows the purchase pitch. The Apple and Google receipt cleanups return before they call a server.
+- The offline build skips the startup cloud sync, the sign-up prompt, the "How'd you hear about us?" survey, the "I have an account" button, and the Account, Nickname, API Keys and Discord rows in Settings.
+- The tab bar hides during a live workout.
+- Four exercises come from other forks: Shoulder Press with a kettlebell, Squat Hops, Split Squat Hops and Calf Jump. They have no pictures yet, so the picker shows a text tile for them.
+- The service worker caches only successful responses, so a missing image or a server error is not kept until the next deploy.
+- `.claude/hooks/session-start.sh` installs dependencies, runs the codegen steps and installs Playwright's Chromium in Claude Code cloud sessions.
 - `src/webpushr-sw.ts` precaches the files the app loads (`/app.js`, `/app.css`, `/app/`). It caches lazy chunks, program data and images on first use. One missing file no longer breaks the install.
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
 - A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
@@ -80,7 +85,18 @@ git push origin master        # Vercel redeploys
 
 The GitHub "Sync fork" button does the same merge when it has no conflicts. It does not run the build, so check the Vercel deploy log afterwards.
 
-Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check.
+Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/subscriptionPlan.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/models/exercise.ts`, `src/models/exerciseImage.ts`, `src/models/exerciseDescriptions.ts`, `src/types.ts`, `llms/exercises.md`, `.claude/settings.json`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check. `src/models/exerciseDescriptions.ts` is generated: after a conflict there, run `npm run build:exercises`.
+
+## Credits
+
+This fork takes code and ideas from these public AGPL-3.0 forks of Liftosaur. Each ported commit keeps its original author, and its message names the source commit.
+
+- [ishank26/Sabertooth](https://github.com/ishank26/Sabertooth) by Ishank Sharma: the free-access plan state and skipping receipt checks when premium is unlocked, plus the test they are based on. Its self-hosted MCP setup informs the AI warmup section of `FORK_ROADMAP.md`.
+- [shoriminimoe/liftosaur](https://github.com/shoriminimoe/liftosaur) by Sam Caldwell: the SessionStart hook for Claude Code cloud sessions. Its removal of paid, promo and social surfaces guided the check for leftover rows in Settings.
+- [yeivier/liftosaur-javier-](https://github.com/yeivier/liftosaur-javier-) by yeivier: hiding the tab bar during a live workout. Its monochrome theme is a roadmap candidate.
+- [EqyMMxpb/liftosaur](https://github.com/EqyMMxpb/liftosaur) by kayuitai: the kettlebell Shoulder Press and its description.
+- [adepssimius/liftosaur](https://github.com/adepssimius/liftosaur) by adepssimius: Squat Hops, Split Squat Hops and Calf Jump.
+- [kai119/liftosaur](https://github.com/kai119/liftosaur) by Kai Mumford: nothing ported yet. Its Docker backend and config module are the Phase 2 sync option in `FORK_ROADMAP.md`.
 
 Export a backup before you open the app on a new version. A storage migration in an upstream release runs on your only copy.
 

@@ -257,6 +257,15 @@ export const allExercisesList: Record<IExerciseId, IExercise> = {
     startingWeightLb: { value: 30, unit: "lb" },
     startingWeightKg: { value: 12.5, unit: "kg" },
   },
+  calfJump: {
+    id: "calfJump",
+    name: "Calf Jump",
+    defaultWarmup: 0,
+    defaultEquipment: "dumbbell",
+    types: ["lower", "legs"],
+    startingWeightLb: { value: 0, unit: "lb" },
+    startingWeightKg: { value: 0, unit: "kg" },
+  },
   calfPressOnLegPress: {
     id: "calfPressOnLegPress",
     name: "Calf Press on Leg Press",
@@ -1418,6 +1427,15 @@ export const allExercisesList: Record<IExerciseId, IExercise> = {
     startingWeightLb: { value: 25, unit: "lb" },
     startingWeightKg: { value: 10, unit: "kg" },
   },
+  splitSquatHops: {
+    id: "splitSquatHops",
+    name: "Split Squat Hops",
+    defaultWarmup: 0,
+    defaultEquipment: "bodyweight",
+    types: ["lower", "legs"],
+    startingWeightLb: { value: 0, unit: "lb" },
+    startingWeightKg: { value: 0, unit: "kg" },
+  },
   splitJerk: {
     id: "splitJerk",
     name: "Split Jerk",
@@ -1435,6 +1453,15 @@ export const allExercisesList: Record<IExerciseId, IExercise> = {
     types: ["lower", "legs"],
     startingWeightLb: { value: 135, unit: "lb" },
     startingWeightKg: { value: 60, unit: "kg" },
+  },
+  squatHops: {
+    id: "squatHops",
+    name: "Squat Hops",
+    defaultWarmup: 0,
+    defaultEquipment: "bodyweight",
+    types: ["lower", "legs"],
+    startingWeightLb: { value: 0, unit: "lb" },
+    startingWeightKg: { value: 0, unit: "kg" },
   },
   squatRow: {
     id: "squatRow",
@@ -2249,6 +2276,12 @@ export const metadata: Record<IExerciseId, IMetaExercises> = {
     ],
     bodyParts: ["Waist"],
     sortedEquipment: ["barbell", "bodyweight", "cable", "leverageMachine", "band"],
+  },
+  calfJump: {
+    targetMuscles: ["Gastrocnemius", "Soleus"],
+    synergistMuscles: ["Quadriceps", "Gluteus Maximus"],
+    bodyParts: ["Calves"],
+    sortedEquipment: ["dumbbell", "bodyweight"],
   },
   calfPressOnLegPress: {
     targetMuscles: ["Gastrocnemius"],
@@ -3335,7 +3368,7 @@ export const metadata: Record<IExerciseId, IMetaExercises> = {
       "Triceps Brachii",
     ],
     bodyParts: ["Shoulders"],
-    sortedEquipment: ["cable", "dumbbell", "leverageMachine", "band", "smith"],
+    sortedEquipment: ["cable", "dumbbell", "leverageMachine", "band", "smith", "kettlebell"],
   },
   shoulderPressParallelGrip: {
     targetMuscles: ["Deltoid Anterior"],
@@ -3497,6 +3530,12 @@ export const metadata: Record<IExerciseId, IMetaExercises> = {
     bodyParts: ["Hips", "Thighs"],
     sortedEquipment: ["dumbbell"],
   },
+  splitSquatHops: {
+    targetMuscles: ["Quadriceps", "Gluteus Maximus"],
+    synergistMuscles: ["Adductor Magnus", "Gastrocnemius", "Soleus"],
+    bodyParts: ["Hips", "Thighs"],
+    sortedEquipment: ["bodyweight"],
+  },
   splitJerk: {
     targetMuscles: [
       "Deltoid Anterior",
@@ -3530,6 +3569,12 @@ export const metadata: Record<IExerciseId, IMetaExercises> = {
     synergistMuscles: ["Adductor Magnus", "Gluteus Maximus", "Soleus"],
     bodyParts: ["Thighs"],
     sortedEquipment: ["barbell", "dumbbell", "bodyweight", "smith", "leverageMachine"],
+  },
+  squatHops: {
+    targetMuscles: ["Gluteus Maximus", "Quadriceps"],
+    synergistMuscles: ["Adductor Magnus", "Gastrocnemius", "Soleus"],
+    bodyParts: ["Thighs"],
+    sortedEquipment: ["bodyweight"],
   },
   squatRow: {
     targetMuscles: ["Gluteus Maximus", "Latissimus Dorsi", "Trapezius Lower Fibers", "Trapezius Middle Fibers"],

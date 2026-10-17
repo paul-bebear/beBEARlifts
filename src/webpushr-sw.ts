@@ -31,6 +31,10 @@ const filesToCache = [
 ];
 
 function cacheRequest(request: Request, response: Response): Promise<Response> {
+  // The image bucket answers 403 for exercises that have no picture yet. Caching that would keep it until the next deploy.
+  if (!response.ok) {
+    return Promise.resolve(response);
+  }
   return caches.open(cacheName).then((cache) => {
     console.log("[Service Worker] Caching new resource: " + request.url);
 

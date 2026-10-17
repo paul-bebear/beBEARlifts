@@ -1,6 +1,6 @@
 import { ISubscription } from "../types";
 import { IIapActiveSubscription } from "./iapAdapter";
-import { Subscriptions_hasSubscription } from "./subscriptions";
+import { Subscriptions_hasSubscription, Subscriptions_isUnlockedByFork } from "./subscriptions";
 
 export type ISubscriptionPlanState =
   | "none"
@@ -43,6 +43,11 @@ export function SubscriptionPlan_derive(args: {
   isIos?: boolean;
 }): IDerivedSubscriptionPlan {
   const { subscription, status, ownedLifetime, isNative, isIos } = args;
+
+  // beBEARlifts fork: "premium" would show the purchase pitch on web. Pattern from ishank26/Sabertooth.
+  if (Subscriptions_isUnlockedByFork()) {
+    return { state: "freeaccess" };
+  }
 
   if (subscription.key && subscription.key !== "unclaimed") {
     return { state: "freeaccess" };
