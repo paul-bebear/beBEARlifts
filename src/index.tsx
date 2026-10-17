@@ -24,9 +24,11 @@ import {
   OfflineOnly_installFetchGuard,
   OfflineOnly_requestPersistentStorage,
 } from "./utils/offlineOnly";
+import { PressFeedback_install } from "./utils/pressFeedback";
 
 if (OfflineOnly_isEnabled()) {
   OfflineOnly_installFetchGuard(window);
+  PressFeedback_install(document, window);
   OfflineOnly_requestPersistentStorage(navigator).then((persisted) => console.log("Persistent storage:", persisted));
 }
 
