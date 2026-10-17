@@ -20,6 +20,9 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - The tab bar hides during a live workout.
 - Four exercises come from other forks: Shoulder Press with a kettlebell, Squat Hops, Split Squat Hops and Calf Jump. They have no pictures yet, so the picker shows a text tile for them.
 - The service worker caches only successful responses, so a missing image or a server error is not kept until the next deploy.
+- iPhone polish in `src/index.html`: the app draws under a translucent status bar (`NavHeader` pads by the safe-area inset), launch screens for 13 iPhone sizes in light and dark (`icons/launch/`, made by `node scripts/generate-launch-screens.js`), no grey tap flash, no page bounce, and the system font (San Francisco on iPhone) in place of Poppins.
+- `src/utils/pressFeedback.ts` dims a button while a finger is on it, as iOS does. It is installed only in the offline build.
+- Settings → Appearance → Monochrome turns the app black and white. It is stored as `settings.monochrome` and puts a `mono` class on `<html>`.
 - `.claude/hooks/session-start.sh` installs dependencies, runs the codegen steps and installs Playwright's Chromium in Claude Code cloud sessions.
 - `src/webpushr-sw.ts` precaches the files the app loads (`/app.js`, `/app.css`, `/app/`). It caches lazy chunks, program data and images on first use. One missing file no longer breaks the install.
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
@@ -85,7 +88,7 @@ git push origin master        # Vercel redeploys
 
 The GitHub "Sync fork" button does the same merge when it has no conflicts. It does not run the build, so check the Vercel deploy log afterwards.
 
-Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/subscriptionPlan.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/models/exercise.ts`, `src/models/exerciseImage.ts`, `src/models/exerciseDescriptions.ts`, `src/types.ts`, `llms/exercises.md`, `.claude/settings.json`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check. `src/models/exerciseDescriptions.ts` is generated: after a conflict there, run `npm run build:exercises`.
+Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/subscriptionPlan.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/models/exercise.ts`, `src/models/exerciseImage.ts`, `src/models/exerciseDescriptions.ts`, `src/types.ts`, `src/index.tsx`, `src/utils/theme.ts`, `src/utils/appliedTheme.ts`, `llms/exercises.md`, `.claude/settings.json`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check. `src/models/exerciseDescriptions.ts` is generated: after a conflict there, run `npm run build:exercises`.
 
 ## Credits
 
@@ -93,7 +96,7 @@ This fork takes code and ideas from these public AGPL-3.0 forks of Liftosaur. Ea
 
 - [ishank26/Sabertooth](https://github.com/ishank26/Sabertooth) by Ishank Sharma: the free-access plan state and skipping receipt checks when premium is unlocked, plus the test they are based on. Its self-hosted MCP setup informs the AI warmup section of `FORK_ROADMAP.md`.
 - [shoriminimoe/liftosaur](https://github.com/shoriminimoe/liftosaur) by Sam Caldwell: the SessionStart hook for Claude Code cloud sessions. Its removal of paid, promo and social surfaces guided the check for leftover rows in Settings.
-- [yeivier/liftosaur-javier-](https://github.com/yeivier/liftosaur-javier-) by yeivier: hiding the tab bar during a live workout. Its monochrome theme is a roadmap candidate.
+- [yeivier/liftosaur-javier-](https://github.com/yeivier/liftosaur-javier-) by yeivier: hiding the tab bar during a live workout, and the monochrome theme idea (black or white accents, a root grayscale filter, the system font). This fork builds it as an option on top of upstream's colours instead of rewriting them.
 - [EqyMMxpb/liftosaur](https://github.com/EqyMMxpb/liftosaur) by kayuitai: the kettlebell Shoulder Press and its description.
 - [adepssimius/liftosaur](https://github.com/adepssimius/liftosaur) by adepssimius: Squat Hops, Split Squat Hops and Calf Jump.
 - [kai119/liftosaur](https://github.com/kai119/liftosaur) by Kai Mumford: nothing ported yet. Its Docker backend and config module are the Phase 2 sync option in `FORK_ROADMAP.md`.
