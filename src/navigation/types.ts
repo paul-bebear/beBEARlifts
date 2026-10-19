@@ -9,6 +9,7 @@ import type {
   IStatsKey,
 } from "../types";
 import type { IHelpKey } from "../components/help/helpRegistry";
+import type { IFoodMeal } from "../models/foodLog";
 
 export type IHomeStackParamList = {
   main: { historyRecordId?: number } | undefined;
@@ -49,6 +50,10 @@ export type IGraphsStackParamList = {
   progress: { id?: number } | undefined;
 };
 
+export type IFoodStackParamList = {
+  food: undefined;
+};
+
 export type IMeStackParamList = {
   settings: undefined;
   account: undefined;
@@ -77,6 +82,7 @@ export type IRootTabParamList = {
   home: NavigatorScreenParams<IHomeStackParamList>;
   program: NavigatorScreenParams<IProgramStackParamList>;
   workout: NavigatorScreenParams<IWorkoutStackParamList>;
+  food: NavigatorScreenParams<IFoodStackParamList>;
   graphs: NavigatorScreenParams<IGraphsStackParamList>;
   me: NavigatorScreenParams<IMeStackParamList>;
 };
@@ -183,7 +189,13 @@ export type IRootStackParamList = {
   exercisePickerSettingsModal: undefined;
   photoPickerModal: undefined;
   helpModal: { helpKey: IHelpKey };
+  foodAddModal: IFoodAddModalParams;
+  foodGoalsModal: undefined;
 };
+
+export type IFoodAddModalParams =
+  | { mode: "search" | "barcode" | "photo"; day: string; meal: IFoodMeal }
+  | { mode: "edit"; entryId: string };
 
 export type IRootLevelScreenParamList = {
   subscription: undefined;
@@ -194,5 +206,6 @@ export type IAllScreenParamList = IOnboardingStackParamList &
   IProgramStackParamList &
   IWorkoutStackParamList &
   IGraphsStackParamList &
+  IFoodStackParamList &
   IMeStackParamList &
   IRootLevelScreenParamList;

@@ -1,8 +1,10 @@
 # beBEARlifts roadmap
 
-Ideas for this fork, with what each one costs and needs. Nothing here is built yet. Add new ideas at the bottom.
+Ideas for this fork, with what each one costs and needs. A heading marked "built" is done. The rest are not built yet. Add new ideas at the bottom.
 
-Two rules shape every item. First, the app is a static site with no server, so it cannot hold a secret. Any paid API key needs a small proxy that keeps the key, and a free Cloudflare Worker (100,000 requests a day) is enough. Second, `vercel.json` sets `connect-src 'self'` and `src/utils/offlineOnly.ts` blocks other origins. Each item that calls an outside API must add that host to both.
+Two rules shape every item. First, the app is a static site, so the page cannot hold a secret. Any paid API key needs a small proxy that keeps the key. A free Cloudflare Worker (100,000 requests a day) is enough, and a Vercel function in `api/` on the same site also works.
+
+Second, `vercel.json` sets `connect-src 'self'` and `src/utils/offlineOnly.ts` blocks other origins. An item that calls an outside API from the page must add that host to both. A same-site function in `api/` needs neither change. The food features use that route.
 
 Facts checked on 2026-10-16.
 
@@ -58,19 +60,22 @@ How it would work after Phase 2:
 - Limits: Claude does not run this on its own each day unless you set up a scheduled task. A warmup written as a note needs no app change. A warmup shown as its own block needs UI work.
 - Effort: half a day to deploy and connect, once Phase 2 runs. 0 days if the warmup goes into notes.
 
-## Food tracking: barcode scanner
+## Food tracking: barcode scanner (built 2026-10-19)
 
-- Cost: free. The Open Food Facts API needs no key. It asks callers to send a descriptive `User-Agent` and to stay within its rate limits.
-- iOS limit: Safari does not support the `BarcodeDetector` API. Use a JavaScript decoder such as `zxing-wasm` on the camera stream. Camera access works in Home Screen web apps.
-- Data: Open Food Facts coverage depends on the country, and some products have no nutrition data. Plan a manual entry screen.
-- Effort: 3 to 4 days. This is a new area of the app (food log, daily totals, storage), not a change to an existing screen.
+- Built: the Food tab, with a day switcher, calorie and macro bars, four meal cards, search, recents, quick add, edit and delete, copy from yesterday, and daily targets. The log is stored under the IndexedDB key `bebear_foodlog`.
+- Scanner: Safari has no `BarcodeDetector` API, so `src/components/foodBarcodeScanner.tsx` uses `@zxing/browser`, a JavaScript decoder with no wasm. It reads EAN-13, EAN-8, UPC-A and UPC-E.
+- Lookups: `api/food/barcode.mjs` and `api/food/search.mjs` call Open Food Facts from the server with the `User-Agent` it asks for. The API is free and needs no key.
+- Data: Open Food Facts coverage depends on the country, and some products have no nutrition data. "Quick add" takes calories and macros by hand for those.
+- Local run: `npm run start:foodapi` serves the functions on port 3010 for `npm run start:offline`.
+- Not checked yet: the camera scanner on an iPhone Home Screen app.
 
-## Food tracking: photo scanner
+## Food tracking: photo scanner (built 2026-10-19)
 
-- Needs a paid vision API. Claude Haiku 5.5 takes image input. A phone photo is about 1,500 input tokens, so a few photos a day cost under $0.05 a month.
-- Needs: the same Anthropic account and Cloudflare Worker as the warmup.
-- Accuracy: calorie estimates from a photo have wide error, often 20 to 30% for mixed dishes. Show the result as an editable estimate.
-- Effort: 1 to 2 days on top of the barcode food log.
+- Built: the "Plate photo" tab in the add sheet. The phone shrinks the photo to a 1024 px JPEG (`src/utils/imageResize.ts`). You review each item and its grams before logging.
+- Model: `api/food/photo.mjs` calls `anthropic/claude-sonnet-5.5` through Vercel AI Gateway, at about $0.003 per photo. `AI_GATEWAY_MODEL` picks another model.
+- Auth: the function signs in with Vercel's OIDC token, so no API key and no Cloudflare Worker are needed. `AI_GATEWAY_API_KEY` overrides it.
+- Accuracy: calorie estimates from a photo have wide error, often 20 to 30% for mixed dishes. The review step lets you fix grams before logging.
+- Not checked yet: no live photo call has run. AI Gateway must be enabled on the Vercel team, and the team needs AI Gateway credit.
 
 ## Phase 2: cloud sync and sharing with friends
 

@@ -10,6 +10,7 @@ import type {
   IProgramStackParamList,
   IWorkoutStackParamList,
   IGraphsStackParamList,
+  IFoodStackParamList,
   IMeStackParamList,
   IRootTabParamList,
   IRootStackParamList,
@@ -36,6 +37,9 @@ import {
 } from "./screens/NavScreenOnboarding";
 import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./screens/NavScreenWorkout";
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
+import { NavScreenFood } from "./screens/NavScreenFood";
+import { NavModalFoodAdd } from "./modals/NavModalFoodAdd";
+import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
 import { NavModalExerciseLiftoEditor } from "./modals/NavModalExerciseLiftoEditor";
 import { NavModalDayLiftoEditor } from "./modals/NavModalDayLiftoEditor";
 import {
@@ -178,6 +182,7 @@ const HomeStack = createNativeStackNavigator<IHomeStackParamList>();
 const ProgramStack = createNativeStackNavigator<IProgramStackParamList>();
 const WorkoutStack = createNativeStackNavigator<IWorkoutStackParamList>();
 const GraphsStack = createNativeStackNavigator<IGraphsStackParamList>();
+const FoodStack = createNativeStackNavigator<IFoodStackParamList>();
 const MeStack = createNativeStackNavigator<IMeStackParamList>();
 const Tab = createBottomTabNavigator<IRootTabParamList>();
 const RootStack = createNativeStackNavigator<IRootStackParamList>();
@@ -314,6 +319,14 @@ function GraphsStackScreen(): JSX.Element {
   );
 }
 
+function FoodStackScreen(): JSX.Element {
+  return (
+    <FoodStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
+      <FoodStack.Screen name="food" component={NavScreenFood} />
+    </FoodStack.Navigator>
+  );
+}
+
 function MeStackScreen(): JSX.Element {
   return (
     <MeStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
@@ -350,6 +363,7 @@ function MainTabsScreen(): JSX.Element {
       <Tab.Screen name="home" component={HomeStackScreen} />
       <Tab.Screen name="program" component={ProgramStackScreen} />
       <Tab.Screen name="workout" component={WorkoutStackScreen} />
+      <Tab.Screen name="food" component={FoodStackScreen} />
       <Tab.Screen name="graphs" component={GraphsStackScreen} />
       <Tab.Screen name="me" component={MeStackScreen} />
     </Tab.Navigator>
@@ -396,6 +410,8 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="monthCalendarModal" component={NavModalMonthCalendar} />
           <RootStack.Screen name="exerciseLiftoEditorModal" component={NavModalExerciseLiftoEditor} />
           <RootStack.Screen name="dayLiftoEditorModal" component={NavModalDayLiftoEditor} />
+          <RootStack.Screen name="foodAddModal" component={NavModalFoodAdd} />
+          <RootStack.Screen name="foodGoalsModal" component={NavModalFoodGoals} />
           <RootStack.Screen name="programRevisionsModal" component={NavModalProgramRevisions} />
           <RootStack.Screen name="programImageExportModal" component={NavModalProgramImageExport} />
           <RootStack.Screen name="exercisePickerModal" component={NavModalExercisePicker} />
