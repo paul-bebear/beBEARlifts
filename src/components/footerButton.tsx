@@ -12,17 +12,18 @@ export interface IProps {
   text: string;
   onClick?: () => void;
   isActive?: boolean;
+  popsToRoot?: boolean;
 }
 
 export function FooterButton(props: IProps): JSX.Element {
-  const isActive = props.name === props.currentTab;
+  const isActive = props.isActive ?? props.name === props.currentTab;
   const dataCy = `footer-${StringUtils_dashcase(props.text)}`;
   return (
     <Pressable
       className="items-center flex-1 px-0.5"
       data-testid={dataCy}
       testID={dataCy}
-      onPress={isActive ? undefined : props.onClick}
+      onPress={isActive && !props.popsToRoot ? undefined : props.onClick}
     >
       <View className="relative flex-row items-center justify-center w-scaled-6 h-scaled-6">
         {props.icon(isActive)}

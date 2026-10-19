@@ -104,29 +104,43 @@ export function Footer2View(props: IFooterProps): JSX.Element {
           text="Food"
           onClick={() => props.dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
         />
-        <FooterButton
-          name="graphs"
-          currentTab={currentTab}
-          icon={(isActive) => <IconGraphs color={isActive ? activeColor : inactiveColor} />}
-          text="Graphs"
-          onClick={() => props.dispatch(Thunk_pushScreen("graphsList", undefined, { tab: "graphs" }))}
-        />
-        <FooterButton
-          name="me"
-          currentTab={currentTab}
-          icon={(isActive) => {
-            const color = isActive
-              ? undefined
-              : props.navCommon.userId || OfflineOnly_isEnabled()
-                ? Tailwind_colors().green[600]
-                : isUserLoading
-                  ? Tailwind_colors().lightgray[600]
-                  : Tailwind_colors().red[600];
-            return <IconMe isSelected={isActive} color={color} />;
-          }}
-          text="Me"
-          onClick={() => props.dispatch(Thunk_pushScreen("settings", undefined, { tab: "me" }))}
-        />
+        {OfflineOnly_isEnabled() ? (
+          <FooterButton
+            name="graphs"
+            currentTab={currentTab}
+            isActive={currentTab === "graphs" || currentTab === "me"}
+            popsToRoot={true}
+            icon={(isActive) => <IconGraphs color={isActive ? activeColor : inactiveColor} />}
+            text="Progress"
+            onClick={() => props.dispatch(Thunk_pushScreen("progressDashboard", undefined, { tab: "graphs" }))}
+          />
+        ) : (
+          <>
+            <FooterButton
+              name="graphs"
+              currentTab={currentTab}
+              icon={(isActive) => <IconGraphs color={isActive ? activeColor : inactiveColor} />}
+              text="Graphs"
+              onClick={() => props.dispatch(Thunk_pushScreen("graphsList", undefined, { tab: "graphs" }))}
+            />
+            <FooterButton
+              name="me"
+              currentTab={currentTab}
+              icon={(isActive) => {
+                const color = isActive
+                  ? undefined
+                  : props.navCommon.userId
+                    ? Tailwind_colors().green[600]
+                    : isUserLoading
+                      ? Tailwind_colors().lightgray[600]
+                      : Tailwind_colors().red[600];
+                return <IconMe isSelected={isActive} color={color} />;
+              }}
+              text="Me"
+              onClick={() => props.dispatch(Thunk_pushScreen("settings", undefined, { tab: "me" }))}
+            />
+          </>
+        )}
       </View>
     </View>
   );
