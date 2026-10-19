@@ -5,8 +5,8 @@ import { IFoodMeal, INutrients } from "../models/foodLog";
 import { FoodMealPicker, FoodPrimaryButton, FoodTextInput } from "./foodUi";
 
 interface IProps {
-  meal: IFoodMeal;
-  onSubmit: (name: string, nutrients: INutrients, meal: IFoodMeal) => void;
+  meal?: IFoodMeal;
+  onSubmit: (name: string, nutrients: INutrients, meal: IFoodMeal | undefined) => void;
   onBack: () => void;
 }
 
@@ -56,8 +56,12 @@ export function FoodQuickAddPanel(props: IProps): JSX.Element {
           </View>
         ))}
       </View>
-      <Text className="mt-4 mb-1.5 text-sm font-semibold">Meal</Text>
-      <FoodMealPicker meal={meal} onChange={setMeal} />
+      {meal != null && (
+        <>
+          <Text className="mt-4 mb-1.5 text-sm font-semibold">Meal</Text>
+          <FoodMealPicker meal={meal} onChange={setMeal} />
+        </>
+      )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
         <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />
         <FoodPrimaryButton

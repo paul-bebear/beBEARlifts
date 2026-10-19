@@ -37,9 +37,10 @@ import {
 } from "./screens/NavScreenOnboarding";
 import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./screens/NavScreenWorkout";
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
+import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
 import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard";
 import { NavScreenFood } from "./screens/NavScreenFood";
-import { NavModalFoodAdd } from "./modals/NavModalFoodAdd";
+import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
 import { NavModalExerciseLiftoEditor } from "./modals/NavModalExerciseLiftoEditor";
 import { NavModalDayLiftoEditor } from "./modals/NavModalDayLiftoEditor";
@@ -326,6 +327,7 @@ function FoodStackScreen(): JSX.Element {
   return (
     <FoodStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
       <FoodStack.Screen name="food" component={NavScreenFood} />
+      <FoodStack.Screen name="foodAdd" component={NavScreenFoodAdd} />
     </FoodStack.Navigator>
   );
 }
@@ -421,7 +423,7 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="monthCalendarModal" component={NavModalMonthCalendar} />
           <RootStack.Screen name="exerciseLiftoEditorModal" component={NavModalExerciseLiftoEditor} />
           <RootStack.Screen name="dayLiftoEditorModal" component={NavModalDayLiftoEditor} />
-          <RootStack.Screen name="foodAddModal" component={NavModalFoodAdd} />
+          <RootStack.Screen name="foodEditModal" component={NavModalFoodEdit} />
           <RootStack.Screen name="foodGoalsModal" component={NavModalFoodGoals} />
           <RootStack.Screen name="programRevisionsModal" component={NavModalProgramRevisions} />
           <RootStack.Screen name="programImageExportModal" component={NavModalProgramImageExport} />

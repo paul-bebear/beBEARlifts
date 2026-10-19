@@ -8,9 +8,9 @@ import { FoodChip, FoodMealPicker, FoodNutrientsRow, FoodPrimaryButton, FoodText
 interface IProps {
   pick: IFoodPick;
   initialGrams: number;
-  meal: IFoodMeal;
+  meal?: IFoodMeal;
   submitTitle: string;
-  onSubmit: (grams: number, meal: IFoodMeal) => void;
+  onSubmit: (grams: number, meal: IFoodMeal | undefined) => void;
   onDelete?: () => void;
   onBack?: () => void;
 }
@@ -62,8 +62,12 @@ export function FoodAmountPanel(props: IProps): JSX.Element {
       <View className="mt-4">
         <FoodNutrientsRow nutrients={nutrients} />
       </View>
-      <Text className="mt-4 mb-1.5 text-sm font-semibold">Meal</Text>
-      <FoodMealPicker meal={meal} onChange={setMeal} />
+      {meal != null && (
+        <>
+          <Text className="mt-4 mb-1.5 text-sm font-semibold">Meal</Text>
+          <FoodMealPicker meal={meal} onChange={setMeal} />
+        </>
+      )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
         {props.onDelete != null && <FoodPrimaryButton title="Delete" kind="danger" onPress={props.onDelete} />}
         {props.onBack != null && <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />}

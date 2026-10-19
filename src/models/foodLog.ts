@@ -42,12 +42,27 @@ export interface IFoodGoals {
 
 export type IFoodRecent = Omit<IFoodEntry, "id" | "day" | "meal" | "createdAt">;
 
+export interface IFoodSavedMeal {
+  id: string;
+  name: string;
+  items: IFoodRecent[];
+}
+
+export interface IFoodRecipe {
+  id: string;
+  name: string;
+  servings: number;
+  ingredients: IFoodRecent[];
+}
+
 export interface IFoodLog {
   version: 1;
   entries: IFoodEntry[];
   goals: IFoodGoals;
   recents: IFoodRecent[];
   savedFoods: IFoodProduct[];
+  meals: IFoodSavedMeal[];
+  recipes: IFoodRecipe[];
 }
 
 export type IFoodProgressMode = "consumed" | "remaining";
@@ -72,7 +87,7 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function FoodLog_empty(): IFoodLog {
-  return { version: 1, entries: [], goals: FoodLog_defaultGoals, recents: [], savedFoods: [] };
+  return { version: 1, entries: [], goals: FoodLog_defaultGoals, recents: [], savedFoods: [], meals: [], recipes: [] };
 }
 
 export function FoodLog_zero(): INutrients {
@@ -159,9 +174,6 @@ export function FoodLog_parse(raw: unknown): IFoodLog {
   const r = raw as Record<string, unknown>;
   const goals = (r.goals ?? {}) as Record<string, unknown>;
   const entries = Array.isArray(r.entries) ? r.entries.map(parseEntry) : [];
-  const recents = Array.isArray(r.recents)
-    ? r.recents.map((recent) => parseEntry({ ...recent, id: "", day: "", meal: "snacks" }))
-    : [];
   return {
     version: 1,
     entries: entries.filter((e): e is IFoodEntry => e != null),
@@ -171,9 +183,47 @@ export function FoodLog_parse(raw: unknown): IFoodLog {
       carbs: parseRange(goals.carbs, FoodLog_defaultGoals.carbs),
       fat: parseRange(goals.fat, FoodLog_defaultGoals.fat),
     },
-    recents: recents.filter((e): e is IFoodEntry => e != null).map(FoodLog_toRecent),
+    recents: parseRecents(r.recents),
     savedFoods: SavedFoods_parse(r.savedFoods),
+    meals: parseList(r.meals, parseSavedMeal),
+    recipes: parseList(r.recipes, parseRecipe),
   };
+}
+
+function parseRecents(raw: unknown): IFoodRecent[] {
+  return Array.isArray(raw)
+    ? raw
+        .map((recent) => parseEntry({ ...recent, id: "", day: "", meal: "snacks" }))
+        .filter((e): e is IFoodEntry => e != null)
+        .map(FoodLog_toRecent)
+    : [];
+}
+
+function parseList<T>(raw: unknown, parse: (item: Record<string, unknown>) => T | undefined): T[] {
+  return Array.isArray(raw)
+    ? raw
+        .filter((item): item is Record<string, unknown> => item != null && typeof item === "object")
+        .map(parse)
+        .filter((item): item is T => item != null)
+    : [];
+}
+
+function parseSavedMeal(r: Record<string, unknown>): IFoodSavedMeal | undefined {
+  const items = parseRecents(r.items);
+  return typeof r.id === "string" && typeof r.name === "string" && items.length > 0
+    ? { id: r.id, name: r.name, items }
+    : undefined;
+}
+
+function parseRecipe(r: Record<string, unknown>): IFoodRecipe | undefined {
+  const ingredients = parseRecents(r.ingredients);
+  return typeof r.id === "string" &&
+    typeof r.name === "string" &&
+    isFiniteNumber(r.servings) &&
+    r.servings > 0 &&
+    ingredients.length > 0
+    ? { id: r.id, name: r.name, servings: r.servings, ingredients }
+    : undefined;
 }
 
 function pad2(n: number): string {
@@ -268,18 +318,39 @@ export function FoodLog_toRecent(entry: IFoodEntry | IFoodRecent): IFoodRecent {
   return recent;
 }
 
-function recentKey(recent: IFoodRecent): string {
+export function FoodLog_recentKey(recent: IFoodRecent): string {
   return recent.barcode ?? `${recent.name}|${recent.brand ?? ""}`.toLowerCase();
 }
 
 export function FoodLog_add(log: IFoodLog, entry: IFoodEntry): IFoodLog {
   const recent = FoodLog_toRecent(entry);
-  const recents = [recent, ...log.recents.filter((r) => recentKey(r) !== recentKey(recent))].slice(0, maxRecents);
+  const key = FoodLog_recentKey(recent);
+  const recents = [recent, ...log.recents.filter((r) => FoodLog_recentKey(r) !== key)].slice(0, maxRecents);
   return { ...log, entries: [...log.entries, entry], recents };
 }
 
 export function FoodLog_saveFood(log: IFoodLog, product: IFoodProduct): IFoodLog {
   return { ...log, savedFoods: SavedFoods_save(log.savedFoods, product) };
+}
+
+export function FoodLog_addAll(log: IFoodLog, entries: IFoodEntry[]): IFoodLog {
+  return entries.reduce(FoodLog_add, log);
+}
+
+export function FoodLog_saveMeal(log: IFoodLog, meal: IFoodSavedMeal): IFoodLog {
+  return { ...log, meals: [meal, ...log.meals.filter((m) => m.id !== meal.id)] };
+}
+
+export function FoodLog_removeMeal(log: IFoodLog, id: string): IFoodLog {
+  return { ...log, meals: log.meals.filter((m) => m.id !== id) };
+}
+
+export function FoodLog_saveRecipe(log: IFoodLog, recipe: IFoodRecipe): IFoodLog {
+  return { ...log, recipes: [recipe, ...log.recipes.filter((r) => r.id !== recipe.id)] };
+}
+
+export function FoodLog_removeRecipe(log: IFoodLog, id: string): IFoodLog {
+  return { ...log, recipes: log.recipes.filter((r) => r.id !== id) };
 }
 
 export function FoodLog_remove(log: IFoodLog, id: string): IFoodLog {

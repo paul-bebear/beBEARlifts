@@ -53,6 +53,7 @@ export type IGraphsStackParamList = IMeStackParamList & {
 
 export type IFoodStackParamList = {
   food: undefined;
+  foodAdd: IFoodAddScreenParams;
 };
 
 export type IMeStackParamList = {
@@ -190,13 +191,13 @@ export type IRootStackParamList = {
   exercisePickerSettingsModal: undefined;
   photoPickerModal: undefined;
   helpModal: { helpKey: IHelpKey };
-  foodAddModal: IFoodAddModalParams;
+  foodEditModal: IFoodEditModalParams;
   foodGoalsModal: undefined;
 };
 
-export type IFoodAddModalParams =
-  | { mode: "search" | "barcode" | "photo"; day: string; meal: IFoodMeal }
-  | { mode: "edit"; entryId: string };
+export type IFoodEditModalParams = { entryId: string };
+
+export type IFoodAddScreenParams = { day: string; meal: IFoodMeal; mode?: "barcode" | "photo" | "describe" | "quick" };
 
 export type IRootLevelScreenParamList = {
   subscription: undefined;

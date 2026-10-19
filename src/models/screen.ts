@@ -2,6 +2,7 @@ import { IState } from "./state";
 import { dequal } from "dequal";
 import { Progress_isCurrent } from "./progress";
 import { IStatsKey } from "../types";
+import type { IFoodAddScreenParams } from "../navigation/types";
 import { Program_getProgram, Program_cleanPlannerProgram } from "./program";
 import { ObjectUtils_isEqual } from "../utils/object";
 
@@ -20,6 +21,7 @@ export type IScreenData =
   | { name: "graphsList"; params?: Record<string, never> }
   | { name: "progressDashboard"; params?: Record<string, never> }
   | { name: "food"; params?: Record<string, never> }
+  | { name: "foodAdd"; params: IFoodAddScreenParams }
   | { name: "finishDay"; params?: { id?: number } }
   | { name: "muscles"; params?: Record<string, never> }
   | { name: "muscleGroups"; params?: Record<string, never> }
@@ -121,6 +123,9 @@ export function Screen_tab(screen: IScreen): ITab {
       return "graphs";
     }
     case "food": {
+      return "food";
+    }
+    case "foodAdd": {
       return "food";
     }
     case "finishDay": {

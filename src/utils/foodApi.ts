@@ -68,11 +68,15 @@ export async function FoodApi_find(query: string, saved: IFoodProduct[]): Promis
   return { ok: true, value: [...mine, ...OpenFoodFacts_parseSearchResponse(result.value)] };
 }
 
-async function askAboutPhoto(imageDataUrl: string, kind: "meal" | "label"): Promise<IFoodApiResult<string>> {
+async function askAi(body: {
+  kind: "meal" | "label" | "describe";
+  image?: string;
+  text?: string;
+}): Promise<IFoodApiResult<string>> {
   const result = await request("/api/food/photo", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ image: imageDataUrl, kind }),
+    body: JSON.stringify(body),
   });
   if (!result.ok) {
     return result;
@@ -81,19 +85,29 @@ async function askAboutPhoto(imageDataUrl: string, kind: "meal" | "label"): Prom
   return { ok: true, value: typeof text === "string" ? text : "" };
 }
 
-export async function FoodApi_estimatePhoto(imageDataUrl: string): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
-  const result = await askAboutPhoto(imageDataUrl, "meal");
+function toEstimate(result: IFoodApiResult<string>, retryHint: string): IFoodApiResult<IFoodPhotoEstimate> {
   if (!result.ok) {
     return result;
   }
   const estimate = FoodPhotoEstimate_parse(result.value);
   return estimate != null
     ? { ok: true, value: estimate }
-    : { ok: false, error: "The AI answer could not be read. Try another photo." };
+    : { ok: false, error: `The AI answer could not be read. ${retryHint}` };
+}
+
+export async function FoodApi_estimatePhoto(
+  imageDataUrl: string,
+  note?: string
+): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
+  return toEstimate(await askAi({ kind: "meal", image: imageDataUrl, text: note }), "Try another photo.");
+}
+
+export async function FoodApi_describe(text: string): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
+  return toEstimate(await askAi({ kind: "describe", text }), "Try different words.");
 }
 
 export async function FoodApi_readLabel(imageDataUrl: string): Promise<IFoodApiResult<INutritionLabel>> {
-  const result = await askAboutPhoto(imageDataUrl, "label");
+  const result = await askAi({ kind: "label", image: imageDataUrl });
   if (!result.ok) {
     return result;
   }

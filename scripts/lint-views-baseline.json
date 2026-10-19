@@ -80,10 +80,7 @@
   "src/components/foodBarcodeScanner.tsx": {
     "decision-in-view:useEffect#1": "Camera and decoder lifecycle only: lazy-load zxing, start the stream, stop it on detect or unmount. No rule to extract."
   },
-  "src/components/foodPhotoPanel.tsx": {
-    "decision-in-view:onFile": "Effect sequence only: resize, POST, set status. The parse and the choice list live in foodPhotoEstimate.ts and foodAddFlow.ts."
-  },
-  "src/components/foodSearchPanel.tsx": {
+  "src/components/foodBrowsePanel.tsx": {
     "decision-in-view:useEffect#1": "The debounce timer and its stale-result guard. Barcode vs text routing lives in FoodApi_find."
   },
   "src/components/graphExercise.tsx": {
