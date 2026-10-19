@@ -102,9 +102,9 @@ export function FoodSummaryCard(props: IProps): JSX.Element {
             <View key={m.key} className="flex-1">
               <Text className="mb-1.5 text-base">{m.label}</Text>
               <Bar fraction={progress.fraction} barClass={m.barClass} height={6} />
-              <Text className="mt-1.5 text-sm" numberOfLines={1}>
-                <Text className="text-sm font-bold">{FoodLog_formatNumber(progress.value)}</Text>
-                <Text className="text-sm text-text-secondary">
+              <Text className="mt-1.5 text-xs" numberOfLines={1}>
+                <Text className="text-xs font-bold">{Math.round(progress.value)}</Text>
+                <Text className="text-xs text-text-secondary">
                   {props.mode === "consumed" ? ` / ${FoodLog_formatRange(props.goals[m.key], "g")}` : "g left"}
                 </Text>
               </Text>

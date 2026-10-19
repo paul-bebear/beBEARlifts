@@ -40,6 +40,7 @@
     "build:stage": "npm run ensure:localdomain && npm run build:theme && npm run build:markdown && npm run build:programs && npm run build:exercises && npm run plannerhighlighter && npm run blog && npm run docs && npm run build:llms-features && npm run sitemap && NODE_ENV=production STAGE=1 npm run build:dev && npm run build:licenses",
     "build:pwa": "npm run ensure:localdomain && npm run build:theme && npm run build:markdown && npm run build:programs && npm run build:exercises && NODE_ENV=production LFT_OFFLINE_ONLY=1 webpack",
     "start:offline": "npm run build:theme && npm run build:markdown && npm run build:programs && npm run build:exercises && LFT_OFFLINE_ONLY=1 webpack-dev-server",
+    "start:foodapi": "node scripts/food-api-dev.mjs",
     "ensure:localdomain": "test -f localdomain.js || cp localdomain.default.js localdomain.js",
     "build:markdown": "node scripts/build-markdown.js",
     "build:programs": "TS_NODE_TRANSPILE_ONLY=1 ts-node scripts/build-programs.ts",

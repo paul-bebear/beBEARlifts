@@ -1,10 +1,10 @@
-import { JSX, useEffect, useRef, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { Text } from "./primitives/text";
 import { IFoodRecent, INutrients } from "../models/foodLog";
 import { IFoodProduct, OpenFoodFacts_isBarcode } from "../models/openFoodFacts";
 import { FoodAddFlow_pickFromProduct, FoodAddFlow_pickFromRecent, IFoodPick } from "../models/foodAddFlow";
-import { FoodApi_lookupBarcode, FoodApi_search } from "../utils/foodApi";
+import { FoodApi_find } from "../utils/foodApi";
 import { FoodTextInput } from "./foodUi";
 
 interface IProps {
@@ -47,32 +47,28 @@ export function FoodSearchPanel(props: IProps): JSX.Element {
   const [results, setResults] = useState<IFoodProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
-  const requestId = useRef(0);
-
   useEffect(() => {
     const text = query.trim();
-    const id = ++requestId.current;
     if (text.length < 2) {
       setResults([]);
       setIsLoading(false);
       setError(undefined);
       return undefined;
     }
+    let isStale = false;
     setIsLoading(true);
     const timer = setTimeout(async () => {
-      const result = OpenFoodFacts_isBarcode(text)
-        ? await FoodApi_lookupBarcode(text).then((r) =>
-            r.ok ? { ok: true as const, value: r.value != null ? [r.value] : [] } : r
-          )
-        : await FoodApi_search(text);
-      if (id !== requestId.current) {
-        return;
+      const result = await FoodApi_find(text);
+      if (!isStale) {
+        setIsLoading(false);
+        setResults(result.ok ? result.value : []);
+        setError(result.ok ? undefined : result.error);
       }
-      setIsLoading(false);
-      setResults(result.ok ? result.value : []);
-      setError(result.ok ? undefined : result.error);
     }, searchDelayMs);
-    return () => clearTimeout(timer);
+    return () => {
+      isStale = true;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   const showRecents = query.trim().length < 2;

@@ -7,7 +7,7 @@ export const FoodLogStore_key = "bebear_foodlog";
 type IListener = (log: IFoodLog) => void;
 
 let current: IFoodLog = FoodLog_empty();
-let loadPromise: Promise<IFoodLog> | undefined;
+let loadPromise: Promise<void> | undefined;
 let writeChain: Promise<void> = Promise.resolve();
 const listeners = new Set<IListener>();
 
@@ -23,11 +23,10 @@ export function FoodLogStore_load(): Promise<IFoodLog> {
       .then((raw) => {
         current = FoodLog_parse(typeof raw === "string" ? JSON.parse(raw) : undefined);
         notify();
-        return current;
       })
-      .catch(() => current);
+      .catch(() => undefined);
   }
-  return loadPromise;
+  return loadPromise.then(() => current);
 }
 
 export function FoodLogStore_get(): IFoodLog {

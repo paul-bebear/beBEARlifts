@@ -1,6 +1,7 @@
 import { FoodPhotoEstimate_parse, IFoodPhotoEstimate } from "../models/foodPhotoEstimate";
 import {
   IFoodProduct,
+  OpenFoodFacts_isBarcode,
   OpenFoodFacts_parseBarcodeResponse,
   OpenFoodFacts_parseSearchResponse,
 } from "../models/openFoodFacts";
@@ -37,6 +38,14 @@ export async function FoodApi_lookupBarcode(code: string): Promise<IFoodApiResul
 export async function FoodApi_search(query: string): Promise<IFoodApiResult<IFoodProduct[]>> {
   const result = await request(`/api/food/search?q=${encodeURIComponent(query)}`);
   return result.ok ? { ok: true, value: OpenFoodFacts_parseSearchResponse(result.value) } : result;
+}
+
+export async function FoodApi_find(query: string): Promise<IFoodApiResult<IFoodProduct[]>> {
+  if (!OpenFoodFacts_isBarcode(query)) {
+    return FoodApi_search(query);
+  }
+  const result = await FoodApi_lookupBarcode(query);
+  return result.ok ? { ok: true, value: result.value != null ? [result.value] : [] } : result;
 }
 
 export async function FoodApi_estimatePhoto(imageDataUrl: string): Promise<IFoodApiResult<IFoodPhotoEstimate>> {

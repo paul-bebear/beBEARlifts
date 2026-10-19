@@ -70,7 +70,9 @@ export function FoodGoalsContent(props: { onClose: () => void }): JSX.Element {
           />
         </View>
       ))}
-      {parsed == null && <Text className="text-sm text-text-error">Each low number must be at or below its high number.</Text>}
+      {parsed == null && (
+        <Text className="text-sm text-text-error">Each low number must be at or below its high number.</Text>
+      )}
       <View className="flex-row mt-3">
         <FoodPrimaryButton
           testID="food-goals-save"
@@ -92,7 +94,9 @@ export function FoodGoalsContent(props: { onClose: () => void }): JSX.Element {
         <FoodPrimaryButton
           title="Export food log"
           kind="outline"
-          onPress={() => Exporter_toFile(`bebear_foodlog_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(log))}
+          onPress={() =>
+            Exporter_toFile(`bebear_foodlog_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(log))
+          }
         />
         {Platform.OS === "web" && (
           <FoodPrimaryButton title="Import" kind="outline" onPress={() => fileRef.current?.click()} />

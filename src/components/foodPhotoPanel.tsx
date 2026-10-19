@@ -48,8 +48,8 @@ function ChoiceRow(props: {
           {choice.name}
         </Text>
         <Text className="text-xs text-text-secondary">
-          {choice.nutrients.calories} cal · {Math.round(choice.nutrients.protein)} P · {Math.round(choice.nutrients.carbs)}{" "}
-          C · {Math.round(choice.nutrients.fat)} F
+          {choice.nutrients.calories} cal · {Math.round(choice.nutrients.protein)} P ·{" "}
+          {Math.round(choice.nutrients.carbs)} C · {Math.round(choice.nutrients.fat)} F
         </Text>
       </View>
       <FoodTextInput

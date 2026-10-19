@@ -453,6 +453,9 @@ const mainConfig = {
     host: "0.0.0.0",
     port: localport,
     proxy: {
+      "/api/food/*": {
+        target: `http://localhost:${process.env.FOOD_API_PORT || 3010}`,
+      },
       "/.well-known/oauth-*": {
         target: localapi,
         secure: false,

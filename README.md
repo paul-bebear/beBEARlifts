@@ -1,6 +1,6 @@
 # beBEARlifts
 
-beBEARlifts is a personal fork of [Liftosaur](https://github.com/astashov/liftosaur) by Anton Astashov. It runs as an offline-only web app on an iPhone Home Screen. It has no server, no account and no subscription.
+beBEARlifts is a personal fork of [Liftosaur](https://github.com/astashov/liftosaur) by Anton Astashov. It runs as an offline-only web app on an iPhone Home Screen. It has no account and no subscription. Workout data never leaves the phone. The only server code is three small Vercel functions that the Food tab calls to look up food.
 
 All credit for the app goes to the Liftosaur authors. The license stays AGPL-3.0 (see `LICENSE`). This fork is public, and Settings → "Source Code on Github" links to it, as AGPL section 13 asks of a network-served modified version.
 
@@ -28,6 +28,11 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
 - A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
 - `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket and sets `Content-Security-Policy: connect-src 'self' blob: data:`.
+- A sixth tab, Food, logs calories and macros per meal. Its layout follows Built With Science's Nutrition screen. The screen is `src/components/screenFood.tsx`, and the rules live in `src/models/foodLog.ts` and `src/models/foodAddFlow.ts`.
+- The food log has its own IndexedDB key, `bebear_foodlog`, outside Liftosaur's storage, so upstream merges do not touch it. The main JSON export does not include it. The targets sheet (the gear icon) has its own export and import.
+- Barcode scanning: `src/components/foodBarcodeScanner.tsx` reads EAN-13, EAN-8, UPC-A and UPC-E from the camera with `@zxing/browser`, a JavaScript decoder. `api/food/barcode.mjs` and `api/food/search.mjs` are Vercel functions on the same site that call Open Food Facts, so `connect-src 'self'` stays as it is.
+- Plate photo estimates: the phone shrinks the photo to a 1024 px JPEG. `api/food/photo.mjs` sends it to `anthropic/claude-sonnet-5.5` through Vercel AI Gateway, at about $0.003 per photo. You review each item and its grams before it is logged. The function signs in with Vercel's OIDC token, so no API key is stored. AI Gateway must be enabled on the Vercel team.
+- The service worker never handles `/api/food/*`, so a lookup always goes to the network.
 
 ## Run it locally
 
@@ -37,7 +42,9 @@ npm run build:pwa
 npx serve dist   # or any static server, then open http://localhost:3000/app/
 ```
 
-`npm run start:offline` runs the webpack dev server with the same flag.
+`npm run start:offline` runs the webpack dev server with the same flag. Open http://localhost:8080/app/index.html.
+
+For the Food tab's lookups, also run `npm run start:foodapi` in a second terminal. It serves the `api/food/*` functions on port 3010, and the dev server forwards `/api/food/*` to it. Set `FOOD_API_PORT` for both commands to use another port. Outside Vercel, the photo function needs `AI_GATEWAY_API_KEY`, or a `VERCEL_OIDC_TOKEN` from `vercel env pull`.
 
 ## Deploy on Vercel (free)
 

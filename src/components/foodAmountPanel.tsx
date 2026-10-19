@@ -22,9 +22,7 @@ export function FoodAmountPanel(props: IProps): JSX.Element {
   const nutrients = FoodAddFlow_nutrientsFor(props.pick, grams ?? 0);
   const hasPortion = props.pick.per100g != null || props.pick.fixed?.grams != null;
   const serving = props.pick.servingGrams;
-  const quickGrams = [serving, 50, 100, 150, 200].filter(
-    (g, i, all): g is number => g != null && all.indexOf(g) === i
-  );
+  const quickGrams = [serving, 50, 100, 150, 200].filter((g, i, all): g is number => g != null && all.indexOf(g) === i);
 
   return (
     <View testID="food-amount-panel" data-testid="food-amount-panel">
