@@ -77,11 +77,18 @@ How it would work after Phase 2:
 
 ## Food tracking: photo scanner (built 2026-10-19)
 
-- Built: the "Plate photo" tab in the add sheet. The phone shrinks the photo to a 1024 px JPEG (`src/utils/imageResize.ts`). You review each item and its grams before logging.
-- Model: `api/food/photo.mjs` calls `anthropic/claude-sonnet-5.5` through Vercel AI Gateway, at about $0.003 per photo. `AI_GATEWAY_MODEL` picks another model.
-- Auth: the function signs in with Vercel's OIDC token, so no API key and no Cloudflare Worker are needed. `AI_GATEWAY_API_KEY` overrides it.
-- Accuracy: calorie estimates from a photo have wide error, often 20 to 30% for mixed dishes. The review step lets you fix grams before logging.
-- Not checked yet: no live photo call has run. AI Gateway must be enabled on the Vercel team, and the team needs AI Gateway credit.
+- Built: AI Scan (a photo, with an optional note) and Describe (text only) on the add screen. The phone shrinks the photo to a 1024 px JPEG (`src/utils/imageResize.ts`). You review each item and its grams before it goes in the basket.
+- Provider: `api/food/photo.mjs` calls Gemini when `GEMINI_API_KEY` is set, through Google's OpenAI-compatible endpoint, with `gemini-flash-lite-latest` on the free tier. Google may use free-tier prompts to improve its products. Without that key it calls `anthropic/claude-haiku-5.5` through Vercel AI Gateway with the OIDC token.
+- Cost per call, checked 2026-10-19: Claude Haiku 5.5 is $0.10 in and $0.50 out per million tokens. A 1024 × 768 photo is about 1,050 tokens, so a photo is about $0.0003 and a description about $0.0002. Claude Sonnet 5.5, the first default, was about $0.006 per photo.
+- Accuracy: calorie estimates from a photo have wide error, often 20 to 30% for mixed dishes. The review step lets you fix grams. Describe asks a question or suggests a photo when the text is too vague.
+- Not checked yet: no live AI call has run. The first try needs `GEMINI_API_KEY` in Vercel, or AI Gateway credit on the Vercel team.
+
+## Tab bar, Progress dashboard and story card (built 2026-10-19)
+
+- Tab bar: Home, Program, Workout, Food, Progress, two on each side. Progress replaces Graphs and Me in the offline build. The upstream build keeps six tabs, so `footer2.tsx` has one branch for each.
+- Progress opens the Me screens on its own stack, so they get a back arrow. `renderMeScreens` in both navigators registers the Me screen list twice.
+- Story card: drawn with html-to-image at 3× from a 360 × 640 view. It shares through the iOS share sheet from a Home Screen app.
+- Not checked yet: sharing the PNG to Instagram from an iPhone.
 
 ## Phase 2: cloud sync and sharing with friends
 
