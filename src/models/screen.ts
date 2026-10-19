@@ -5,7 +5,7 @@ import { IStatsKey } from "../types";
 import { Program_getProgram, Program_cleanPlannerProgram } from "./program";
 import { ObjectUtils_isEqual } from "../utils/object";
 
-export type ITab = "home" | "program" | "workout" | "graphs" | "me";
+export type ITab = "home" | "program" | "workout" | "food" | "graphs" | "me";
 
 export type IScreenData =
   | { name: "first"; params?: Record<string, never> }
@@ -18,6 +18,7 @@ export type IScreenData =
   | { name: "programs"; params?: Record<string, never> }
   | { name: "progress"; params?: { id?: number } }
   | { name: "graphsList"; params?: Record<string, never> }
+  | { name: "food"; params?: Record<string, never> }
   | { name: "finishDay"; params?: { id?: number } }
   | { name: "muscles"; params?: Record<string, never> }
   | { name: "muscleGroups"; params?: Record<string, never> }
@@ -114,6 +115,9 @@ export function Screen_tab(screen: IScreen): ITab {
     }
     case "graphsList": {
       return "graphs";
+    }
+    case "food": {
+      return "food";
     }
     case "finishDay": {
       return "workout";

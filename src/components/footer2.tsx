@@ -13,6 +13,7 @@ import { Tailwind_semantic, Tailwind_colors } from "../utils/tailwindConfig";
 import { IconDoc2 } from "./icons/iconDoc2";
 import { INavCommon } from "../models/state";
 import { IconBarbell2 } from "./icons/iconBarbell2";
+import { IconFood } from "./icons/iconFood";
 import { ObjectUtils_values } from "../utils/object";
 import { Program_evaluate } from "../models/program";
 import { navigateToModal } from "../navigation/navigationService";
@@ -96,6 +97,13 @@ export function Footer2View(props: IFooterProps): JSX.Element {
             Workout
           </Text>
         </View>
+        <FooterButton
+          name="food"
+          currentTab={currentTab}
+          icon={(isActive) => <IconFood size={20} isSelected={isActive} />}
+          text="Food"
+          onClick={() => props.dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
+        />
         <FooterButton
           name="graphs"
           currentTab={currentTab}
