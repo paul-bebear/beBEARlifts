@@ -1,4 +1,5 @@
 import { INutrients } from "./foodLog";
+import { JsonInText_extract } from "./jsonInText";
 
 export interface IFoodPhotoItem {
   name: string;
@@ -13,21 +14,6 @@ export interface IFoodPhotoEstimate {
 
 function num(value: unknown): number | undefined {
   return typeof value === "number" && isFinite(value) && value >= 0 ? value : undefined;
-}
-
-function extractJson(text: string): unknown {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const body = fenced != null ? fenced[1] : text;
-  const start = body.indexOf("{");
-  const end = body.lastIndexOf("}");
-  if (start === -1 || end <= start) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(body.slice(start, end + 1));
-  } catch {
-    return undefined;
-  }
 }
 
 function parseItem(raw: unknown): IFoodPhotoItem | undefined {
@@ -54,7 +40,7 @@ function parseItem(raw: unknown): IFoodPhotoItem | undefined {
 }
 
 export function FoodPhotoEstimate_parse(text: string): IFoodPhotoEstimate | undefined {
-  const json = extractJson(text);
+  const json = JsonInText_extract(text);
   if (json == null || typeof json !== "object") {
     return undefined;
   }

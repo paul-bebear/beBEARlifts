@@ -43,6 +43,55 @@ describe("OpenFoodFacts_parseBarcodeResponse", () => {
     ).to.equal(undefined);
   });
 
+  it("falls back to an English, then any localized name when product_name is empty", () => {
+    const english = OpenFoodFacts_parseBarcodeResponse({
+      status: 1,
+      product: { product_name: "", product_name_en: "Buldak ramen", nutriments: { "energy-kcal_100g": 380 } },
+    });
+    expect(english?.name).to.equal("Buldak ramen");
+    const korean = OpenFoodFacts_parseBarcodeResponse({
+      status: 1,
+      product: { product_name: "", product_name_ko: "불닭볶음면", nutriments: { "energy-kcal_100g": 380 } },
+    });
+    expect(korean?.name).to.equal("불닭볶음면");
+  });
+
+  it("converts per-serving nutrition to per 100 g using the serving size text", () => {
+    const product = OpenFoodFacts_parseBarcodeResponse({
+      status: 1,
+      product: {
+        product_name: "Hot Chicken Flavor Ramen",
+        serving_size: "1 pack (140 g)",
+        nutriments: {
+          "energy-kcal_serving": 530,
+          proteins_serving: 12,
+          carbohydrates_serving: 84,
+          fat_serving: 16,
+        },
+      },
+    });
+    expect(product).to.deep.include({
+      servingGrams: 140,
+      per100g: { calories: 379, protein: 8.6, carbs: 60, fat: 11.4 },
+    });
+  });
+
+  it("returns nothing for per-serving nutrition when the serving has no gram weight", () => {
+    const product = OpenFoodFacts_parseBarcodeResponse({
+      status: 1,
+      product: { product_name: "Ramen", serving_size: "1 pack", nutriments: { "energy-kcal_serving": 530 } },
+    });
+    expect(product).to.equal(undefined);
+  });
+
+  it("does not read a kilogram weight as grams", () => {
+    const product = OpenFoodFacts_parseBarcodeResponse({
+      status: 1,
+      product: { product_name: "Rice", serving_size: "1kg", nutriments: { "energy-kcal_100g": 360 } },
+    });
+    expect(product?.servingGrams).to.equal(undefined);
+  });
+
   it("uses kJ when the kcal field holds a kJ number", () => {
     const product = OpenFoodFacts_parseBarcodeResponse({
       status: 1,

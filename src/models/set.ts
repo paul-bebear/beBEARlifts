@@ -104,12 +104,35 @@ function convertSetWeightsTo(set: ISet, unit: IUnit): ISet {
   };
 }
 
+// An ad-hoc set has no program behind it, so the last set's numbers are only a starting point.
+// They go into the completed fields, and with no target a finished set always counts as a success.
+function adhocSetFrom(lastSet: ISet, isUnilateral: boolean): ISet {
+  const completedReps = lastSet.completedReps ?? lastSet.reps;
+  return {
+    ...ObjectUtils_clone(lastSet),
+    reps: undefined,
+    minReps: undefined,
+    weight: undefined,
+    originalWeight: undefined,
+    isAmrap: false,
+    askWeight: false,
+    rpe: undefined,
+    completedReps,
+    completedRepsLeft: isUnilateral ? (lastSet.completedRepsLeft ?? completedReps) : undefined,
+    completedWeight: lastSet.completedWeight ?? lastSet.weight,
+    completedRpe: undefined,
+    completedSetTimer: undefined,
+    completedSetTimerLeft: undefined,
+  };
+}
+
 export function Reps_addSet(
   sets: ISet[],
   isUnilateral: boolean,
   previousWorkoutSet?: ISet,
   isWarmup?: boolean,
-  unit?: IUnit
+  unit?: IUnit,
+  isAdhoc?: boolean
 ): ISet[] {
   let lastSet =
     sets[sets.length - 1] ??
@@ -117,7 +140,9 @@ export function Reps_addSet(
   if (lastSet == null) {
     lastSet = Reps_newSet(isUnilateral, 0);
   } else {
-    if (isWarmup) {
+    if (isAdhoc && !isWarmup) {
+      lastSet = adhocSetFrom(lastSet, isUnilateral);
+    } else if (isWarmup) {
       lastSet = {
         ...ObjectUtils_clone(lastSet),
         reps: lastSet.completedReps ?? lastSet.reps,

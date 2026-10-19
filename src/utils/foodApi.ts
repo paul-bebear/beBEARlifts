@@ -1,4 +1,7 @@
 import { FoodPhotoEstimate_parse, IFoodPhotoEstimate } from "../models/foodPhotoEstimate";
+import { INutritionLabel, NutritionLabel_note, NutritionLabel_parse } from "../models/nutritionLabel";
+import { SavedFoods_find, SavedFoods_search } from "../models/savedFoods";
+import { UsdaFoodData_parseBarcodeResponse } from "../models/usdaFoodData";
 import {
   IFoodProduct,
   OpenFoodFacts_isBarcode,
@@ -30,36 +33,88 @@ async function request(path: string, init?: RequestInit): Promise<IFoodApiResult
   return { ok: true, value: body };
 }
 
-export async function FoodApi_lookupBarcode(code: string): Promise<IFoodApiResult<IFoodProduct | undefined>> {
-  const result = await request(`/api/food/barcode?code=${encodeURIComponent(code)}`);
-  return result.ok ? { ok: true, value: OpenFoodFacts_parseBarcodeResponse(result.value) } : result;
-}
-
-export async function FoodApi_search(query: string): Promise<IFoodApiResult<IFoodProduct[]>> {
-  const result = await request(`/api/food/search?q=${encodeURIComponent(query)}`);
-  return result.ok ? { ok: true, value: OpenFoodFacts_parseSearchResponse(result.value) } : result;
-}
-
-export async function FoodApi_find(query: string): Promise<IFoodApiResult<IFoodProduct[]>> {
-  if (!OpenFoodFacts_isBarcode(query)) {
-    return FoodApi_search(query);
+export async function FoodApi_lookupBarcode(
+  code: string,
+  saved: IFoodProduct[]
+): Promise<IFoodApiResult<IFoodProduct | undefined>> {
+  const mine = SavedFoods_find(saved, code);
+  if (mine != null) {
+    return { ok: true, value: mine };
   }
-  const result = await FoodApi_lookupBarcode(query);
-  return result.ok ? { ok: true, value: result.value != null ? [result.value] : [] } : result;
+  const path = `?code=${encodeURIComponent(code)}`;
+  const openFoodFacts = await request(`/api/food/barcode${path}`);
+  const fromOpenFoodFacts = openFoodFacts.ok ? OpenFoodFacts_parseBarcodeResponse(openFoodFacts.value) : undefined;
+  if (fromOpenFoodFacts != null) {
+    return { ok: true, value: fromOpenFoodFacts };
+  }
+  const usda = await request(`/api/food/usda${path}`);
+  const fromUsda = usda.ok ? UsdaFoodData_parseBarcodeResponse(usda.value, code) : undefined;
+  if (fromUsda != null || openFoodFacts.ok) {
+    return { ok: true, value: fromUsda };
+  }
+  return openFoodFacts;
 }
 
-export async function FoodApi_estimatePhoto(imageDataUrl: string): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
+export async function FoodApi_find(query: string, saved: IFoodProduct[]): Promise<IFoodApiResult<IFoodProduct[]>> {
+  if (OpenFoodFacts_isBarcode(query)) {
+    const result = await FoodApi_lookupBarcode(query, saved);
+    return result.ok ? { ok: true, value: result.value != null ? [result.value] : [] } : result;
+  }
+  const mine = SavedFoods_search(saved, query);
+  const result = await request(`/api/food/search?q=${encodeURIComponent(query)}`);
+  if (!result.ok) {
+    return mine.length > 0 ? { ok: true, value: mine } : result;
+  }
+  return { ok: true, value: [...mine, ...OpenFoodFacts_parseSearchResponse(result.value)] };
+}
+
+async function askAi(body: {
+  kind: "meal" | "label" | "describe";
+  image?: string;
+  text?: string;
+}): Promise<IFoodApiResult<string>> {
   const result = await request("/api/food/photo", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ image: imageDataUrl }),
+    body: JSON.stringify(body),
   });
   if (!result.ok) {
     return result;
   }
   const text = (result.value as { text?: unknown }).text;
-  const estimate = typeof text === "string" ? FoodPhotoEstimate_parse(text) : undefined;
+  return { ok: true, value: typeof text === "string" ? text : "" };
+}
+
+function toEstimate(result: IFoodApiResult<string>, retryHint: string): IFoodApiResult<IFoodPhotoEstimate> {
+  if (!result.ok) {
+    return result;
+  }
+  const estimate = FoodPhotoEstimate_parse(result.value);
   return estimate != null
     ? { ok: true, value: estimate }
-    : { ok: false, error: "The AI answer could not be read. Try another photo." };
+    : { ok: false, error: `The AI answer could not be read. ${retryHint}` };
+}
+
+export async function FoodApi_estimatePhoto(
+  imageDataUrl: string,
+  note?: string
+): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
+  return toEstimate(await askAi({ kind: "meal", image: imageDataUrl, text: note }), "Try another photo.");
+}
+
+export async function FoodApi_describe(text: string): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
+  return toEstimate(await askAi({ kind: "describe", text }), "Try different words.");
+}
+
+export async function FoodApi_readLabel(imageDataUrl: string): Promise<IFoodApiResult<INutritionLabel>> {
+  const result = await askAi({ kind: "label", image: imageDataUrl });
+  if (!result.ok) {
+    return result;
+  }
+  const label = NutritionLabel_parse(result.value);
+  if (label != null) {
+    return { ok: true, value: label };
+  }
+  const note = NutritionLabel_note(result.value);
+  return { ok: false, error: note ?? "The label could not be read. Try a closer photo, or type the numbers in." };
 }

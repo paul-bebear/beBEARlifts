@@ -44,6 +44,8 @@ import { Muscle_getMuscleGroupName } from "../models/muscle";
 import { IconDoc } from "./icons/iconDoc";
 import { LiftohistorySerializer_serialize } from "../liftohistory/liftohistorySerializer";
 import { navigateToModal } from "../navigation/navigationService";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { WorkoutStoryCardSection } from "./workoutStoryCard";
 
 interface IProps {
   history: IHistoryRecord[];
@@ -170,6 +172,8 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
         <View className="px-gutter py-4 mt-4">
           <PersonalRecords prs={allPrs} historyRecords={[record]} settings={props.settings} />
         </View>
+
+        {OfflineOnly_isEnabled() && <WorkoutStoryCardSection record={record} settings={props.settings} />}
 
         {isMobile ? (
           <MobileShare userId={props.userId} history={props.history} record={record} settings={props.settings} />

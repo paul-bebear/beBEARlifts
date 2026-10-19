@@ -16,6 +16,8 @@ import {
 import { FoodLogStore_newId, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { navigateToModal } from "../navigation/navigationService";
+import { useTrackedDispatch } from "../navigation/TrackedStateContext";
+import { Thunk_pushScreen } from "../ducks/thunks";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import { FoodSummaryCard } from "./foodSummaryCard";
 import { FoodMealCard } from "./foodMealCard";
@@ -53,6 +55,7 @@ function DayNavigator(props: { day: string; today: string; onChange: (day: strin
 }
 
 export function ScreenFood(): JSX.Element {
+  const dispatch = useTrackedDispatch();
   const log = useFoodLog();
   const today = FoodLog_dayKey(new Date());
   const [day, setDay] = useState(today);
@@ -64,7 +67,7 @@ export function ScreenFood(): JSX.Element {
   useNavOptions({ navTitle: <DayNavigator day={day} today={today} onChange={setDay} /> });
 
   const openAdd = (addMode: "search" | "barcode" | "photo", meal: IFoodMeal): void => {
-    navigateToModal("foodAddModal", { mode: addMode, day, meal });
+    dispatch(Thunk_pushScreen("foodAdd", { day, meal, mode: addMode === "search" ? undefined : addMode }));
   };
 
   const copyPreviousDay = async (): Promise<void> => {
@@ -115,7 +118,7 @@ export function ScreenFood(): JSX.Element {
           isExpanded={!collapsed[meal]}
           onToggle={() => setCollapsed({ ...collapsed, [meal]: !collapsed[meal] })}
           onAdd={() => openAdd("search", meal)}
-          onEntryPress={(entry) => navigateToModal("foodAddModal", { mode: "edit", entryId: entry.id })}
+          onEntryPress={(entry) => navigateToModal("foodEditModal", { entryId: entry.id })}
         />
       ))}
       <View className="h-4" />

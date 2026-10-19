@@ -17,7 +17,9 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - `Subscriptions_hasSubscription` in `src/utils/subscriptions.ts` always returns true. Every premium feature reads that one function.
 - `SubscriptionPlan_derive` reports "Free access", so no screen shows the purchase pitch. The Apple and Google receipt cleanups return before they call a server.
 - The offline build skips the startup cloud sync, the sign-up prompt, the "How'd you hear about us?" survey, the "I have an account" button, and the Account, Nickname, API Keys and Discord rows in Settings.
-- The tab bar hides during a live workout.
+- The tab bar hides during a live workout. It has five tabs, two on each side of the Workout button: Home, Program, Food and Progress. Progress (`src/components/screenProgressDashboard.tsx`) folds in Graphs and Me: daily targets, latest weight, food days logged, workouts and streak, with the profile and settings buttons in its header.
+- An ad-hoc set added with "Add Set" gets the last set's numbers pre-filled but no target (`Reps_addSet` in `src/models/set.ts`). Upstream copied them as the target, so a later set with fewer reps turned red. Program sets keep the target, because progressions read it.
+- The finish screen has a story card (`src/components/workoutStoryCard.tsx`): a 1080 × 1920 PNG with weight lifted, duration, sets, a muscle map and a random comparison such as "That's 1,083 loaves of bread", over your own photo if you add one.
 - Four exercises come from other forks: Shoulder Press with a kettlebell, Squat Hops, Split Squat Hops and Calf Jump. They have no pictures yet, so the picker shows a text tile for them.
 - The service worker caches only successful responses, so a missing image or a server error is not kept until the next deploy.
 - iPhone polish in `src/index.html`: the app draws under a translucent status bar (`NavHeader` pads by the safe-area inset), launch screens for 13 iPhone sizes in light and dark (`icons/launch/`, made by `node scripts/generate-launch-screens.js`), no grey tap flash, no page bounce, and the system font (San Francisco on iPhone) in place of Poppins.
@@ -28,10 +30,14 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
 - A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
 - `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket and sets `Content-Security-Policy: connect-src 'self' blob: data:`.
-- A sixth tab, Food, logs calories and macros per meal. Its layout follows Built With Science's Nutrition screen. The screen is `src/components/screenFood.tsx`, and the rules live in `src/models/foodLog.ts` and `src/models/foodAddFlow.ts`.
+- The Food tab logs calories and macros per meal. Its layout follows Built With Science's Nutrition screen. The screen is `src/components/screenFood.tsx`, and the rules live in `src/models/foodLog.ts` and `src/models/foodAddFlow.ts`.
+- Adding food opens a full screen (`src/components/screenFoodAdd.tsx`): search, Barcode, AI Scan, Describe and Quick Log tiles, and Food, Meals and Recipes tabs. Ticked foods collect in an Item Log basket with portions, then log together (`src/models/foodBasket.ts`). Saved meals and batch recipes live in the food log (`src/models/savedMeals.ts`).
 - The food log has its own IndexedDB key, `bebear_foodlog`, outside Liftosaur's storage, so upstream merges do not touch it. The main JSON export does not include it. The targets sheet (the gear icon) has its own export and import.
 - Barcode scanning: `src/components/foodBarcodeScanner.tsx` reads EAN-13, EAN-8, UPC-A and UPC-E from the camera with `@zxing/browser`, a JavaScript decoder. `api/food/barcode.mjs` and `api/food/search.mjs` are Vercel functions on the same site that call Open Food Facts, so `connect-src 'self'` stays as it is.
-- Plate photo estimates: the phone shrinks the photo to a 1024 px JPEG. `api/food/photo.mjs` sends it to `anthropic/claude-sonnet-5.5` through Vercel AI Gateway, at about $0.003 per photo. You review each item and its grams before it is logged. The function signs in with Vercel's OIDC token, so no API key is stored. AI Gateway must be enabled on the Vercel team.
+- AI estimates: AI Scan sends a 1024 px photo and an optional note. Describe sends only text, such as "2 eggs and a buldak". You review each item and its grams before it goes in the basket. `api/food/photo.mjs` uses Google's Gemini when `GEMINI_API_KEY` is set (model `gemini-flash-lite-latest`, free tier). Otherwise it uses `anthropic/claude-haiku-5.5` through Vercel AI Gateway, at about $0.0003 per photo and $0.0002 per description, signed in with Vercel's OIDC token. `GEMINI_MODEL` and `AI_GATEWAY_MODEL` pick other models.
+- A barcode lookup tries three places in order: foods saved on the phone, Open Food Facts, then USDA FoodData Central (`api/food/usda.mjs`). USDA covers products sold in the US. It needs a free api.data.gov key in the Vercel environment variable `FDC_API_KEY`. Without it, the shared `DEMO_KEY` allows about 30 lookups an hour.
+- The Open Food Facts parser falls back to the English or another localized name when `product_name` is empty. It converts per-serving nutrition to per 100 g when the serving has a gram weight.
+- When no source has a barcode, "Photo the nutrition label" sends a 1600 px photo to the same model with a label prompt (`kind: "label"` in `api/food/photo.mjs`). You check the numbers or type them in. The food is saved in the food log's `savedFoods` under that barcode, so the next scan finds it, even offline. Search finds saved foods by name.
 - The service worker never handles `/api/food/*`, so a lookup always goes to the network.
 
 ## Run it locally
@@ -44,7 +50,7 @@ npx serve dist   # or any static server, then open http://localhost:3000/app/
 
 `npm run start:offline` runs the webpack dev server with the same flag. Open http://localhost:8080/app/index.html.
 
-For the Food tab's lookups, also run `npm run start:foodapi` in a second terminal. It serves the `api/food/*` functions on port 3010, and the dev server forwards `/api/food/*` to it. Set `FOOD_API_PORT` for both commands to use another port. Outside Vercel, the photo function needs `AI_GATEWAY_API_KEY`, or a `VERCEL_OIDC_TOKEN` from `vercel env pull`.
+For the Food tab's lookups, also run `npm run start:foodapi` in a second terminal. It serves the `api/food/*` functions on port 3010, and the dev server forwards `/api/food/*` to it. Set `FOOD_API_PORT` for both commands to use another port. Outside Vercel, the photo function needs `GEMINI_API_KEY`, `AI_GATEWAY_API_KEY`, or a `VERCEL_OIDC_TOKEN` from `vercel env pull`. The USDA function reads `FDC_API_KEY` the same way.
 
 ## Deploy on Vercel (free)
 

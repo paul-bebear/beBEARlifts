@@ -3,6 +3,21 @@
 // Open Food Facts asks every caller for a User-Agent that names the app and a contact.
 export const openFoodFactsUserAgent = "beBEARlifts/1.0 (https://github.com/paul-bebear/beBEARlifts)";
 
+// src/models/openFoodFacts.ts reads these. Imports often have only a localized name, so those are asked for too.
+export const openFoodFactsFields = [
+  "code",
+  "product_name",
+  ...["en", "ko", "ja", "zh", "th", "vi", "fr", "de", "es", "it", "nl", "pt"].map((lang) => `product_name_${lang}`),
+  "generic_name",
+  "generic_name_en",
+  "abbreviated_product_name",
+  "brands",
+  "serving_quantity",
+  "serving_size",
+  "nutriments",
+  "image_front_small_url",
+].join(",");
+
 export function json(body, status = 200, maxAgeSeconds = 0) {
   return new Response(JSON.stringify(body), {
     status,

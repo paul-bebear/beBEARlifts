@@ -1,11 +1,10 @@
 import { JSX } from "react";
 import { Text } from "./primitives/text";
-import { IFoodMeal } from "../models/foodLog";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
 
 interface IProps {
-  meal: IFoodMeal;
-  onSubmit: (choices: IFoodPhotoChoice[], meal: IFoodMeal) => void;
+  initialNote?: string;
+  onAdd: (choices: IFoodPhotoChoice[]) => void;
 }
 
 // This fork ships only the web build. A native version would use react-native-image-picker for the photo.

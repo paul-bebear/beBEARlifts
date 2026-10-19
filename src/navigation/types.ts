@@ -45,13 +45,15 @@ export type IWorkoutStackParamList = {
   exerciseStats: undefined;
 };
 
-export type IGraphsStackParamList = {
+// The Progress tab lives on the graphs stack and opens the Me screens on top of itself, so they get a back arrow.
+export type IGraphsStackParamList = IMeStackParamList & {
+  progressDashboard: undefined;
   graphsList: undefined;
-  progress: { id?: number } | undefined;
 };
 
 export type IFoodStackParamList = {
   food: undefined;
+  foodAdd: IFoodAddScreenParams;
 };
 
 export type IMeStackParamList = {
@@ -189,13 +191,13 @@ export type IRootStackParamList = {
   exercisePickerSettingsModal: undefined;
   photoPickerModal: undefined;
   helpModal: { helpKey: IHelpKey };
-  foodAddModal: IFoodAddModalParams;
+  foodEditModal: IFoodEditModalParams;
   foodGoalsModal: undefined;
 };
 
-export type IFoodAddModalParams =
-  | { mode: "search" | "barcode" | "photo"; day: string; meal: IFoodMeal }
-  | { mode: "edit"; entryId: string };
+export type IFoodEditModalParams = { entryId: string };
+
+export type IFoodAddScreenParams = { day: string; meal: IFoodMeal; mode?: "barcode" | "photo" | "describe" | "quick" };
 
 export type IRootLevelScreenParamList = {
   subscription: undefined;

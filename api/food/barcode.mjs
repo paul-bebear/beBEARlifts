@@ -1,6 +1,4 @@
-import { fetchJson, json, openFoodFactsUserAgent } from "../_food.mjs";
-
-const fields = "code,product_name,generic_name,brands,serving_quantity,nutriments,image_front_small_url";
+import { fetchJson, json, openFoodFactsFields as fields, openFoodFactsUserAgent } from "../_food.mjs";
 
 export async function GET(request) {
   const code = new URL(request.url).searchParams.get("code") ?? "";

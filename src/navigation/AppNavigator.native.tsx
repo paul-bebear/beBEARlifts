@@ -37,8 +37,10 @@ import {
 } from "./screens/NavScreenOnboarding";
 import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./screens/NavScreenWorkout";
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
+import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
+import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard";
 import { NavScreenFood } from "./screens/NavScreenFood";
-import { NavModalFoodAdd } from "./modals/NavModalFoodAdd";
+import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
 import { NavModalExerciseLiftoEditor } from "./modals/NavModalExerciseLiftoEditor";
 import { NavModalDayLiftoEditor } from "./modals/NavModalDayLiftoEditor";
@@ -305,16 +307,18 @@ function GraphsStackScreen(): JSX.Element {
   return (
     <GraphsStack.Navigator screenOptions={stackScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
       <GraphsStack.Screen
+        name="progressDashboard"
+        component={NavScreenProgressDashboard}
+        options={{ headerShown: true, header: NavHeader }}
+      />
+      <GraphsStack.Screen
         name="graphsList"
         component={NavScreenGraphs}
         options={{ headerShown: true, header: NavHeader }}
       />
-      <GraphsStack.Screen
-        name="progress"
-        component={NavScreenProgress}
-        getId={({ params }) => String(params?.id ?? 0)}
-        options={{ headerShown: true, header: NavHeader }}
-      />
+      <GraphsStack.Group screenOptions={navHeaderScreenOptions}>
+        {renderMeScreens(GraphsStack.Screen as unknown as typeof MeStack.Screen)}
+      </GraphsStack.Group>
     </GraphsStack.Navigator>
   );
 }
@@ -323,34 +327,43 @@ function FoodStackScreen(): JSX.Element {
   return (
     <FoodStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
       <FoodStack.Screen name="food" component={NavScreenFood} />
+      <FoodStack.Screen name="foodAdd" component={NavScreenFoodAdd} />
     </FoodStack.Navigator>
+  );
+}
+
+function renderMeScreens(Screen: typeof MeStack.Screen): JSX.Element {
+  return (
+    <>
+      <Screen name="settings" component={NavScreenSettings} />
+      <Screen name="account" component={NavScreenAccount} />
+      <Screen name="timers" component={NavScreenTimers} />
+      <Screen name="plates" component={NavScreenPlates} />
+      <Screen name="gyms" component={NavScreenGyms} />
+      <Screen name="exercises" component={NavScreenExercises} />
+      <Screen name="appleHealth" component={NavScreenAppleHealth} />
+      <Screen name="googleHealth" component={NavScreenGoogleHealth} />
+      <Screen name="muscleGroups" component={NavScreenMuscleGroups} />
+      <Screen name="stats" component={NavScreenStats} />
+      <Screen name="measurements" component={NavScreenMeasurements} />
+      <Screen name="sleepNutrition" component={NavScreenSleepNutrition} />
+      <Screen name="exerciseStats" component={NavScreenExerciseStats} />
+      <Screen name="apiKeys" component={NavScreenApiKeys} />
+      <Screen name="recentImports" component={NavScreenRecentImports} />
+      <Screen name="importPreview" component={NavScreenImportPreview} />
+      <Screen name="programs" component={NavScreenPrograms} />
+      <Screen name="progress" component={NavScreenProgress} getId={({ params }) => String(params?.id ?? 0)} />
+      <Screen name="onerms" component={NavScreenOnerms} />
+      <Screen name="editProgram" component={NavScreenEditProgram} />
+      <Screen name="programPreview" component={NavScreenProgramPreview} />
+    </>
   );
 }
 
 function MeStackScreen(): JSX.Element {
   return (
     <MeStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
-      <MeStack.Screen name="settings" component={NavScreenSettings} />
-      <MeStack.Screen name="account" component={NavScreenAccount} />
-      <MeStack.Screen name="timers" component={NavScreenTimers} />
-      <MeStack.Screen name="plates" component={NavScreenPlates} />
-      <MeStack.Screen name="gyms" component={NavScreenGyms} />
-      <MeStack.Screen name="exercises" component={NavScreenExercises} />
-      <MeStack.Screen name="appleHealth" component={NavScreenAppleHealth} />
-      <MeStack.Screen name="googleHealth" component={NavScreenGoogleHealth} />
-      <MeStack.Screen name="muscleGroups" component={NavScreenMuscleGroups} />
-      <MeStack.Screen name="stats" component={NavScreenStats} />
-      <MeStack.Screen name="measurements" component={NavScreenMeasurements} />
-      <MeStack.Screen name="sleepNutrition" component={NavScreenSleepNutrition} />
-      <MeStack.Screen name="exerciseStats" component={NavScreenExerciseStats} />
-      <MeStack.Screen name="apiKeys" component={NavScreenApiKeys} />
-      <MeStack.Screen name="recentImports" component={NavScreenRecentImports} />
-      <MeStack.Screen name="importPreview" component={NavScreenImportPreview} />
-      <MeStack.Screen name="programs" component={NavScreenPrograms} />
-      <MeStack.Screen name="progress" component={NavScreenProgress} getId={({ params }) => String(params?.id ?? 0)} />
-      <MeStack.Screen name="onerms" component={NavScreenOnerms} />
-      <MeStack.Screen name="editProgram" component={NavScreenEditProgram} />
-      <MeStack.Screen name="programPreview" component={NavScreenProgramPreview} />
+      {renderMeScreens(MeStack.Screen)}
     </MeStack.Navigator>
   );
 }
@@ -410,7 +423,7 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="monthCalendarModal" component={NavModalMonthCalendar} />
           <RootStack.Screen name="exerciseLiftoEditorModal" component={NavModalExerciseLiftoEditor} />
           <RootStack.Screen name="dayLiftoEditorModal" component={NavModalDayLiftoEditor} />
-          <RootStack.Screen name="foodAddModal" component={NavModalFoodAdd} />
+          <RootStack.Screen name="foodEditModal" component={NavModalFoodEdit} />
           <RootStack.Screen name="foodGoalsModal" component={NavModalFoodGoals} />
           <RootStack.Screen name="programRevisionsModal" component={NavModalProgramRevisions} />
           <RootStack.Screen name="programImageExportModal" component={NavModalProgramImageExport} />

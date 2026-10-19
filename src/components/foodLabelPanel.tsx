@@ -1,0 +1,156 @@
+import { JSX, useRef, useState } from "react";
+import { View, Pressable, ActivityIndicator } from "react-native";
+import { Text } from "./primitives/text";
+import { IFoodProduct } from "../models/openFoodFacts";
+import { INutritionLabelForm, NutritionLabel_toForm, NutritionLabel_toProduct } from "../models/nutritionLabel";
+import { FoodApi_readLabel } from "../utils/foodApi";
+import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
+import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+
+interface IProps {
+  barcode?: string;
+  onSave: (product: IFoodProduct) => void;
+  onBack: () => void;
+}
+
+const labelMaxSidePx = 1600;
+
+const textFields: { key: keyof INutritionLabelForm; label: string; placeholder: string }[] = [
+  { key: "name", label: "Name", placeholder: "e.g. Buldak ramen" },
+  { key: "brand", label: "Brand (optional)", placeholder: "e.g. Samyang" },
+];
+
+const numberFields: { key: keyof INutritionLabelForm; label: string }[] = [
+  { key: "servingGrams", label: "Serving (g)" },
+  { key: "calories", label: "Calories" },
+  { key: "protein", label: "Protein (g)" },
+  { key: "carbs", label: "Carbs (g)" },
+  { key: "fat", label: "Fat (g)" },
+];
+
+function LabelForm(props: { form: INutritionLabelForm; onChange: (form: INutritionLabelForm) => void }): JSX.Element {
+  const { form } = props;
+  return (
+    <View>
+      {textFields.map((f) => (
+        <View key={f.key} className="mb-3">
+          <Text className="mb-1.5 text-sm font-semibold">{f.label}</Text>
+          <FoodTextInput
+            testID={`food-label-${f.key}`}
+            value={form[f.key]}
+            onChangeText={(text) => props.onChange({ ...form, [f.key]: text })}
+            placeholder={f.placeholder}
+          />
+        </View>
+      ))}
+      <Text className="mb-1.5 text-xs font-semibold tracking-wide uppercase text-text-secondary">Per serving</Text>
+      <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+        {numberFields.map((f) => (
+          <View key={f.key} style={{ width: "48%" }}>
+            <Text className="mb-1.5 text-sm font-semibold">{f.label}</Text>
+            <FoodTextInput
+              testID={`food-label-${f.key}`}
+              value={form[f.key]}
+              onChangeText={(text) => props.onChange({ ...form, [f.key]: text })}
+              keyboardType="decimal-pad"
+              inputMode="decimal"
+              placeholder="0"
+            />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function FoodLabelPanel(props: IProps): JSX.Element {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState<INutritionLabelForm | undefined>(undefined);
+  const [isReading, setIsReading] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+
+  const onFile = async (file: File): Promise<void> => {
+    setIsReading(true);
+    setError(undefined);
+    const result = await ImageResize_toJpegDataUrl(file, labelMaxSidePx).then(FoodApi_readLabel, () => ({
+      ok: false as const,
+      error: "The photo could not be read. Try another one.",
+    }));
+    setIsReading(false);
+    if (result.ok) {
+      setForm(NutritionLabel_toForm(result.value));
+    } else {
+      setError(result.error);
+    }
+  };
+
+  const save = (): void => {
+    if (form == null) {
+      return;
+    }
+    const result = NutritionLabel_toProduct(form, props.barcode);
+    if (result.ok) {
+      props.onSave(result.product);
+    } else {
+      setError(result.error);
+    }
+  };
+
+  return (
+    <View testID="food-label-panel" data-testid="food-label-panel">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        data-testid="food-label-input"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file != null) {
+            onFile(file);
+          }
+        }}
+      />
+      <Text className="pb-3 text-sm text-text-secondary">
+        {form == null
+          ? "Take a photo of the nutrition facts label, close and flat, or type the numbers in."
+          : "Check the numbers against the label before you save."}
+        {props.barcode != null && " The food is saved on this phone, so the next scan of this barcode finds it."}
+      </Text>
+      {isReading && (
+        <View className="items-center py-6">
+          <ActivityIndicator />
+          <Text className="mt-2 text-sm text-text-secondary">Reading the label…</Text>
+        </View>
+      )}
+      {form != null && !isReading && (
+        <LabelForm
+          form={form}
+          onChange={(changed) => {
+            setForm(changed);
+            setError(undefined);
+          }}
+        />
+      )}
+      {error != null && <Text className="pt-3 text-sm text-text-error">{error}</Text>}
+      {form == null && !isReading && (
+        <Pressable className="py-3" onPress={() => setForm(NutritionLabel_toForm(undefined))}>
+          <Text className="text-base text-text-link">Type it in instead</Text>
+        </Pressable>
+      )}
+      <View className="flex-row mt-5" style={{ gap: 8 }}>
+        <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />
+        {!isReading && (
+          <FoodPrimaryButton
+            testID="food-label-photo"
+            title={form == null ? "Photo the label" : "New photo"}
+            kind={form == null ? "primary" : "outline"}
+            onPress={() => inputRef.current?.click()}
+          />
+        )}
+        {form != null && !isReading && <FoodPrimaryButton testID="food-label-save" title="Save" onPress={save} />}
+      </View>
+    </View>
+  );
+}

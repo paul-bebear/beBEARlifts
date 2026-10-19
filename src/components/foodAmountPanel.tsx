@@ -8,9 +8,9 @@ import { FoodChip, FoodMealPicker, FoodNutrientsRow, FoodPrimaryButton, FoodText
 interface IProps {
   pick: IFoodPick;
   initialGrams: number;
-  meal: IFoodMeal;
+  meal?: IFoodMeal;
   submitTitle: string;
-  onSubmit: (grams: number, meal: IFoodMeal) => void;
+  onSubmit: (grams: number, meal: IFoodMeal | undefined) => void;
   onDelete?: () => void;
   onBack?: () => void;
 }
@@ -32,8 +32,8 @@ export function FoodAmountPanel(props: IProps): JSX.Element {
       {props.pick.brand != null && <Text className="text-sm text-text-secondary">{props.pick.brand}</Text>}
       {props.pick.per100g != null && (
         <Text className="mt-1 text-xs text-text-secondary">
-          Per 100 g: {props.pick.per100g.calories} cal · {FoodLog_formatNumber(props.pick.per100g.protein)} P ·{" "}
-          {FoodLog_formatNumber(props.pick.per100g.carbs)} C · {FoodLog_formatNumber(props.pick.per100g.fat)} F
+          Per 100 g: {Math.round(props.pick.per100g.calories)} cal · {FoodLog_formatNumber(props.pick.per100g.protein)}{" "}
+          P · {FoodLog_formatNumber(props.pick.per100g.carbs)} C · {FoodLog_formatNumber(props.pick.per100g.fat)} F
         </Text>
       )}
       {hasPortion && (
@@ -62,8 +62,12 @@ export function FoodAmountPanel(props: IProps): JSX.Element {
       <View className="mt-4">
         <FoodNutrientsRow nutrients={nutrients} />
       </View>
-      <Text className="mt-4 mb-1.5 text-sm font-semibold">Meal</Text>
-      <FoodMealPicker meal={meal} onChange={setMeal} />
+      {meal != null && (
+        <>
+          <Text className="mt-4 mb-1.5 text-sm font-semibold">Meal</Text>
+          <FoodMealPicker meal={meal} onChange={setMeal} />
+        </>
+      )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
         {props.onDelete != null && <FoodPrimaryButton title="Delete" kind="danger" onPress={props.onDelete} />}
         {props.onBack != null && <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />}
