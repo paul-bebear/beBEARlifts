@@ -1,3 +1,6 @@
+import type { IFoodProduct } from "./openFoodFacts";
+import { SavedFoods_parse, SavedFoods_save } from "./savedFoods";
+
 export type IFoodMeal = "breakfast" | "lunch" | "dinner" | "snacks";
 
 export const FoodLog_meals: IFoodMeal[] = ["breakfast", "lunch", "dinner", "snacks"];
@@ -44,6 +47,7 @@ export interface IFoodLog {
   entries: IFoodEntry[];
   goals: IFoodGoals;
   recents: IFoodRecent[];
+  savedFoods: IFoodProduct[];
 }
 
 export type IFoodProgressMode = "consumed" | "remaining";
@@ -68,7 +72,7 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function FoodLog_empty(): IFoodLog {
-  return { version: 1, entries: [], goals: FoodLog_defaultGoals, recents: [] };
+  return { version: 1, entries: [], goals: FoodLog_defaultGoals, recents: [], savedFoods: [] };
 }
 
 export function FoodLog_zero(): INutrients {
@@ -168,6 +172,7 @@ export function FoodLog_parse(raw: unknown): IFoodLog {
       fat: parseRange(goals.fat, FoodLog_defaultGoals.fat),
     },
     recents: recents.filter((e): e is IFoodEntry => e != null).map(FoodLog_toRecent),
+    savedFoods: SavedFoods_parse(r.savedFoods),
   };
 }
 
@@ -271,6 +276,10 @@ export function FoodLog_add(log: IFoodLog, entry: IFoodEntry): IFoodLog {
   const recent = FoodLog_toRecent(entry);
   const recents = [recent, ...log.recents.filter((r) => recentKey(r) !== recentKey(recent))].slice(0, maxRecents);
   return { ...log, entries: [...log.entries, entry], recents };
+}
+
+export function FoodLog_saveFood(log: IFoodLog, product: IFoodProduct): IFoodLog {
+  return { ...log, savedFoods: SavedFoods_save(log.savedFoods, product) };
 }
 
 export function FoodLog_remove(log: IFoodLog, id: string): IFoodLog {

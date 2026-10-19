@@ -2,7 +2,7 @@ import { getVercelOidcToken } from "@vercel/oidc";
 import { fetchJson, json } from "../_food.mjs";
 
 const defaultModel = "anthropic/claude-sonnet-5.5";
-// The phone shrinks photos to 1024px JPEG, about 200 KB as base64. Vercel caps request bodies at 4.5 MB.
+// The phone shrinks plates to 1024px and labels to 1600px JPEG, under 1 MB as base64. Vercel caps bodies at 4.5 MB.
 const maxImageChars = 3_000_000;
 
 const prompt = `You estimate the nutrition of a meal from one photo, for a calorie tracker.
@@ -12,6 +12,22 @@ If the photo shows a nutrition label or packaged product, use the label values.
 If there is no food in the photo, return an empty list and say why in "note".
 Answer with JSON only, no other text, in this shape:
 {"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4}],"note":"optional short caveat"}`;
+
+const labelPrompt = `You read the nutrition facts label on a food package from one photo, for a calorie tracker.
+Give the product name in English if you can read or recognize it, and the brand if it is visible.
+Give the values for one serving as printed, and the serving size in grams. For example "1 pack (140g)" is 140.
+If the label gives values only for the whole package, treat the whole package as one serving and use its net weight.
+If the label gives values only per 100 g, put them in "per100g" and leave "perServing" out.
+If the label shows "as packaged" and "prepared" columns, use "as packaged".
+Use kcal. If the label gives only kJ, divide by 4.184.
+If there is no readable nutrition label in the photo, return only {"note":"why"}.
+Answer with JSON only, no other text, in this shape:
+{"name":"Hot Chicken Flavor Ramen","brand":"Samyang","servingGrams":140,"perServing":{"calories":530,"protein":12,"carbs":84,"fat":16},"note":"optional short caveat"}`;
+
+const tasks = {
+  meal: { system: prompt, user: "Estimate this meal.", maxTokens: 1000 },
+  label: { system: labelPrompt, user: "Read this nutrition label.", maxTokens: 600 },
+};
 
 async function gatewayToken() {
   if (process.env.AI_GATEWAY_API_KEY) {
@@ -26,8 +42,11 @@ async function gatewayToken() {
 
 export async function POST(request) {
   let image;
+  let task;
   try {
-    image = (await request.json())?.image;
+    const body = await request.json();
+    image = body?.image;
+    task = tasks[body?.kind === "label" ? "label" : "meal"];
   } catch {
     return json({ error: "Send JSON with an image field" }, 400);
   }
@@ -49,15 +68,15 @@ export async function POST(request) {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: process.env.AI_GATEWAY_MODEL || defaultModel,
-          max_tokens: 1000,
+          max_tokens: task.maxTokens,
           temperature: 0.2,
           messages: [
-            { role: "system", content: prompt },
+            { role: "system", content: task.system },
             {
               role: "user",
               content: [
                 { type: "image_url", image_url: { url: image } },
-                { type: "text", text: "Estimate this meal." },
+                { type: "text", text: task.user },
               ],
             },
           ],

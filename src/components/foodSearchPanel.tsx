@@ -9,8 +9,10 @@ import { FoodTextInput } from "./foodUi";
 
 interface IProps {
   recents: IFoodRecent[];
+  savedFoods: IFoodProduct[];
   onPick: (pick: IFoodPick) => void;
   onQuickAdd: () => void;
+  onLabel: () => void;
 }
 
 const searchDelayMs = 450;
@@ -58,7 +60,7 @@ export function FoodSearchPanel(props: IProps): JSX.Element {
     let isStale = false;
     setIsLoading(true);
     const timer = setTimeout(async () => {
-      const result = await FoodApi_find(text);
+      const result = await FoodApi_find(text, props.savedFoods);
       if (!isStale) {
         setIsLoading(false);
         setResults(result.ok ? result.value : []);
@@ -69,7 +71,7 @@ export function FoodSearchPanel(props: IProps): JSX.Element {
       isStale = true;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, props.savedFoods]);
 
   const showRecents = query.trim().length < 2;
   return (
@@ -85,6 +87,9 @@ export function FoodSearchPanel(props: IProps): JSX.Element {
       />
       <Pressable className="py-3" onPress={props.onQuickAdd} testID="food-quick-add" data-testid="food-quick-add">
         <Text className="text-base text-text-link">+ Quick add calories and macros</Text>
+      </Pressable>
+      <Pressable className="pb-3" onPress={props.onLabel} testID="food-add-label" data-testid="food-add-label">
+        <Text className="text-base text-text-link">+ Add a food from its nutrition label</Text>
       </Pressable>
       {isLoading && <ActivityIndicator className="py-4" />}
       {error != null && <Text className="py-3 text-sm text-text-error">{error}</Text>}
@@ -112,7 +117,7 @@ export function FoodSearchPanel(props: IProps): JSX.Element {
             key={`${p.barcode ?? p.name}-${i}`}
             title={p.name}
             subtitle={[p.brand, `per 100 g: ${macrosLine(p.per100g)}`].filter(Boolean).join(" · ")}
-            calories={`${p.per100g.calories} cal`}
+            calories={`${Math.round(p.per100g.calories)} cal`}
             onPress={() =>
               props.onPick(FoodAddFlow_pickFromProduct(p, OpenFoodFacts_isBarcode(query.trim()) ? "barcode" : "search"))
             }

@@ -67,7 +67,13 @@ How it would work after Phase 2:
 - Lookups: `api/food/barcode.mjs` and `api/food/search.mjs` call Open Food Facts from the server with the `User-Agent` it asks for. The API is free and needs no key.
 - Data: Open Food Facts coverage depends on the country, and some products have no nutrition data. "Quick add" takes calories and macros by hand for those.
 - Local run: `npm run start:foodapi` serves the functions on port 3010 for `npm run start:offline`.
-- Not checked yet: the camera scanner on an iPhone Home Screen app.
+- Checked 2026-10-19 on an iPhone Home Screen app: most scans work. Niche imports such as Samyang Buldak ramen did not.
+- Added after that (2026-10-19):
+  - The parser reads `product_name_en` and other localized names when `product_name` is empty, and converts per-serving values to per 100 g using `serving_size` (`src/models/openFoodFacts.ts`).
+  - USDA FoodData Central is the second barcode source (`api/food/usda.mjs`, `src/models/usdaFoodData.ts`). It is free with an api.data.gov key in `FDC_API_KEY`, at 1,000 requests an hour. It only covers products sold in the US.
+  - A miss offers "Photo the nutrition label" (`src/components/foodLabelPanel.tsx`, `src/models/nutritionLabel.ts`). The food is saved in `savedFoods` under its barcode (`src/models/savedFoods.ts`), so the next scan finds it on the phone.
+- Not checked yet: live USDA lookups and a live label read. This session's network blocked both hosts.
+- Other sources looked at: Nutritionix, FatSecret and Edamam have barcode lookup, but it is paid or limited on their free tiers. Check current pricing before adding one.
 
 ## Food tracking: photo scanner (built 2026-10-19)
 

@@ -1,7 +1,14 @@
 import { JSX, useState } from "react";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_add, FoodLog_remove, FoodLog_setGrams, FoodLog_setMeal, IFoodMeal } from "../models/foodLog";
+import {
+  FoodLog_add,
+  FoodLog_remove,
+  FoodLog_saveFood,
+  FoodLog_setGrams,
+  FoodLog_setMeal,
+  IFoodMeal,
+} from "../models/foodLog";
 import {
   FoodAddFlow_entriesFromPhoto,
   FoodAddFlow_entryFromPick,
@@ -18,6 +25,7 @@ import { FoodAmountPanel } from "./foodAmountPanel";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
 import { FoodPhotoPanel } from "./foodPhotoPanel";
 import { FoodQuickAddPanel } from "./foodQuickAddPanel";
+import { FoodLabelPanel } from "./foodLabelPanel";
 import { FoodPrimaryButton } from "./foodUi";
 import { Dialog_confirm } from "../utils/dialog";
 
@@ -28,7 +36,8 @@ type IStep =
   | { kind: "lookup"; code: string }
   | { kind: "notFound"; code: string; error?: string }
   | { kind: "amount"; pick: IFoodPick; from: IAddMode }
-  | { kind: "quickAdd" };
+  | { kind: "quickAdd" }
+  | { kind: "label"; code?: string; from: IAddMode };
 
 const tabs: { mode: IAddMode; label: string }[] = [
   { mode: "search", label: "Search" },
@@ -109,7 +118,7 @@ export function FoodAddContent(props: { params: IFoodAddModalParams; onClose: ()
 
   const onBarcode = async (code: string): Promise<void> => {
     setStep({ kind: "lookup", code });
-    const result = await FoodApi_lookupBarcode(code);
+    const result = await FoodApi_lookupBarcode(code, log.savedFoods);
     if (result.ok && result.value != null) {
       setStep({ kind: "amount", pick: FoodAddFlow_pickFromProduct(result.value, "barcode"), from: "barcode" });
     } else {
@@ -120,14 +129,16 @@ export function FoodAddContent(props: { params: IFoodAddModalParams; onClose: ()
   const activeTab = step.kind === "search" || step.kind === "barcode" || step.kind === "photo" ? step.kind : undefined;
   return (
     <View testID="food-add-content" data-testid="food-add-content">
-      {step.kind !== "amount" && step.kind !== "quickAdd" && (
+      {step.kind !== "amount" && step.kind !== "quickAdd" && step.kind !== "label" && (
         <Tabs mode={activeTab} onChange={(mode) => setStep({ kind: mode })} />
       )}
       {step.kind === "search" && (
         <FoodSearchPanel
           recents={log.recents}
+          savedFoods={log.savedFoods}
           onPick={(pick) => setStep({ kind: "amount", pick, from: "search" })}
           onQuickAdd={() => setStep({ kind: "quickAdd" })}
+          onLabel={() => setStep({ kind: "label", from: "search" })}
         />
       )}
       {step.kind === "barcode" && <FoodBarcodeScanner onDetected={onBarcode} />}
@@ -142,11 +153,29 @@ export function FoodAddContent(props: { params: IFoodAddModalParams; onClose: ()
           <Text className="text-base">
             {step.error ?? `Barcode ${step.code} is not in Open Food Facts, or it has no nutrition data.`}
           </Text>
-          <View className="flex-row mt-4" style={{ gap: 8 }}>
+          <View className="mt-4">
+            <FoodPrimaryButton
+              testID="food-not-found-label"
+              title="Photo the nutrition label"
+              onPress={() => setStep({ kind: "label", code: step.code, from: "barcode" })}
+            />
+          </View>
+          <View className="flex-row mt-2" style={{ gap: 8 }}>
             <FoodPrimaryButton title="Scan again" kind="outline" onPress={() => setStep({ kind: "barcode" })} />
-            <FoodPrimaryButton title="Quick add" onPress={() => setStep({ kind: "quickAdd" })} />
+            <FoodPrimaryButton title="Quick add" kind="outline" onPress={() => setStep({ kind: "quickAdd" })} />
           </View>
         </View>
+      )}
+      {step.kind === "label" && (
+        <FoodLabelPanel
+          barcode={step.code}
+          onBack={() => setStep({ kind: step.from })}
+          onSave={async (product) => {
+            await FoodLogStore_update((l) => FoodLog_saveFood(l, product));
+            const pick = FoodAddFlow_pickFromProduct(product, step.code != null ? "barcode" : "search");
+            setStep({ kind: "amount", pick, from: step.from });
+          }}
+        />
       )}
       {step.kind === "photo" && (
         <FoodPhotoPanel

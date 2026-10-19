@@ -32,6 +32,9 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - The food log has its own IndexedDB key, `bebear_foodlog`, outside Liftosaur's storage, so upstream merges do not touch it. The main JSON export does not include it. The targets sheet (the gear icon) has its own export and import.
 - Barcode scanning: `src/components/foodBarcodeScanner.tsx` reads EAN-13, EAN-8, UPC-A and UPC-E from the camera with `@zxing/browser`, a JavaScript decoder. `api/food/barcode.mjs` and `api/food/search.mjs` are Vercel functions on the same site that call Open Food Facts, so `connect-src 'self'` stays as it is.
 - Plate photo estimates: the phone shrinks the photo to a 1024 px JPEG. `api/food/photo.mjs` sends it to `anthropic/claude-sonnet-5.5` through Vercel AI Gateway, at about $0.003 per photo. You review each item and its grams before it is logged. The function signs in with Vercel's OIDC token, so no API key is stored. AI Gateway must be enabled on the Vercel team.
+- A barcode lookup tries three places in order: foods saved on the phone, Open Food Facts, then USDA FoodData Central (`api/food/usda.mjs`). USDA covers products sold in the US. It needs a free api.data.gov key in the Vercel environment variable `FDC_API_KEY`. Without it, the shared `DEMO_KEY` allows about 30 lookups an hour.
+- The Open Food Facts parser falls back to the English or another localized name when `product_name` is empty. It converts per-serving nutrition to per 100 g when the serving has a gram weight.
+- When no source has a barcode, "Photo the nutrition label" sends a 1600 px photo to the same model with a label prompt (`kind: "label"` in `api/food/photo.mjs`). You check the numbers or type them in. The food is saved in the food log's `savedFoods` under that barcode, so the next scan finds it, even offline. Search finds saved foods by name.
 - The service worker never handles `/api/food/*`, so a lookup always goes to the network.
 
 ## Run it locally
@@ -44,7 +47,7 @@ npx serve dist   # or any static server, then open http://localhost:3000/app/
 
 `npm run start:offline` runs the webpack dev server with the same flag. Open http://localhost:8080/app/index.html.
 
-For the Food tab's lookups, also run `npm run start:foodapi` in a second terminal. It serves the `api/food/*` functions on port 3010, and the dev server forwards `/api/food/*` to it. Set `FOOD_API_PORT` for both commands to use another port. Outside Vercel, the photo function needs `AI_GATEWAY_API_KEY`, or a `VERCEL_OIDC_TOKEN` from `vercel env pull`.
+For the Food tab's lookups, also run `npm run start:foodapi` in a second terminal. It serves the `api/food/*` functions on port 3010, and the dev server forwards `/api/food/*` to it. Set `FOOD_API_PORT` for both commands to use another port. Outside Vercel, the photo function needs `AI_GATEWAY_API_KEY`, or a `VERCEL_OIDC_TOKEN` from `vercel env pull`. The USDA function reads `FDC_API_KEY` the same way.
 
 ## Deploy on Vercel (free)
 
