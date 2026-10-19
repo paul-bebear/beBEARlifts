@@ -146,6 +146,7 @@ function WorkoutExerciseAllSetsInner(props: IWorkoutExerciseAllSets): JSX.Elemen
   const lbSetByIndex = useMemo(() => sets.map((_, i) => props.lbSets.i(i)), [props.lbSets, sets.length]);
 
   const { dispatch, lbWarmupSets, lbSets, lastSets, exerciseType, settings, expansion } = props;
+  const { isCurrentProgress, programExercise } = props;
   const trackClick = useTrackClick();
   const helps = props.helps ?? [];
   const showTargetHint = expansion != null && !WorkoutHints_isLearned(helps, "workout-target-switch");
@@ -181,12 +182,13 @@ function WorkoutExerciseAllSetsInner(props: IWorkoutExerciseAllSets): JSX.Elemen
     trackClick("workout-add-set");
     const unilateral = Exercise_getIsUnilateral(exerciseType, settings);
     const unit = Equipment_getUnitOrDefaultForExerciseType(settings, exerciseType);
+    const isAdhoc = isCurrentProgress && programExercise == null;
     updateProgress(
       dispatch,
-      [lbSets.recordModify((s) => Reps_addSet(s, unilateral, lastSets?.[lastSets.length - 1], false, unit))],
+      [lbSets.recordModify((s) => Reps_addSet(s, unilateral, lastSets?.[lastSets.length - 1], false, unit, isAdhoc))],
       "add-set"
     );
-  }, [dispatch, exerciseType, lbSets, lastSets, settings, trackClick]);
+  }, [dispatch, exerciseType, lbSets, lastSets, settings, trackClick, isCurrentProgress, programExercise]);
 
   const onSuppressProgress = useCallback(
     (isSuppressed: boolean) => {
