@@ -1,5 +1,6 @@
 import { fetchJson, json } from "../_food.mjs";
 import { aiProvider } from "../_ai.mjs";
+import { AiAuth_check } from "../_auth.mjs";
 
 // About 400 tokens in and 400 out, so one warmup is about $0.0003 on Claude Haiku 5.5.
 const maxExercises = 12;
@@ -45,6 +46,10 @@ export async function POST(request) {
   const ai = await aiProvider();
   if (!ai.token) {
     return json({ error: "The server has no AI key. Set AI_GATEWAY_API_KEY in Vercel." }, 500);
+  }
+  const denied = await AiAuth_check(request);
+  if (denied != null) {
+    return denied;
   }
   try {
     const {

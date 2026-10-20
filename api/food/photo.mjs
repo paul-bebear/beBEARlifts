@@ -1,5 +1,6 @@
 import { fetchJson, json } from "../_food.mjs";
 import { aiProvider } from "../_ai.mjs";
+import { AiAuth_check } from "../_auth.mjs";
 
 // The phone shrinks plates to 1024px and labels to 1600px JPEG, under 1 MB as base64. Vercel caps bodies at 4.5 MB.
 const maxImageChars = 3_000_000;
@@ -72,6 +73,10 @@ export async function POST(request) {
   const ai = await aiProvider();
   if (!ai.token) {
     return json({ error: "The server has no AI key. Set GEMINI_API_KEY or turn on AI Gateway." }, 500);
+  }
+  const denied = await AiAuth_check(request);
+  if (denied != null) {
+    return denied;
   }
   try {
     const {

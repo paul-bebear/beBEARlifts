@@ -63,16 +63,23 @@ export async function CloudBackupClient_verify(email: string, code: string): Pro
   return result.ok ? saveSession(result.value) : result;
 }
 
+export const CloudBackup_notSignedIn = "Not signed in";
+
 async function getSession(): Promise<ICloudResult<ICloudSession>> {
   const current = (await CloudStore.load()).session;
   if (current == null) {
-    return { ok: false, error: "Not signed in" };
+    return { ok: false, error: CloudBackup_notSignedIn };
   }
   if (!CloudBackup_needsRefresh(current, Date.now())) {
     return { ok: true, value: current };
   }
   const result = await call("/auth/v1/token?grant_type=refresh_token", json({ refresh_token: current.refreshToken }));
   return result.ok ? saveSession(result.value) : result;
+}
+
+export async function CloudBackupClient_accessToken(): Promise<ICloudResult<string>> {
+  const auth = await getSession();
+  return auth.ok ? { ok: true, value: auth.value.accessToken } : auth;
 }
 
 async function put(path: string, text: string, token: string): Promise<ICloudResult<Response>> {

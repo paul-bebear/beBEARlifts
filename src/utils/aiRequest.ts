@@ -1,0 +1,38 @@
+import { CloudBackupClient_accessToken, CloudBackup_notSignedIn } from "./cloudBackupClient";
+
+export const AiRequest_signInMessage = "Sign in to use AI features. Open Settings → Cloud backup.";
+export const AiRequest_offlineMessage = "No connection. AI features need a signal.";
+
+export type IAiRequestResult = { ok: true; body: unknown } | { ok: false; error: string };
+
+// The /api/ai and /api/food/photo functions bill the owner's AI Gateway credit, so they serve signed-in users only.
+export async function AiRequest_post(path: string, payload: unknown): Promise<IAiRequestResult> {
+  const auth = await CloudBackupClient_accessToken();
+  if (!auth.ok) {
+    return { ok: false, error: auth.error === CloudBackup_notSignedIn ? AiRequest_signInMessage : auth.error };
+  }
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth.value}` },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    return { ok: false, error: AiRequest_offlineMessage };
+  }
+  const body: unknown = await response.json().catch(() => undefined);
+  if (response.status === 401) {
+    return { ok: false, error: AiRequest_signInMessage };
+  }
+  if (!response.ok) {
+    const error = (body as { error?: unknown } | undefined)?.error;
+    return { ok: false, error: typeof error === "string" ? error : `The server returned ${response.status}.` };
+  }
+  return { ok: true, body };
+}
+
+export function AiRequest_text(body: unknown): string | undefined {
+  const text = (body as { text?: unknown } | undefined)?.text;
+  return typeof text === "string" ? text : undefined;
+}

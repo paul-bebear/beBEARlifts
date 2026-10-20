@@ -2,6 +2,7 @@ import { FoodPhotoEstimate_parse, IFoodPhotoEstimate } from "../models/foodPhoto
 import { INutritionLabel, NutritionLabel_note, NutritionLabel_parse } from "../models/nutritionLabel";
 import { SavedFoods_find, SavedFoods_search } from "../models/savedFoods";
 import { UsdaFoodData_parseBarcodeResponse } from "../models/usdaFoodData";
+import { AiRequest_post, AiRequest_text } from "./aiRequest";
 import {
   IFoodProduct,
   OpenFoodFacts_isBarcode,
@@ -73,16 +74,8 @@ async function askAi(body: {
   image?: string;
   text?: string;
 }): Promise<IFoodApiResult<string>> {
-  const result = await request("/api/food/photo", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!result.ok) {
-    return result;
-  }
-  const text = (result.value as { text?: unknown }).text;
-  return { ok: true, value: typeof text === "string" ? text : "" };
+  const result = await AiRequest_post("/api/food/photo", body);
+  return result.ok ? { ok: true, value: AiRequest_text(result.body) ?? "" } : result;
 }
 
 function toEstimate(result: IFoodApiResult<string>, retryHint: string): IFoodApiResult<IFoodPhotoEstimate> {
