@@ -16,8 +16,13 @@ Facts checked on 2026-10-16.
 - Effort: half a day for per-set notes, plus a test for the storage schema.
 - Merge risk: a new field in `ISet` touches `src/types.ts`, which upstream changes often. Check whether upstream adds per-set notes first.
 
-## Music: log every song played during a workout
+## Music: log every song played during a workout (built 2026-10-20)
 
+- Built: Progress → Workout music connects Spotify with PKCE. During a workout `src/components/musicTracker.tsx` polls `currently-playing` every 8 seconds while the app is open. When the app comes back from a locked screen, it fills the gap from `recently-played`. A song heard for half its length, or to within 20 seconds of its end, is kept. Any other song is a skip (`src/models/musicSession.ts`).
+- Built: after the workout, the Music screen lists each song with a tick. "Save to Spotify" makes a private playlist of the kept songs. "Play next workout" starts them on the active Spotify device.
+- Spotify app: Client ID `3eaf01f171e440139aa2774df77e5f6f`, in Development Mode, 5 users added by email in the dashboard. Registered redirect URI `https://lifts.paulbebear.com/app/`. Local dev also needs `http://127.0.0.1:8080/app/` registered, because Spotify rejects `localhost`.
+- Not checked yet: no call has reached the real Spotify API. The playlist endpoints try `POST /me/playlists` and `/playlists/{id}/items` first, then fall back to `/users/{id}/playlists` and `/tracks` on a 404 or 410.
+- Not checked yet: whether `played_at` marks the start or the end of a song. Progress → Workout music → "Show Spotify's recently played list (debug)" shows it next to each song's length. If it marks the end, subtract `durationMs` in `SpotifyTracks_parseHistory` and update `test/musicSession.test.ts`.
 - Spotify, free to build. Use the Authorization Code with PKCE flow, which needs no server and no secret. `GET /me/player/recently-played` returns the last 50 tracks with a `played_at` time for each. That works with shuffle, and the app can fetch it after the workout ends.
 - Spotify limits since February 2026: an app in Development Mode needs its owner to have Spotify Premium. It allows at most 5 users, each added by hand in the developer dashboard. Extended quota is for companies with 250,000+ monthly users, so 5 people is the ceiling for this fork. Spotify also removed several endpoints from Development Mode.
 - "Liked this one": Spotify's save-to-library endpoint saves a track for the user. Free. Check its current path in the Web API reference, because the February 2026 migration moved some endpoints.

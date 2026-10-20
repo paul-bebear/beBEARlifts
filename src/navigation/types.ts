@@ -41,6 +41,7 @@ export type IProgramStackParamList = {
 export type IWorkoutStackParamList = {
   progress: { id?: number } | undefined;
   finishDay: { id: number } | undefined;
+  music: undefined;
   muscles: undefined;
   exerciseStats: undefined;
 };
@@ -48,6 +49,7 @@ export type IWorkoutStackParamList = {
 // The Progress tab lives on the graphs stack and opens the Me screens on top of itself, so they get a back arrow.
 export type IGraphsStackParamList = IMeStackParamList & {
   progressDashboard: undefined;
+  music: undefined;
   graphsList: undefined;
 };
 

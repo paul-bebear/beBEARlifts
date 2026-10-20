@@ -1,0 +1,242 @@
+import { JSX, useState } from "react";
+import { View, Pressable, Linking } from "react-native";
+import { Text } from "./primitives/text";
+import { useNavOptions } from "../navigation/useNavOptions";
+import { useTrackedState, untrack } from "../navigation/TrackedStateContext";
+import { FoodPrimaryButton } from "./foodUi";
+import { IconCheckCircle } from "./icons/iconCheckCircle";
+import { Tailwind_semantic } from "../utils/tailwindConfig";
+import { Dialog_confirm } from "../utils/dialog";
+import { MusicStore_update, useMusicLog } from "../utils/musicStore";
+import {
+  SpotifyClient_login,
+  SpotifyClient_play,
+  SpotifyClient_rawHistory,
+  SpotifyClient_savePlaylist,
+  SpotifyClient_takeError,
+} from "../utils/spotifyClient";
+import {
+  MusicLog_disconnect,
+  MusicLog_formatDuration,
+  MusicLog_putSession,
+  MusicLog_reviewable,
+} from "../models/musicLog";
+import {
+  IMusicSession,
+  MusicSession_counts,
+  MusicSession_keptTracks,
+  MusicSession_setKept,
+} from "../models/musicSession";
+import { SpotifyPlaylist_name } from "../models/spotifyPlaylist";
+import { SpotifyTracks_parseHistory } from "../models/spotifyTracks";
+import { IHistoryRecord } from "../types";
+
+type IStatus = { kind: "busy" } | { kind: "message"; text: string; url?: string };
+
+function SessionCard(props: {
+  session: IMusicSession;
+  title: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+}): JSX.Element {
+  const { session } = props;
+  const [status, setStatus] = useState<IStatus | undefined>(undefined);
+  const semantic = Tailwind_semantic();
+  const counts = MusicSession_counts(session);
+  const uris = MusicSession_keptTracks(session).map((t) => t.uri);
+  const isBusy = status?.kind === "busy";
+
+  const setKept = (index: number, isKept: boolean): void => {
+    MusicStore_update((log) => MusicLog_putSession(log, MusicSession_setKept(session, index, isKept)));
+  };
+
+  const save = async (): Promise<void> => {
+    setStatus({ kind: "busy" });
+    const result = await SpotifyClient_savePlaylist(SpotifyPlaylist_name(session.startedAt), uris);
+    setStatus(
+      result.ok
+        ? {
+            kind: "message",
+            text: `Saved ${uris.length} song${uris.length === 1 ? "" : "s"} to Spotify.`,
+            url: result.value.url,
+          }
+        : { kind: "message", text: result.message }
+    );
+  };
+
+  const play = async (): Promise<void> => {
+    setStatus({ kind: "busy" });
+    const result = await SpotifyClient_play(uris);
+    setStatus({ kind: "message", text: result.ok ? "Playing on Spotify." : result.message });
+  };
+
+  return (
+    <View className="mx-4 mb-3 rounded-2xl bg-background-subtle" testID="music-session" data-testid="music-session">
+      <Pressable className="flex-row items-center p-4" onPress={props.onToggle}>
+        <View className="flex-1">
+          <Text className="text-base font-bold">{props.title}</Text>
+          <Text className="text-sm text-text-secondary">
+            {counts.kept} kept · {counts.skipped} skipped{session.endedAt == null ? " · in progress" : ""}
+          </Text>
+        </View>
+        <Text className="text-sm text-text-link">{props.isExpanded ? "Hide" : "Show"}</Text>
+      </Pressable>
+      {props.isExpanded && (
+        <View className="px-4 pb-4">
+          {session.plays.map((p, index) => (
+            <Pressable
+              key={`${p.track.id}-${p.startedAt}`}
+              className="flex-row items-center py-2"
+              testID={`music-play-${p.track.id}`}
+              data-testid={`music-play-${p.track.id}`}
+              onPress={() => setKept(index, !p.isKept)}
+            >
+              <IconCheckCircle isChecked={p.isKept} color={semantic.icon.blue} size={22} />
+              <View className="flex-1 ml-3">
+                <Text className="text-base" numberOfLines={1}>
+                  {p.track.name}
+                </Text>
+                <Text className="text-sm text-text-secondary" numberOfLines={1}>
+                  {p.track.artists} · heard {MusicLog_formatDuration(p.heardMs)} of{" "}
+                  {MusicLog_formatDuration(p.track.durationMs)}
+                  {p.source === "history" ? " · while locked" : ""}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
+          {session.current != null && (
+            <Text className="py-2 text-sm text-text-secondary">Now: {session.current.track.name}</Text>
+          )}
+          <View className="flex-row gap-2 mt-3">
+            <FoodPrimaryButton
+              title="Save to Spotify"
+              testID="music-save"
+              disabled={isBusy || uris.length === 0}
+              onPress={save}
+            />
+            <FoodPrimaryButton
+              title="Play next workout"
+              kind="outline"
+              testID="music-play"
+              disabled={isBusy || uris.length === 0}
+              onPress={play}
+            />
+          </View>
+          {status?.kind === "message" && (
+            <Text className="mt-3 text-sm" testID="music-status" data-testid="music-status">
+              {status.text}
+              {status.url != null && (
+                <Text className="text-text-link" onPress={() => Linking.openURL(status.url!).catch(() => undefined)}>
+                  {" "}
+                  Open in Spotify
+                </Text>
+              )}
+            </Text>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function HistoryDebug(): JSX.Element {
+  const [rows, setRows] = useState<string[] | undefined>(undefined);
+  const load = async (): Promise<void> => {
+    const raw = await SpotifyClient_rawHistory().catch(() => undefined);
+    setRows(
+      SpotifyTracks_parseHistory(raw).map(
+        (h) =>
+          `${new Date(h.playedAt).toLocaleTimeString()} · ${MusicLog_formatDuration(h.track.durationMs)} · ${h.track.name}`
+      )
+    );
+  };
+  return (
+    <View className="px-4 pt-6">
+      <Pressable onPress={load} testID="music-debug" data-testid="music-debug">
+        <Text className="text-sm text-text-link">Show Spotify's recently played list (debug)</Text>
+      </Pressable>
+      {rows != null && (
+        <View className="mt-2">
+          <Text className="mb-1 text-xs text-text-secondary">played_at · duration_ms · song</Text>
+          {rows.length === 0 && <Text className="text-sm text-text-secondary">Spotify returned no songs.</Text>}
+          {rows.map((row, i) => (
+            <Text key={i} className="text-xs" style={{ fontFamily: "monospace" }}>
+              {row}
+            </Text>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function sessionTitle(session: IMusicSession, history: IHistoryRecord[]): string {
+  const record = history.find((h) => h.id === session.id);
+  const date = new Date(session.startedAt).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  return record != null ? `${date} · ${record.dayName}` : date;
+}
+
+export function ScreenMusic(): JSX.Element {
+  const state = useTrackedState();
+  const history = untrack(state.storage.history);
+  const log = useMusicLog();
+  const [error] = useState(() => SpotifyClient_takeError());
+  const sessions = MusicLog_reviewable(log);
+  const [expandedId, setExpandedId] = useState<number | undefined>(sessions[0]?.id);
+
+  useNavOptions({ navTitle: "Workout music" });
+
+  const disconnect = async (): Promise<void> => {
+    if (await Dialog_confirm("Disconnect Spotify? Your saved song lists stay on this phone.")) {
+      await MusicStore_update(MusicLog_disconnect);
+    }
+  };
+
+  return (
+    <View className="pt-2 pb-6" testID="music-screen" data-testid="music-screen">
+      <View className="p-4 mx-4 mb-4 rounded-2xl bg-background-subtle">
+        {log.tokens == null ? (
+          <>
+            <Text className="mb-3 text-base">
+              Connect Spotify. During a workout the app notes each song. A song heard for half its length is kept, any
+              other song is a skip. After the workout, save the kept songs as a playlist.
+            </Text>
+            <View className="flex-row">
+              <FoodPrimaryButton title="Connect Spotify" testID="music-connect" onPress={SpotifyClient_login} />
+            </View>
+          </>
+        ) : (
+          <View className="flex-row items-center">
+            <Text className="flex-1 text-base" testID="music-account" data-testid="music-account">
+              Spotify: {log.displayName ?? "connected"}
+            </Text>
+            <Pressable onPress={disconnect} testID="music-disconnect" data-testid="music-disconnect">
+              <Text className="text-sm text-text-error">Disconnect</Text>
+            </Pressable>
+          </View>
+        )}
+        {error != null && <Text className="mt-3 text-sm text-text-error">{error}</Text>}
+      </View>
+      {sessions.length === 0 ? (
+        <Text className="px-4 text-base text-text-secondary">
+          No workout music yet. Start a workout with Spotify playing on this account.
+        </Text>
+      ) : (
+        sessions.map((s) => (
+          <SessionCard
+            key={s.id}
+            session={s}
+            title={sessionTitle(s, history)}
+            isExpanded={expandedId === s.id}
+            onToggle={() => setExpandedId(expandedId === s.id ? undefined : s.id)}
+          />
+        ))
+      )}
+      {log.tokens != null && <HistoryDebug />}
+    </View>
+  );
+}

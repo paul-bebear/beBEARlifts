@@ -25,9 +25,11 @@ import {
   OfflineOnly_requestPersistentStorage,
 } from "./utils/offlineOnly";
 import { PressFeedback_install } from "./utils/pressFeedback";
+import { SpotifyClient_handleRedirect } from "./utils/spotifyClient";
 
 if (OfflineOnly_isEnabled()) {
   OfflineOnly_installFetchGuard(window);
+  SpotifyClient_handleRedirect();
   PressFeedback_install(document, window);
   OfflineOnly_requestPersistentStorage(navigator).then((persisted) => console.log("Persistent storage:", persisted));
 }
