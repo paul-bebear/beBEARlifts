@@ -48,6 +48,7 @@ import { LiftohistorySerializer_serialize } from "../liftohistory/liftohistorySe
 import { navigateToModal } from "../navigation/navigationService";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { WorkoutStoryCardSection } from "./workoutStoryCard";
+import { CloudBackupAfterWorkout } from "./cloudBackupAfterWorkout";
 
 interface IProps {
   history: IHistoryRecord[];
@@ -98,6 +99,7 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
 
   return (
     <>
+      {OfflineOnly_isEnabled() && <CloudBackupAfterWorkout dispatch={props.dispatch} />}
       <View className="px-gutter pb-6">
         <View className="flex-row items-center justify-center pb-2">
           {Platform.OS === "web" ? (

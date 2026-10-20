@@ -99,7 +99,9 @@ How it would work after Phase 2:
 
 ## Phase 2: cloud sync and sharing with friends
 
-Not started. When we start, compare these three options. The Docker option is the first one to try.
+- Built (2026-10-20): optional Supabase cloud backup with email-code sign-in, uploads after workouts, manual backup and confirmed restore. Settings → Import / Export holds the controls. The private `backups` bucket stores `latest.json` and seven weekday copies per account. Cloud and Spotify tokens stay out of exports. This saves whole files. Multi-device merge and sharing with friends remain unbuilt.
+
+For multi-device sync and sharing, compare these three options. The Docker option is the first one to try.
 
 - Deploy upstream's AWS backend: `liftosaur-cdk/`, Lambda, DynamoDB and S3. The sync code then works as written. It needs an AWS account, a domain, and the 16 credentials in `lftAppSecrets`. Lambda and DynamoDB free tiers may cover a few users, but CloudFront, Route 53 and Secrets Manager cost a few dollars a month.
 - Replace it with Supabase (Postgres, auth and storage). The free tier pauses a project after 1 week without activity. It means rewriting the client side of `/api/sync2`, which is the most complex part of the app. A simpler first step is a JSON backup to a Supabase table with no merge logic.

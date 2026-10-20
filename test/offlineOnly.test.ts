@@ -35,4 +35,15 @@ describe("OfflineOnly_isRequestAllowed", () => {
     expect(OfflineOnly_isRequestAllowed("data:text/plain,hello", origin)).to.equal(true);
     expect(OfflineOnly_isRequestAllowed(`blob:${origin}/2b6e0c8a`, origin)).to.equal(true);
   });
+
+  it("allows only this Supabase project's HTTPS origin", () => {
+    const supabase = "qvqwvuuwfueccrmzwyct.supabase.co";
+    expect(OfflineOnly_isRequestAllowed(`https://${supabase}/auth/v1/otp`, origin)).to.equal(true);
+    expect(
+      OfflineOnly_isRequestAllowed(`https://${supabase}/storage/v1/object/backups/u/latest.json`, origin)
+    ).to.equal(true);
+    expect(OfflineOnly_isRequestAllowed(`http://${supabase}/auth/v1/otp`, origin)).to.equal(false);
+    expect(OfflineOnly_isRequestAllowed("https://another.supabase.co/auth/v1/otp", origin)).to.equal(false);
+    expect(OfflineOnly_isRequestAllowed(`https://${supabase}.example.com/auth/v1/otp`, origin)).to.equal(false);
+  });
 });

@@ -171,6 +171,9 @@
   "src/components/screenEquipment.tsx": {
     "decision-in-view:useEffect#1": "predates the rule"
   },
+  "src/components/screenFinishDay.tsx": {
+    "long-view": "one workout completion screen and its platform share views; cloud uploads live in CloudBackupAfterWorkout and Thunk_cloudBackup"
+  },
   "src/components/screenGraphs.tsx": {
     "decision-in-view:useTimedMemo#1": "predates the rule",
     "decision-in-view:useTimedMemo#2": "predates the rule"
@@ -180,7 +183,7 @@
     "decision-in-view:anonymous#2": "predates the rule"
   },
   "src/components/screenSettings.tsx": {
-    "long-view": "predates the rule"
+    "long-view": "one settings menu; cloud backup controls render in cloudBackupCard and its state machine lives in cloudBackupForm"
   },
   "src/components/screenStats.tsx": {
     "decision-in-view:save": "predates the rule",

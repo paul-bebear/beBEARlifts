@@ -1,0 +1,92 @@
+import { CloudBackup_isCode, CloudBackup_isEmail } from "./cloudBackup";
+
+export type ICloudBackupOperation = "sendCode" | "verify" | "backup" | "restore" | "signOut";
+export type ICloudBackupCommand = { operation: ICloudBackupOperation | "findBackup"; email: string; code: string };
+
+export interface ICloudBackupForm {
+  step: "email" | "code" | "signedIn";
+  email: string;
+  code: string;
+  command?: ICloudBackupCommand;
+  error?: string;
+  message?: string;
+  offerRestore: boolean;
+}
+
+export type ICloudBackupEvent =
+  | { type: "email" | "code"; value: string }
+  | { type: "session"; email?: string }
+  | { type: "request"; operation: ICloudBackupOperation }
+  | { type: "sent" }
+  | { type: "verified"; hasHistory: boolean }
+  | { type: "found"; exists: boolean }
+  | { type: "done"; message?: string }
+  | { type: "signedOut" }
+  | { type: "failed"; error: string }
+  | { type: "changeEmail" };
+
+export function CloudBackupForm_empty(): ICloudBackupForm {
+  return { step: "email", email: "", code: "", offerRestore: false };
+}
+
+export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBackupEvent): ICloudBackupForm {
+  if (event.type === "session") {
+    return event.email != null
+      ? { ...state, step: "signedIn", email: event.email }
+      : state.step === "signedIn" && state.command == null
+        ? CloudBackupForm_empty()
+        : state;
+  }
+  if (event.type === "failed") {
+    return { ...state, command: undefined, error: event.error, message: undefined };
+  }
+  if (event.type === "sent") {
+    return { ...state, step: "code", command: undefined, code: "", message: "Check your email for the code." };
+  }
+  if (event.type === "verified") {
+    return {
+      ...state,
+      step: "signedIn",
+      code: "",
+      command: event.hasHistory ? undefined : { operation: "findBackup", email: state.email, code: "" },
+      message: "Signed in. Backups upload after each workout.",
+    };
+  }
+  if (event.type === "found") {
+    return { ...state, command: undefined, offerRestore: event.exists };
+  }
+  if (event.type === "done") {
+    return { ...state, command: undefined, message: event.message, offerRestore: false };
+  }
+  if (event.type === "signedOut") {
+    return CloudBackupForm_empty();
+  }
+  if (state.command != null) {
+    return state;
+  }
+  if (event.type === "changeEmail") {
+    return { ...CloudBackupForm_empty(), email: state.email };
+  }
+  if (event.type === "email" || event.type === "code") {
+    return { ...state, [event.type]: event.value, error: undefined, message: undefined };
+  }
+  if (event.type === "request") {
+    if (event.operation === "sendCode" && !CloudBackup_isEmail(state.email)) {
+      return { ...state, error: "Enter a valid email address." };
+    }
+    if (event.operation === "verify" && !CloudBackup_isCode(state.code)) {
+      return { ...state, error: "Enter the 6 to 10 digit code from your email." };
+    }
+    const signedOutOperation = event.operation === "sendCode" || event.operation === "verify";
+    if (signedOutOperation === (state.step === "signedIn") || (event.operation === "verify" && state.step !== "code")) {
+      return state;
+    }
+    return {
+      ...state,
+      error: undefined,
+      message: undefined,
+      command: { operation: event.operation, email: state.email.trim(), code: state.code.trim() },
+    };
+  }
+  return state;
+}

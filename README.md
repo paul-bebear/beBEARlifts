@@ -1,6 +1,6 @@
 # beBEARlifts
 
-beBEARlifts is a personal fork of [Liftosaur](https://github.com/astashov/liftosaur) by Anton Astashov. It runs as an offline-only web app on an iPhone Home Screen. It has no account and no subscription. Workout data never leaves the phone. The only server code is three small Vercel functions that the Food tab calls to look up food.
+beBEARlifts is a personal fork of [Liftosaur](https://github.com/astashov/liftosaur) by Anton Astashov. It runs offline as a web app on an iPhone Home Screen. It has no subscription. Cloud backup is optional and uses an email code. Without cloud sign-in, workout data stays on the phone. Vercel functions provide food lookups and AI estimates.
 
 All credit for the app goes to the Liftosaur authors. The license stays AGPL-3.0 (see `LICENSE`). This fork is public, and Settings → "Source Code on Github" links to it, as AGPL section 13 asks of a network-served modified version.
 
@@ -11,7 +11,7 @@ The original Liftosaur README follows below, after the fork notes.
 Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modified version to list them.
 
 - The build flag `LFT_OFFLINE_ONLY=1` makes a no-backend build. `npm run build:pwa` sets it. Without the flag, the code builds the same as upstream.
-- In that build, `src/utils/offlineOnly.ts` rejects every `fetch` to another origin except `https://api.spotify.com` and `https://accounts.spotify.com`. The app sees the same error as a phone with no signal, and takes its existing offline path.
+- In that build, `src/utils/offlineOnly.ts` allows Spotify and `https://qvqwvuuwfueccrmzwyct.supabase.co`. It rejects every other external `fetch`. The app sees the same error as a phone with no signal, and takes its existing offline path.
 - `__API_HOST__` becomes `https://api.offline.invalid`. The `.invalid` TLD never resolves. `__HOST__` becomes the page's own origin, so built-in programs load from the same site.
 - `src/index.html` no longer loads Rollbar, Google Analytics, the consent script or Apple sign-in. A two-line stub stands in for the global `Rollbar`.
 - `Subscriptions_hasSubscription` in `src/utils/subscriptions.ts` always returns true. Every premium feature reads that one function.
@@ -30,7 +30,7 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - The offline build names `app`, `vendors` and their CSS by content hash, for example `/app.736a0190.js`, and `HashedIndexPlugin` in `webpack.config.js` writes those names into `app/index.html`. Vercel ignores the query string on static files. With the old `/app.js?version=<commit>` names, a deploy could hand the service worker the previous `app.js` under the new name, and the phone kept it. The service worker reads the bundle names from the cached `/app/` page on install (`src/utils/bundleNames.ts`).
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
 - A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
-- `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket and sets `Content-Security-Policy: connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com`.
+- `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket. Its `connect-src` allows the app's origin, in-memory files, Spotify and the Supabase project.
 - The Food tab logs calories and macros per meal. Its layout follows Built With Science's Nutrition screen. The screen is `src/components/screenFood.tsx`, and the rules live in `src/models/foodLog.ts` and `src/models/foodAddFlow.ts`.
 - Adding food opens a full screen (`src/components/screenFoodAdd.tsx`): search, Barcode, AI Scan, Describe and Quick Log tiles, and Food, Meals and Recipes tabs. Ticked foods collect in an Item Log basket with portions, then log together (`src/models/foodBasket.ts`). Saved meals and batch recipes live in the food log (`src/models/savedMeals.ts`).
 - The food log has its own IndexedDB key, `bebear_foodlog`, outside Liftosaur's storage, so upstream merges do not touch it. The main JSON export does not include it. The targets sheet (the gear icon) has its own export and import.
@@ -45,6 +45,20 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - The music log has its own IndexedDB key, `bebear_music`: Spotify tokens, the display name and the last 60 workouts' songs. Only Spotify sees which songs played. No workout data goes to Spotify.
 - The service worker never handles `*.spotify.com` requests.
 - `llms/program_builder_prompt.md` is a prompt for your own AI chat app. It interviews you, then picks a built-in program or writes one in Liftoscript. "Build your program with your own AI" below says how to use it.
+
+## Cloud backup
+
+Open Settings → Import / Export → Cloud backup. Enter your email, tap "Send code", then enter the code and tap "Sign in".
+
+After each finished workout, the signed-in app uploads the same JSON as "Export everything". It includes workouts, programs, settings, body stats, food, music history, body scans, warmups and workout reports. Spotify tokens and the cloud session in `bebear_cloud` stay on the phone.
+
+Backups go to the private `backups` bucket in Supabase project `bebearlifts` (`qvqwvuuwfueccrmzwyct`). Each account can read and write only its own folder. `latest.json` holds the restore file. Seven weekday files keep the latest backup from each weekday. "Back up now" also saves changes between workouts. "Last backup" shows when both uploads succeeded. A failed automatic upload leaves that time unchanged. Finish another workout or tap "Back up now" to retry.
+
+On a new phone, install the Home Screen app and sign in with the same email. If local workout history is empty, the app checks for a cloud backup and offers to restore it. Tap "Restore from cloud" and confirm. Restore replaces local workouts, settings, food, music, body scans, warmups and reports. It keeps this phone's cloud and Spotify logins. Sign out stops automatic uploads and leaves cloud files in place.
+
+For a new Supabase project on the free plan, configure custom SMTP under Authentication → Emails → SMTP Settings first. The dashboard requires custom SMTP before it allows template edits. Resend needs a verified sending domain and a sending-access API key. The sending address does not need an inbox.
+
+In Authentication → Emails → Templates, add `Your code: {{ .Token }}` to both "Magic link or OTP" and "Confirm sign up". A link alone opens Safari and cannot sign in the Home Screen app. This project's SMTP and both code templates were configured on 2026-10-20. Emails send through Resend from `noreply@mail.paulbebear.com` to the address entered in the app.
 
 ## Run it locally
 

@@ -67,17 +67,20 @@ import { ImportFileError } from "../utils/importTypes";
 import { StringUtils_pluralize } from "../utils/string";
 import { CSV_toString } from "../utils/csv";
 import { Exporter_toFile } from "../utils/exporter";
-import {
-  FullBackup_build,
-  FullBackup_filename,
-  FullBackup_keepSpotifyLogin,
-  FullBackup_unwrap,
-} from "../models/fullBackup";
-import { FoodLogStore_load, FoodLogStore_replace } from "../utils/foodLogStore";
-import { MusicStore_load, MusicStore_update } from "../utils/musicStore";
-import { BodyScanStore_load, BodyScanStore_update } from "../utils/bodyScanStore";
-import { WarmupStore_load, WarmupStore_update } from "../utils/warmupStore";
+import { FullBackup_filename, FullBackup_keepSpotifyLogin, FullBackup_unwrap } from "../models/fullBackup";
+import { FoodLogStore_replace } from "../utils/foodLogStore";
+import { MusicStore_update } from "../utils/musicStore";
+import { BodyScanStore_update } from "../utils/bodyScanStore";
+import { WarmupStore_update } from "../utils/warmupStore";
 import { ReportStore } from "../utils/reportStore";
+import { FullBackupFile_build } from "../utils/fullBackupFile";
+import { CloudBackup_isAutoDue } from "../models/cloudBackup";
+import {
+  CloudBackupClient_download,
+  CloudBackupClient_upload,
+  CloudStore,
+  ICloudResult,
+} from "../utils/cloudBackupClient";
 import { DateUtils_formatYYYYMMDD, DateUtils_format } from "../utils/date";
 import { getInitialState } from "./reducer";
 import { IndexedDBUtils_set } from "../utils/indexeddb";
@@ -595,7 +598,10 @@ async function switchToSyncAccount(
     hasLocalCopy: localStorageResult?.success === true && localStorageResult.data.tempUserId === mismatch.userId,
   });
   if (plan === "load-local" && localCopy != null) {
-    const newState = await getInitialState(env.service.client, { localStorage: localCopy, deviceId: getState().deviceId });
+    const newState = await getInitialState(env.service.client, {
+      localStorage: localCopy,
+      deviceId: getState().deviceId,
+    });
     newState.user = { id: mismatch.userId, email: mismatch.email };
     dispatch({ type: "ReplaceState", state: newState });
     dispatch(Thunk_fetchInitial());
@@ -1763,17 +1769,75 @@ export function Thunk_exportStorage(): IThunk {
 export function Thunk_exportEverything(): IThunk {
   return async (dispatch, getState) => {
     dispatch(Thunk_postevent("export-everything"));
-    const [food, music, body, warmups, reports] = await Promise.all([
-      FoodLogStore_load(),
-      MusicStore_load(),
-      BodyScanStore_load(),
-      WarmupStore_load(),
-      ReportStore.load(),
-    ]);
-    const now = Date.now();
-    const backup = FullBackup_build({ storage: getState().storage, food, music, body, warmups, reports }, now);
-    Exporter_toFile(FullBackup_filename(now), JSON.stringify(backup, null, 2));
+    const { text, now } = await FullBackupFile_build(() => getState().storage);
+    Exporter_toFile(FullBackup_filename(now), text);
     BackupReminderMarks_recordBackup(now);
+  };
+}
+
+export function Thunk_cloudBackup(
+  force: boolean,
+  onResult?: (result: ICloudResult<number | undefined>) => void
+): IThunk {
+  return async (dispatch, getState) => {
+    let result: ICloudResult<number | undefined>;
+    try {
+      const cloud = await CloudStore.load();
+      const latest = getState().storage.history[0];
+      if (!force && !CloudBackup_isAutoDue(cloud, latest?.endTime ?? latest?.startTime)) {
+        onResult?.({ ok: true, value: undefined });
+        return;
+      }
+      const { text } = await FullBackupFile_build(() => getState().storage);
+      result = await CloudBackupClient_upload(text);
+    } catch (error) {
+      result = { ok: false, error: error instanceof Error ? error.message : "Could not save cloud backup" };
+    }
+    if (onResult != null) {
+      onResult(result);
+    } else if (force && !result.ok) {
+      Dialog_alert(result.error);
+    }
+  };
+}
+
+export function Thunk_cloudRestore(onResult?: (result: ICloudResult<boolean>) => void): IThunk {
+  return async (dispatch, getState, env) => {
+    try {
+      if (
+        !(await Dialog_confirm(
+          "Restore from cloud? This replaces local workouts, settings, food, music, body scans, warmups and reports."
+        ))
+      ) {
+        onResult?.({ ok: true, value: false });
+        return;
+      }
+      const result = await CloudBackupClient_download();
+      if (!result.ok || result.value == null) {
+        const failure = result.ok ? { ok: false as const, error: "No cloud backup yet" } : result;
+        if (onResult != null) {
+          onResult(failure);
+        } else {
+          Dialog_alert(failure.error);
+        }
+        return;
+      }
+      await Thunk_importStorage(result.value, (success) => onResult?.({ ok: true, value: success }))(
+        dispatch,
+        getState,
+        env
+      );
+    } catch (error) {
+      const failure = {
+        ok: false as const,
+        error: error instanceof Error ? error.message : "Could not restore cloud backup",
+      };
+      if (onResult != null) {
+        onResult(failure);
+      } else {
+        Dialog_alert(failure.error);
+      }
+    }
   };
 }
 
@@ -1820,7 +1884,7 @@ export function Thunk_exportProgramsToText(): IThunk {
   };
 }
 
-export function Thunk_importStorage(maybeStorage: string): IThunk {
+export function Thunk_importStorage(maybeStorage: string, onImported?: (success: boolean) => void): IThunk {
   return async (dispatch) => {
     dispatch(Thunk_postevent("import-json-storage"));
     let parsedMaybeStorage: Record<string, unknown>;
@@ -1828,6 +1892,7 @@ export function Thunk_importStorage(maybeStorage: string): IThunk {
       parsedMaybeStorage = JSON.parse(maybeStorage);
     } catch (e) {
       Dialog_alert("Couldn't parse the provided file");
+      onImported?.(false);
       return;
     }
     const contents = FullBackup_unwrap(parsedMaybeStorage);
@@ -1857,6 +1922,7 @@ export function Thunk_importStorage(maybeStorage: string): IThunk {
     } else {
       Dialog_alert(`Couldn't import the storage, errors: \n${result.error.join("\n")}`);
     }
+    onImported?.(result.success);
   };
 }
 
