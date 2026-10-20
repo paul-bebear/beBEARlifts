@@ -19,8 +19,9 @@
     <link rel="apple-touch-icon" href="/icons/icon512.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="beBEARlifts" />
-    <!-- beBEARlifts fork: draw under the status bar like the native app. NavHeader pads by the safe-area inset. -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- beBEARlifts fork: no apple-mobile-web-app-status-bar-style. With black-translucent, iOS 26 (WebKit bug 301108)
+         makes the page 62pt shorter than the screen and resizes it on every rotation, and keypad taps then landed on
+         the key above. iOS reads this tag when the app is added, so a change needs the Home Screen icon re-added. -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <!-- LAUNCH_SCREENS_START -->
