@@ -506,6 +506,9 @@ const mainConfig = {
       "/api/food/*": {
         target: `http://localhost:${process.env.FOOD_API_PORT || 3010}`,
       },
+      "/api/ai/*": {
+        target: `http://localhost:${process.env.FOOD_API_PORT || 3010}`,
+      },
       "/.well-known/oauth-*": {
         target: localapi,
         secure: false,

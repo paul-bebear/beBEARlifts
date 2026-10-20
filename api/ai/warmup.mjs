@@ -1,0 +1,80 @@
+import { fetchJson, json } from "../_food.mjs";
+import { aiProvider } from "../_ai.mjs";
+
+// About 400 tokens in and 400 out, so one warmup is about $0.0003 on Claude Haiku 5.5.
+const maxExercises = 12;
+const maxFieldChars = 120;
+
+const systemPrompt = `You are a strength coach. You write the general warmup for one gym session.
+The user lists today's exercises in order, with the muscles each one trains and the first working set.
+Write 4 to 7 items that take 5 to 8 minutes in total:
+- Start with 2 to 3 minutes of easy cardio.
+- Then dynamic mobility and activation for the muscles and joints today's first two exercises load most.
+- Use only bodyweight, a light band, or an empty bar. No static stretches held over 20 seconds, and nothing to fatigue.
+- End with one item named "Ramp-up sets" that tells the user to do the warmup sets the app shows for the first exercise.
+Each "detail" is one short sentence with reps or time, written for someone standing in the gym.
+Put "seconds" only on timed items.
+Answer with JSON only, no other text, in this shape:
+{"items":[{"name":"Easy bike","detail":"Easy pace, enough to get a little warm.","seconds":150},{"name":"Leg swings","detail":"10 front to back and 10 side to side, each leg."}]}`;
+
+function clean(value) {
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, maxFieldChars) : "";
+}
+
+function describe(exercises) {
+  return exercises
+    .slice(0, maxExercises)
+    .map((e, i) => {
+      const muscles = Array.isArray(e?.muscles) ? e.muscles.map(clean).filter(Boolean).join(", ") : "";
+      return `${i + 1}. ${clean(e?.name)} (${muscles || "muscles unknown"}): ${clean(e?.sets)}`;
+    })
+    .join("\n");
+}
+
+export async function POST(request) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Send JSON with an exercises list" }, 400);
+  }
+  const exercises = Array.isArray(body?.exercises) ? body.exercises.filter((e) => clean(e?.name) !== "") : [];
+  if (exercises.length === 0) {
+    return json({ error: "The workout has no exercises" }, 400);
+  }
+  const ai = await aiProvider();
+  if (!ai.token) {
+    return json({ error: "The server has no AI key. Set AI_GATEWAY_API_KEY in Vercel." }, 500);
+  }
+  try {
+    const {
+      status,
+      body: answer,
+      text: raw,
+    } = await fetchJson(
+      ai.url,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${ai.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: ai.model,
+          max_tokens: 700,
+          temperature: 0.4,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Today's workout:\n${describe(exercises)}` },
+          ],
+        }),
+      },
+      30000
+    );
+    if (status !== 200) {
+      const message = answer?.error?.message ?? raw.slice(0, 200);
+      return json({ error: `${ai.name} returned ${status}: ${message}` }, 502);
+    }
+    const content = answer?.choices?.[0]?.message?.content;
+    return json({ text: typeof content === "string" ? content : "" });
+  } catch {
+    return json({ error: "The AI did not answer in 30 seconds" }, 504);
+  }
+}

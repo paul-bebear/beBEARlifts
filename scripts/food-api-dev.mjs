@@ -1,10 +1,10 @@
-// Serves the Vercel functions in api/food/ on localhost, so `npm run start:offline` can proxy /api/food to them.
+// Serves the Vercel functions in api/food/ and api/ai/ on localhost, so `npm run start:offline` can proxy to them.
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const port = Number(process.env.FOOD_API_PORT || 3010);
-const apiDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "api", "food");
+const apiDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "api");
 
 async function readBody(req) {
   const chunks = [];
@@ -16,14 +16,14 @@ async function readBody(req) {
 
 async function handle(req, res) {
   const url = new URL(req.url, `http://localhost:${port}`);
-  const match = /^\/api\/food\/([a-z]+)$/.exec(url.pathname);
+  const match = /^\/api\/(food|ai)\/([a-z]+)$/.exec(url.pathname);
   if (match == null) {
     res.writeHead(404).end();
     return;
   }
   let handlers;
   try {
-    handlers = await import(pathToFileURL(path.join(apiDir, `${match[1]}.mjs`)).href);
+    handlers = await import(pathToFileURL(path.join(apiDir, match[1], `${match[2]}.mjs`)).href);
   } catch {
     res.writeHead(404).end();
     return;
@@ -46,4 +46,4 @@ http
       res.writeHead(500).end();
     });
   })
-  .listen(port, () => console.log(`food api on http://localhost:${port}/api/food/*`));
+  .listen(port, () => console.log(`api on http://localhost:${port}/api/food/* and /api/ai/*`));

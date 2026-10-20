@@ -1,10 +1,6 @@
-import { getVercelOidcToken } from "@vercel/oidc";
 import { fetchJson, json } from "../_food.mjs";
+import { aiProvider } from "../_ai.mjs";
 
-// Claude Haiku 5.5 costs about $0.0003 per photo and $0.0002 per description at $0.10 / $0.50 per million tokens.
-const defaultGatewayModel = "anthropic/claude-haiku-5.5";
-// The "-latest" alias follows Google's newest Flash-Lite, which has a free tier.
-const defaultGeminiModel = "gemini-flash-lite-latest";
 // The phone shrinks plates to 1024px and labels to 1600px JPEG, under 1 MB as base64. Vercel caps bodies at 4.5 MB.
 const maxImageChars = 3_000_000;
 const maxTextChars = 600;
@@ -44,35 +40,6 @@ const tasks = {
   describe: { system: describePrompt, user: "Estimate this meal.", needsImage: false, maxTokens: 1000 },
 };
 
-async function gatewayToken() {
-  if (process.env.AI_GATEWAY_API_KEY) {
-    return process.env.AI_GATEWAY_API_KEY;
-  }
-  try {
-    return await getVercelOidcToken();
-  } catch {
-    return process.env.VERCEL_OIDC_TOKEN;
-  }
-}
-
-// Both speak the OpenAI Chat Completions format, so one request body serves either.
-async function provider() {
-  if (process.env.GEMINI_API_KEY) {
-    return {
-      name: "Gemini",
-      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-      token: process.env.GEMINI_API_KEY,
-      model: process.env.GEMINI_MODEL || defaultGeminiModel,
-    };
-  }
-  return {
-    name: "AI Gateway",
-    url: "https://ai-gateway.vercel.sh/v1/chat/completions",
-    token: await gatewayToken(),
-    model: process.env.AI_GATEWAY_MODEL || defaultGatewayModel,
-  };
-}
-
 function userContent(task, image, text) {
   const words = text ? `${task.user}\nThe user says: ${text}` : task.user;
   return image
@@ -102,7 +69,7 @@ export async function POST(request) {
   if (image != null && image.length > maxImageChars) {
     return json({ error: "The photo is too large" }, 413);
   }
-  const ai = await provider();
+  const ai = await aiProvider();
   if (!ai.token) {
     return json({ error: "The server has no AI key. Set GEMINI_API_KEY or turn on AI Gateway." }, 500);
   }
