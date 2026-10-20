@@ -44,6 +44,7 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - Workout music: Progress → Workout music connects Spotify (Authorization Code with PKCE, no server). During a workout, `src/components/musicTracker.tsx` asks Spotify for the playing song every 8 seconds while the app is open, and reads `recently-played` when the app comes back from a locked screen. A song heard for half its length, or to within 20 seconds of its end, is kept (`src/models/musicSession.ts`). After the workout, untick songs, then "Save to Spotify" makes a private playlist, and "Play next workout" plays them again. The finish screen links to the list.
 - The music log has its own IndexedDB key, `bebear_music`: Spotify tokens, the display name and the last 60 workouts' songs. Only Spotify sees which songs played. No workout data goes to Spotify.
 - The service worker never handles `*.spotify.com` requests.
+- `llms/program_builder_prompt.md` is a prompt for your own AI chat app. It interviews you, then picks a built-in program or writes one in Liftoscript. "Build your program with your own AI" below says how to use it.
 
 ## Run it locally
 
@@ -76,6 +77,36 @@ The repo has a git submodule (`lambda/scripts`) that points at a private SSH URL
 2. Tap Share → "Add to Home Screen" → Add.
 3. Always open the app from the Home Screen icon. Safari tabs and the Home Screen app keep separate storage.
 4. Open the app once with a signal, so the service worker caches it. After that it starts in airplane mode.
+
+## Build your program with your own AI
+
+The app does not interview you yet. Until it does, an AI chat app such as ChatGPT or Claude can, with the prompt in [`llms/program_builder_prompt.md`](llms/program_builder_prompt.md).
+
+1. Open the prompt file. Copy everything below its line and paste it into a new chat.
+2. Answer the questions one at a time: goal, experience, days per week, minutes per session, equipment, injuries, and lifts you like or hate.
+3. The AI either names one of the app's built-in programs, or writes a program for you as one `liftoscript` code block.
+
+To add a built-in program:
+
+1. Open the Program tab and tap the two-arrows icon right of the program name. "Choose a program" opens.
+2. Tap "Built-in", search for the name, tap the program, then tap "Clone".
+
+To add a program the AI wrote:
+
+1. Copy the text inside the code block. Chat apps show a copy button on the block.
+2. Open the Program tab, tap the two-arrows icon, then tap "Create New Program" at the bottom.
+3. Type a name and tap "Create". The Program tab opens on the new, empty program.
+4. Tap "Edit", then the icon just left of "Save". It shows curly braces around three lines, and it switches the editor to full text mode.
+5. Select all the text in the editor and paste.
+6. Tap "Save". The app goes to Home with the new program active.
+
+On the app's first launch, the "Choose your program" screen comes up by itself. Tap "Pick a built-in program" or "Create a program" there, in place of the two-arrows icon.
+
+If a line is wrong, a red bar above the editor shows `Error:` with the line and column, for example `Syntax error (12:42)`. "Save" stays grey until the text parses. Paste the error into the chat, and the AI sends the fixed block.
+
+The starting weights are guesses. Change any that feel wrong after the first workout.
+
+`test/programBuilderPrompt.test.ts` parses the prompt's example with the app's own parser. It also checks that every exercise name in the prompt exists and that every built-in program is listed. A change that breaks the prompt fails `npm test`.
 
 ## Your data and backups
 
