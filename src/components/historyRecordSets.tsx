@@ -2,7 +2,7 @@ import { JSX, memo, useMemo } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { FastText } from "./primitives/fastText";
-import { IDisplaySet, Reps_group, Reps_setToDisplaySet } from "../models/set";
+import { IDisplaySet, Reps_setToDisplaySet } from "../models/set";
 import { ISet, IUnit } from "../types";
 import { CollectionUtils_compact } from "../utils/collection";
 import { ObjectUtils_keys } from "../utils/object";
@@ -11,6 +11,8 @@ import { StyledText, StyledText_remToPx } from "../utils/styledText";
 import { useRem } from "../utils/useRem";
 import { Tailwind_semantic, Tailwind_colors } from "../utils/tailwindConfig";
 import { TimeUtils_formatMMSS } from "../utils/time";
+import { ISetClipLog, SetClips_historyGroups } from "../models/setClips";
+import { SetClipMark } from "./setClipMark";
 
 function addRecordedDuration(
   builder: StyledText,
@@ -42,6 +44,9 @@ function isSameDisplaySet(a: IDisplaySet, b: IDisplaySet): boolean {
 }
 
 interface IHistoryRecordSetsProps {
+  clips?: ISetClipLog;
+  clipWorkoutId?: number;
+  clipExerciseId?: string;
   showPrDetails?: boolean;
   sets: ISet[];
   isNext: boolean;
@@ -50,22 +55,24 @@ interface IHistoryRecordSetsProps {
 }
 
 export const HistoryRecordSetsView = memo(function HistoryRecordSetsView(props: IHistoryRecordSetsProps): JSX.Element {
-  const { sets, isNext, units } = props;
-  const displayGroups = useMemo(() => {
-    const groups = Reps_group(sets, isNext);
-    return groups.map((g) => g.map((set) => Reps_setToDisplaySet(set, isNext, units)));
-  }, [sets, isNext, units]);
+  const { sets, isNext, units, clips, clipWorkoutId, clipExerciseId } = props;
+  const displayGroups = useMemo(
+    () => SetClips_historyGroups(sets, isNext, units, clips, clipWorkoutId, clipExerciseId),
+    [sets, isNext, units, clips, clipWorkoutId, clipExerciseId]
+  );
   return (
     <View className="text-sm" style={{ alignItems: "flex-end" }}>
       {displayGroups.map((g, i) => (
-        <HistoryRecordSet
-          key={i}
-          sets={g}
-          prs={props.prs}
-          isNext={props.isNext}
-          showPrDetails={props.showPrDetails}
-          units={props.units}
-        />
+        <View key={i} className="flex-row items-center">
+          <HistoryRecordSet
+            sets={g.sets}
+            prs={props.prs}
+            isNext={props.isNext}
+            showPrDetails={props.showPrDetails}
+            units={props.units}
+          />
+          {g.clip && <SetClipMark clip={g.clip} />}
+        </View>
       ))}
     </View>
   );

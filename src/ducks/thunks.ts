@@ -73,6 +73,7 @@ import { MusicStore_update } from "../utils/musicStore";
 import { BodyScanStore_update } from "../utils/bodyScanStore";
 import { WarmupStore_update } from "../utils/warmupStore";
 import { ReportStore } from "../utils/reportStore";
+import { SetClipStore } from "../utils/setClipStore";
 import { FullBackupFile_build } from "../utils/fullBackupFile";
 import { CloudBackup_isAutoDue } from "../models/cloudBackup";
 import {
@@ -1806,7 +1807,7 @@ export function Thunk_cloudRestore(onResult?: (result: ICloudResult<boolean>) =>
     try {
       if (
         !(await Dialog_confirm(
-          "Restore from cloud? This replaces local workouts, settings, food, music, body scans, warmups and reports."
+          "Restore from cloud? This replaces local workouts, settings, food, music, body scans, warmups, reports and clip records."
         ))
       ) {
         onResult?.({ ok: true, value: false });
@@ -1917,6 +1918,10 @@ export function Thunk_importStorage(maybeStorage: string, onImported?: (success:
       const reports = contents.reports;
       if (reports != null) {
         await ReportStore.update(() => reports);
+      }
+      const clips = contents.clips;
+      if (clips != null) {
+        await SetClipStore.update(() => clips);
       }
       Dialog_alert("Successfully imported");
     } else {

@@ -68,6 +68,7 @@ import { navigateToModal } from "../navigation/navigationService";
 import { Dialog_confirm } from "../utils/dialog";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { usePerfWhyRender } from "../utils/usePerfWhyRender";
+import { SetClips_workoutId } from "../models/setClips";
 
 interface IWorkoutExerciseCardProps {
   entry: IHistoryEntry;
@@ -77,6 +78,7 @@ interface IWorkoutExerciseCardProps {
   day: number;
   prevData?: IPrevExerciseData;
   progressId: number;
+  progressStartTime: number;
   supersetEntry?: IHistoryEntry;
   progressUserPromptedStateVars?: Partial<Record<string, IProgramState>>;
   isCurrentProgress: boolean;
@@ -578,6 +580,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
       </View>
       <View className="mt-2">
         <WorkoutExerciseAllSets
+          clipWorkoutId={SetClips_workoutId({ id: props.progressId, startTime: props.progressStartTime })}
           stats={props.stats}
           isPlayground={false}
           helps={props.helps}

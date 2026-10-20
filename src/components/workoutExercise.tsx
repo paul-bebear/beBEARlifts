@@ -177,6 +177,7 @@ function WorkoutExerciseInner(props: IWorkoutExerciseProps): JSX.Element {
           programDay={props.programDay}
           otherStates={props.otherStates}
           progressId={props.progressId}
+          progressStartTime={props.progressStartTime}
           supersetEntry={props.supersetEntry}
           progressUserPromptedStateVars={props.userPromptedStateVars}
           isCurrentProgress={props.isCurrentProgress}

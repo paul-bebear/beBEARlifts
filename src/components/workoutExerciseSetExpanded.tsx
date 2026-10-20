@@ -16,6 +16,8 @@ import { InputWeight2 } from "./inputWeight2";
 import { WorkoutExerciseUtils_getBgColor100, WorkoutExerciseUtils_getIconColor } from "../utils/workoutExerciseUtils";
 import { DateUtils_formatDayMonth } from "../utils/date";
 import { ActionMenu, IActionMenuAction } from "./actionMenu";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { SetClipCapture } from "./setClipCapture";
 import type { IWorkoutExerciseSetBodyProps } from "./workoutExerciseSet";
 import {
   RpeWeightHint,
@@ -107,6 +109,9 @@ export function WorkoutExerciseSetExpanded(props: IWorkoutExerciseSetBodyProps):
                   />
                 </View>
               </Pressable>
+              {OfflineOnly_isEnabled() && Platform.OS === "web" && props.clipWorkoutId != null && (
+                <SetClipCapture workoutId={props.clipWorkoutId} setId={set.id} exerciseId={props.exerciseType.id} />
+              )}
               <ActionMenu
                 renderTrigger={(open) => (
                   <Pressable

@@ -29,6 +29,9 @@ import { HistoryCollapse_summary } from "../models/historyCollapse";
 import { useMusicLog } from "../utils/musicStore";
 import { MusicLog_sessionForWorkout } from "../models/musicLog";
 import { SongPerSet_forEntry, SongPerSet_match } from "../models/songPerSet";
+import { SetClipStore } from "../utils/setClipStore";
+import { SetClips_workoutId } from "../models/setClips";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 
 interface IProps {
   historyRecord: IHistoryRecord;
@@ -63,6 +66,7 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
   const entries = historyRecord.entries;
   const supersetToColor = useMemo(() => Progress_getSupersetToColor(entries), [entries]);
   const musicLog = useMusicLog();
+  const clips = SetClipStore.use();
   const songs = useMemo(
     () => (isCurrent ? [] : SongPerSet_match(historyRecord, MusicLog_sessionForWorkout(musicLog, historyRecord))),
     [isCurrent, historyRecord, musicLog]
@@ -160,6 +164,8 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
                   settings={props.settings}
                   showNotes={true}
                   songs={SongPerSet_forEntry(songs, i)}
+                  clips={!isCurrent && OfflineOnly_isEnabled() && Platform.OS === "web" ? clips : undefined}
+                  clipWorkoutId={SetClips_workoutId(historyRecord)}
                 />
               );
             })}

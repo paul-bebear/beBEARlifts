@@ -14,6 +14,7 @@ import { FoodLog_empty } from "../src/models/foodLog";
 import { IMusicLog, MusicLog_empty } from "../src/models/musicLog";
 import { Storage_getDefault } from "../src/models/storage";
 import { BodyScans_empty } from "../src/models/bodyScans";
+import { SetClips_empty } from "../src/models/setClips";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 
@@ -25,6 +26,7 @@ function parts(overrides: Partial<IFullBackupParts>): IFullBackupParts {
     body: BodyScans_empty(),
     warmups: WarmupPlan_empty(),
     reports: WorkoutReport_empty(),
+    clips: SetClips_empty(),
     ...overrides,
   };
 }
@@ -55,6 +57,35 @@ describe("FullBackup", () => {
     expect(contents.music?.sessions).to.deep.equal([]);
     expect(contents.body).to.deep.equal(body);
     expect(contents.reports).to.deep.equal(WorkoutReport_empty());
+    expect(contents.clips).to.deep.equal(SetClips_empty());
+  });
+
+  it("round trips clip metadata and thumbnails without video data", () => {
+    const clips = {
+      version: 1 as const,
+      clips: [
+        {
+          workoutId: now,
+          setId: "set-1",
+          exerciseId: "squat",
+          timestamp: now,
+          size: 200000000,
+          duration: 5,
+          thumbnail: "data:image/jpeg;base64,YWJj",
+          savedVia: "share" as const,
+        },
+      ],
+    };
+    const backup = FullBackup_build(parts({ clips }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).clips).to.deep.equal(clips);
+    expect(backup.readme).to.include("video files stay in Photos or downloads");
+  });
+
+  it("leaves existing clips untouched when an older backup has no clips", () => {
+    const backup = FullBackup_build(parts({}), now);
+    const { clips, ...older } = backup;
+    expect(clips.clips).to.deep.equal([]);
+    expect(FullBackup_unwrap(older).clips).to.equal(undefined);
   });
 
   it("passes a plain Liftosaur export through as storage only", () => {

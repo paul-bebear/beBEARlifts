@@ -10,6 +10,7 @@ import { IHistoryEntryPersonalRecords } from "../models/history";
 import { HistoryRecordSetsView } from "./historyRecordSets";
 import { ObjectUtils_values } from "../utils/object";
 import { ISongForSet, SongPerSet_label } from "../models/songPerSet";
+import { ISetClipLog, SetClips_filmedSets } from "../models/setClips";
 
 interface IHistoryEntryProps {
   entry: IHistoryEntry;
@@ -21,6 +22,8 @@ interface IHistoryEntryProps {
   settings: ISettings;
   showNotes: boolean;
   songs?: ISongForSet[];
+  clips?: ISetClipLog;
+  clipWorkoutId?: number;
 }
 
 export const HistoryEntryView = memo((props: IHistoryEntryProps): JSX.Element => {
@@ -28,6 +31,7 @@ export const HistoryEntryView = memo((props: IHistoryEntryProps): JSX.Element =>
   const exercise = Exercise_get(entry.exercise, settings.exercises);
   const exerciseUnit = Equipment_getUnitOrDefaultForExerciseType(settings, exercise);
   const isPr = ObjectUtils_values(props.prs || {}).some((v) => v);
+  const filmedWarmups = SetClips_filmedSets(entry.warmupSets, props.clips, props.clipWorkoutId, entry.exercise.id);
   return (
     <View data-testid="history-entry-exercise" testID="history-entry-exercise" className="flex-row items-center gap-2">
       {props.supersetColor && (
@@ -88,7 +92,23 @@ export const HistoryEntryView = memo((props: IHistoryEntryProps): JSX.Element =>
             ))}
           </View>
           <View className="shrink">
+            {filmedWarmups.length > 0 && (
+              <View>
+                <Text className="text-xs text-text-secondary">Warmup</Text>
+                <HistoryRecordSetsView
+                  sets={filmedWarmups}
+                  clips={props.clips}
+                  clipWorkoutId={props.clipWorkoutId}
+                  clipExerciseId={entry.exercise.id}
+                  units={props.settings.units}
+                  isNext={false}
+                />
+              </View>
+            )}
             <HistoryRecordSetsView
+              clips={props.clips}
+              clipWorkoutId={props.clipWorkoutId}
+              clipExerciseId={entry.exercise.id}
               sets={entry.sets.map((set) => ({
                 ...set,
                 weight:
