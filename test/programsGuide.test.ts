@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import matter from "gray-matter";
 
-const root = path.resolve(__dirname, "..");
+const root = process.cwd();
 const guide = fs.readFileSync(path.join(root, "llms/programs_guide.md"), "utf8");
 const dir = path.join(root, "programs/builtin");
 const names = fs
