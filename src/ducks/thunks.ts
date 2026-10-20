@@ -158,6 +158,7 @@ import {
 import { IAuthToken } from "../utils/keychain";
 import { Analytics_trackPurchase, Analytics_trackSignUp } from "../utils/analytics";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { TabRouting_programTab } from "../models/tabRouting";
 import { BackupReminder_isDue, BackupReminder_message } from "../models/backupReminder";
 import {
   BackupReminderMarks_read,
@@ -1309,10 +1310,11 @@ export function Thunk_pushToEditProgram(): IThunk {
     const state = getState();
     const currentProgram =
       state.storage.currentProgramId != null ? Program_getProgram(state, state.storage.currentProgramId) : undefined;
+    const tab = TabRouting_programTab(OfflineOnly_isEnabled());
     if (Program_isEmpty(currentProgram)) {
-      dispatch(Thunk_pushScreen("programs", undefined, { tab: "program" }));
+      dispatch(Thunk_pushScreen("programs", undefined, { tab }));
     } else if (currentProgram) {
-      Program_editAction(dispatch, currentProgram, { tab: "program" });
+      Program_editAction(dispatch, currentProgram, { tab });
     }
   };
 }

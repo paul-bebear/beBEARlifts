@@ -49,8 +49,13 @@ export type IWorkoutStackParamList = {
 // The Progress tab lives on the graphs stack and opens the Me screens on top of itself, so they get a back arrow.
 export type IGraphsStackParamList = IMeStackParamList & {
   progressDashboard: undefined;
+  programselect: undefined;
   music: undefined;
   graphsList: undefined;
+};
+
+export type IFriendsStackParamList = {
+  friends: undefined;
 };
 
 export type IFoodStackParamList = {
@@ -84,6 +89,7 @@ export type IMeStackParamList = {
 
 export type IRootTabParamList = {
   home: NavigatorScreenParams<IHomeStackParamList>;
+  friends: NavigatorScreenParams<IFriendsStackParamList>;
   program: NavigatorScreenParams<IProgramStackParamList>;
   workout: NavigatorScreenParams<IWorkoutStackParamList>;
   food: NavigatorScreenParams<IFoodStackParamList>;
@@ -211,5 +217,6 @@ export type IAllScreenParamList = IOnboardingStackParamList &
   IWorkoutStackParamList &
   IGraphsStackParamList &
   IFoodStackParamList &
+  IFriendsStackParamList &
   IMeStackParamList &
   IRootLevelScreenParamList;

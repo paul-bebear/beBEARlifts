@@ -9,6 +9,7 @@ import type {
   IWorkoutStackParamList,
   IGraphsStackParamList,
   IFoodStackParamList,
+  IFriendsStackParamList,
   IMeStackParamList,
   IRootTabParamList,
   IRootStackParamList,
@@ -43,6 +44,8 @@ import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
 import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard";
 import { NavScreenMusic } from "./screens/NavScreenMusic";
 import { NavScreenFood } from "./screens/NavScreenFood";
+import { NavScreenFriends } from "./screens/NavScreenFriends";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
 import {
@@ -154,6 +157,7 @@ const ProgramStack = createStackNavigator<IProgramStackParamList>();
 const WorkoutStack = createStackNavigator<IWorkoutStackParamList>();
 const GraphsStack = createStackNavigator<IGraphsStackParamList>();
 const FoodStack = createStackNavigator<IFoodStackParamList>();
+const FriendsStack = createStackNavigator<IFriendsStackParamList>();
 const MeStack = createStackNavigator<IMeStackParamList>();
 const Tab = createBottomTabNavigator<IRootTabParamList>();
 const RootStack = createStackNavigator<IRootStackParamList>();
@@ -253,8 +257,18 @@ function GraphsStackScreen(): JSX.Element {
       <GraphsStack.Screen name="progressDashboard" component={NavScreenProgressDashboard} />
       <GraphsStack.Screen name="graphsList" component={NavScreenGraphs} />
       <GraphsStack.Screen name="music" component={NavScreenMusic} />
+      {OfflineOnly_isEnabled() && <GraphsStack.Screen name="programselect" component={NavScreenProgramSelect} />}
       {renderMeScreens(GraphsStack.Screen as unknown as typeof MeStack.Screen)}
     </GraphsStack.Navigator>
+  );
+}
+
+function FriendsStackScreen(): JSX.Element {
+  const screenOptions = useStackScreenOptions();
+  return (
+    <FriendsStack.Navigator screenOptions={screenOptions} screenLayout={renderScreenWithErrorBoundary}>
+      <FriendsStack.Screen name="friends" component={NavScreenFriends} />
+    </FriendsStack.Navigator>
   );
 }
 
@@ -325,7 +339,11 @@ function MainTabsScreen(): JSX.Element {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions} tabBar={(tabProps) => <Footer2Wrapper {...tabProps} />}>
       <Tab.Screen name="home" component={HomeStackScreen} />
-      <Tab.Screen name="program" component={ProgramStackScreen} />
+      {OfflineOnly_isEnabled() ? (
+        <Tab.Screen name="friends" component={FriendsStackScreen} />
+      ) : (
+        <Tab.Screen name="program" component={ProgramStackScreen} />
+      )}
       <Tab.Screen name="workout" component={WorkoutStackScreen} />
       <Tab.Screen name="food" component={FoodStackScreen} />
       <Tab.Screen name="graphs" component={GraphsStackScreen} />
