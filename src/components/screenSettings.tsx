@@ -41,6 +41,7 @@ import { EffortRating_isEnabled } from "../models/effortRating";
 import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offlineOnly";
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
+import { CloudBackupCard } from "./cloudBackupCard";
 
 interface IProps {
   dispatch: IDispatch;
@@ -509,6 +510,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         </>
       )}
       <GroupHeader name="Import / Export" topPadding={true} />
+      {OfflineOnly_isEnabled() && <CloudBackupCard dispatch={props.dispatch} />}
       <MenuItemWrapper name="Export everything" onClick={() => props.dispatch(Thunk_exportEverything())}>
         <View className="py-3">
           <Text className="text-base text-text-primary">Export everything</Text>

@@ -50,7 +50,11 @@ async function saveSession(response: Response): Promise<ICloudResult<ICloudSessi
   if (session == null) {
     return { ok: false, error: "Supabase sent an answer the app could not read" };
   }
-  await CloudStore.update((state) => ({ ...state, session }));
+  await CloudStore.update((state) => ({
+    ...state,
+    session,
+    lastBackupAt: state.session?.userId === session.userId ? state.lastBackupAt : undefined,
+  }));
   return { ok: true, value: session };
 }
 
@@ -59,7 +63,7 @@ export async function CloudBackupClient_verify(email: string, code: string): Pro
   return result.ok ? saveSession(result.value) : result;
 }
 
-async function session(): Promise<ICloudResult<ICloudSession>> {
+async function getSession(): Promise<ICloudResult<ICloudSession>> {
   const current = (await CloudStore.load()).session;
   if (current == null) {
     return { ok: false, error: "Not signed in" };
@@ -80,7 +84,7 @@ async function put(path: string, text: string, token: string): Promise<ICloudRes
 }
 
 export async function CloudBackupClient_upload(text: string): Promise<ICloudResult<number>> {
-  const auth = await session();
+  const auth = await getSession();
   if (!auth.ok) {
     return auth;
   }
@@ -90,13 +94,16 @@ export async function CloudBackupClient_upload(text: string): Promise<ICloudResu
   if (!latest.ok) {
     return latest;
   }
-  await put(paths.daily, text, auth.value.accessToken);
+  const daily = await put(paths.daily, text, auth.value.accessToken);
+  if (!daily.ok) {
+    return daily;
+  }
   await CloudStore.update((state) => ({ ...state, lastBackupAt: now }));
   return { ok: true, value: now };
 }
 
 export async function CloudBackupClient_download(): Promise<ICloudResult<string | undefined>> {
-  const auth = await session();
+  const auth = await getSession();
   if (!auth.ok) {
     return auth;
   }
@@ -107,7 +114,7 @@ export async function CloudBackupClient_download(): Promise<ICloudResult<string 
     auth.value.accessToken
   );
   if (!result.ok) {
-    return /not.?found/i.test(result.error) || /400|404/.test(result.error) ? { ok: true, value: undefined } : result;
+    return /^Object not found$/i.test(result.error) ? { ok: true, value: undefined } : result;
   }
   return { ok: true, value: await result.value.text() };
 }

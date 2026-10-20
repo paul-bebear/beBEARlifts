@@ -26,25 +26,25 @@ The user signs in with an email code. After each workout the app uploads the "Ex
 
 None of the client code has run against a real sign-in yet.
 
-## To do
+## To do (completed 2026-10-20)
 
-1. **Let the page reach Supabase.**
+1. [x] **Let the page reach Supabase.**
    - Add `https://qvqwvuuwfueccrmzwyct.supabase.co` to `OfflineOnly_allowedOrigins` in `src/utils/offlineOnly.ts`. Update `test/offlineOnly.test.ts` if it lists the origins.
    - Add the same origin to the `connect-src` header in `vercel.json`.
    - Without both, every call fails with "No connection".
-2. **Upload thunk.** Add `Thunk_cloudBackup(force: boolean)` in `src/ducks/thunks.ts`.
+2. [x] **Upload thunk.** Add `Thunk_cloudBackup(force: boolean)` in `src/ducks/thunks.ts`.
    - Build the file the way `Thunk_exportEverything` does: load the food, music, body, warmup and report stores, then call `FullBackup_build({...}, now)` and `JSON.stringify`. Extract a shared helper so the two thunks do not duplicate this.
    - Without `force`, upload only when `CloudBackup_isAutoDue(state, lastWorkoutAt)` is true. `lastWorkoutAt` is `history[0].endTime ?? history[0].startTime`.
    - Then call `CloudBackupClient_upload`.
-3. **Restore thunk.** Add `Thunk_cloudRestore()`. It calls `CloudBackupClient_download()` and passes the text to `Thunk_importStorage`, which already restores a full backup, food, music, body scans, warmups and reports.
-4. **Auto backup.** In `src/components/screenFinishDay.tsx`, dispatch `Thunk_cloudBackup(false)` once on mount, offline build only (`OfflineOnly_isEnabled()`).
-5. **Settings card.** Add `src/components/cloudBackupCard.tsx` under the "Import / Export" group in `src/components/screenSettings.tsx`, offline build only.
+3. [x] **Restore thunk.** Add `Thunk_cloudRestore()`. It calls `CloudBackupClient_download()` and passes the text to `Thunk_importStorage`, which already restores a full backup, food, music, body scans, warmups and reports.
+4. [x] **Auto backup.** In `src/components/screenFinishDay.tsx`, dispatch `Thunk_cloudBackup(false)` once on mount, offline build only (`OfflineOnly_isEnabled()`).
+5. [x] **Settings card.** Add `src/components/cloudBackupCard.tsx` under the "Import / Export" group in `src/components/screenSettings.tsx`, offline build only.
    - **Signed out:** an email field and "Send code". Then a code field and "Sign in". Validate with `CloudBackup_isEmail` and `CloudBackup_isCode`. Show the error text from the client.
    - **Signed in:** the email, "Last backup: <date and time>" from `CloudStore.use()`, and the buttons "Back up now" (`force: true`), "Restore from cloud" (confirm first, because it replaces local data) and "Sign out".
    - **Right after sign-in:** if local history is empty and a cloud backup exists, offer to restore it.
    - Put the step state machine (email → code → signed in, busy, error) in a pure module with a test, per the "Where logic lives" rule.
-6. **Include the cloud file in "Export everything"?** No. Keep `bebear_cloud` out of the export, because it holds the refresh token.
-7. **Docs.** Add a "Cloud backup" section to `README.md`: what is uploaded, where, how to restore, and the email limit below. Add a "built" entry to `FORK_ROADMAP.md` under Phase 2.
+6. [x] **Include the cloud file in "Export everything"?** No. Keep `bebear_cloud` out of the export, because it holds the refresh token.
+7. [x] **Docs.** Add a "Cloud backup" section to `README.md`: what is uploaded, where, how to restore, and the email limit below. Add a "built" entry to `FORK_ROADMAP.md` under Phase 2.
 
 ## The user must do in the Supabase dashboard
 

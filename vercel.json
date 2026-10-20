@@ -16,7 +16,7 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com" },
+        { "key": "Content-Security-Policy", "value": "connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com https://qvqwvuuwfueccrmzwyct.supabase.co" },
         { "key": "X-Robots-Tag", "value": "noindex" }
       ]
     },
