@@ -55,6 +55,54 @@ const offlineOnlyDefines = isOfflineOnly
   ? { __API_HOST__: JSON.stringify(offlineOnlyApiHost), __HOST__: "window.location.origin" }
   : {};
 
+// Vercel serves a static file by its path and ignores the query, so `app.js?version=new` can return the old
+// file during a deploy, and the service worker then keeps it. A content hash in the file name cannot go stale.
+const offlineOnlyHashedNames = isOfflineOnly
+  ? {
+      filename: (pathData) => (pathData.chunk.name === "webpushr-sw" ? "[name].js" : "[name].[contenthash].js"),
+    }
+  : {};
+const cssFileNames = isOfflineOnly
+  ? { filename: "[name].[contenthash].css", chunkFilename: "chunks/[name].[contenthash].css" }
+  : { filename: "[name].css" };
+
+// copy-webpack-plugin 5 adds app/index.html on the emit hook, so this runs on emit at a later stage.
+const hashedIndexPlugin = {
+  apply(compiler) {
+    compiler.hooks.emit.tap({ name: "HashedIndexPlugin", stage: 100 }, (compilation) => {
+      const entry = compilation.entrypoints.get("app");
+      if (entry == null) {
+        return;
+      }
+      const page = compilation.getAsset("app/index.html");
+      if (page == null) {
+        throw new Error("HashedIndexPlugin: app/index.html was not emitted");
+      }
+      const files = entry.getFiles();
+      const find = (pattern) => {
+        const file = files.find((f) => pattern.test(f));
+        if (file == null) {
+          throw new Error(`HashedIndexPlugin: no ${pattern} in the app entrypoint (${files.join(", ")})`);
+        }
+        return `/${file}`;
+      };
+      const replacements = [
+        [/\/app\.css\?version=[^"]*/g, find(/^app\.[0-9a-f]+\.css$/)],
+        [/\/vendors\.js\?vendor=[^"]*/g, find(/^vendors\.[0-9a-f]+\.js$/)],
+        [/\/app\.js\?version=[^"]*/g, find(/^app\.[0-9a-f]+\.js$/)],
+      ];
+      let html = page.source.source().toString();
+      for (const [pattern, file] of replacements) {
+        if (html.search(pattern) === -1) {
+          throw new Error(`HashedIndexPlugin: app/index.html has no ${pattern}`);
+        }
+        html = html.replace(pattern, file);
+      }
+      compilation.updateAsset("app/index.html", new sources.RawSource(html));
+    });
+  },
+};
+
 const uniwindRnRewrite = new NormalModuleReplacementPlugin(/^react-native$/, (resource) => {
   const issuer = (resource.contextInfo && resource.contextInfo.issuer) || resource.context || "";
   if (issuer.includes(`${require("path").sep}uniwind${require("path").sep}`)) {
@@ -207,6 +255,7 @@ const mainConfig = {
     chunkFilename: "chunks/[name].[contenthash].js",
     publicPath: "/",
     path: path.resolve(__dirname, "dist"),
+    ...offlineOnlyHashedNames,
   },
   devtool: false,
   module: {
@@ -266,7 +315,8 @@ const mainConfig = {
       append: `\n//# sourceMappingURL=[url]?version=${commitHash}`,
       filename: "[file].map",
     }),
-    new MiniCssExtractPlugin({ filename: "[name].css" }),
+    new MiniCssExtractPlugin(cssFileNames),
+    ...(isOfflineOnly ? [hashedIndexPlugin] : []),
     new DefinePlugin({
       "process.env.JEST_WORKER_ID": "undefined",
       __DEV__: JSON.stringify(process.env.NODE_ENV !== "production"),

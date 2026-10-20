@@ -1,4 +1,5 @@
 import { UrlUtils_build } from "./utils/url";
+import { BundleNames_assetsInPage, BundleNames_hashedAsset } from "./utils/bundleNames";
 
 declare let __COMMIT_HASH__: string;
 const cacheName = `liftosaur-sw-${__COMMIT_HASH__}`;
@@ -8,7 +9,8 @@ const filesToCache = [
   `/app.js?version=${__COMMIT_HASH__}`,
   "/app/",
   "/manifest.webmanifest",
-  /\/chunks\/.*\.js$/,
+  /\/chunks\/.*\.(js|css)$/,
+  BundleNames_hashedAsset,
   /\/programdata\//,
   /\/images\//,
   `/main.css?version=${__COMMIT_HASH__}`,
@@ -48,9 +50,14 @@ function initialize(service: ServiceWorkerGlobalScope): void {
     event.waitUntil(
       // One file at a time: cache.addAll rejects the whole install if any single file 404s
       // (e.g. /vendors.css, which the current build does not emit), and then nothing works offline.
-      caches.open(cacheName).then((cache) => {
-        const urls = filesToCache.filter((f) => typeof f === "string") as string[];
-        return Promise.all(urls.map((u) => cache.add(u).catch((err) => console.warn("[Service Worker] Skip", u, err))));
+      caches.open(cacheName).then(async (cache) => {
+        const add = (urls: string[]): Promise<unknown> =>
+          Promise.all(urls.map((u) => cache.add(u).catch((err) => console.warn("[Service Worker] Skip", u, err))));
+        await add(filesToCache.filter((f) => typeof f === "string") as string[]);
+        const page = await cache.match("/app/");
+        if (page != null) {
+          await add(BundleNames_assetsInPage(await page.text()));
+        }
       })
     );
   });
