@@ -1,6 +1,7 @@
 import { IStorage } from "../types";
 import { FoodLog_parse, IFoodLog } from "./foodLog";
 import { IMusicLog, MusicLog_parse } from "./musicLog";
+import { BodyScans_parse, IBodyScanLog } from "./bodyScans";
 
 export const FullBackup_format = "bebearlifts-backup";
 
@@ -10,6 +11,7 @@ const readme = [
   "workouts.history: one record per finished workout. Each of its entries is an exercise; each set has reps, weight, completedReps, completedWeight, completedRpe (10 minus reps in reserve) and timestamp (ms, when the set was ticked).",
   "workouts.stats: body measurements over time, under weight, length and percentage (body fat). workouts.programs: the training programs, written in Liftoscript.",
   "food.entries: food eaten, with calories and macros per entry. food.goals: daily targets. food.profile: height, sex, birth year, activity, goal.",
+  "body.scans: gym scale scans (weight, body fat %, muscle mass, body water %, bone mass, visceral fat, BMR, metabolic age), newest first. Masses use each scan's unit.",
   "music.sessions: songs played during each workout, matched by session id to workouts.history id. startedAt is ms; heardMs is how long the song played; isKept false means skipped.",
 ].join("\n");
 
@@ -21,9 +23,16 @@ export interface IFullBackup {
   workouts: IStorage;
   food: IFoodLog;
   music: IMusicLog;
+  body: IBodyScanLog;
 }
 
-export function FullBackup_build(storage: IStorage, food: IFoodLog, music: IMusicLog, now: number): IFullBackup {
+export function FullBackup_build(
+  storage: IStorage,
+  food: IFoodLog,
+  music: IMusicLog,
+  body: IBodyScanLog,
+  now: number
+): IFullBackup {
   return {
     format: FullBackup_format,
     version: 1,
@@ -32,6 +41,7 @@ export function FullBackup_build(storage: IStorage, food: IFoodLog, music: IMusi
     workouts: storage,
     food,
     music: { ...music, tokens: undefined },
+    body,
   };
 }
 
@@ -43,6 +53,7 @@ export interface IFullBackupContents {
   storage: unknown;
   food?: IFoodLog;
   music?: IMusicLog;
+  body?: IBodyScanLog;
 }
 
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
@@ -55,6 +66,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     storage: r.workouts,
     food: r.food != null ? FoodLog_parse(r.food) : undefined,
     music: r.music != null ? MusicLog_parse(r.music) : undefined,
+    body: r.body != null ? BodyScans_parse(r.body) : undefined,
   };
 }
 
