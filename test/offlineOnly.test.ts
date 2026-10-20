@@ -31,6 +31,21 @@ describe("OfflineOnly_isRequestAllowed", () => {
     expect(OfflineOnly_isRequestAllowed("http://api.spotify.com/v1/me", origin)).to.equal(false);
   });
 
+  it("allows this app's Supabase project and no other Supabase project", () => {
+    expect(
+      OfflineOnly_isRequestAllowed("https://qvqwvuuwfueccrmzwyct.supabase.co/rest/v1/posts?select=*", origin)
+    ).to.equal(true);
+    expect(OfflineOnly_isRequestAllowed("https://qvqwvuuwfueccrmzwyct.supabase.co/auth/v1/token", origin)).to.equal(
+      true
+    );
+    expect(OfflineOnly_isRequestAllowed("https://abcdefghijklmnopqrst.supabase.co/rest/v1/posts", origin)).to.equal(
+      false
+    );
+    expect(OfflineOnly_isRequestAllowed("http://qvqwvuuwfueccrmzwyct.supabase.co/rest/v1/posts", origin)).to.equal(
+      false
+    );
+  });
+
   it("allows data and blob URLs used for in-memory files", () => {
     expect(OfflineOnly_isRequestAllowed("data:text/plain,hello", origin)).to.equal(true);
     expect(OfflineOnly_isRequestAllowed(`blob:${origin}/2b6e0c8a`, origin)).to.equal(true);

@@ -20,6 +20,7 @@ export interface IMusicSession {
   endedAt?: number;
   plays: IMusicPlay[];
   current?: IMusicCurrent;
+  playlistUrl?: string;
 }
 
 const keptShare = 0.5;

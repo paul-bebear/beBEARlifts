@@ -2,7 +2,11 @@ declare let __OFFLINE_ONLY__: boolean | undefined;
 declare let __SOURCE_CODE_URL__: string | undefined;
 
 const UPSTREAM_SOURCE_CODE_URL = "https://github.com/astashov/liftosaur";
-export const OfflineOnly_allowedOrigins = ["https://api.spotify.com", "https://accounts.spotify.com"];
+export const OfflineOnly_allowedOrigins = [
+  "https://api.spotify.com",
+  "https://accounts.spotify.com",
+  "https://qvqwvuuwfueccrmzwyct.supabase.co",
+];
 
 export function OfflineOnly_isEnabled(): boolean {
   return typeof __OFFLINE_ONLY__ !== "undefined" && __OFFLINE_ONLY__ === true;

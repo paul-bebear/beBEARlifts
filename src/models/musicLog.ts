@@ -63,6 +63,9 @@ function parseSession(raw: unknown): IMusicSession | undefined {
   if (currentTrack != null && firstSeenAt != null && maxProgressMs != null) {
     session.current = { track: currentTrack, firstSeenAt, maxProgressMs };
   }
+  if (typeof r.playlistUrl === "string") {
+    session.playlistUrl = r.playlistUrl;
+  }
   return session;
 }
 
