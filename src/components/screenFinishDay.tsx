@@ -1,3 +1,4 @@
+import { ListenLinks_open } from "./listenLinksCard";
 import { JSX, useState } from "react";
 import { View, Pressable, Platform } from "react-native";
 import { SvgUri, SvgXml } from "react-native-svg";
@@ -180,6 +181,16 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
             <LinkButton name="finish-day-music" onClick={() => props.dispatch(Thunk_pushScreen("music"))}>
               Review this workout's songs
             </LinkButton>
+            {props.settings.listenLinks?.cooldown != null && (
+              <View className="mt-3">
+                <LinkButton
+                  name="finish-day-cooldown"
+                  onClick={() => ListenLinks_open(props.settings.listenLinks?.cooldown ?? "")}
+                >
+                  Play cooldown for the walk home
+                </LinkButton>
+              </View>
+            )}
           </View>
         )}
 

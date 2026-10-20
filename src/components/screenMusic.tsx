@@ -2,7 +2,8 @@ import { JSX, useState } from "react";
 import { View, Pressable, Linking } from "react-native";
 import { Text } from "./primitives/text";
 import { useNavOptions } from "../navigation/useNavOptions";
-import { useTrackedState, untrack } from "../navigation/TrackedStateContext";
+import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
+import { ListenLinksCard } from "./listenLinksCard";
 import { FoodPrimaryButton } from "./foodUi";
 import { IconCheckCircle } from "./icons/iconCheckCircle";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
@@ -203,6 +204,7 @@ export function ScreenMusic(): JSX.Element {
   const state = useTrackedState();
   const history = untrack(state.storage.history);
   const settings = untrack(state.storage.settings);
+  const dispatch = useTrackedDispatch();
   const log = useMusicLog();
   const [error] = useState(() => SpotifyClient_takeError());
   const sessions = MusicLog_reviewable(log);
@@ -241,6 +243,7 @@ export function ScreenMusic(): JSX.Element {
         )}
         {error != null && <Text className="mt-3 text-sm text-text-error">{error}</Text>}
       </View>
+      <ListenLinksCard settings={settings} dispatch={dispatch} />
       {sessions.length === 0 ? (
         <Text className="px-4 text-base text-text-secondary">
           No workout music yet. Start a workout with Spotify playing on this account.
