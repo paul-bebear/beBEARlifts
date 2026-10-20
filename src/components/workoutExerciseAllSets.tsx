@@ -42,6 +42,7 @@ import { useTrackClick } from "../utils/clickTracking";
 import { useRem } from "../utils/useRem";
 
 interface IWorkoutExerciseAllSets {
+  clipWorkoutId?: number;
   day: number;
   isCurrentProgress: boolean;
   isPlayground: boolean;
@@ -245,6 +246,7 @@ function WorkoutExerciseAllSetsInner(props: IWorkoutExerciseAllSets): JSX.Elemen
             isCurrentProgress={props.isCurrentProgress}
             isPlayground={props.isPlayground}
             type="warmup"
+            clipWorkoutId={props.isPlayground ? undefined : props.clipWorkoutId}
             key={`warmup-${set.id}-${i}`}
             day={props.day}
             exerciseType={props.exerciseType}
@@ -272,6 +274,7 @@ function WorkoutExerciseAllSetsInner(props: IWorkoutExerciseAllSets): JSX.Elemen
             isPlayground={props.isPlayground}
             isCurrentProgress={props.isCurrentProgress}
             type="workout"
+            clipWorkoutId={props.isPlayground ? undefined : props.clipWorkoutId}
             key={`workout-${set.id}-${i}`}
             isExpanded={expanded?.mode === "workout" && expanded.setIndex === i}
             onToggleExpand={expansion?.onToggle}

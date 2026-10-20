@@ -92,6 +92,7 @@ export function computeSetColumnWidths(remValue: number, isUnilateral: boolean, 
 }
 
 interface IWorkoutExerciseSet {
+  clipWorkoutId?: number;
   exerciseType: IExerciseType;
   day: number;
   type: IProgressMode;
@@ -118,6 +119,7 @@ interface IWorkoutExerciseSet {
 }
 
 export interface IWorkoutExerciseSetBodyProps {
+  clipWorkoutId?: number;
   set: ISet;
   type: IProgressMode;
   setType: IWorkoutSetType;
@@ -357,6 +359,7 @@ function WorkoutExerciseSetInner(props: IWorkoutExerciseSet): JSX.Element {
     props.type === "warmup" ? "warmup" : props.isCurrentProgress && props.programExercise == null ? "adhoc" : "program";
 
   const body: IWorkoutExerciseSetBodyProps = {
+    clipWorkoutId: props.clipWorkoutId,
     set,
     type: props.type,
     setType,

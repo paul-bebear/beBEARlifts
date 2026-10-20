@@ -22,6 +22,8 @@ import * as dialogs from "../src/utils/dialog";
 import * as exporter from "../src/utils/exporter";
 import { CloudBackupCommand_run } from "../src/utils/cloudBackupCommand";
 import { ICloudBackupEvent } from "../src/models/cloudBackupForm";
+import { SetClips_empty, SetClips_parse } from "../src/models/setClips";
+import { SetClipStore } from "../src/utils/setClipStore";
 
 const now = Date.UTC(2026, 9, 20, 18);
 const session = {
@@ -60,6 +62,7 @@ describe("Cloud backup thunks", () => {
     sinon.stub(body, "BodyScanStore_load").resolves(BodyScans_empty());
     sinon.stub(warmups, "WarmupStore_load").resolves(WarmupPlan_empty());
     sinon.stub(ReportStore, "load").resolves(WorkoutReport_empty());
+    sinon.stub(SetClipStore, "load").resolves(SetClips_empty());
   });
   afterEach(() => sinon.restore());
 
@@ -105,7 +108,8 @@ describe("Cloud backup thunks", () => {
       "music",
       "body",
       "warmups",
-      "reports"
+      "reports",
+      "clips"
     );
     expect(text).to.not.include("secret-refresh");
     expect(text).to.not.include("spotify-refresh");
@@ -150,6 +154,20 @@ describe("Cloud backup thunks", () => {
       body: BodyScans_empty(),
       warmups: WarmupPlan_empty(),
       reports: WorkoutReport_empty(),
+      clips: {
+        version: 1 as const,
+        clips: [
+          {
+            workoutId: now,
+            setId: "set-1",
+            exerciseId: "squat",
+            timestamp: now,
+            size: 1000,
+            savedVia: "share" as const,
+            thumbnail: "data:image/jpeg;base64,YWJj",
+          },
+        ],
+      },
     };
     download.resolves({ ok: true, value: JSON.stringify(FullBackup_build(parts, now)) });
     const replaceFood = sinon.stub(food, "FoodLogStore_replace").resolves();
@@ -157,6 +175,7 @@ describe("Cloud backup thunks", () => {
     const replaceBody = sinon.stub(body, "BodyScanStore_update").resolves();
     const replaceWarmups = sinon.stub(warmups, "WarmupStore_update").resolves();
     const replaceReports = sinon.stub(ReportStore, "update").resolves();
+    const replaceClips = sinon.stub(SetClipStore, "update").resolves();
     const updateCloud = sinon.spy(cloud.CloudStore, "update");
     const result = sinon.spy();
     await run(Thunk_cloudRestore(result));
@@ -171,6 +190,7 @@ describe("Cloud backup thunks", () => {
     expect(replaceBody.firstCall.args[0](BodyScans_empty())).to.deep.equal(parts.body);
     expect(replaceWarmups.firstCall.args[0](WarmupPlan_empty())).to.deep.equal(parts.warmups);
     expect(replaceReports.firstCall.args[0](WorkoutReport_empty())).to.deep.equal(parts.reports);
+    expect(replaceClips.firstCall.args[0](SetClips_empty())).to.deep.equal(SetClips_parse(parts.clips));
     expect(updateCloud.called).to.equal(false);
   });
 
