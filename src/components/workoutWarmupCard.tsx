@@ -71,9 +71,7 @@ export function WorkoutWarmupCard(props: {
       {isOpen && (
         <View className="mt-2">
           {plan.source === "rules" && (
-            <Text className="mb-2 text-xs text-text-secondary">
-              Standard warmup{error != null ? ` (${error})` : ""}.
-            </Text>
+            <Text className="mb-2 text-xs text-text-secondary">Standard warmup.{error != null ? ` ${error}` : ""}</Text>
           )}
           {plan.items.map((item, i) => (
             <Pressable

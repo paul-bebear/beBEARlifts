@@ -23,14 +23,14 @@ function save(report: IWorkoutReport): Promise<void> {
 export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Element {
   const { report } = props;
   const [isBusy, setIsBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const writeSummary = async (): Promise<void> => {
     setIsBusy(true);
-    const summary = await ReportApi_summary(report);
-    setFailed(summary == null);
-    if (summary != null) {
-      await save({ ...report, summary });
+    const result = await ReportApi_summary(report);
+    setError(result.ok ? undefined : result.error);
+    if (result.ok) {
+      await save({ ...report, summary: result.text });
     }
     setIsBusy(false);
   };
@@ -76,7 +76,7 @@ export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Elemen
           {isBusy ? "Writing…" : report.summary != null ? "Rewrite the coach's note" : "Get the coach's note"}
         </Text>
       </Pressable>
-      {failed && <Text className="mt-1 text-xs text-text-error">No note right now. It needs a connection.</Text>}
+      {error != null && <Text className="mt-1 text-xs text-text-error">{error}</Text>}
     </View>
   );
 }
