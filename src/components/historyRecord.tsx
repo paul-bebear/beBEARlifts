@@ -26,6 +26,9 @@ import { Thunk_startProgramDay, Thunk_editHistoryRecord } from "../ducks/thunks"
 import { IconArrowDown2 } from "./icons/iconArrowDown2";
 import { IconArrowUp } from "./icons/iconArrowUp";
 import { HistoryCollapse_summary } from "../models/historyCollapse";
+import { useMusicLog } from "../utils/musicStore";
+import { MusicLog_session } from "../models/musicLog";
+import { SongPerSet_forEntry, SongPerSet_match } from "../models/songPerSet";
 
 interface IProps {
   historyRecord: IHistoryRecord;
@@ -59,6 +62,11 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
 
   const entries = historyRecord.entries;
   const supersetToColor = useMemo(() => Progress_getSupersetToColor(entries), [entries]);
+  const musicLog = useMusicLog();
+  const songs = useMemo(
+    () => (isCurrent ? [] : SongPerSet_match(historyRecord, MusicLog_session(musicLog, historyRecord.id))),
+    [isCurrent, historyRecord, musicLog]
+  );
 
   const handleCardPress = (): void => {
     if (Progress_isCurrent(historyRecord)) {
@@ -151,6 +159,7 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
                   supersetColor={entry.superset != null ? supersetToColor[entry.superset] : undefined}
                   settings={props.settings}
                   showNotes={true}
+                  songs={SongPerSet_forEntry(songs, i)}
                 />
               );
             })}

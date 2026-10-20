@@ -9,6 +9,7 @@ import { ExerciseImage } from "./exerciseImage";
 import { IHistoryEntryPersonalRecords } from "../models/history";
 import { HistoryRecordSetsView } from "./historyRecordSets";
 import { ObjectUtils_values } from "../utils/object";
+import { ISongForSet, SongPerSet_label } from "../models/songPerSet";
 
 interface IHistoryEntryProps {
   entry: IHistoryEntry;
@@ -19,6 +20,7 @@ interface IHistoryEntryProps {
   supersetColor?: string;
   settings: ISettings;
   showNotes: boolean;
+  songs?: ISongForSet[];
 }
 
 export const HistoryEntryView = memo((props: IHistoryEntryProps): JSX.Element => {
@@ -72,6 +74,18 @@ export const HistoryEntryView = memo((props: IHistoryEntryProps): JSX.Element =>
                 <Text className="mt-1 text-sm text-text-secondary">{entry.notes}</Text>
               </View>
             )}
+            {props.songs?.map((song) => (
+              <Text
+                key={song.setIndex}
+                className="mt-1 text-xs text-text-secondary"
+                numberOfLines={1}
+                data-testid="history-entry-song"
+                testID="history-entry-song"
+              >
+                {"♪ "}
+                {SongPerSet_label(song)}
+              </Text>
+            ))}
           </View>
           <View className="shrink">
             <HistoryRecordSetsView

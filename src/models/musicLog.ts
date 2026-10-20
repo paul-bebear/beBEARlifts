@@ -108,3 +108,8 @@ export function MusicLog_formatDuration(ms: number): string {
 export function MusicLog_disconnect(log: IMusicLog): IMusicLog {
   return { ...log, tokens: undefined, displayName: undefined };
 }
+
+// The export goes to a file the user may share, so the Spotify refresh token stays on the phone.
+export function MusicLog_exportJson(log: IMusicLog): string {
+  return JSON.stringify({ ...log, tokens: undefined });
+}
