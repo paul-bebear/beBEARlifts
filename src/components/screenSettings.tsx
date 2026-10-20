@@ -37,6 +37,7 @@ import { TextSize_apply } from "../utils/textSize";
 import { useOsFontScale } from "../utils/fontScale";
 import { LinkButton } from "./linkButton";
 import { Features_isEnabled } from "../utils/features";
+import { EffortRating_isEnabled } from "../models/effortRating";
 import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offlineOnly";
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
@@ -217,6 +218,20 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         shouldShowRightArrow={true}
       />
       <MenuItem name="Timers" onClick={() => props.dispatch(Thunk_pushScreen("timers"))} shouldShowRightArrow={true} />
+      <MenuItemEditable
+        type="boolean"
+        name="Rate each set"
+        value={EffortRating_isEnabled(props.settings) ? "true" : "false"}
+        onChange={(newValue) => {
+          props.dispatch({
+            type: "UpdateSettings",
+            lensRecording: lb<ISettings>()
+              .p("rateEachSet")
+              .record(newValue === "true"),
+            desc: "Toggle rate each set",
+          });
+        }}
+      />
       {props.settings.gyms.length > 1 && (
         <MenuItemEditable
           type="select"

@@ -1,5 +1,6 @@
 import { ISetsStatus, Reps_isFinished, Reps_isCompleted, Reps_isInRangeCompleted } from "../models/set";
 import { ISet } from "../types";
+import { EffortRating_color } from "../models/effortRating";
 import { Tailwind_semantic, Tailwind_colors } from "./tailwindConfig";
 
 export function WorkoutExerciseUtils_getColor(sets: ISet[], isWarmup: boolean): string {
@@ -10,10 +11,11 @@ export function WorkoutExerciseUtils_getColor(sets: ISet[], isWarmup: boolean): 
     if (isWarmup) {
       return "green";
     } else {
+      const effortColor = EffortRating_color(sets);
       if (Reps_isCompleted(sets)) {
-        return "green";
+        return effortColor ?? "green";
       } else if (Reps_isInRangeCompleted(sets)) {
-        return "yellow";
+        return effortColor ?? "yellow";
       } else {
         return "red";
       }

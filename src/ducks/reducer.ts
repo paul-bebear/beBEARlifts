@@ -316,6 +316,7 @@ export type IChangeAMRAPAction = {
   isAmrap?: boolean;
   logRpe?: boolean;
   askWeight?: boolean;
+  rateEffort?: boolean;
   programExercise?: IPlannerProgramExercise;
   otherStates?: IByExercise<IProgramState>;
   userVars?: Record<string, number | IWeight | IPercentage>;
