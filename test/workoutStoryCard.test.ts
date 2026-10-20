@@ -1,10 +1,17 @@
 import "mocha";
 import { expect } from "chai";
-import { LiftEquivalents_count, LiftEquivalents_pick } from "../src/models/liftEquivalents";
+import {
+  ILiftEquivalent,
+  LiftEquivalents_all,
+  LiftEquivalents_count,
+  LiftEquivalents_formatCount,
+  LiftEquivalents_pick,
+} from "../src/models/liftEquivalents";
 import {
   WorkoutStoryCard_duration,
   WorkoutStoryCard_muscles,
   WorkoutStoryCard_stats,
+  WorkoutStoryCard_weightNumber,
 } from "../src/models/workoutStoryCard";
 import { Settings_build } from "../src/models/settings";
 import { Weight_build } from "../src/models/weight";
@@ -74,29 +81,66 @@ describe("WorkoutStoryCard", () => {
   it("has no muscles for a workout with no finished sets", () => {
     expect(WorkoutStoryCard_muscles({ ...record, entries: [] }, settings)).to.deep.equal({});
   });
+
+  it("writes the weight as a whole number with thousands commas", () => {
+    expect(WorkoutStoryCard_weightNumber(Weight_build(12345.6, "lb"))).to.equal("12,346");
+  });
 });
 
+function allPicks(totalKg: number): ILiftEquivalent[] {
+  return Array.from({ length: LiftEquivalents_count(totalKg) }, (_, i) => LiftEquivalents_pick(totalKg, i)!);
+}
+
 describe("LiftEquivalents_pick", () => {
-  it("names a funny equivalent and changes with the seed", () => {
-    const first = LiftEquivalents_pick(2438, 0);
-    expect(first?.text).to.match(/^That's [\d,.]+ [a-zA-Z. ]+$/);
-    const texts = new Set(
-      Array.from({ length: LiftEquivalents_count(2438) }, (_, i) => LiftEquivalents_pick(2438, i)?.text)
-    );
-    expect(texts.size).to.equal(LiftEquivalents_count(2438));
+  it("has at least 40 things, each with a plural name and an emoji", () => {
+    const things = LiftEquivalents_all();
+    expect(things.length).to.be.at.least(40);
+    expect(new Set(things.map((t) => t.many)).size).to.equal(things.length);
+    expect(things.every((t) => t.kg > 0 && t.emoji !== "" && t.many !== t.one)).to.equal(true);
   });
 
-  it("gives 1,083 loaves of bread for 866.4 kg when it lands on bread", () => {
-    const loaves = Array.from({ length: LiftEquivalents_count(866.4) }, (_, i) => LiftEquivalents_pick(866.4, i)).find(
-      (e) => e?.emoji === "🍞"
-    );
-    expect(loaves?.text).to.equal("That's 1,083 loaves of bread");
+  it("keeps every count between 2 and 999, so there is never 0.3 elephants or 48,000 bananas", () => {
+    for (const totalKg of [1, 25, 300, 2438, 15000, 80000, 600000]) {
+      const picks = allPicks(totalKg);
+      expect(picks.length, `${totalKg} kg`).to.be.at.least(3);
+      expect(picks.every((e) => e.count >= 2 && e.count <= 999)).to.equal(true);
+    }
+    expect(allPicks(500).some((e) => e.noun === "African elephants")).to.equal(false);
+    expect(allPicks(6000).some((e) => e.noun === "bananas")).to.equal(false);
   });
 
-  it("skips things that would be under 2 or over 100,000", () => {
-    const all = Array.from({ length: LiftEquivalents_count(500) }, (_, i) => LiftEquivalents_pick(500, i)!);
-    expect(all.every((e) => e.count >= 2 && e.count <= 100000)).to.equal(true);
-    expect(all.some((e) => e.emoji === "🐘")).to.equal(false);
+  it("shows every fitting thing once before it repeats", () => {
+    const nouns = new Set(allPicks(2438).map((e) => e.noun));
+    expect(nouns.size).to.equal(LiftEquivalents_count(2438));
+  });
+
+  it("changes both the thing and the phrase on each shuffle", () => {
+    const a = LiftEquivalents_pick(2438, 10)!;
+    const b = LiftEquivalents_pick(2438, 11)!;
+    expect(a.noun).to.not.equal(b.noun);
+    expect(a.lead + a.tail).to.not.equal(b.lead + b.tail);
+  });
+
+  it("builds the line from the phrase, the number and the noun", () => {
+    const leads = new Set<string>();
+    for (let seed = 0; seed < 30; seed += 1) {
+      const e = LiftEquivalents_pick(1200, seed)!;
+      leads.add(e.lead);
+      expect(e.text).to.equal([e.lead, `${e.number} ${e.noun}`, e.tail].filter((s) => s !== "").join(" "));
+    }
+    expect(leads.size).to.be.at.least(4);
+    const piano = allPicks(1200).find((e) => e.noun === "grand pianos");
+    expect(piano?.number).to.equal("3");
+  });
+
+  it("rounds under 10 to one decimal and adds commas from 1,000", () => {
+    expect([2.04, 2.46, 9.96, 148.4, 1083.2].map(LiftEquivalents_formatCount)).to.deep.equal([
+      "2",
+      "2.5",
+      "10",
+      "148",
+      "1,083",
+    ]);
   });
 
   it("has nothing for an empty workout and handles a negative seed", () => {

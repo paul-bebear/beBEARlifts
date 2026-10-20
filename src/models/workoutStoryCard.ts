@@ -19,6 +19,10 @@ export function WorkoutStoryCard_duration(ms: number): string {
   return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
 }
 
+export function WorkoutStoryCard_weightNumber(weight: IWeight): string {
+  return Math.round(weight.value).toLocaleString("en-US");
+}
+
 export function WorkoutStoryCard_stats(record: IHistoryRecord, settings: ISettings): IWorkoutStoryStats {
   const weight = History_totalRecordWeight(record, settings);
   return {
