@@ -18,6 +18,12 @@ import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedState } from "../navigation/TrackedStateContext";
 import { HistoryRecordView } from "./historyRecord";
 import { Program_evaluate, Program_getProgramDay } from "../models/program";
+import {
+  HistoryCollapse_expand,
+  HistoryCollapse_isExpanded,
+  HistoryCollapse_toggle,
+  IExpandedHistoryIds,
+} from "../models/historyCollapse";
 
 interface IProps {
   program: IProgram;
@@ -121,6 +127,12 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
     return idx >= 0 ? idx : 0;
   });
   const [listRemountKey, setListRemountKey] = useState(0);
+  const [expandedIds, setExpandedIds] = useState<IExpandedHistoryIds>(() =>
+    HistoryCollapse_expand({}, initialHistoryRecordId)
+  );
+  const onToggleExpanded = useCallback((recordId: number) => {
+    setExpandedIds((ids) => HistoryCollapse_toggle(ids, recordId));
+  }, []);
 
   const trackedState = useTrackedState();
   const scrollToRecordId = trackedState.scrollToHistoryRecordId;
@@ -129,6 +141,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
       updateState(props.dispatch, [lb<IState>().p("scrollToHistoryRecordId").record(undefined)], "Clear scroll target");
       const index = sortedHistory.findIndex((record) => record.id === scrollToRecordId);
       if (index >= 0) {
+        setExpandedIds((ids) => HistoryCollapse_expand(ids, scrollToRecordId));
         setInitialScrollIndex(index);
         setListRemountKey((k) => k + 1);
       }
@@ -148,10 +161,12 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
           settings={props.settings}
           historyRecord={item}
           dispatch={dispatch}
+          isExpanded={HistoryCollapse_isExpanded(item, expandedIds)}
+          onToggleExpanded={onToggleExpanded}
         />
       </View>
     ),
-    [isOngoing, programDay, prs, props.settings, dispatch]
+    [isOngoing, programDay, prs, props.settings, dispatch, expandedIds, onToggleExpanded]
   );
 
   const keyExtractor = useCallback((item: IHistoryRecord) => String(item.id), []);
@@ -204,6 +219,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         ref={flatListRef}
         data={sortedHistory}
         renderItem={renderItem}
+        extraData={expandedIds}
         keyExtractor={keyExtractor}
         estimatedItemSize={300}
         initialScrollIndex={initialScrollIndex}

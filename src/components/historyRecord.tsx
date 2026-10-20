@@ -23,6 +23,9 @@ import { StringUtils_pluralize } from "../utils/string";
 import { n } from "../utils/math";
 import { IEvaluatedProgramDay } from "../models/program";
 import { Thunk_startProgramDay, Thunk_editHistoryRecord } from "../ducks/thunks";
+import { IconArrowDown2 } from "./icons/iconArrowDown2";
+import { IconArrowUp } from "./icons/iconArrowUp";
+import { HistoryCollapse_summary } from "../models/historyCollapse";
 
 interface IProps {
   historyRecord: IHistoryRecord;
@@ -32,6 +35,8 @@ interface IProps {
   prs?: IPersonalRecords;
   settings: ISettings;
   dispatch: IDispatch;
+  isExpanded?: boolean;
+  onToggleExpanded?: (recordId: number) => void;
 }
 
 function getNativeCardShadow(): Record<string, unknown> {
@@ -67,16 +72,45 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
     }
   };
 
+  const title = !isCurrent
+    ? DateUtils_format(historyRecord.date)
+    : props.isOngoing
+      ? "Ongoing workout"
+      : "Next workout";
+  const canCollapse = !isCurrent && !!props.onToggleExpanded;
+  const toggle = (): void => props.onToggleExpanded?.(historyRecord.id);
+
+  if (canCollapse && props.isExpanded === false) {
+    return (
+      <View data-testid="history-record" testID="history-record" className="pt-2">
+        <Pressable
+          data-testid="history-record-collapsed"
+          testID="history-record-collapsed"
+          className="px-4 py-3 border rounded-2xl bg-background-cardpurple border-border-cardpurple"
+          style={getNativeCardShadow()}
+          onPress={toggle}
+        >
+          <CollapsedRecord historyRecord={historyRecord} title={title} prs={props.prs} />
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View data-testid="history-record" testID="history-record" className="pt-2">
       {props.showTitle && (
-        <Text
-          data-testid="history-record-date"
-          testID="history-record-date"
-          className="mx-1 mb-1 text-base font-semibold"
+        <Pressable
+          disabled={!canCollapse}
+          onPress={toggle}
+          className="flex-row items-center justify-between mx-1 mb-1"
+          data-testid="history-record-header"
+          testID="history-record-header"
         >
-          {!isCurrent ? DateUtils_format(historyRecord.date) : props.isOngoing ? "Ongoing workout" : "Next workout"}
-        </Text>
+          <Text data-testid="history-record-date" testID="history-record-date" className="text-base font-semibold">
+            {title}
+          </Text>
+          {canCollapse && <IconArrowUp />}
+        </Pressable>
       )}
       <Pressable
         className={`rounded-2xl px-4 ${
@@ -162,6 +196,42 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
     </View>
   );
 }, ComparerUtils_noFns);
+
+interface ICollapsedRecordProps {
+  historyRecord: IHistoryRecord;
+  title: string;
+  prs?: IPersonalRecords;
+}
+
+function CollapsedRecord(props: ICollapsedRecordProps): JSX.Element {
+  const { historyRecord } = props;
+  const summary = HistoryCollapse_summary(historyRecord, props.prs);
+  const exercisesUnit = StringUtils_pluralize("exercise", summary.exercises);
+  const setsUnit = StringUtils_pluralize("set", summary.sets);
+  return (
+    <View>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center flex-1">
+          <Text className="text-base font-semibold">{props.title}</Text>
+          {summary.hasPr && (
+            <View
+              data-testid="history-record-pr"
+              testID="history-record-pr"
+              className="px-2 ml-2 rounded-full bg-background-cardyellow"
+            >
+              <Text className="text-xs font-semibold">{"\u{1F3C6} PR"}</Text>
+            </View>
+          )}
+        </View>
+        <IconArrowDown2 />
+      </View>
+      <Text className="text-sm text-text-secondary">{historyRecord.dayName}</Text>
+      <Text className="mt-1 text-sm">
+        {`${summary.duration}  ·  ${summary.exercises} ${exercisesUnit}  ·  ${summary.sets} ${setsUnit}`}
+      </Text>
+    </View>
+  );
+}
 
 interface IHistoryRecordStats {
   historyRecord: IHistoryRecord;
