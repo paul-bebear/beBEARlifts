@@ -46,13 +46,16 @@ None of the client code has run against a real sign-in yet.
 6. [x] **Include the cloud file in "Export everything"?** No. Keep `bebear_cloud` out of the export, because it holds the refresh token.
 7. [x] **Docs.** Add a "Cloud backup" section to `README.md`: what is uploaded, where, how to restore, and the email limit below. Add a "built" entry to `FORK_ROADMAP.md` under Phase 2.
 
-## The user must do in the Supabase dashboard
+## Supabase dashboard setup (completed 2026-10-20)
 
-These cannot be done from the code or the Supabase MCP tools. Put them in the PR body as steps.
+The free-plan dashboard requires custom SMTP before it allows template edits. The setup was completed through the browser.
 
-1. **Authentication → Emails → Templates.** In both "Magic Link" and "Confirm signup", add the code: `Your code: {{ .Token }}`. Without it, the email only holds a link, which opens Safari and never signs in the Home Screen app.
-2. **Email limit.** Supabase's built-in email sender allows only a few emails per hour. That is fine for the user alone. Before inviting testers, set up custom SMTP under Authentication → Emails → SMTP. Resend's free tier works.
+1. [x] Resend verified `mail.paulbebear.com`. Receiving is disabled. The user saved the three sending verification records in Spaceship.
+2. [x] The user created a sending-access key restricted to `mail.paulbebear.com` and saved it in Supabase's SMTP password field. Supabase uses `smtp.resend.com`, port `465`, username `resend`, sender `noreply@mail.paulbebear.com`, and sender name `beBEARlifts`.
+3. [x] Both "Magic link or OTP" and "Confirm sign up" now use `{{ .Token }}`. Their subject is "Your beBEARlifts sign-in code". Both saves returned success in the dashboard.
+
+Real sign-in and backup verification remain for the user's iPhone after PR #24 is merged and deployed.
 
 ## After the PR
 
-Run the Supabase security advisor (`get_advisors`, type `security`) on project `qvqwvuuwfueccrmzwyct` and fix any warning it reports for the new policies.
+The Supabase security advisor (`get_advisors`, type `security`) returned no warnings for `qvqwvuuwfueccrmzwyct` after PR #24 opened.

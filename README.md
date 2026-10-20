@@ -56,7 +56,9 @@ Backups go to the private `backups` bucket in Supabase project `bebearlifts` (`q
 
 On a new phone, install the Home Screen app and sign in with the same email. If local workout history is empty, the app checks for a cloud backup and offers to restore it. Tap "Restore from cloud" and confirm. Restore replaces local workouts, settings, food, music, body scans, warmups and reports. It keeps this phone's cloud and Spotify logins. Sign out stops automatic uploads and leaves cloud files in place.
 
-In Supabase Authentication → Emails → Templates, add `Your code: {{ .Token }}` to both "Magic Link" and "Confirm signup". A link alone opens Safari and cannot sign in the Home Screen app. Supabase's built-in sender allows only a few emails per hour. Before inviting testers, configure custom SMTP under Authentication → Emails → SMTP.
+For a new Supabase project on the free plan, configure custom SMTP under Authentication → Emails → SMTP Settings first. The dashboard requires custom SMTP before it allows template edits. Resend needs a verified sending domain and a sending-access API key. The sending address does not need an inbox.
+
+In Authentication → Emails → Templates, add `Your code: {{ .Token }}` to both "Magic link or OTP" and "Confirm sign up". A link alone opens Safari and cannot sign in the Home Screen app. This project's SMTP and both code templates were configured on 2026-10-20. Emails send through Resend from `noreply@mail.paulbebear.com` to the address entered in the app.
 
 ## Run it locally
 
