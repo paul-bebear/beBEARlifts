@@ -21,6 +21,8 @@ import {
 import Animated, { SharedValue, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Pressable as StickyPressable } from "./primitives/pressable";
 import { Text } from "./primitives/text";
+import { WorkoutWarmupCard } from "./workoutWarmupCard";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { IDispatch } from "../ducks/types";
 import {
   IHistoryEntry,
@@ -264,6 +266,7 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
             renderMenu={props.renderHeaderMenu}
           />
           <View>
+            {OfflineOnly_isEnabled() && <WorkoutWarmupCard progress={props.progress} settings={props.settings} />}
             {showReorderHint && (
               <Text className="px-4 pt-1 text-xs text-text-secondary" testID="workout-reorder-hint">
                 Long-tap a thumbnail to reorder
