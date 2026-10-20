@@ -6,6 +6,8 @@ import matter from "gray-matter";
 import { PlannerMode_commitFullText } from "../src/pages/planner/models/plannerMode";
 import { Settings_build } from "../src/models/settings";
 import { equipmentName, Exercise_findByName } from "../src/models/exercise";
+import { ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords } from "../src/utils/importFromLiftosaur";
+import { CsvFromChat_extract } from "../src/models/csvFromChat";
 
 const root = path.resolve(__dirname, "..");
 const prompt = fs.readFileSync(path.join(root, "llms/program_builder_prompt.md"), "utf8");
@@ -67,5 +69,24 @@ describe("Program builder prompt", () => {
       .filter((f) => f.endsWith(".md"))
       .map((f) => String(matter(fs.readFileSync(path.join(dir, f), "utf8")).data.name));
     expect(names.filter((name) => !prompt.includes(`- ${name} (`))).to.deep.equal([]);
+  });
+
+  it("has a history CSV example that the app's CSV import reads without errors", () => {
+    const blocks = Array.from(prompt.matchAll(/```csv\n([\s\S]*?)```/g), (m) => m[1]);
+    expect(blocks).to.have.length(1);
+    const result = ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords(blocks[0], settings);
+    expect(result.errors).to.deep.equal([]);
+    expect(result.historyRecords).to.have.length(1);
+    const record = result.historyRecords[0];
+    expect(record.dayName).to.equal("Legs");
+    expect(record.entries.map((e) => e.sets.length)).to.deep.equal([2, 1]);
+    expect(record.entries[1].sets[0].completedReps).to.equal(7);
+    expect(Object.keys(result.customExercises)).to.deep.equal([]);
+  });
+
+  it("takes the CSV out of a pasted code fence", () => {
+    expect(CsvFromChat_extract("```csv\na,b\n1,2\n```\n")).to.equal("a,b\n1,2");
+    expect(CsvFromChat_extract("a,b\n1,2")).to.equal("a,b\n1,2");
+    expect(CsvFromChat_extract("  \n")).to.equal(undefined);
   });
 });
