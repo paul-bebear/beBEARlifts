@@ -11,7 +11,7 @@ The original Liftosaur README follows below, after the fork notes.
 Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modified version to list them.
 
 - The build flag `LFT_OFFLINE_ONLY=1` makes a no-backend build. `npm run build:pwa` sets it. Without the flag, the code builds the same as upstream.
-- In that build, `src/utils/offlineOnly.ts` rejects every `fetch` to another origin. The app sees the same error as a phone with no signal, and takes its existing offline path.
+- In that build, `src/utils/offlineOnly.ts` rejects every `fetch` to another origin except `https://api.spotify.com` and `https://accounts.spotify.com`. The app sees the same error as a phone with no signal, and takes its existing offline path.
 - `__API_HOST__` becomes `https://api.offline.invalid`. The `.invalid` TLD never resolves. `__HOST__` becomes the page's own origin, so built-in programs load from the same site.
 - `src/index.html` no longer loads Rollbar, Google Analytics, the consent script or Apple sign-in. A two-line stub stands in for the global `Rollbar`.
 - `Subscriptions_hasSubscription` in `src/utils/subscriptions.ts` always returns true. Every premium feature reads that one function.
@@ -29,7 +29,7 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - `src/webpushr-sw.ts` precaches the files the app loads (`/app.js`, `/app.css`, `/app/`). It caches lazy chunks, program data and images on first use. One missing file no longer breaks the install.
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
 - A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
-- `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket and sets `Content-Security-Policy: connect-src 'self' blob: data:`.
+- `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket and sets `Content-Security-Policy: connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com`.
 - The Food tab logs calories and macros per meal. Its layout follows Built With Science's Nutrition screen. The screen is `src/components/screenFood.tsx`, and the rules live in `src/models/foodLog.ts` and `src/models/foodAddFlow.ts`.
 - Adding food opens a full screen (`src/components/screenFoodAdd.tsx`): search, Barcode, AI Scan, Describe and Quick Log tiles, and Food, Meals and Recipes tabs. Ticked foods collect in an Item Log basket with portions, then log together (`src/models/foodBasket.ts`). Saved meals and batch recipes live in the food log (`src/models/savedMeals.ts`).
 - The food log has its own IndexedDB key, `bebear_foodlog`, outside Liftosaur's storage, so upstream merges do not touch it. The main JSON export does not include it. The targets sheet (the gear icon) has its own export and import.
@@ -39,6 +39,9 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - The Open Food Facts parser falls back to the English or another localized name when `product_name` is empty. It converts per-serving nutrition to per 100 g when the serving has a gram weight.
 - When no source has a barcode, "Photo the nutrition label" sends a 1600 px photo to the same model with a label prompt (`kind: "label"` in `api/food/photo.mjs`). You check the numbers or type them in. The food is saved in the food log's `savedFoods` under that barcode, so the next scan finds it, even offline. Search finds saved foods by name.
 - The service worker never handles `/api/food/*`, so a lookup always goes to the network.
+- Workout music: Progress → Workout music connects Spotify (Authorization Code with PKCE, no server). During a workout, `src/components/musicTracker.tsx` asks Spotify for the playing song every 8 seconds while the app is open, and reads `recently-played` when the app comes back from a locked screen. A song heard for half its length, or to within 20 seconds of its end, is kept (`src/models/musicSession.ts`). After the workout, untick songs, then "Save to Spotify" makes a private playlist, and "Play next workout" plays them again. The finish screen links to the list.
+- The music log has its own IndexedDB key, `bebear_music`: Spotify tokens, the display name and the last 60 workouts' songs. Only Spotify sees which songs played. No workout data goes to Spotify.
+- The service worker never handles `*.spotify.com` requests.
 
 ## Run it locally
 
@@ -49,6 +52,8 @@ npx serve dist   # or any static server, then open http://localhost:3000/app/
 ```
 
 `npm run start:offline` runs the webpack dev server with the same flag. Open http://localhost:8080/app/index.html.
+
+To test the Spotify login locally, open http://127.0.0.1:8080/app/ instead. Spotify rejects `localhost` redirects, and `http://127.0.0.1:8080/app/` must be listed under Redirect URIs in the Spotify developer dashboard. `tests/music.spec.ts` runs the whole music flow against routed Spotify responses: serve `dist` on `127.0.0.1:4173`, then run `MUSIC_PWA_URL=http://127.0.0.1:4173/app/ npx playwright test tests/music.spec.ts`.
 
 For the Food tab's lookups, also run `npm run start:foodapi` in a second terminal. It serves the `api/food/*` functions on port 3010, and the dev server forwards `/api/food/*` to it. Set `FOOD_API_PORT` for both commands to use another port. Outside Vercel, the photo function needs `GEMINI_API_KEY`, `AI_GATEWAY_API_KEY`, or a `VERCEL_OIDC_TOKEN` from `vercel env pull`. The USDA function reads `FDC_API_KEY` the same way.
 

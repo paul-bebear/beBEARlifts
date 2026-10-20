@@ -22,6 +22,15 @@ describe("OfflineOnly_isRequestAllowed", () => {
     expect(OfflineOnly_isRequestAllowed("https://bebearlifts.vercel.app:8443/app", origin)).to.equal(false);
   });
 
+  it("allows the Spotify API and login hosts and nothing else on spotify.com", () => {
+    expect(OfflineOnly_isRequestAllowed("https://api.spotify.com/v1/me/player/currently-playing", origin)).to.equal(
+      true
+    );
+    expect(OfflineOnly_isRequestAllowed("https://accounts.spotify.com/api/token", origin)).to.equal(true);
+    expect(OfflineOnly_isRequestAllowed("https://open.spotify.com/track/1", origin)).to.equal(false);
+    expect(OfflineOnly_isRequestAllowed("http://api.spotify.com/v1/me", origin)).to.equal(false);
+  });
+
   it("allows data and blob URLs used for in-memory files", () => {
     expect(OfflineOnly_isRequestAllowed("data:text/plain,hello", origin)).to.equal(true);
     expect(OfflineOnly_isRequestAllowed(`blob:${origin}/2b6e0c8a`, origin)).to.equal(true);

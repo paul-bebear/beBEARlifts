@@ -58,7 +58,7 @@ function initialize(service: ServiceWorkerGlobalScope): void {
   service.addEventListener("fetch", (e) => {
     const url = UrlUtils_build(e.request.url);
     // Returning without respondWith hands the request to the browser, so no cache read or write can happen.
-    if (url.pathname.startsWith("/api/food/")) {
+    if (url.pathname.startsWith("/api/food/") || url.hostname.endsWith(".spotify.com")) {
       return;
     }
     if (

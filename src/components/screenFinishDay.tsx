@@ -175,6 +175,14 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
 
         {OfflineOnly_isEnabled() && <WorkoutStoryCardSection record={record} settings={props.settings} />}
 
+        {OfflineOnly_isEnabled() && (
+          <View className="items-center px-gutter pb-4">
+            <LinkButton name="finish-day-music" onClick={() => props.dispatch(Thunk_pushScreen("music"))}>
+              Review this workout's songs
+            </LinkButton>
+          </View>
+        )}
+
         {isMobile ? (
           <MobileShare userId={props.userId} history={props.history} record={record} settings={props.settings} />
         ) : (

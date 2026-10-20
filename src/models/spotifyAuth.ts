@@ -16,6 +16,16 @@ export const SpotifyAuth_scopes = [
 ];
 
 const refreshMarginMs = 60 * 1000;
+const verifierAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+export function SpotifyAuth_randomString(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => verifierAlphabet[b % verifierAlphabet.length]).join("");
+}
+
+export function SpotifyAuth_base64Url(bytes: Uint8Array): string {
+  const binary = Array.from(bytes, (b) => String.fromCharCode(b)).join("");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
 export function SpotifyAuth_authorizeUrl(args: {
   clientId: string;

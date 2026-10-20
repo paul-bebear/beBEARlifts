@@ -34,6 +34,8 @@ import {
 } from "../utils/subscriptions";
 import { lb } from "lens-shmens";
 import { RestTimer } from "./restTimer";
+import { MusicTracker } from "./musicTracker";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { UrlUtils_build } from "../utils/url";
 import { AsyncQueue } from "../utils/asyncQueue";
 import { useLoopCatcher } from "../utils/useLoopCatcher";
@@ -354,6 +356,14 @@ export function AppView(props: IProps): JSX.Element | null {
                     >
                       <AppNavigator initialScreen={initialScreen} />
                     </NavigationContainer>
+                    {OfflineOnly_isEnabled() && (
+                      <MusicTracker
+                        workoutId={progress?.id}
+                        workoutStartTime={progress?.startTime}
+                        isNavReady={isNavReady}
+                        dispatch={dispatch}
+                      />
+                    )}
                   </AppContext.Provider>
                 </ActiveSheetHeightProvider>
               </ModalStateProvider>

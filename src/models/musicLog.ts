@@ -96,6 +96,15 @@ export function MusicLog_putSession(log: IMusicLog, session: IMusicSession): IMu
   return { ...log, sessions: [session, ...others].sort((a, b) => b.startedAt - a.startedAt).slice(0, maxSessions) };
 }
 
+export function MusicLog_reviewable(log: IMusicLog): IMusicSession[] {
+  return log.sessions.filter((s) => s.plays.length > 0 || s.current != null);
+}
+
+export function MusicLog_formatDuration(ms: number): string {
+  const totalSeconds = Math.round(ms / 1000);
+  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+}
+
 export function MusicLog_disconnect(log: IMusicLog): IMusicLog {
   return { ...log, tokens: undefined, displayName: undefined };
 }

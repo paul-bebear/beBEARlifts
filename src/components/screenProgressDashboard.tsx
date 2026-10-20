@@ -22,6 +22,8 @@ import { IconFood } from "./icons/iconFood";
 import { IconBarbell2 } from "./icons/iconBarbell2";
 import { IconGraphs } from "./icons/iconGraphs";
 import { IconChevronRight } from "./icons/iconFoodUi";
+import { IconSpeaker } from "./icons/iconSpeaker";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 
 const pillColors = {
   neutral: "rgba(59, 130, 246, 0.22)",
@@ -186,6 +188,14 @@ export function ScreenProgressDashboard(): JSX.Element {
         title="Body measurements"
         onPress={() => dispatch(Thunk_pushScreen("measurements"))}
       />
+      {OfflineOnly_isEnabled() && (
+        <LinkRow
+          testID="progress-music"
+          icon={<IconSpeaker size={20} color={iconColor} />}
+          title="Workout music"
+          onPress={() => dispatch(Thunk_pushScreen("music"))}
+        />
+      )}
       <LinkRow
         testID="progress-exercise-stats"
         icon={<IconBarbell2 />}
