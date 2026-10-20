@@ -43,6 +43,7 @@ import { NavScreenGraphs } from "./screens/NavScreenGraphs";
 import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
 import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard";
 import { NavScreenMusic } from "./screens/NavScreenMusic";
+import { NavScreenBodyScans } from "./screens/NavScreenBodyScans";
 import { NavScreenFood } from "./screens/NavScreenFood";
 import { NavScreenFriends } from "./screens/NavScreenFriends";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
@@ -257,6 +258,7 @@ function GraphsStackScreen(): JSX.Element {
       <GraphsStack.Screen name="progressDashboard" component={NavScreenProgressDashboard} />
       <GraphsStack.Screen name="graphsList" component={NavScreenGraphs} />
       <GraphsStack.Screen name="music" component={NavScreenMusic} />
+      <GraphsStack.Screen name="bodyScans" component={NavScreenBodyScans} />
       {OfflineOnly_isEnabled() && <GraphsStack.Screen name="programselect" component={NavScreenProgramSelect} />}
       {renderMeScreens(GraphsStack.Screen as unknown as typeof MeStack.Screen)}
     </GraphsStack.Navigator>

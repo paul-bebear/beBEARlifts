@@ -10,6 +10,7 @@ import {
 import { FoodLog_empty } from "../src/models/foodLog";
 import { IMusicLog, MusicLog_empty } from "../src/models/musicLog";
 import { Storage_getDefault } from "../src/models/storage";
+import { BodyScans_empty } from "../src/models/bodyScans";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 const tokens = { accessToken: "a", refreshToken: "r", expiresAt: now + 3600 * 1000 };
@@ -17,7 +18,7 @@ const tokens = { accessToken: "a", refreshToken: "r", expiresAt: now + 3600 * 10
 describe("FullBackup", () => {
   it("leaves the Spotify login out of the file", () => {
     const music: IMusicLog = { ...MusicLog_empty(), tokens, displayName: "Paul" };
-    const backup = FullBackup_build(Storage_getDefault(), FoodLog_empty(), music, now);
+    const backup = FullBackup_build(Storage_getDefault(), FoodLog_empty(), music, BodyScans_empty(), now);
     const text = JSON.stringify(backup);
     expect(text).to.not.include("refreshToken");
     expect(backup.music.displayName).to.equal("Paul");
@@ -31,11 +32,13 @@ describe("FullBackup", () => {
 
   it("unwraps a full backup after a JSON round trip", () => {
     const food = { ...FoodLog_empty(), goals: { ...FoodLog_empty().goals, calories: { min: 2600, max: 2700 } } };
-    const backup = FullBackup_build(Storage_getDefault(), food, MusicLog_empty(), now);
+    const body = { version: 1 as const, scans: [{ id: 1, timestamp: now, unit: "kg" as const, weight: 82 }] };
+    const backup = FullBackup_build(Storage_getDefault(), food, MusicLog_empty(), body, now);
     const contents = FullBackup_unwrap(JSON.parse(JSON.stringify(backup)));
     expect((contents.storage as { version: string }).version).to.equal(Storage_getDefault().version);
     expect(contents.food?.goals.calories).to.deep.equal({ min: 2600, max: 2700 });
     expect(contents.music?.sessions).to.deep.equal([]);
+    expect(contents.body).to.deep.equal(body);
   });
 
   it("passes a plain Liftosaur export through as storage only", () => {

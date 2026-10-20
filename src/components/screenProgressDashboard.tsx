@@ -232,6 +232,12 @@ export function ScreenProgressDashboard(): JSX.Element {
         title="Body measurements"
         onPress={() => dispatch(Thunk_pushScreen("measurements"))}
       />
+      <LinkRow
+        testID="progress-body-scans"
+        icon={<IconStats size={20} color={iconColor} />}
+        title="Body composition"
+        onPress={() => dispatch(Thunk_pushScreen("bodyScans"))}
+      />
       {OfflineOnly_isEnabled() && (
         <LinkRow
           testID="progress-music"
