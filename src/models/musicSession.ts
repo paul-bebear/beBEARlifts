@@ -40,11 +40,9 @@ function startsInside(play: { startedAt: number; heardMs: number }, startedAt: n
   return startedAt < play.startedAt + play.heardMs - restartMs;
 }
 
-// A seek back to the middle of the song gives a start inside the play heard so far, so it stays one play.
-function isRestart(current: IMusicCurrent, snapshot: ISpotifyNowPlaying, now: number): boolean {
-  const isJumpBack = snapshot.progressMs + restartMs < current.maxProgressMs;
-  const heard = { startedAt: current.firstSeenAt, heardMs: current.maxProgressMs };
-  return isJumpBack && !startsInside(heard, now - snapshot.progressMs);
+// The user scrubs back mid-song to line up the next song with a set. Only a jump back to the start is a new play.
+function isRestart(current: IMusicCurrent, snapshot: ISpotifyNowPlaying): boolean {
+  return snapshot.progressMs < restartMs && snapshot.progressMs + restartMs < current.maxProgressMs;
 }
 
 export function MusicSession_start(id: number, now: number): IMusicSession {
@@ -76,7 +74,7 @@ export function MusicSession_observe(
     return session;
   }
   const current = session.current;
-  if (current != null && isSameSong(current.track, snapshot.track) && !isRestart(current, snapshot, now)) {
+  if (current != null && isSameSong(current.track, snapshot.track) && !isRestart(current, snapshot)) {
     return { ...session, current: { ...current, maxProgressMs: Math.max(current.maxProgressMs, snapshot.progressMs) } };
   }
   const closed = finalize(session);

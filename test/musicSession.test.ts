@@ -75,7 +75,7 @@ describe("MusicSession", () => {
     expect(s.current?.maxProgressMs).to.equal(2000);
   });
 
-  it("keeps one play when the user seeks back to the middle of the song", () => {
+  it("keeps one play when the user scrubs back to the middle of the song", () => {
     const kryptonite = track("k", 233933);
     let s = MusicSession_start(1, t0);
     for (let progress = 8000; progress <= 181555; progress += 8000) {
@@ -86,6 +86,15 @@ describe("MusicSession", () => {
     s = MusicSession_observe(s, playing(kryptonite, 227309), t0 + 310864);
     s = MusicSession_observe(s, playing(track("next"), 2000), t0 + 318864);
     expect(s.plays.map((p) => [p.track.id, p.startedAt, p.heardMs])).to.deep.equal([["k", t0, 227309]]);
+  });
+
+  it("keeps one play when the user scrubs back after a long pause", () => {
+    let s = MusicSession_start(1, t0);
+    s = MusicSession_observe(s, playing(track("a"), 150000), t0);
+    s = MusicSession_observe(s, { track: track("a"), progressMs: 150000, isPlaying: false }, t0 + 300000);
+    s = MusicSession_observe(s, playing(track("a"), 100000), t0 + 308000);
+    expect(s.plays).to.have.length(0);
+    expect(s.current?.firstSeenAt).to.equal(t0 - 150000);
   });
 
   it("counts a restart right after the song played out as a new play", () => {
