@@ -1,5 +1,6 @@
 import type { IFoodProduct } from "./openFoodFacts";
 import { SavedFoods_parse, SavedFoods_save } from "./savedFoods";
+import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } from "./foodTargets";
 
 export type IFoodMeal = "breakfast" | "lunch" | "dinner" | "snacks";
 
@@ -63,6 +64,7 @@ export interface IFoodLog {
   savedFoods: IFoodProduct[];
   meals: IFoodSavedMeal[];
   recipes: IFoodRecipe[];
+  profile: IFoodProfile;
 }
 
 export type IFoodProgressMode = "consumed" | "remaining";
@@ -87,7 +89,16 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function FoodLog_empty(): IFoodLog {
-  return { version: 1, entries: [], goals: FoodLog_defaultGoals, recents: [], savedFoods: [], meals: [], recipes: [] };
+  return {
+    version: 1,
+    entries: [],
+    goals: FoodLog_defaultGoals,
+    recents: [],
+    savedFoods: [],
+    meals: [],
+    recipes: [],
+    profile: FoodTargets_defaultProfile,
+  };
 }
 
 export function FoodLog_zero(): INutrients {
@@ -187,6 +198,7 @@ export function FoodLog_parse(raw: unknown): IFoodLog {
     savedFoods: SavedFoods_parse(r.savedFoods),
     meals: parseList(r.meals, parseSavedMeal),
     recipes: parseList(r.recipes, parseRecipe),
+    profile: FoodTargets_parseProfile(r.profile),
   };
 }
 
@@ -395,6 +407,10 @@ export function FoodLog_copyDay(
 
 export function FoodLog_setGoals(log: IFoodLog, goals: IFoodGoals): IFoodLog {
   return { ...log, goals };
+}
+
+export function FoodLog_setProfile(log: IFoodLog, profile: IFoodProfile): IFoodLog {
+  return { ...log, profile };
 }
 
 export interface IFoodProgress {
