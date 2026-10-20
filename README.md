@@ -94,6 +94,8 @@ The repo has a git submodule (`lambda/scripts`) that points at a private SSH URL
 
 ## Build your program with your own AI
 
+Pick a built-in plan with the [programs guide](llms/programs_guide.md), grouped by experience, schedule, goal, and equipment.
+
 The app does not interview you yet. Until it does, an AI chat app such as ChatGPT or Claude can, with the prompt in [`llms/program_builder_prompt.md`](llms/program_builder_prompt.md).
 
 1. Open the prompt file. Copy everything below its line and paste it into a new chat.
