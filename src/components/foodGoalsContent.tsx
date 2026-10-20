@@ -120,7 +120,7 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
       </View>
       <Text className="mt-8 mb-1 text-base font-semibold">Backup</Text>
       <Text className="mb-3 text-sm text-text-secondary">
-        The main JSON export in Me does not include food. Export the food log here too.
+        Settings → Export everything includes food. This exports the food log alone.
       </Text>
       <View className="flex-row" style={{ gap: 8 }}>
         <FoodPrimaryButton

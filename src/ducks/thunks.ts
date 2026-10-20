@@ -67,6 +67,14 @@ import { ImportFileError } from "../utils/importTypes";
 import { StringUtils_pluralize } from "../utils/string";
 import { CSV_toString } from "../utils/csv";
 import { Exporter_toFile } from "../utils/exporter";
+import {
+  FullBackup_build,
+  FullBackup_filename,
+  FullBackup_keepSpotifyLogin,
+  FullBackup_unwrap,
+} from "../models/fullBackup";
+import { FoodLogStore_load, FoodLogStore_replace } from "../utils/foodLogStore";
+import { MusicStore_load, MusicStore_update } from "../utils/musicStore";
 import { DateUtils_formatYYYYMMDD, DateUtils_format } from "../utils/date";
 import { getInitialState } from "./reducer";
 import { IndexedDBUtils_set } from "../utils/indexeddb";
@@ -1749,6 +1757,17 @@ export function Thunk_exportStorage(): IThunk {
   };
 }
 
+export function Thunk_exportEverything(): IThunk {
+  return async (dispatch, getState) => {
+    dispatch(Thunk_postevent("export-everything"));
+    const [food, music] = await Promise.all([FoodLogStore_load(), MusicStore_load()]);
+    const now = Date.now();
+    const backup = FullBackup_build(getState().storage, food, music, now);
+    Exporter_toFile(FullBackup_filename(now), JSON.stringify(backup, null, 2));
+    BackupReminderMarks_recordBackup(now);
+  };
+}
+
 export function Thunk_exportProgramToFile(program: IProgram): IThunk {
   return async (dispatch, getState, env) => {
     dispatch(Thunk_postevent("export-program-to-file"));
@@ -1802,9 +1821,17 @@ export function Thunk_importStorage(maybeStorage: string): IThunk {
       Dialog_alert("Couldn't parse the provided file");
       return;
     }
-    const result = Storage_get(parsedMaybeStorage, false);
+    const contents = FullBackup_unwrap(parsedMaybeStorage);
+    const result = Storage_get(contents.storage as Record<string, unknown>, false);
     if (result.success) {
       updateState(dispatch, [lb<IState>().p("storage").record(result.data)], "Importing Storage");
+      if (contents.food != null) {
+        await FoodLogStore_replace(contents.food);
+      }
+      const music = contents.music;
+      if (music != null) {
+        await MusicStore_update((current) => FullBackup_keepSpotifyLogin(music, current));
+      }
       Dialog_alert("Successfully imported");
     } else {
       Dialog_alert(`Couldn't import the storage, errors: \n${result.error.join("\n")}`);

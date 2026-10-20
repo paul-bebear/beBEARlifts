@@ -17,7 +17,7 @@ export function ImporterStorage(props: IImporterStorageProps): JSX.Element {
       return;
     }
     const ok = await FileImport_confirm(
-      "Importing new data will wipe out your current data. If you don't want to lose it, make sure to 'Export data to file' first. Press 'OK' to proceed with import."
+      "Importing new data will wipe out your current data. If you don't want to lose it, make sure to 'Export everything' first. An 'Export everything' file also restores food and music. Press 'OK' to proceed with import."
     );
     if (ok) {
       props.dispatch(Thunk_importStorage(contents));
