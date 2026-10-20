@@ -6,6 +6,7 @@ import { MenuItem, MenuItemWrapper } from "./menuItem";
 import {
   Thunk_pushScreen,
   Thunk_exportStorage,
+  Thunk_exportEverything,
   Thunk_exportHistoryToCSV,
   Thunk_exportProgramsToText,
 } from "../ducks/thunks";
@@ -493,6 +494,14 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         </>
       )}
       <GroupHeader name="Import / Export" topPadding={true} />
+      <MenuItemWrapper name="Export everything" onClick={() => props.dispatch(Thunk_exportEverything())}>
+        <View className="py-3">
+          <Text className="text-base text-text-primary">Export everything</Text>
+          <Text className="text-xs text-text-secondary">
+            Workouts, body stats, food and music in one file. Save it to iCloud, or give it to an AI.
+          </Text>
+        </View>
+      </MenuItemWrapper>
       <MenuItemWrapper name="Export data to JSON file" onClick={() => props.dispatch(Thunk_exportStorage())}>
         <View className="py-3">
           <Text className="text-base text-text-primary">Export data to JSON file</Text>
