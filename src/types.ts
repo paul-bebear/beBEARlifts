@@ -1025,6 +1025,7 @@ export interface IHistoryRecord {
     logRpe?: boolean;
     askWeight?: boolean;
     userVars?: boolean;
+    rateEffort?: boolean;
     nonce?: number;
   };
   // The exercise the workout screen is scrolled to. Lives on the record (not under `ui`) so it version-syncs
@@ -1091,6 +1092,7 @@ const _VHistoryRecord = v.object({
       logRpe: v.optional(v.boolean()),
       askWeight: v.optional(v.boolean()),
       userVars: v.optional(v.boolean()),
+      rateEffort: v.optional(v.boolean()),
       nonce: v.optional(v.number()),
     })
   ),
@@ -1663,6 +1665,7 @@ export interface ISettings {
   recentExercises?: Partial<Record<string, string[]>>;
   theme?: "dark" | "light";
   monochrome?: boolean;
+  rateEachSet?: boolean;
   currentBodyweight?: IWeight;
   affiliateEnabled?: boolean;
 }
@@ -1715,6 +1718,7 @@ const _VSettings = v.object({
   recentExercises: v.optional(v.record(VExerciseId, v.optional(v.array(VExerciseId)))),
   theme: v.optional(v.union([v.literal("dark"), v.literal("light")])),
   monochrome: v.optional(v.boolean()),
+  rateEachSet: v.optional(v.boolean()),
   currentBodyweight: v.optional(VWeight),
   affiliateEnabled: v.optional(v.boolean()),
 });
