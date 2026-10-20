@@ -46,7 +46,7 @@ test("a new program and the Program card retain a back arrow to Progress", async
   await back(page);
   await expect(page.getByTestId("progress-dashboard")).toBeVisible();
   await page.getByTestId("footer-friends").click();
-  await expect(page.getByTestId("friends-placeholder")).toBeVisible();
+  await expect(page.getByTestId("friends-signed-out")).toBeVisible();
 });
 
 test("cloning a percentage program opens 1RM setup on Progress", async ({ page }) => {

@@ -1,4 +1,4 @@
-import { CloudBackupClient_accessToken, CloudBackup_notSignedIn } from "./cloudBackupClient";
+import { SupabaseClient_accessToken, Supabase_notSignedIn } from "./supabaseClient";
 
 export const AiRequest_signInMessage = "Sign in to use AI features. Open Settings → Cloud backup.";
 export const AiRequest_offlineMessage = "No connection. AI features need a signal.";
@@ -7,9 +7,9 @@ export type IAiRequestResult = { ok: true; body: unknown } | { ok: false; error:
 
 // The /api/ai and /api/food/photo functions bill the owner's AI Gateway credit, so they serve signed-in users only.
 export async function AiRequest_post(path: string, payload: unknown): Promise<IAiRequestResult> {
-  const auth = await CloudBackupClient_accessToken();
+  const auth = await SupabaseClient_accessToken();
   if (!auth.ok) {
-    return { ok: false, error: auth.error === CloudBackup_notSignedIn ? AiRequest_signInMessage : auth.error };
+    return { ok: false, error: auth.error === Supabase_notSignedIn ? AiRequest_signInMessage : auth.error };
   }
   let response: Response;
   try {

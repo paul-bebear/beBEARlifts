@@ -2,7 +2,7 @@ import { JSX, useEffect, useReducer } from "react";
 import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { CloudBackupForm_empty, CloudBackupForm_reduce } from "../models/cloudBackupForm";
-import { CloudStore } from "../utils/cloudBackupClient";
+import { CloudStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
 import { Button } from "./button";
 import { Text } from "./primitives/text";
