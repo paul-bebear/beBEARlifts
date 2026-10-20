@@ -76,6 +76,8 @@ import {
 import { FoodLogStore_load, FoodLogStore_replace } from "../utils/foodLogStore";
 import { MusicStore_load, MusicStore_update } from "../utils/musicStore";
 import { BodyScanStore_load, BodyScanStore_update } from "../utils/bodyScanStore";
+import { WarmupStore_load, WarmupStore_update } from "../utils/warmupStore";
+import { ReportStore } from "../utils/reportStore";
 import { DateUtils_formatYYYYMMDD, DateUtils_format } from "../utils/date";
 import { getInitialState } from "./reducer";
 import { IndexedDBUtils_set } from "../utils/indexeddb";
@@ -1761,9 +1763,15 @@ export function Thunk_exportStorage(): IThunk {
 export function Thunk_exportEverything(): IThunk {
   return async (dispatch, getState) => {
     dispatch(Thunk_postevent("export-everything"));
-    const [food, music, body] = await Promise.all([FoodLogStore_load(), MusicStore_load(), BodyScanStore_load()]);
+    const [food, music, body, warmups, reports] = await Promise.all([
+      FoodLogStore_load(),
+      MusicStore_load(),
+      BodyScanStore_load(),
+      WarmupStore_load(),
+      ReportStore.load(),
+    ]);
     const now = Date.now();
-    const backup = FullBackup_build(getState().storage, food, music, body, now);
+    const backup = FullBackup_build({ storage: getState().storage, food, music, body, warmups, reports }, now);
     Exporter_toFile(FullBackup_filename(now), JSON.stringify(backup, null, 2));
     BackupReminderMarks_recordBackup(now);
   };
@@ -1836,6 +1844,14 @@ export function Thunk_importStorage(maybeStorage: string): IThunk {
       const body = contents.body;
       if (body != null) {
         await BodyScanStore_update(() => body);
+      }
+      const warmups = contents.warmups;
+      if (warmups != null) {
+        await WarmupStore_update(() => warmups);
+      }
+      const reports = contents.reports;
+      if (reports != null) {
+        await ReportStore.update(() => reports);
       }
       Dialog_alert("Successfully imported");
     } else {

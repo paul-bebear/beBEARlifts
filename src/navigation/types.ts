@@ -42,6 +42,7 @@ export type IWorkoutStackParamList = {
   progress: { id?: number } | undefined;
   finishDay: { id: number } | undefined;
   music: undefined;
+  reports: undefined;
   muscles: undefined;
   exerciseStats: undefined;
 };
@@ -51,6 +52,7 @@ export type IGraphsStackParamList = IMeStackParamList & {
   progressDashboard: undefined;
   programselect: undefined;
   music: undefined;
+  reports: undefined;
   bodyScans: undefined;
   graphsList: undefined;
 };
