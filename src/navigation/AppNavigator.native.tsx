@@ -11,6 +11,7 @@ import type {
   IWorkoutStackParamList,
   IGraphsStackParamList,
   IFoodStackParamList,
+  IFriendsStackParamList,
   IMeStackParamList,
   IRootTabParamList,
   IRootStackParamList,
@@ -42,6 +43,11 @@ import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard
 import { NavScreenFood } from "./screens/NavScreenFood";
 import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
+import { NavScreenMusic } from "./screens/NavScreenMusic";
+import { NavScreenReports } from "./screens/NavScreenReports";
+import { NavScreenBodyScans } from "./screens/NavScreenBodyScans";
+import { NavScreenFriends } from "./screens/NavScreenFriends";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { NavModalExerciseLiftoEditor } from "./modals/NavModalExerciseLiftoEditor";
 import { NavModalDayLiftoEditor } from "./modals/NavModalDayLiftoEditor";
 import {
@@ -185,6 +191,7 @@ const ProgramStack = createNativeStackNavigator<IProgramStackParamList>();
 const WorkoutStack = createNativeStackNavigator<IWorkoutStackParamList>();
 const GraphsStack = createNativeStackNavigator<IGraphsStackParamList>();
 const FoodStack = createNativeStackNavigator<IFoodStackParamList>();
+const FriendsStack = createNativeStackNavigator<IFriendsStackParamList>();
 const MeStack = createNativeStackNavigator<IMeStackParamList>();
 const Tab = createBottomTabNavigator<IRootTabParamList>();
 const RootStack = createNativeStackNavigator<IRootStackParamList>();
@@ -289,6 +296,12 @@ function WorkoutStackScreen(): JSX.Element {
         component={NavScreenFinishDay}
         options={{ headerShown: true, header: NavHeader }}
       />
+      <WorkoutStack.Screen name="music" component={NavScreenMusic} options={{ headerShown: true, header: NavHeader }} />
+      <WorkoutStack.Screen
+        name="reports"
+        component={NavScreenReports}
+        options={{ headerShown: true, header: NavHeader }}
+      />
       <WorkoutStack.Screen
         name="muscles"
         component={NavScreenMuscles}
@@ -317,9 +330,21 @@ function GraphsStackScreen(): JSX.Element {
         options={{ headerShown: true, header: NavHeader }}
       />
       <GraphsStack.Group screenOptions={navHeaderScreenOptions}>
+        <GraphsStack.Screen name="music" component={NavScreenMusic} />
+        <GraphsStack.Screen name="reports" component={NavScreenReports} />
+        <GraphsStack.Screen name="bodyScans" component={NavScreenBodyScans} />
+        {OfflineOnly_isEnabled() && <GraphsStack.Screen name="programselect" component={NavScreenProgramSelect} />}
         {renderMeScreens(GraphsStack.Screen as unknown as typeof MeStack.Screen)}
       </GraphsStack.Group>
     </GraphsStack.Navigator>
+  );
+}
+
+function FriendsStackScreen(): JSX.Element {
+  return (
+    <FriendsStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
+      <FriendsStack.Screen name="friends" component={NavScreenFriends} />
+    </FriendsStack.Navigator>
   );
 }
 
@@ -374,7 +399,11 @@ function MainTabsScreen(): JSX.Element {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions} tabBar={(tabProps) => <Footer2Wrapper {...tabProps} />}>
       <Tab.Screen name="home" component={HomeStackScreen} />
-      <Tab.Screen name="program" component={ProgramStackScreen} />
+      {OfflineOnly_isEnabled() ? (
+        <Tab.Screen name="friends" component={FriendsStackScreen} />
+      ) : (
+        <Tab.Screen name="program" component={ProgramStackScreen} />
+      )}
       <Tab.Screen name="workout" component={WorkoutStackScreen} />
       <Tab.Screen name="food" component={FoodStackScreen} />
       <Tab.Screen name="graphs" component={GraphsStackScreen} />

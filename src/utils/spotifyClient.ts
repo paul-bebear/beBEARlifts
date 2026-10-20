@@ -64,8 +64,12 @@ function readPkce(): { verifier?: string; state?: string } {
 }
 
 export function SpotifyClient_takeError(): string | undefined {
-  const message = localStorage.getItem(errorKey) ?? undefined;
-  localStorage.removeItem(errorKey);
+  const storage = globalThis.localStorage;
+  if (storage == null) {
+    return undefined;
+  }
+  const message = storage.getItem(errorKey) ?? undefined;
+  storage.removeItem(errorKey);
   return message;
 }
 

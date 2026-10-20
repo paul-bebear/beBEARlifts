@@ -1,5 +1,5 @@
 import { JSX, useState } from "react";
-import { View, Pressable, Linking } from "react-native";
+import { View, Pressable, Linking, Platform } from "react-native";
 import { Text } from "./primitives/text";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
@@ -222,7 +222,11 @@ export function ScreenMusic(): JSX.Element {
   return (
     <View className="pt-2 pb-6" testID="music-screen" data-testid="music-screen">
       <View className="p-4 mx-4 mb-4 rounded-2xl bg-background-subtle">
-        {log.tokens == null ? (
+        {log.tokens == null && Platform.OS !== "web" ? (
+          <Text className="text-base" testID="music-native-pending" data-testid="music-native-pending">
+            Spotify login is not in the iPhone app yet. Song tracking and playlists work in the web app.
+          </Text>
+        ) : log.tokens == null ? (
           <>
             <Text className="mb-3 text-base">
               Connect Spotify. During a workout the app notes each song. A song heard for half its length is kept, any
