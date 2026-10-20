@@ -2,7 +2,7 @@
 
 How to ship this fork as a native iPhone app on TestFlight. Written 2026-10-21 against master at `638c5dec`.
 
-Status: step 1 of 13 is done (the native build compiles with the fork's tabs). The task list at the end has the rest.
+Status: step 1 of 14 is done (the native build compiles with the fork's tabs). The task list at the end has the rest.
 
 ## Why native
 
@@ -165,7 +165,8 @@ In order. "Codex" means a written handoff can do the task without a phone. "Phon
 10. Food log import with `FileImport_pickFile`. 1 hour. Codex.
 11. Apple Watch: install the watchOS platform, build, pair, and run a workout on the watch. Half a day. Phone and watch.
 12. Story card rebuilt with native views. 2 days. Not Codex: the layout needs looking at.
-13. Before any public App Store release: send the message to Anton and wait for a yes.
+13. Set clips on native with `react-native-image-picker` in video mode. 1 day. Codex for the code. Phone for filming.
+14. Before any public App Store release: send the message to Anton and wait for a yes.
 
 Friends on Supabase is being built in another session. Its code must also avoid `localStorage`, `window` and relative URLs, or carry a `.native.ts` variant, so it runs in this build.
 
