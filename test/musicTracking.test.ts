@@ -59,8 +59,8 @@ describe("MusicTracking", () => {
       MusicLog_empty(),
       workout,
       [
-        { track: track("early"), playedAt: workout.startTime - 60_000 },
-        { track: track("b"), playedAt: workout.startTime + 60_000 },
+        { track: track("early"), startedAt: workout.startTime - 260_000, endedAt: workout.startTime - 60_000 },
+        { track: track("b"), startedAt: workout.startTime + 60_000, endedAt: workout.startTime + 260_000 },
       ],
       workout.startTime + 600_000
     );

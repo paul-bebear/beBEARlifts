@@ -77,7 +77,7 @@ export function MusicSession_finish(session: IMusicSession, now: number): IMusic
   return session.endedAt != null ? session : { ...finalize(session), endedAt: now };
 }
 
-// Songs that played while the phone was locked come only from Spotify's history, so they are kept for review.
+// Songs that played while the phone was locked come only from Spotify's history. It lists only songs played to the end, so they are kept.
 export function MusicSession_mergeHistory(
   session: IMusicSession,
   history: ISpotifyHistoryItem[],
@@ -90,17 +90,17 @@ export function MusicSession_mergeHistory(
   ];
   const added: IMusicPlay[] = [];
   for (const item of history) {
-    if (item.playedAt < session.startedAt || item.playedAt > end) {
+    if (item.endedAt <= session.startedAt || item.startedAt > end) {
       continue;
     }
     const isKnown = known.some(
       (p) =>
-        p.track.id === item.track.id && Math.abs(p.startedAt - item.playedAt) <= item.track.durationMs + historySlackMs
+        p.track.id === item.track.id && Math.abs(p.startedAt - item.startedAt) <= item.track.durationMs + historySlackMs
     );
     if (!isKnown) {
       added.push({
         track: item.track,
-        startedAt: item.playedAt,
+        startedAt: item.startedAt,
         heardMs: item.track.durationMs,
         source: "history",
         isKept: true,

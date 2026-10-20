@@ -146,7 +146,7 @@ function HistoryDebug(): JSX.Element {
     setRows(
       SpotifyTracks_parseHistory(raw).map(
         (h) =>
-          `${new Date(h.playedAt).toLocaleTimeString()} · ${MusicLog_formatDuration(h.track.durationMs)} · ${h.track.name}`
+          `${new Date(h.startedAt).toLocaleTimeString()} to ${new Date(h.endedAt).toLocaleTimeString()} · ${h.track.name}`
       )
     );
   };
@@ -157,7 +157,7 @@ function HistoryDebug(): JSX.Element {
       </Pressable>
       {rows != null && (
         <View className="mt-2">
-          <Text className="mb-1 text-xs text-text-secondary">played_at · duration_ms · song</Text>
+          <Text className="mb-1 text-xs text-text-secondary">start to end · song</Text>
           {rows.length === 0 && <Text className="text-sm text-text-secondary">Spotify returned no songs.</Text>}
           {rows.map((row, i) => (
             <Text key={i} className="text-xs" style={{ fontFamily: "monospace" }}>

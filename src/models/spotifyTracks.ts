@@ -15,7 +15,8 @@ export interface ISpotifyNowPlaying {
 
 export interface ISpotifyHistoryItem {
   track: ISpotifyTrack;
-  playedAt: number;
+  startedAt: number;
+  endedAt: number;
 }
 
 function str(value: unknown): string | undefined {
@@ -73,10 +74,11 @@ export function SpotifyTracks_parseHistory(raw: unknown): ISpotifyHistoryItem[] 
   for (const item of items) {
     const r = (item ?? {}) as Record<string, unknown>;
     const track = SpotifyTracks_parseTrack(r.track);
-    const playedAt = typeof r.played_at === "string" ? Date.parse(r.played_at) : NaN;
-    if (track != null && isFinite(playedAt)) {
-      result.push({ track, playedAt });
+    // Checked on an iPhone on 2026-10-20: played_at is when the song ended, and skipped songs are not listed.
+    const endedAt = typeof r.played_at === "string" ? Date.parse(r.played_at) : NaN;
+    if (track != null && isFinite(endedAt)) {
+      result.push({ track, startedAt: endedAt - track.durationMs, endedAt });
     }
   }
-  return result.sort((a, b) => a.playedAt - b.playedAt);
+  return result.sort((a, b) => a.endedAt - b.endedAt);
 }

@@ -1,0 +1,379 @@
+# AGENTS.md
+
+This file provides guidance to Codex (claude.ai/code) when working with code in this repository.
+
+## Development Commands
+
+### Starting Development
+```bash
+npm start          # Frontend dev server
+npm run start:server  # Backend dev server with hot reload
+```
+
+### Building
+```bash
+npm run build      # Production build
+npm run build:dev  # Development build
+npm run build:lambda  # Build Lambda functions
+```
+
+### Testing & Quality
+```bash
+npm test           # Run all tests
+npm run onetest    # Run single test file
+npm run playwright # Run Playwright E2E tests
+npm run lint       # ESLint for TypeScript files
+```
+
+### Backend / Lambda Development
+There is **no local Lambda emulation**. The backend runs locally through `devserver.ts` —
+use `npm run start:server` (above). The `start:lambda` / `sam-start-api` / `cdk-synth`
+scripts are dead leftovers from the old SAM setup; `sam local start-api` is not used.
+
+`npm run build:lambda` builds the deployable bundle. Deploys run in CodeBuild: pushing
+`redesign` deploys the dev/stage stack, `master` deploys prod.
+
+### Infrastructure (CDK)
+```bash
+# REQUIRED - every cdk command throws without it
+export LFT_ORIGIN_VERIFY_SECRET=$(aws secretsmanager get-secret-value \
+  --secret-id lftOriginVerifySecret --query SecretString --output text)
+npx cdk diff LiftosaurStackDev
+npx cdk deploy LiftosaurStack
+```
+`LFT_ORIGIN_VERIFY_SECRET` is the shared secret CloudFront stamps onto every origin request
+so the regional WAF on the API Gateway stage can reject anything that did not arrive through
+CloudFront. It lives in its own `lftOriginVerifySecret` — one value shared by dev and prod,
+and deliberately *not* a key in `lftAppSecrets`: Secrets Manager has no per-key update, so
+every write there rewrites all 16 credentials at once, and `cookieSecret` and
+`updatesPrivateKey` are not things to risk for an unrelated change.
+
+Any `cdk` command fails fast without the variable, by design, so a stack can never be
+synthesized with the origin left open.
+
+### iOS/watchOS Development
+```bash
+# Build watch bundle (included in build:dev, deployed to server)
+npm run build:dev
+
+# Watch bundle is downloaded from https://www.liftosaur.com/watch-bundle.js
+# by WatchCacheManager at runtime - no manual copy needed
+
+# Build watch app (run from ./ios)
+xcodebuild -workspace Liftosaur.xcworkspace -scheme "LiftosaurWatch" -destination 'platform=watchOS Simulator,id=6D3DDA86-DDC2-4D24-8908-21839A099D79' build
+```
+
+## Visual Verification with MCP Tools
+
+Codex has MCP tools configured for visual verification on web, iOS, and Android. Use these to verify UI changes after code modifications.
+
+### Web (Playwright MCP)
+```
+# Navigate and interact with the web app
+mcp__playwright__browser_navigate - Open a URL
+mcp__playwright__browser_snapshot  - Get page structure (accessibility tree)
+mcp__playwright__browser_click     - Click elements by ref
+mcp__playwright__browser_type      - Type into inputs
+mcp__playwright__browser_take_screenshot - Capture visual state
+```
+
+**Workflow:**
+First, figure out the host - use the prefix values from `localdomain.js` file, and then combine them with the liftosaur.com. E.g.
+if main: "local", then the host is "local.liftosaur.com". If main is "localai", then the host is "localai.liftosaur.com".
+
+1. Ensure dev server is running (`npm start`)
+2. Navigate to `https://{main}.liftosaur.com:8080/app`
+3. Use `browser_snapshot` to see interactive elements with refs
+4. Click/type using element refs from snapshot
+5. Take screenshots to verify visual state
+
+### iOS Simulator (ios-simulator-mcp — PREFERRED for iOS)
+
+The app is bare React Native (Fabric/New Arch), so the simulator exposes a real
+native accessibility tree. Use `ios-simulator-mcp` (idb-backed), NOT mobile-mcp —
+it's faster, ~token-free vs screenshots, and our `testID`s come through as stable
+`AXUniqueId` refs (e.g. `save-program-exercise`, `input-set-reps-field`, `footer-workout`).
+
+```
+mcp__ios-simulator__get_booted_sim_id  - Get the booted sim UUID
+mcp__ios-simulator__ui_describe_all    - Full accessibility tree (elements + frames)
+mcp__ios-simulator__ui_find_element    - Find by AXLabel or AXUniqueId (our testID)
+mcp__ios-simulator__ui_tap             - Tap at x,y
+mcp__ios-simulator__ui_type            - Type text
+mcp__ios-simulator__ui_swipe           - Swipe/scroll
+mcp__ios-simulator__ui_view            - Compressed screenshot (visual check only)
+mcp__ios-simulator__launch_app         - Launch by bundle id (com.liftosaur.www)
+```
+
+**Workflow (target by testID, never pixel-guess):**
+1. `get_booted_sim_id` to get the UUID
+2. `ui_find_element(["<testID>"])` → read the returned `frame` (x, y, width, height)
+3. `ui_tap` at the frame center; re-run `ui_describe_all` to confirm the tree updated
+4. Use `ui_view`/`screenshot` only for visual/pixel verification
+
+**Prereqs (already installed):** `idb-companion` (brew `facebook/fb` tap) + `fb-idb`
+client on PATH (`~/.local/bin/idb`). Note: `fb-idb` breaks on Python ≥3.13
+(`asyncio.get_event_loop` removed) — if reinstalling, pin it: `pipx install
+--python python3.11 fb-idb`.
+
+### Android Emulator (mobile-mcp)
+```
+# Start emulator
+~/Library/Android/sdk/emulator/emulator -list-avds        # List available
+~/Library/Android/sdk/emulator/emulator -avd <name> &     # Start emulator
+
+# Same mobile-mcp tools work for Android
+# App package: com.liftosaur.www.twa
+```
+
+**Workflow:**
+1. Start emulator (command above)
+2. List devices - Android shows as `emulator-5554`
+3. Launch app with package `com.liftosaur.www.twa`
+4. Take screenshots and interact via coordinates
+
+### Notes
+- The app is bare React Native (not a WebView wrapper). iOS exposes a real native
+  accessibility tree via `ios-simulator-mcp` — prefer semantic `testID`/AXUniqueId
+  targeting over screenshots + coordinates.
+- Android has no idb-based server; keep using `mobile-mcp` (screenshot + coordinate
+  taps, package `com.liftosaur.www.twa`) for Android.
+- On native, the Liftoscript editor is a native text view (Runestone on iOS, sora on
+  Android). On web it is CodeMirror.
+- Web verification via Playwright provides richer element detection via snapshots.
+
+## Architecture Overview
+
+Liftosaur is a PWA weightlifting tracker using a custom DSL called Liftoscript for defining workout programs.
+
+### Tech Stack
+- **Frontend**: Preact, TypeScript, Tailwind CSS, CodeMirror 6
+- **State Management**: Custom Redux-like with lens-shmens for immutable updates
+- **Backend**: AWS Lambda + DynamoDB + S3
+- **Infrastructure**: AWS CDK
+
+### Key Concepts
+
+1. **Liftoscript**: Domain-specific language for workout programs
+   - Text-based, markdown-like syntax with JavaScript-like scripting
+   - Programs are immutable snapshots
+   - See `/llms/liftoscript.md` for language reference
+
+2. **State Management Pattern**:
+   - Single global state in `src/models/state.ts`
+   - Updates via lenses: `updateState(dispatch, lb<IState>().p('exercises').i(0).p('name').record('Bench Press'))`
+   - State persisted to IndexedDB for offline support
+
+3. **Program Model**:
+   - Programs don't know about user equipment or settings
+   - User settings (1RM, plates) applied on execution
+   - Sharing creates immutable program links
+
+### Project Structure
+```
+src/
+├── components/     # Preact UI components
+├── models/        # Business logic & data models
+├── pages/         # Page components
+├── ducks/         # Redux-like state management
+├── utils/         # Utilities
+└── api/           # API service layer
+
+lambda/            # Backend Lambda functions
+├── dao/           # DynamoDB access
+└── utils/         # Backend utilities
+```
+
+### Important Files
+- `src/types.ts` - Core TypeScript types
+- `src/models/state.ts` - Global state definition
+- `src/parser.ts` - Liftoscript parser
+- `lambda/index.ts` - Lambda router entry point
+
+### Development Tips
+- State updates must use lenses for immutability
+- Programs are text (Liftoscript) as source of truth
+- Keep bundle size minimal (current ~200kb total)
+- Test Liftoscript changes thoroughly - it's the core of the app
+
+For detailed Liftoscript documentation, see `/llms/liftoscript.md` and `/llms/liftoscript_examples.md`.
+
+## Where logic lives
+
+A `.tsx` file renders and runs effects. Nothing else. Every decision, state machine, text transform or save rule lives in a pure module with a mocha test, and the component calls it and applies what comes back.
+
+- A function inside a component or hook that returns no JSX is probably a decision. Over 20 lines, `scripts/lint-views.ts` asks about it through the PostToolUse hook. The hook never blocks. Judge it: a state machine, a save rule or a text transform moves to a module; one piece of geometry or scrolling math that reads as a unit may stay. A function that stays gets an entry in `scripts/lint-views-baseline.json` with the reason, so the question is not asked twice.
+- A view file over 400 lines gets the same question. Past that, the file usually holds more than one screen's worth of responsibility.
+- Name a module by what it does: `textDiff.ts`, `exercisePreviewPass.ts`, `exerciseLiftoEditorSave.ts`. Never by a convention suffix. A `*Session.ts` or `*Logic.ts` name says nothing about the module and invites hundreds of them.
+- State a component keeps in refs to drive a sequence of steps (a debounce, a pending write, a last error) is a state machine. The module owns the state as a plain object and returns the next state plus the effects to run. The component owns the timer and the platform calls.
+- The `/feature` contract names the module that owns each behaviour and its test file before the first edit. A view in that list fails the gate.
+
+The baseline started with every finding that predated the rule, each marked "predates the rule". Those entries are debt to pay when the file is next touched, never a licence to add to it. An entry with a real reason is a judgment already made, and stands until the function changes.
+
+## Editing Files
+
+Change files with the Edit/Write tools, not with shell commands. A `sed -i`,
+heredoc, or `python3 - <<EOF` rewrite renders no diff in the transcript, and it
+no-ops silently when the pattern doesn't match — Edit fails loudly instead.
+This holds even when the harness suggests preferring Bash for file changes.
+
+The one exception is a genuine sweep across many files (a codemod, a mechanical
+migration), where one script beats dozens of Edits. Those go through the shell
+with `# allow-bash-edit` in the command, so the choice is visible. A single-file
+change is never that exception.
+
+<!-- prose:start -->
+
+## Prose rules
+
+Generated from `PROSE.md`. Do not edit here — edit `PROSE.md` and run `npx ts-node scripts/generate-prose-rules.ts`.
+
+**The line is the unit of meaning.** No hard wrap. One paragraph per line, one list item per line, blank lines between paragraphs. Never pack two checkboxes or two bullets onto one line.
+
+**Lists, not tables.** No pipe tables. They read as a wall of `|` in the editor and a one-word edit rewrites the whole line in the diff. The only exception is data with two real axes, as a fixed-width aligned block inside a fence, at most one per document.
+
+**Cross-references name the thing, never a number.** Strip every link from a sentence and it must still say what it points at. Never `§4`, never `section 3.2`, never a link whose text is `:1511`, never `see above`. Link the symbol name, or name the behaviour: `the fall-through`, `the 250ms tick`.
+
+**No line numbers in prose or in fences.** No `// :N` comments. A fence shows shape; the links live in the surrounding list.
+
+**Every sentence names a symbol, a file, a number, or a consequence.** A sentence naming none of those is filler. "The nonce keeps it stable" is short and useless. "The nonce survives the flip, so promoting the countdown does not re-present the banner" carries the fact.
+
+**Short sentences in plain words.** One idea per sentence, under 20 words. No colon or semicolon that joins two thoughts; write two sentences. Common words first, then the platform term once in brackets: "asleep (suspended)". Say who does what: "the watch asks the phone", never "the phone is asked". The reader is not a native English speaker, and every idiom or 40-word sentence makes them read it twice.
+
+**An estimate is a number and the condition it depends on.** "Roughly a day", "a small change", `cheap` — none of those can be planned around. "Twenty minutes if the codegen is current, half a day if the pod install has to be redone" can. Effort is a number, so the sentence rule above already covers it: an estimate without one is filler.
+
+**Restate position in multi-step work.** One line at the top of a report saying where we are, every turn: "phase 5 of 8 done". The reader should never reconstruct progress from prose, and a checkbox list in a file they are not looking at does not do this job.
+
+**A reply or a plan ends with one next action, doable in under two minutes.** Not a question. "Reload VSCode, then click `IActiveSetTimer`" beats "want me to keep going?", which hands the reader the work of deciding what happens next. An archdoc has no next action and ends with its debugging map instead.
+
+### Banned outright
+
+Fake idioms, say the mechanism instead: `load-bearing`, `smoking gun`, `north star`, `lodestar`, `footgun`, `sharp edge`, `moving parts`, `the whole point`, `the entire point`.
+
+Economics metaphors for code, say the actual cost or benefit with a number: `cheap`, `expensive`, `for free`, `buys us`, `pays for itself`, `earns its keep`, `costs us`.
+
+The negation-contrast tic, state the second half and delete the first: `X is not Y, it is Z`, `not just X but Y`, `isn't about X, it's about Y`, `less a X than a Y`.
+
+Emphasis adverbs that measure nothing, delete or replace with a number: `actually`, `genuinely`, `precisely`, `crucially`, `critically`, `importantly`, `fundamentally`, `essentially`, `simply`, `merely`, `truly`, `dramatically`, `significantly`, `massively`, `wildly`.
+
+Meta-narration, say the thing instead of announcing it: `here's the thing`, `the key insight`, `worth noting`, `note that`, `to be clear`, `that said`, `in other words`, `which is to say`, `at its core`, `the real question is`.
+
+Marketing words: `robust`, `seamless`, `elegant`, `surgical`, `comprehensive`, `leverage`, `principled`, `nuanced`, `delve`.
+
+**The catch-all:** a metaphor is banned unless it is a term of art in this codebase. Describe the mechanism. This includes the mild ones: `armed`, `fires`, `wins`, `trusted to`, `on its own clock`. Use the API's own word or say what happens: "the timer already scheduled", "the OS delivers it". Fences are prose too; a call tree's annotations follow the same rule.
+
+### Budgeted, not banned
+
+Per document: `deliberate` three times, `by construction` twice, `first-class` once, one em-dash per eight lines. `scar tissue` is unlimited, it is a section name in archdocs. `rather than` is ordinary English and is not restricted.
+
+### Comments in code
+
+Default: zero comments. A comment is an admission that the code failed to explain itself.
+
+Before writing one, try in this order: a better name, extracting a named function, a named constant instead of a literal, restructuring so the branch is obvious. A comment is allowed only when all four fail.
+
+A comment may only carry information that is not in the code and cannot be put there: a decision and the alternative it rejected, an external bug or limitation with a link or version, a constraint from outside this file (an old client still syncing, an App Store release cycle, a server contract), or a measured number and how it was measured.
+
+Never: restating the line, section banners like `// ---- helpers ----`, an opener from Check / Get / Set / Create / Update / Handle / Loop / Initialize / First / Then / Now we, hedges such as "this might" or "not sure but", JSDoc on a function whose name and signature already say it, or a TODO that was not asked for.
+
+Length: one line, three is the hard cap. Longer belongs in an archdoc, with the comment pointing at it.
+
+The test: delete the comment and read the code. If a reviewer would ask "why is this here?", it goes back. Otherwise it stays deleted.
+
+<!-- prose:end -->
+
+Two worked examples of the comment rule.
+
+BAD (restates the line):
+```typescript
+// Check if user is subscribed
+if (user.subscription?.active) {
+```
+
+GOOD (carries a constraint the code cannot show):
+```typescript
+// Stripe webhook can be delayed, so we also check local cache
+if (user.subscription?.active || cachedSubscription) {
+```
+
+## Git Commits
+
+Do NOT add "Co-Authored-By: Codex ..." (or any other AI attribution) lines to commit messages.
+
+## Knowledge Base
+
+Project knowledge base lives in `lambda/scripts/memory/`. See `lambda/scripts/memory/INDEX.md` for a compact overview of all captured knowledge.
+
+When you discover important architectural decisions, non-obvious bug root causes, new subsystems, or significant product features — use the `/kb` skill to capture them.
+
+## Conversation style
+
+Write in direct, plain technically accurate English. Short sentences. Plain words.
+
+Use ASD-STE100 Simplified Technical English as inspiration for clarity, but natural and simple like a great tweet might be by an industry thought leader.
+
+Simplify the words. Never simplify the facts.
+
+Plain language is about sentence style, not about content. Keep every specific: file paths, function and file names, versions, flags, ports, commands, error text, numbers. Write short plain sentences around them. Never replace a specific with a vague description. "the config file" is worse than "services/pyproject.toml". Explain a term the first time you use it, in a few words. Then just use it.
+
+Optimize for **information density, not exhaustiveness**.
+
+Rules:
+
+* Lead with the result.
+* Use short, direct sentences.
+* Prefer active voice and concrete verbs.
+* State what happened. Do not narrate your reasoning process unless it materially affects the result.
+* Do not defend routine decisions.
+* Do not explain why you did not do unrelated or unnecessary work.
+* Do not preemptively answer objections the user did not raise.
+* Do not document every verification step merely to prove diligence.
+* Do not repeat information in progressively more qualified forms.
+* Avoid bureaucratic, legalistic, academic, or audit-style wording when ordinary technical language is sufficient.
+* Assume the reader is smart and can infer obvious implications. Do not assume they know jargon.
+* Use precise technical terminology where it adds information. Otherwise use ordinary English.
+* Mention caveats only when they materially affect correctness, safety, mergeability, validation, data integrity, or the user's next decision.
+* Distinguish a real blocker from an observation. Do not elevate minor observations into warnings.
+* When the requested work is complete and there is no material unresolved issue, stop.
+
+For task-completion reports, prefer this structure:
+
+**Done**
+
+What changed, commit/PR if relevant, and validation result.
+
+**Remaining**
+
+Only genuinely unfinished work or material risks. Omit this section if there are none.
+
+**Needs your decision**
+
+Only decisions that actually require the user's input. Omit this section if there are none.
+
+Do not create sections merely to fill the structure.
+
+A useful test before including a sentence:
+
+**Would the user make a different decision, take a different action, or understand the result less accurately if I refrained from saying this sentence?**
+
+If not, don't say it.
+
+A second test, in the other direction:
+
+**Could the user act on this without the exact name, path, number, flag, or command?**
+
+If not, include it exactly.
+
+Prefer:
+
+"PR #512 is mergeable. The branch is 8 commits behind main. Validation was run against d9631c45, so merging main requires re-running validation."
+
+Not:
+
+"I did not rebase or merge — doing so would have invalidated the validation I'd just run against base d9631c45. GitHub reports it mergeable, and the PR body states this explicitly so a reviewer doesn't assume the green lanes cover a merge with current main."
+
+Be accurate without being pedantic. Do the work carefully; report it simply.
+
+## When I ask for real writing
+
+Long is fine for drafts, scripts, posts, and documents. This whole style guide is about how you talk to me in chat, not about the work itself.

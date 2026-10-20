@@ -85,13 +85,25 @@ describe("MusicSession", () => {
     let s = MusicSession_start(1, t0);
     s = MusicSession_observe(s, playing(track("a"), 10000), t0 + 10000);
     const history = [
-      { track: track("old"), playedAt: t0 - 60000 },
-      { track: track("a"), playedAt: t0 + 200000 },
-      { track: track("x"), playedAt: t0 + 400000 },
+      { track: track("old"), startedAt: t0 - 260000, endedAt: t0 - 60000 },
+      { track: track("a"), startedAt: t0, endedAt: t0 + 200000 },
+      { track: track("x"), startedAt: t0 + 200000, endedAt: t0 + 400000 },
+      { track: track("late"), startedAt: t0 + 600000, endedAt: t0 + 800000 },
     ];
     s = MusicSession_mergeHistory(s, history, t0 + 500000);
     s = MusicSession_mergeHistory(s, history, t0 + 500000);
-    expect(s.plays.map((p) => [p.track.id, p.source, p.isKept])).to.deep.equal([["x", "history", true]]);
+    expect(s.plays.map((p) => [p.track.id, p.startedAt, p.source, p.isKept])).to.deep.equal([
+      ["x", t0 + 200000, "history", true],
+    ]);
+  });
+
+  it("adds a song that started before the workout and ended during it", () => {
+    const s = MusicSession_mergeHistory(
+      MusicSession_start(1, t0),
+      [{ track: track("warmup"), startedAt: t0 - 170000, endedAt: t0 + 30000 }],
+      t0 + 60000
+    );
+    expect(s.plays.map((p) => p.track.id)).to.deep.equal(["warmup"]);
   });
 
   it("lists kept songs once each, and lets the review untick one", () => {
@@ -148,6 +160,9 @@ describe("Spotify parsing", () => {
       ],
     });
     expect(history.map((h) => h.track.id)).to.deep.equal(["b", raw.id]);
+    const endedAt = Date.parse("2026-10-20T10:01:00.000Z");
+    expect(history[0].endedAt).to.equal(endedAt);
+    expect(history[0].startedAt).to.equal(endedAt - history[0].track.durationMs);
   });
 });
 
