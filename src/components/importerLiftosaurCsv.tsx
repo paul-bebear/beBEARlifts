@@ -7,6 +7,7 @@ import { IDispatch } from "../ducks/types";
 import { MenuItemWrapper } from "./menuItem";
 import { Thunk_importCsvData } from "../ducks/thunks";
 import { FileImport_pickFile } from "../utils/fileImport";
+import { ClipboardUtils_paste } from "../utils/clipboard";
 import { IconHelp } from "./icons/iconHelp";
 import { InternalLink } from "../internalLink";
 
@@ -27,7 +28,10 @@ export function ImporterLiftosaurCsv(props: IImporterLiftosaurCsvProps): JSX.Ele
 
   // Safari shows its own "Paste" bubble on readText, and only inside a tap handler.
   const onPaste = useCallback(async () => {
-    const text = await navigator.clipboard?.readText().catch(() => undefined);
+    const text =
+      Platform.OS === "web"
+        ? await navigator.clipboard?.readText().catch(() => undefined)
+        : await ClipboardUtils_paste().catch(() => undefined);
     const csv = text != null ? CsvFromChat_extract(text) : undefined;
     if (csv == null) {
       Dialog_alert("The clipboard is empty. Copy the CSV block from the AI chat first.");

@@ -3,6 +3,7 @@ import { INutritionLabel, NutritionLabel_note, NutritionLabel_parse } from "../m
 import { SavedFoods_find, SavedFoods_search } from "../models/savedFoods";
 import { UsdaFoodData_parseBarcodeResponse } from "../models/usdaFoodData";
 import { AiRequest_post, AiRequest_text } from "./aiRequest";
+import { ApiUrl_for } from "./apiUrl";
 import {
   IFoodProduct,
   OpenFoodFacts_isBarcode,
@@ -17,7 +18,7 @@ const offlineError = "No connection. Food lookup needs a signal.";
 async function request(path: string, init?: RequestInit): Promise<IFoodApiResult<unknown>> {
   let response: Response;
   try {
-    response = await fetch(path, init);
+    response = await fetch(ApiUrl_for(path), init);
   } catch {
     return { ok: false, error: offlineError };
   }

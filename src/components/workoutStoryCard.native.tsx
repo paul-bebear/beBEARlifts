@@ -5,7 +5,7 @@ interface IProps {
   settings: ISettings;
 }
 
-// This fork ships only the web build, where the card is drawn with html-to-image.
+// The web card is drawn with html-to-image. NATIVE_PLAN.md has the react-native-view-shot fix.
 export function WorkoutStoryCardSection(_props: IProps): null {
   return null;
 }

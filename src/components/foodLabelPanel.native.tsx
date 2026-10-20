@@ -8,7 +8,7 @@ interface IProps {
   onBack: () => void;
 }
 
-// This fork ships only the web build. A native version would use react-native-image-picker for the photo.
+// The web panel needs <input type="file"> and a canvas. NATIVE_PLAN.md has the react-native-image-picker fix.
 export function FoodLabelPanel(_props: IProps): JSX.Element {
   return <Text className="py-6 text-base text-center">Label photos work in the web app only.</Text>;
 }

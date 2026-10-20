@@ -5,7 +5,7 @@ interface IProps {
   onDetected: (code: string) => void;
 }
 
-// This fork ships only the web build. A native scanner would need a camera library such as react-native-vision-camera.
+// The web scanner needs @zxing/browser and a <video> element. NATIVE_PLAN.md has the react-native-vision-camera fix.
 export function FoodBarcodeScanner(_props: IProps): JSX.Element {
   return <Text className="py-6 text-base text-center">Barcode scanning works in the web app only.</Text>;
 }

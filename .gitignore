@@ -35,6 +35,7 @@ cloudflare.*
 # React Native - iOS
 ios/Pods/
 ios/build/
+ios/.xcode.env.local
 ios/*.xcworkspace/xcuserdata/
 ios/Liftosaur.xcodeproj/xcuserdata/
 ios/Liftosaur.xcodeproj/project.xcworkspace/xcuserdata/

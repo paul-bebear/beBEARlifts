@@ -1,4 +1,5 @@
 import { SupabaseClient_accessToken, Supabase_notSignedIn } from "./supabaseClient";
+import { ApiUrl_for } from "./apiUrl";
 
 export const AiRequest_signInMessage = "Sign in to use AI features. Open Settings → Cloud backup.";
 export const AiRequest_offlineMessage = "No connection. AI features need a signal.";
@@ -13,7 +14,7 @@ export async function AiRequest_post(path: string, payload: unknown): Promise<IA
   }
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(ApiUrl_for(path), {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth.value}` },
       body: JSON.stringify(payload),
