@@ -1,7 +1,8 @@
 import { CommonActions, type NavigationState, type PartialState } from "@react-navigation/native";
 import { navigationRef } from "./navigationRef";
-import { Screen_tab, IScreen } from "../models/screen";
-import type { ITab, IScreenData } from "../models/screen";
+import type { IScreen, ITab, IScreenData } from "../models/screen";
+import { TabRouting_resetRoutes, TabRouting_shouldReset, TabRouting_tabForScreen } from "../models/tabRouting";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import type { IAllScreenParamList, IRootStackParamList } from "./types";
 import { PerfNavTracker_recordTap } from "../utils/perfNavTracker";
 import { HermesProfile_captureOnce } from "../utils/hermesProfile";
@@ -77,7 +78,12 @@ export function navigateTo<T extends IScreen>(screen: T, params?: IAllScreenPara
     return;
   }
 
-  if (opts?.tab) {
+  const offline = OfflineOnly_isEnabled();
+  const currentRoot = getCurrentRoot();
+
+  if (TabRouting_shouldReset(screen, opts?.tab, currentRoot === "onboarding", offline)) {
+    const tab = TabRouting_tabForScreen(screen, opts?.tab, offline);
+    const routes = TabRouting_resetRoutes(tab, screen, params as object | undefined, offline);
     const resetState: PartialState<NavigationState> = {
       index: 0,
       routes: [
@@ -86,10 +92,10 @@ export function navigateTo<T extends IScreen>(screen: T, params?: IAllScreenPara
           state: {
             routes: [
               {
-                name: opts.tab,
+                name: tab,
                 state: {
-                  index: 0,
-                  routes: [{ name: screen, params }],
+                  index: routes.length - 1,
+                  routes,
                 },
               },
             ],
@@ -101,12 +107,10 @@ export function navigateTo<T extends IScreen>(screen: T, params?: IAllScreenPara
     return;
   }
 
-  const currentRoot = getCurrentRoot();
-
   if (currentRoot === "onboarding") {
     navigationRef.dispatch(CommonActions.navigate({ name: "onboarding", params: { screen, params } }));
   } else if (currentRoot === "mainTabs") {
-    const tab = getCurrentTab() ?? Screen_tab(screen);
+    const tab = TabRouting_tabForScreen(screen, getCurrentTab(), offline);
     navigationRef.dispatch(
       CommonActions.navigate({
         name: "mainTabs",

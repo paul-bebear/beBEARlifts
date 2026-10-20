@@ -17,7 +17,7 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - `Subscriptions_hasSubscription` in `src/utils/subscriptions.ts` always returns true. Every premium feature reads that one function.
 - `SubscriptionPlan_derive` reports "Free access", so no screen shows the purchase pitch. The Apple and Google receipt cleanups return before they call a server.
 - The offline build skips the startup cloud sync, the sign-up prompt, the "How'd you hear about us?" survey, the "I have an account" button, and the Account, Nickname, API Keys and Discord rows in Settings.
-- The tab bar hides during a live workout. It has five tabs, two on each side of the Workout button: Home, Program, Food and Progress. Progress (`src/components/screenProgressDashboard.tsx`) folds in Graphs and Me: daily targets, latest weight, food days logged, workouts and streak, with the profile and settings buttons in its header.
+- The tab bar hides during a live workout. It has five tabs, two on each side of the Workout button: Home, Friends, Food and Progress. Friends (`src/components/screenFriends.tsx`) is a placeholder for the friends feed. Progress (`src/components/screenProgressDashboard.tsx`) folds in Graphs and Me: a Program card, daily targets, latest weight, food days logged, workouts and streak, with the profile and settings buttons in its header. The Program card opens the program editor, which has a back arrow to Progress. The program list, the program preview and the 1RM screen open on the Progress tab too (`TabRouting_tabForScreen` in `src/models/tabRouting.ts`).
 - An ad-hoc set added with "Add Set" gets the last set's numbers pre-filled but no target (`Reps_addSet` in `src/models/set.ts`). Upstream copied them as the target, so a later set with fewer reps turned red. Program sets keep the target, because progressions read it.
 - The finish screen has a story card (`src/components/workoutStoryCard.tsx`): a 1080 × 1920 PNG with weight lifted, duration, sets, a muscle map and a funny comparison such as "You moved 3 grand pianos", over your own photo if you add one. The comparison comes from 50 things (`src/models/liftEquivalents.ts`) and always lands between 2 and 999 of them. Shuffle picks another thing and phrase.
 - Four exercises come from other forks: Shoulder Press with a kettlebell, Squat Hops, Split Squat Hops and Calf Jump. They have no pictures yet, so the picker shows a text tile for them.
@@ -88,14 +88,14 @@ The app does not interview you yet. Until it does, an AI chat app such as ChatGP
 
 To add a built-in program:
 
-1. Open the Program tab and tap the two-arrows icon right of the program name. "Choose a program" opens.
+1. Open the Progress tab, tap the Program card at the top, then tap the two-arrows icon right of the program name. "Choose a program" opens.
 2. Tap "Built-in", search for the name, tap the program, then tap "Clone".
 
 To add a program the AI wrote:
 
 1. Copy the text inside the code block. Chat apps show a copy button on the block.
-2. Open the Program tab, tap the two-arrows icon, then tap "Create New Program" at the bottom.
-3. Type a name and tap "Create". The Program tab opens on the new, empty program.
+2. Open the Progress tab, tap the Program card at the top, tap the two-arrows icon, then tap "Create New Program" at the bottom.
+3. Type a name and tap "Create". The program editor opens on the new, empty program.
 4. Tap "Edit", then the icon just left of "Save". It shows curly braces around three lines, and it switches the editor to full text mode.
 5. Select all the text in the editor and paste.
 6. Tap "Save". The app goes to Home with the new program active.

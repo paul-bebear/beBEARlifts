@@ -6,7 +6,7 @@ import type { IFoodAddScreenParams } from "../navigation/types";
 import { Program_getProgram, Program_cleanPlannerProgram } from "./program";
 import { ObjectUtils_isEqual } from "../utils/object";
 
-export type ITab = "home" | "program" | "workout" | "food" | "graphs" | "me";
+export type ITab = "home" | "friends" | "program" | "workout" | "food" | "graphs" | "me";
 
 export type IScreenData =
   | { name: "first"; params?: Record<string, never> }
@@ -22,6 +22,7 @@ export type IScreenData =
   | { name: "progressDashboard"; params?: Record<string, never> }
   | { name: "music"; params?: Record<string, never> }
   | { name: "food"; params?: Record<string, never> }
+  | { name: "friends"; params?: Record<string, never> }
   | { name: "foodAdd"; params: IFoodAddScreenParams }
   | { name: "finishDay"; params?: { id?: number } }
   | { name: "muscles"; params?: Record<string, never> }
@@ -131,6 +132,9 @@ export function Screen_tab(screen: IScreen): ITab {
     }
     case "foodAdd": {
       return "food";
+    }
+    case "friends": {
+      return "friends";
     }
     case "finishDay": {
       return "workout";
