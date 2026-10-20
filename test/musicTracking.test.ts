@@ -1,11 +1,19 @@
 import "mocha";
 import { expect } from "chai";
 import { createHash } from "crypto";
-import { MusicLog_empty, MusicLog_formatDuration, MusicLog_reviewable, MusicLog_session } from "../src/models/musicLog";
+import {
+  MusicLog_empty,
+  MusicLog_formatDuration,
+  MusicLog_reviewable,
+  MusicLog_session,
+  MusicLog_sessionForWorkout,
+  MusicLog_workoutForSession,
+} from "../src/models/musicLog";
 import {
   MusicTracking_finishOthers,
   MusicTracking_mergeHistory,
   MusicTracking_observe,
+  MusicTracking_workoutOf,
 } from "../src/models/musicTracking";
 import { ISpotifyTrack } from "../src/models/spotifyTracks";
 import { SpotifyAuth_base64Url, SpotifyAuth_randomString } from "../src/models/spotifyAuth";
@@ -81,6 +89,36 @@ describe("MusicTracking", () => {
     expect(MusicLog_session(closed, 42)!.endedAt).to.equal(undefined);
     const allClosed = MusicTracking_finishOthers(closed, undefined, 1_300_000);
     expect(MusicLog_session(allClosed, 42)!.endedAt).to.equal(1_300_000);
+  });
+
+  it("keys a running workout by its start time, the id it gets when it is finished", () => {
+    expect(MusicTracking_workoutOf({ id: 0, startTime: 1792505563321 })).to.deep.equal({
+      id: 1792505563321,
+      startTime: 1792505563321,
+    });
+    expect(MusicTracking_workoutOf({ id: 1792505563321, startTime: 1792505563321 })).to.equal(undefined);
+    expect(MusicTracking_workoutOf(undefined)).to.equal(undefined);
+  });
+});
+
+describe("MusicLog links sessions and workouts", () => {
+  const lower1 = { id: 1792505563321, startTime: 1792505563321, endTime: 1792511379085 };
+  const other = { id: 1792400000000, startTime: 1792400000000, endTime: 1792404000000 };
+  const keyed = { id: lower1.id, startedAt: lower1.startTime, plays: [] };
+  const zero = { id: 0, startedAt: lower1.startTime, endedAt: 1792511379000, plays: [] };
+
+  it("links by id", () => {
+    const log = { ...MusicLog_empty(), sessions: [zero, keyed] };
+    expect(MusicLog_sessionForWorkout(log, lower1)).to.equal(keyed);
+    expect(MusicLog_workoutForSession([other, lower1], keyed)).to.equal(lower1);
+  });
+
+  it("links a session stored under id 0 to the workout it started in", () => {
+    const log = { ...MusicLog_empty(), sessions: [zero] };
+    expect(MusicLog_sessionForWorkout(log, lower1)).to.equal(zero);
+    expect(MusicLog_sessionForWorkout(log, other)).to.equal(undefined);
+    expect(MusicLog_workoutForSession([other, lower1], zero)).to.equal(lower1);
+    expect(MusicLog_workoutForSession([other], zero)).to.equal(undefined);
   });
 });
 

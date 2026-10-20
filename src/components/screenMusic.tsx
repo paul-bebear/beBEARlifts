@@ -22,6 +22,7 @@ import {
   MusicLog_formatDuration,
   MusicLog_putSession,
   MusicLog_reviewable,
+  MusicLog_workoutForSession,
 } from "../models/musicLog";
 import {
   IMusicSession,
@@ -250,7 +251,7 @@ export function ScreenMusic(): JSX.Element {
         </Text>
       ) : (
         sessions.map((s) => {
-          const record = history.find((h) => h.id === s.id);
+          const record = MusicLog_workoutForSession(history, s);
           return (
             <SessionCard
               key={s.id}
