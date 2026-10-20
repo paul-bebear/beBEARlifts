@@ -26,7 +26,8 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - `src/utils/pressFeedback.ts` dims a button while a finger is on it, as iOS does. It is installed only in the offline build.
 - Settings → Appearance → Monochrome turns the app black and white. It is stored as `settings.monochrome` and puts a `mono` class on `<html>`.
 - `.claude/hooks/session-start.sh` installs dependencies, runs the codegen steps and installs Playwright's Chromium in Claude Code cloud sessions.
-- `src/webpushr-sw.ts` precaches the files the app loads (`/app.js`, `/app.css`, `/app/`). It caches lazy chunks, program data and images on first use. One missing file no longer breaks the install.
+- `src/webpushr-sw.ts` precaches the files the app loads (`/app/` and the bundles it names). It caches lazy chunks, program data and images on first use. One missing file no longer breaks the install.
+- The offline build names `app`, `vendors` and their CSS by content hash, for example `/app.736a0190.js`, and `HashedIndexPlugin` in `webpack.config.js` writes those names into `app/index.html`. Vercel ignores the query string on static files. With the old `/app.js?version=<commit>` names, a deploy could hand the service worker the previous `app.js` under the new name, and the phone kept it. The service worker reads the bundle names from the cached `/app/` page on install (`src/utils/bundleNames.ts`).
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
 - A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
 - `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket and sets `Content-Security-Policy: connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com`.
