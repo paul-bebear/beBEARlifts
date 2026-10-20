@@ -1,27 +1,30 @@
 # Program builder prompt
 
-Copy everything below the line into a new chat with ChatGPT, Claude or another AI chat app. The AI asks you a few questions. Then it picks a built-in program or writes one for you.
+Copy everything below the line into a new chat with ChatGPT, Claude or another AI chat app. The AI asks you three quick questions. Then it converts your current plan from screenshots, picks a built-in program, or writes one for you.
 
 The prompt works on its own. If your chat app takes files, you can also attach `llms/exercises.md`, `llms/liftoscript_llm.md` and `llms/program_design.md` from this repository. The AI then knows every exercise name and every Liftoscript feature.
 
 ---
 
-You help me choose or write a weightlifting program for beBEARlifts, an offline fork of the Liftosaur app. Programs in the app are text in a language called Liftoscript. Follow the four steps below in order.
+You help me set up beBEARlifts, a free weightlifting app. Programs in the app are text in a language called Liftoscript. Follow the steps below in order. Keep every message short. I am on my phone.
 
-## Step 1. Ask me about myself
+## Step 0. Get the app
 
-Ask one short question at a time. Wait for my answer before you ask the next one. Ask about:
+Start with this, in two lines: open https://lifts.paulbebear.com/app/ in Safari on an iPhone, tap Share, then "Add to Home Screen". Open the app from the Home Screen icon, because data saved in a Safari tab is separate. Then go straight to step 1.
 
-1. My goal: strength, muscle, fat loss, or general fitness.
-2. My experience: how long I have lifted, and whether I can still add weight to my lifts every session.
-3. How many days per week I can train.
-4. How many minutes one session can take.
-5. The equipment I have: a full gym, a home gym (ask what is in it), dumbbells only, or bodyweight only.
-6. Injuries, pain, or movements I must avoid.
-7. Lifts I enjoy and lifts I hate.
-8. Whether I use kg or lb.
+## Step 1. Ask me three quick questions
 
-If I skip a question, use the default: muscle with some strength, beginner, 3 days, 60 minutes, full gym, no injuries, lb.
+Ask one question per message and wait for my answer. Tell me once, in the first question, that I can answer "skip" to any of them.
+
+1. What is your goal (build muscle, get stronger, lose fat, or just get fit), and how many days a week can you train?
+2. What are your height, weight and age, and how long have you been lifting?
+3. Do you already follow a plan? If yes, send screenshots of the whole plan. Add screenshots of your recent workouts too, if you have them, and I will bring those into the app as your history.
+
+If I skip a question or part of one, use the default: muscle with some strength, 3 days a week, 60-minute sessions, full gym, beginner, no injuries. Use kg or lb the way I wrote my weight; use lb if I gave none. If I mention an injury, a piece of equipment, or a lift I hate in any answer, follow it. Do not ask more questions unless a screenshot is unreadable.
+
+Height, weight and age only tune the starting weights. Do not comment on my body.
+
+If I sent a plan in question 3, skip step 2 and go to "Step 3a. Convert my plan".
 
 For fat loss, tell me in one sentence that food drives fat loss and lifting keeps muscle. Then plan for "strength and muscle". For general fitness, also plan for "strength and muscle", with shorter sessions.
 
@@ -108,6 +111,17 @@ If I want the built-in one, give me these steps, then stop. In the app, open the
 
 If none fits, or I ask for a personal program, go to step 3.
 
+## Step 3a. Convert my plan
+
+Turn my screenshots into Liftoscript, following the Liftoscript rules in step 3:
+
+- Keep my days, exercises, sets, reps and weights as they are. Do not "improve" my plan unless I ask.
+- Map each exercise to the closest name and equipment in the list in step 3. Under the summary in step 4, list every exercise you renamed, as "My name → app name".
+- If the plan shows a rep range such as 8-12, use double progression: `3x8` with `progress: dp(5lb, 8, 12)`. If it shows fixed reps, use linear progression.
+- If the plan has no weights, guess them as in step 3 and say they are guesses.
+
+If I also sent screenshots of past workouts, do step 5 after step 4.
+
 ## Step 3. Write a personal program
 
 Design rules:
@@ -158,7 +172,13 @@ Before you answer, check the program against every rule above.
 
 Write a short summary first: the days, what each day trains, and how the weights go up. Then put the whole program in one fenced code block marked `liftoscript`. Put nothing else in the block, and leave out a program name, because the app asks for it.
 
-After the block, add one line: "Paste this into the app's full text editor. The README says how."
+After the block, give me these steps to add it:
+
+1. In the app, open the Progress tab, tap the Program card, tap the two-arrows icon, then "Create New Program". Type a name and tap "Create".
+2. Tap "Edit", then the curly-braces icon just left of "Save".
+3. Select all the text, paste the block, and tap "Save".
+
+Then add one line: "To set your daily macros, open the Food tab, tap the targets, then 'Calculate my targets'."
 
 If I come back with an error from the app, such as `Error: Syntax error (12:42)`, the numbers are the line and column. Fix that line and give me the whole block again.
 
@@ -179,3 +199,29 @@ Overhead Press, Barbell / 3x5 / 45lb / 180s / progress: lp(5lb, 1, 0, 10lb, 3, 0
 Lat Pulldown, Cable / 3x10 / 70lb / 120s / progress: dp(5lb, 10, 15)
 Bicep Curl, Dumbbell / 3x10 / 15lb / 60s / warmup: none / progress: dp(5lb, 10, 15)
 ```
+
+## Step 5. Turn my past workouts into history
+
+Only do this if I sent screenshots of past workouts. Write one row per working set I did, in one fenced code block marked `csv`, with nothing else in the block. Start with this exact header row. The app reads the columns by position, so every row has 25 values and keeps every comma:
+
+- Workout DateTime: the workout's date, as `2026-10-13T18:00:00.000Z`. If the screenshot shows no time, use 18:00. All sets of one workout share this value.
+- Program and Day Name: the plan's name and the day's name, the same on every row of one workout.
+- Exercise: the app name from step 3a, in double quotes because it holds a comma: `"Squat, Barbell"`.
+- Required Reps and Completed Reps: the reps I did. Required Weight Value and Completed Weight Value: the weight I used. Both units: `kg` or `lb`.
+- Completed Reps Time: the Workout DateTime again.
+- Every flag column (Is Warmup Set?, Is AMRAP?, Log RPE?, Ask Weight?, Is Overflow Set Time?): `0`. Leave every other column empty.
+- Skip warmup sets. If a number is unreadable, leave that set out and tell me which one.
+
+Here is an example of a correct block, for one workout with two sets of squats and one set of bench press:
+
+```csv
+Workout DateTime,Program,Day Name,Exercise,Is Warmup Set?,Required Reps,Completed Reps,Is AMRAP?,Required RPE,Completed RPE,Log RPE?,Required Weight Value,Required Weight Unit,Completed Weight Value,Completed Weight Unit,Ask Weight?,Completed Reps Time,Target Muscles,Synergist Muscles,Notes,Completed Reps Left,Required Set Time Seconds,Is Overflow Set Time?,Completed Set Time Seconds,Completed Set Time Left Seconds
+2026-10-13T18:00:00.000Z,My Plan,Legs,"Squat, Barbell",0,5,5,0,,,0,100,kg,100,kg,0,2026-10-13T18:00:00.000Z,,,,,,0,,
+2026-10-13T18:00:00.000Z,My Plan,Legs,"Squat, Barbell",0,5,5,0,,,0,100,kg,100,kg,0,2026-10-13T18:00:00.000Z,,,,,,0,,
+2026-10-13T18:00:00.000Z,My Plan,Legs,"Bench Press, Barbell",0,8,7,0,,,0,70,kg,70,kg,0,2026-10-13T18:00:00.000Z,,,,,,0,,
+```
+
+After the block, give me these steps:
+
+1. Tap the copy button on the block.
+2. In the app, open Settings and tap "Paste history from clipboard". Tap "Paste" if the phone asks.

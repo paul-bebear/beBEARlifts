@@ -83,8 +83,11 @@ The repo has a git submodule (`lambda/scripts`) that points at a private SSH URL
 The app does not interview you yet. Until it does, an AI chat app such as ChatGPT or Claude can, with the prompt in [`llms/program_builder_prompt.md`](llms/program_builder_prompt.md).
 
 1. Open the prompt file. Copy everything below its line and paste it into a new chat.
-2. Answer the questions one at a time: goal, experience, days per week, minutes per session, equipment, injuries, and lifts you like or hate.
-3. The AI either names one of the app's built-in programs, or writes a program for you as one `liftoscript` code block.
+2. The AI first says how to add the app to the Home Screen. Then it asks three questions, and you can skip any of them: your goal and days per week, your height, weight, age and experience, and whether you already follow a plan.
+3. If you follow a plan, send screenshots of it. The AI converts it to Liftoscript as it is, and lists every exercise it renamed. Screenshots of past workouts become a `csv` block of history.
+4. Otherwise the AI names one of the app's built-in programs, or writes a program for you as one `liftoscript` code block.
+
+To add the history: copy the `csv` block, open Settings and tap "Paste history from clipboard". Safari asks to paste; tap "Paste".
 
 To add a built-in program:
 
@@ -106,7 +109,7 @@ If a line is wrong, a red bar above the editor shows `Error:` with the line and 
 
 The starting weights are guesses. Change any that feel wrong after the first workout.
 
-`test/programBuilderPrompt.test.ts` parses the prompt's example with the app's own parser. It also checks that every exercise name in the prompt exists and that every built-in program is listed. A change that breaks the prompt fails `npm test`.
+`test/programBuilderPrompt.test.ts` parses the prompt's example program with the app's own parser, and imports its example history CSV with the app's own CSV import. It also checks that every exercise name in the prompt exists and that every built-in program is listed. A change that breaks the prompt fails `npm test`.
 
 ## Your data and backups
 
