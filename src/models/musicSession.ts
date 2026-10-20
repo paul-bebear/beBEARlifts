@@ -24,12 +24,25 @@ export interface IMusicSession {
 
 const keptShare = 0.5;
 const nearEndMs = 20 * 1000;
-// A jump back by more than this on the same track is a restart, and counts as a new play.
 const restartMs = 15 * 1000;
 const historySlackMs = 5 * 60 * 1000;
 
 export function MusicSession_isKept(heardMs: number, durationMs: number): boolean {
   return heardMs >= keptShare * durationMs || heardMs >= durationMs - nearEndMs;
+}
+
+// Spotify relinks a song to another track id between Now Playing and Recently Played, so the id alone misses copies.
+function isSameSong(a: ISpotifyTrack, b: ISpotifyTrack): boolean {
+  return a.id === b.id || (a.name === b.name && a.artists === b.artists);
+}
+
+function startsInside(play: { startedAt: number; heardMs: number }, startedAt: number): boolean {
+  return startedAt < play.startedAt + play.heardMs - restartMs;
+}
+
+// The user scrubs back mid-song to line up the next song with a set. Only a jump back to the start is a new play.
+function isRestart(current: IMusicCurrent, snapshot: ISpotifyNowPlaying): boolean {
+  return snapshot.progressMs < restartMs && snapshot.progressMs + restartMs < current.maxProgressMs;
 }
 
 export function MusicSession_start(id: number, now: number): IMusicSession {
@@ -61,9 +74,7 @@ export function MusicSession_observe(
     return session;
   }
   const current = session.current;
-  const isSameTrack = current != null && current.track.id === snapshot.track.id;
-  const isRestart = isSameTrack && snapshot.progressMs + restartMs < current.maxProgressMs;
-  if (isSameTrack && !isRestart) {
+  if (current != null && isSameSong(current.track, snapshot.track) && !isRestart(current, snapshot)) {
     return { ...session, current: { ...current, maxProgressMs: Math.max(current.maxProgressMs, snapshot.progressMs) } };
   }
   const closed = finalize(session);
@@ -95,7 +106,8 @@ export function MusicSession_mergeHistory(
     }
     const isKnown = known.some(
       (p) =>
-        p.track.id === item.track.id && Math.abs(p.startedAt - item.startedAt) <= item.track.durationMs + historySlackMs
+        isSameSong(p.track, item.track) &&
+        Math.abs(p.startedAt - item.startedAt) <= item.track.durationMs + historySlackMs
     );
     if (!isKnown) {
       added.push({
@@ -111,6 +123,25 @@ export function MusicSession_mergeHistory(
     return session;
   }
   return { ...session, plays: [...session.plays, ...added].sort((a, b) => a.startedAt - b.startedAt) };
+}
+
+function mergeCopies(a: IMusicPlay, b: IMusicPlay): IMusicPlay {
+  const kept = a.source === "live" || b.source === "history" ? a : b;
+  return { ...kept, heardMs: Math.max(a.heardMs, b.heardMs), isKept: a.isKept || b.isKept };
+}
+
+// Builds before 2026-10-21 stored a seek back as a second play and a relinked history copy next to the live play.
+export function MusicSession_dropCopies(session: IMusicSession): IMusicSession {
+  const plays: IMusicPlay[] = [];
+  for (const play of [...session.plays].sort((a, b) => a.startedAt - b.startedAt)) {
+    const index = plays.findIndex((p) => isSameSong(p.track, play.track) && startsInside(p, play.startedAt));
+    if (index === -1) {
+      plays.push(play);
+    } else {
+      plays[index] = mergeCopies(plays[index], play);
+    }
+  }
+  return plays.length === session.plays.length ? session : { ...session, plays };
 }
 
 export function MusicSession_setKept(session: IMusicSession, index: number, isKept: boolean): IMusicSession {

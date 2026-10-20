@@ -35,6 +35,7 @@ import {
 import { lb } from "lens-shmens";
 import { RestTimer } from "./restTimer";
 import { MusicTracker } from "./musicTracker";
+import { MusicTracking_workoutOf } from "../models/musicTracking";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { UrlUtils_build } from "../utils/url";
 import { AsyncQueue } from "../utils/asyncQueue";
@@ -358,8 +359,8 @@ export function AppView(props: IProps): JSX.Element | null {
                     </NavigationContainer>
                     {OfflineOnly_isEnabled() && (
                       <MusicTracker
-                        workoutId={progress?.id}
-                        workoutStartTime={progress?.startTime}
+                        workoutId={MusicTracking_workoutOf(progress)?.id}
+                        workoutStartTime={MusicTracking_workoutOf(progress)?.startTime}
                         isNavReady={isNavReady}
                         dispatch={dispatch}
                       />

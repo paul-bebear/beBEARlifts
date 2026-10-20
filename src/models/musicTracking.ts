@@ -7,6 +7,8 @@ import {
   MusicSession_start,
 } from "./musicSession";
 import { ISpotifyHistoryItem, ISpotifyNowPlaying } from "./spotifyTracks";
+import { Progress_isCurrent } from "./progress";
+import { IHistoryRecord } from "../types";
 
 export interface IMusicWorkout {
   id: number;
@@ -14,6 +16,15 @@ export interface IMusicWorkout {
 }
 
 export const MusicTracking_pollMs = 8 * 1000;
+
+// History_finishProgramDay gives a running workout (id 0) its startTime as the id. An edited old workout plays no music.
+export function MusicTracking_workoutOf(
+  progress: Pick<IHistoryRecord, "id" | "startTime"> | undefined
+): IMusicWorkout | undefined {
+  return progress != null && Progress_isCurrent(progress)
+    ? { id: progress.startTime, startTime: progress.startTime }
+    : undefined;
+}
 
 function apply(log: IMusicLog, workout: IMusicWorkout, fn: (s: IMusicSession) => IMusicSession): IMusicLog {
   const existing = MusicLog_session(log, workout.id);

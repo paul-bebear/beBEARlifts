@@ -1,6 +1,9 @@
 import { ISpotifyTokens, SpotifyAuth_parseTokensRecord } from "./spotifyAuth";
-import { IMusicPlay, IMusicSession } from "./musicSession";
+import { IMusicPlay, IMusicSession, MusicSession_dropCopies } from "./musicSession";
 import { SpotifyTracks_parseTrack, ISpotifyTrack } from "./spotifyTracks";
+import { IHistoryRecord } from "../types";
+
+type IWorkoutTimes = Pick<IHistoryRecord, "id" | "startTime" | "endTime">;
 
 export interface IMusicLog {
   version: 1;
@@ -63,7 +66,7 @@ function parseSession(raw: unknown): IMusicSession | undefined {
   if (currentTrack != null && firstSeenAt != null && maxProgressMs != null) {
     session.current = { track: currentTrack, firstSeenAt, maxProgressMs };
   }
-  return session;
+  return MusicSession_dropCopies(session);
 }
 
 export function MusicLog_parse(raw: unknown): IMusicLog {
@@ -89,6 +92,22 @@ export function MusicLog_parse(raw: unknown): IMusicLog {
 
 export function MusicLog_session(log: IMusicLog, id: number): IMusicSession | undefined {
   return log.sessions.find((s) => s.id === id);
+}
+
+function startedDuring(session: IMusicSession, workout: IWorkoutTimes): boolean {
+  return session.startedAt >= workout.startTime && session.startedAt <= (workout.endTime ?? workout.startTime);
+}
+
+// Builds before 2026-10-21 stored a running workout's session under id 0, so a session without a matching id links by time.
+export function MusicLog_sessionForWorkout(log: IMusicLog, workout: IWorkoutTimes): IMusicSession | undefined {
+  return MusicLog_session(log, workout.id) ?? log.sessions.find((s) => startedDuring(s, workout));
+}
+
+export function MusicLog_workoutForSession<T extends IWorkoutTimes>(
+  history: T[],
+  session: IMusicSession
+): T | undefined {
+  return history.find((h) => h.id === session.id) ?? history.find((h) => startedDuring(session, h));
 }
 
 export function MusicLog_putSession(log: IMusicLog, session: IMusicSession): IMusicLog {

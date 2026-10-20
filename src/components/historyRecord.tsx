@@ -27,7 +27,7 @@ import { IconArrowDown2 } from "./icons/iconArrowDown2";
 import { IconArrowUp } from "./icons/iconArrowUp";
 import { HistoryCollapse_summary } from "../models/historyCollapse";
 import { useMusicLog } from "../utils/musicStore";
-import { MusicLog_session } from "../models/musicLog";
+import { MusicLog_sessionForWorkout } from "../models/musicLog";
 import { SongPerSet_forEntry, SongPerSet_match } from "../models/songPerSet";
 
 interface IProps {
@@ -64,7 +64,7 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
   const supersetToColor = useMemo(() => Progress_getSupersetToColor(entries), [entries]);
   const musicLog = useMusicLog();
   const songs = useMemo(
-    () => (isCurrent ? [] : SongPerSet_match(historyRecord, MusicLog_session(musicLog, historyRecord.id))),
+    () => (isCurrent ? [] : SongPerSet_match(historyRecord, MusicLog_sessionForWorkout(musicLog, historyRecord))),
     [isCurrent, historyRecord, musicLog]
   );
 

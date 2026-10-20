@@ -1,7 +1,9 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  IMusicPlay,
   MusicSession_counts,
+  MusicSession_dropCopies,
   MusicSession_finish,
   MusicSession_isKept,
   MusicSession_keptTracks,
@@ -71,6 +73,66 @@ describe("MusicSession", () => {
     expect(s.plays).to.have.length(1);
     expect(s.plays[0].isKept).to.equal(true);
     expect(s.current?.maxProgressMs).to.equal(2000);
+  });
+
+  it("keeps one play when the user scrubs back to the middle of the song", () => {
+    const kryptonite = track("k", 233933);
+    let s = MusicSession_start(1, t0);
+    for (let progress = 8000; progress <= 181555; progress += 8000) {
+      s = MusicSession_observe(s, playing(kryptonite, progress), t0 + progress);
+    }
+    s = MusicSession_observe(s, playing(kryptonite, 181555), t0 + 181555);
+    s = MusicSession_observe(s, playing(kryptonite, 106000), t0 + 189555);
+    s = MusicSession_observe(s, playing(kryptonite, 227309), t0 + 310864);
+    s = MusicSession_observe(s, playing(track("next"), 2000), t0 + 318864);
+    expect(s.plays.map((p) => [p.track.id, p.startedAt, p.heardMs])).to.deep.equal([["k", t0, 227309]]);
+  });
+
+  it("keeps one play when the user scrubs back after a long pause", () => {
+    let s = MusicSession_start(1, t0);
+    s = MusicSession_observe(s, playing(track("a"), 150000), t0);
+    s = MusicSession_observe(s, { track: track("a"), progressMs: 150000, isPlaying: false }, t0 + 300000);
+    s = MusicSession_observe(s, playing(track("a"), 100000), t0 + 308000);
+    expect(s.plays).to.have.length(0);
+    expect(s.current?.firstSeenAt).to.equal(t0 - 150000);
+  });
+
+  it("counts a restart right after the song played out as a new play", () => {
+    let s = MusicSession_start(1, t0);
+    s = MusicSession_observe(s, playing(track("a"), 195000), t0);
+    s = MusicSession_observe(s, playing(track("a"), 3000), t0 + 8000);
+    expect(s.plays.map((p) => p.heardMs)).to.deep.equal([195000]);
+    expect(s.current?.firstSeenAt).to.equal(t0 + 5000);
+  });
+
+  it("skips a history copy of a live play that Spotify lists under another track id", () => {
+    const live = { ...track("live-faded", 206666), name: "Faded", artists: "Tyga, Lil Wayne" };
+    const relinked = { ...live, id: "history-faded", uri: "spotify:track:history-faded", durationMs: 211413 };
+    let s = MusicSession_start(1, t0);
+    s = MusicSession_observe(s, playing(live, 206666), t0 + 206666);
+    s = MusicSession_observe(s, playing(track("b"), 1000), t0 + 214000);
+    s = MusicSession_mergeHistory(s, [{ track: relinked, startedAt: t0 + 162, endedAt: t0 + 211575 }], t0 + 300000);
+    expect(s.plays.map((p) => [p.track.id, p.source])).to.deep.equal([["live-faded", "live"]]);
+  });
+
+  it("drops the copies older builds stored: a seek back as a second play, a relinked history copy", () => {
+    const k = track("k", 233933);
+    const faded = { ...track("live-faded", 206666), name: "Faded" };
+    const fadedHistory = { ...faded, id: "history-faded", uri: "spotify:track:history-faded" };
+    const plays: IMusicPlay[] = [
+      { track: faded, startedAt: t0, heardMs: 206666, source: "live", isKept: true },
+      { track: fadedHistory, startedAt: t0 + 162, heardMs: 211413, source: "history", isKept: true },
+      { track: k, startedAt: t0 + 438126, heardMs: 181555, source: "live", isKept: true },
+      { track: k, startedAt: t0 + 521508, heardMs: 227309, source: "live", isKept: true },
+      { track: k, startedAt: t0 + 3000000, heardMs: 233933, source: "live", isKept: true },
+    ];
+    const s = MusicSession_dropCopies({ id: 1, startedAt: t0, plays });
+    expect(s.plays.map((p) => [p.track.id, p.startedAt, p.heardMs, p.source])).to.deep.equal([
+      ["live-faded", t0, 211413, "live"],
+      ["k", t0 + 438126, 227309, "live"],
+      ["k", t0 + 3000000, 233933, "live"],
+    ]);
+    expect(MusicLog_parse({ sessions: [{ id: 1, startedAt: t0, plays }] }).sessions[0].plays).to.have.length(3);
   });
 
   it("closes the last song when the workout ends, and ignores later snapshots", () => {
