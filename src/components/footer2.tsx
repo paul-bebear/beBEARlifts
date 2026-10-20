@@ -11,11 +11,12 @@ import { IconHome } from "./icons/iconHome";
 import { IconMe } from "./icons/iconMe";
 import { Tailwind_semantic, Tailwind_colors } from "../utils/tailwindConfig";
 import { IconDoc2 } from "./icons/iconDoc2";
+import { IconFriends } from "./icons/iconFriends";
 import { INavCommon } from "../models/state";
 import { IconBarbell2 } from "./icons/iconBarbell2";
 import { IconFood } from "./icons/iconFood";
 import { ObjectUtils_values } from "../utils/object";
-import { Program_evaluate } from "../models/program";
+import { ProgramCard_hasErrors } from "../models/programCard";
 import { navigateToModal } from "../navigation/navigationService";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 
@@ -23,15 +24,6 @@ interface IFooterProps {
   dispatch: IDispatch;
   navCommon: INavCommon;
   currentTab: ITab;
-}
-
-function getHasErrorsInProgram(navCommon: INavCommon): boolean {
-  const program = navCommon.currentProgram;
-  if (!program) {
-    return false;
-  }
-  const evaluatedProgram = Program_evaluate(program, navCommon.settings);
-  return evaluatedProgram.errors.length > 0;
 }
 
 function getNativeShadowStyle(semantic: ReturnType<typeof Tailwind_semantic>): Record<string, unknown> {
@@ -51,7 +43,7 @@ export function Footer2View(props: IFooterProps): JSX.Element {
   const isUserLoading = ObjectUtils_values(props.navCommon.loading.items).some(
     (i) => i?.type === "fetchStorage" && !i.endTime
   );
-  const hasErrorsInProgram = getHasErrorsInProgram(props.navCommon);
+  const hasErrorsInProgram = ProgramCard_hasErrors(props.navCommon.currentProgram, props.navCommon.settings);
   const insets = useSafeAreaInsets();
   const nativeShadow = getNativeShadowStyle(semantic);
   return (
@@ -67,14 +59,24 @@ export function Footer2View(props: IFooterProps): JSX.Element {
           text="Home"
           onClick={() => props.dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
         />
-        <FooterButton
-          name="program"
-          currentTab={currentTab}
-          icon={(isActive) => <IconDoc2 isSelected={isActive} />}
-          hasDot={hasErrorsInProgram}
-          text="Program"
-          onClick={() => props.dispatch(Thunk_pushToEditProgram())}
-        />
+        {OfflineOnly_isEnabled() ? (
+          <FooterButton
+            name="friends"
+            currentTab={currentTab}
+            icon={(isActive) => <IconFriends isSelected={isActive} color={isActive ? activeColor : inactiveColor} />}
+            text="Friends"
+            onClick={() => props.dispatch(Thunk_pushScreen("friends", undefined, { tab: "friends" }))}
+          />
+        ) : (
+          <FooterButton
+            name="program"
+            currentTab={currentTab}
+            icon={(isActive) => <IconDoc2 isSelected={isActive} />}
+            hasDot={hasErrorsInProgram}
+            text="Program"
+            onClick={() => props.dispatch(Thunk_pushToEditProgram())}
+          />
+        )}
         <View className="items-center flex-1">
           <Pressable
             data-testid="footer-workout"

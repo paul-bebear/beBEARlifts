@@ -4,7 +4,10 @@ import { Text } from "./primitives/text";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { navigateToModal } from "../navigation/navigationService";
-import { Thunk_pushScreen } from "../ducks/thunks";
+import { Thunk_pushScreen, Thunk_pushToEditProgram } from "../ducks/thunks";
+import { ProgramCard_build } from "../models/programCard";
+import type { IProgramCard } from "../models/programCard";
+import { IconDoc2 } from "./icons/iconDoc2";
 import {
   ProgressDashboard_build,
   ProgressDashboard_caloriesPill,
@@ -72,6 +75,39 @@ function StatCard(props: {
   );
 }
 
+function ProgramCardView(props: { card: IProgramCard; onPress: () => void }): JSX.Element {
+  return (
+    <Pressable
+      testID="progress-program"
+      data-testid="progress-program"
+      onPress={props.onPress}
+      className="flex-row items-center p-4 mx-4 mb-3 rounded-2xl bg-background-subtle"
+    >
+      <View className="relative items-center justify-center mr-4 border w-14 h-14 rounded-2xl border-border-neutral">
+        <IconDoc2 />
+        {props.card.hasErrors && (
+          <View
+            testID="progress-program-error"
+            data-testid="progress-program-error"
+            className="absolute w-2.5 h-2.5 rounded-full bg-redv2-700"
+            style={{ top: 6, right: 6 }}
+          />
+        )}
+      </View>
+      <View className="flex-1">
+        <Text className="text-xs font-semibold tracking-wide uppercase text-text-secondary">Program</Text>
+        <Text className="text-xl font-bold" numberOfLines={1}>
+          {props.card.title}
+        </Text>
+        <Text className="text-sm text-text-secondary" numberOfLines={1}>
+          {props.card.subtitle}
+        </Text>
+      </View>
+      <IconChevronRight size={16} color={Tailwind_semantic().icon.neutral} />
+    </Pressable>
+  );
+}
+
 function LinkRow(props: { testID: string; icon: ReactNode; title: string; onPress: () => void }): JSX.Element {
   return (
     <Pressable
@@ -98,6 +134,11 @@ export function ScreenProgressDashboard(): JSX.Element {
     () => ProgressDashboard_build({ history, stats, foodLog, settings, now: Date.now() }),
     [history, stats, foodLog, settings]
   );
+  const currentProgramId = state.storage.currentProgramId;
+  const program = untrack(
+    currentProgramId != null ? state.storage.programs.find((p) => p.id === currentProgramId) : undefined
+  );
+  const programCard = useMemo(() => ProgramCard_build(program, settings), [program, settings]);
   const semantic = Tailwind_semantic();
   const iconColor = semantic.icon.neutral;
   const blue = semantic.icon.blue;
@@ -130,6 +171,9 @@ export function ScreenProgressDashboard(): JSX.Element {
   const weight = dashboard.weight;
   return (
     <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
+      {OfflineOnly_isEnabled() && (
+        <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />
+      )}
       <Pressable
         testID="progress-targets"
         data-testid="progress-targets"
