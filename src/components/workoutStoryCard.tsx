@@ -3,8 +3,13 @@ import { View } from "react-native";
 import * as htmlToImage from "html-to-image";
 import { Text } from "./primitives/text";
 import { IHistoryRecord, IScreenMuscle, ISettings } from "../types";
-import { WorkoutStoryCard_muscles, WorkoutStoryCard_stats } from "../models/workoutStoryCard";
-import { LiftEquivalents_pick } from "../models/liftEquivalents";
+import {
+  IWorkoutStoryStats,
+  WorkoutStoryCard_muscles,
+  WorkoutStoryCard_stats,
+  WorkoutStoryCard_weightNumber,
+} from "../models/workoutStoryCard";
+import { ILiftEquivalent, LiftEquivalents_pick } from "../models/liftEquivalents";
 import { FrontMusclesSvg } from "./muscles/images/frontMusclesSvg";
 import { BackMusclesSvg, IMuscleStyle } from "./muscles/images/backMusclesSvg";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
@@ -40,28 +45,66 @@ function muscleStyles(levels: Partial<Record<IScreenMuscle, number>>): Partial<R
 
 function Stat(props: { label: string; value: string }): JSX.Element {
   return (
-    <View className="items-center mb-3">
-      <Text className="text-base font-semibold text-white" style={textShadow}>
-        {props.label}
-      </Text>
-      <Text className="font-bold text-white" style={{ fontSize: 40, lineHeight: 46, ...textShadow }}>
+    <View className="items-center" style={{ minWidth: 96 }}>
+      <Text className="font-bold text-white" style={{ fontSize: 34, lineHeight: 40, ...textShadow }}>
         {props.value}
+      </Text>
+      <Text className="text-xs font-semibold tracking-widest text-white" style={{ opacity: 0.85, ...textShadow }}>
+        {props.label}
       </Text>
     </View>
   );
 }
 
-function StoryCard(props: { record: IHistoryRecord; settings: ISettings; photo?: string; seed: number }): JSX.Element {
-  const stats = WorkoutStoryCard_stats(props.record, props.settings);
+function MuscleMaps(props: { muscles: Partial<Record<IScreenMuscle, IMuscleStyle>>; width: number }): JSX.Element {
+  const contour = { fill: "#ffffff", opacity: 0.85 };
+  return (
+    <View className="flex-row justify-center" style={{ gap: props.width / 6 }}>
+      <View style={{ width: props.width }}>
+        <FrontMusclesSvg muscles={props.muscles} contour={contour} defaultOpacity={0.12} />
+      </View>
+      <View style={{ width: props.width }}>
+        <BackMusclesSvg muscles={props.muscles} contour={contour} defaultOpacity={0.12} />
+      </View>
+    </View>
+  );
+}
+
+function Scrim(props: { edge: "top" | "bottom"; height: number; opacity: number }): JSX.Element {
+  const direction = props.edge === "top" ? "180deg" : "0deg";
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        [props.edge]: 0,
+        height: props.height,
+        background: `linear-gradient(${direction}, rgba(0,0,0,${props.opacity}) 0%, rgba(0,0,0,${props.opacity * 0.6}) 55%, rgba(0,0,0,0) 100%)`,
+      }}
+    />
+  );
+}
+
+interface IStoryCardProps {
+  record: IHistoryRecord;
+  settings: ISettings;
+  stats: IWorkoutStoryStats;
+  photo?: string;
+  equivalent?: ILiftEquivalent;
+}
+
+function StoryCard(props: IStoryCardProps): JSX.Element {
+  const stats = props.stats;
   const muscles = useMemo(
     () => muscleStyles(WorkoutStoryCard_muscles(props.record, props.settings)),
     [props.record, props.settings]
   );
-  const equivalent = LiftEquivalents_pick(stats.weightKg, props.seed);
-  const contour = { fill: "#ffffff", opacity: 0.85 };
+  const hasPhoto = props.photo != null;
+  const equivalent = props.equivalent;
   return (
     <View style={{ width: cardWidth, height: cardHeight, backgroundColor: "#1b1033", overflow: "hidden" }}>
-      {props.photo != null ? (
+      {hasPhoto ? (
         <img
           src={props.photo}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
@@ -75,36 +118,49 @@ function StoryCard(props: { record: IHistoryRecord; settings: ISettings; photo?:
           }}
         />
       )}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.55) 100%)",
-        }}
-      />
-      <View className="items-center pt-10">
-        <Stat label="Weight lifted" value={`${stats.weight.value.toLocaleString("en-US")} ${stats.weight.unit}`} />
-        <Stat label="Duration" value={stats.duration} />
-        <Stat label="Total Sets" value={`${stats.sets}`} />
-      </View>
-      <View className="flex-row justify-center" style={{ gap: 14, marginTop: 4 }}>
-        <View style={{ width: 92 }}>
-          <FrontMusclesSvg muscles={muscles} contour={contour} defaultOpacity={0.12} />
+      <Scrim edge="top" height={300} opacity={hasPhoto ? 0.75 : 0.35} />
+      <Scrim edge="bottom" height={360} opacity={hasPhoto ? 0.85 : 0.45} />
+      <View className="items-center pt-9">
+        <Text className="text-xs font-semibold tracking-widest text-white" style={{ opacity: 0.85, ...textShadow }}>
+          LIFTED TODAY
+        </Text>
+        <View className="flex-row" style={{ alignItems: "baseline" }}>
+          <Text className="font-bold text-white" style={{ fontSize: 76, lineHeight: 88, ...textShadow }}>
+            {WorkoutStoryCard_weightNumber(stats.weight)}
+          </Text>
+          <Text className="ml-2 font-bold text-white" style={{ fontSize: 28, ...textShadow }}>
+            {stats.weight.unit}
+          </Text>
         </View>
-        <View style={{ width: 92 }}>
-          <BackMusclesSvg muscles={muscles} contour={contour} defaultOpacity={0.12} />
+        <View className="flex-row items-center mt-2" style={{ gap: 12 }}>
+          <Stat label="TIME" value={stats.duration} />
+          {hasPhoto && <MuscleMaps muscles={muscles} width={40} />}
+          <Stat label="SETS" value={`${stats.sets}`} />
         </View>
       </View>
-      <View className="absolute left-0 right-0 items-center px-6" style={{ bottom: 34 }}>
+      {!hasPhoto && (
+        <View style={{ marginTop: 22 }}>
+          <MuscleMaps muscles={muscles} width={96} />
+        </View>
+      )}
+      <View className="absolute left-0 right-0 items-center px-6" style={{ bottom: 26 }}>
         {equivalent != null && (
-          <View className="px-4 py-2 rounded-2xl" style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
-            <Text className="text-lg font-bold text-center text-white">
-              {equivalent.emoji} {equivalent.text}
+          <View className="items-center" testID="workout-story-equivalent" data-testid="workout-story-equivalent">
+            <Text style={{ fontSize: 44, lineHeight: 52 }}>{equivalent.emoji}</Text>
+            <Text className="text-lg font-semibold text-center text-white" style={textShadow}>
+              {equivalent.lead}
             </Text>
+            <Text className="font-bold text-center text-white" style={{ fontSize: 32, lineHeight: 38, ...textShadow }}>
+              {equivalent.number} {equivalent.noun}
+            </Text>
+            {equivalent.tail !== "" && (
+              <Text className="text-lg font-semibold text-center text-white" style={textShadow}>
+                {equivalent.tail}
+              </Text>
+            )}
           </View>
         )}
-        <Text className="mt-3 text-xs font-semibold tracking-widest text-white" style={{ opacity: 0.8 }}>
+        <Text className="mt-4 font-semibold tracking-widest text-white" style={{ fontSize: 10, opacity: 0.7 }}>
           BEBEARLIFTS
         </Text>
       </View>
@@ -126,6 +182,8 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [photo, setPhoto] = useState<string | undefined>(undefined);
   const [seed, setSeed] = useState(() => Math.floor(Date.now() / 1000));
   const [isSharing, setIsSharing] = useState(false);
+  const stats = WorkoutStoryCard_stats(props.record, props.settings);
+  const equivalent = LiftEquivalents_pick(stats.weightKg, seed);
 
   const share = async (): Promise<void> => {
     setIsSharing(true);
@@ -159,7 +217,13 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
       <View className="items-center" style={{ height: cardHeight * previewScale }}>
         <View style={{ transform: [{ scale: previewScale }], transformOrigin: "top center" }}>
           <View ref={cardRef} collapsable={false}>
-            <StoryCard record={props.record} settings={props.settings} photo={photo} seed={seed} />
+            <StoryCard
+              record={props.record}
+              settings={props.settings}
+              stats={stats}
+              photo={photo}
+              equivalent={equivalent}
+            />
           </View>
         </View>
       </View>
@@ -170,12 +234,14 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
           title={photo == null ? "Add photo" : "Change photo"}
           onPress={() => inputRef.current?.click()}
         />
-        <FoodPrimaryButton
-          testID="workout-story-shuffle"
-          kind="outline"
-          title="Shuffle"
-          onPress={() => setSeed(seed + 1)}
-        />
+        {equivalent != null && (
+          <FoodPrimaryButton
+            testID="workout-story-shuffle"
+            kind="outline"
+            title="Shuffle"
+            onPress={() => setSeed(seed + 1)}
+          />
+        )}
       </View>
       <View className="flex-row mt-2">
         <FoodPrimaryButton
