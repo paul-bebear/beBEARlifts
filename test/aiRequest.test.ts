@@ -2,7 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import { AiRequest_offlineMessage, AiRequest_post, AiRequest_signInMessage } from "../src/utils/aiRequest";
-import { CloudStore } from "../src/utils/cloudBackupClient";
+import { CloudStore } from "../src/utils/supabaseClient";
 import { ICloudState } from "../src/models/cloudBackup";
 import { WarmupApi_generate } from "../src/utils/warmupApi";
 import { ReportApi_summary } from "../src/utils/reportStore";

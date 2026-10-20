@@ -7,9 +7,8 @@ import {
   CloudBackupClient_signOut,
   CloudBackupClient_upload,
   CloudBackupClient_verify,
-  CloudBackup_origin,
-  CloudStore,
 } from "../src/utils/cloudBackupClient";
+import { CloudStore, Supabase_origin as CloudBackup_origin } from "../src/utils/supabaseClient";
 import { ICloudState } from "../src/models/cloudBackup";
 
 const now = Date.UTC(2026, 9, 20, 18);

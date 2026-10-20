@@ -1,6 +1,6 @@
 import { fetchJson, json } from "./_food.mjs";
 
-// Same project and publishable key as src/utils/cloudBackupClient.ts. The key is public by design.
+// Same project and publishable key as src/utils/supabaseClient.ts. The key is public by design.
 const supabaseOrigin = "https://qvqwvuuwfueccrmzwyct.supabase.co";
 const publishableKey = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
 const defaultDailyCap = 60;

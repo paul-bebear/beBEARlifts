@@ -13,6 +13,7 @@ import { WarmupPlan_empty } from "../src/models/warmupPlan";
 import { WorkoutReport_empty } from "../src/models/workoutReport";
 import { FullBackup_build } from "../src/models/fullBackup";
 import * as cloud from "../src/utils/cloudBackupClient";
+import * as supabase from "../src/utils/supabaseClient";
 import * as food from "../src/utils/foodLogStore";
 import * as music from "../src/utils/musicStore";
 import * as body from "../src/utils/bodyScanStore";
@@ -49,7 +50,7 @@ describe("Cloud backup thunks", () => {
     state = { storage: Storage_getDefault() } as IState;
     dispatch = sinon.stub();
     sinon.stub(Date, "now").returns(now);
-    sinon.stub(cloud.CloudStore, "load").resolves({ version: 1, session });
+    sinon.stub(supabase.CloudStore, "load").resolves({ version: 1, session });
     upload = sinon.stub(cloud, "CloudBackupClient_upload").resolves({ ok: true, value: now });
     download = sinon.stub(cloud, "CloudBackupClient_download");
     confirm = sinon.stub(dialogs, "Dialog_confirm").resolves(true);
@@ -70,9 +71,9 @@ describe("Cloud backup thunks", () => {
     await run(Thunk_cloudBackup(false));
     expect(upload.called).to.equal(false);
     state.storage.history = [{ id: 1, startTime: now - 2000, endTime: now - 1000 } as IHistoryRecord];
-    (cloud.CloudStore.load as sinon.SinonStub).resolves({ version: 1 });
+    (supabase.CloudStore.load as sinon.SinonStub).resolves({ version: 1 });
     await run(Thunk_cloudBackup(false));
-    (cloud.CloudStore.load as sinon.SinonStub).resolves({ version: 1, session, lastBackupAt: now - 1000 });
+    (supabase.CloudStore.load as sinon.SinonStub).resolves({ version: 1, session, lastBackupAt: now - 1000 });
     await run(Thunk_cloudBackup(false));
     expect(upload.called).to.equal(false);
     expect((food.FoodLogStore_load as sinon.SinonStub).called).to.equal(false);
@@ -80,7 +81,7 @@ describe("Cloud backup thunks", () => {
 
   it("uses end time, falls back to start time, and permits a forced empty backup", async () => {
     state.storage.history = [{ id: 1, startTime: now - 2000, endTime: now - 1000 } as IHistoryRecord];
-    (cloud.CloudStore.load as sinon.SinonStub).resolves({ version: 1, session, lastBackupAt: now - 1500 });
+    (supabase.CloudStore.load as sinon.SinonStub).resolves({ version: 1, session, lastBackupAt: now - 1500 });
     await run(Thunk_cloudBackup(false));
     expect(upload.callCount).to.equal(1);
     state.storage.history = [{ id: 2, startTime: now - 500 } as IHistoryRecord];
@@ -176,7 +177,7 @@ describe("Cloud backup thunks", () => {
     const replaceWarmups = sinon.stub(warmups, "WarmupStore_update").resolves();
     const replaceReports = sinon.stub(ReportStore, "update").resolves();
     const replaceClips = sinon.stub(SetClipStore, "update").resolves();
-    const updateCloud = sinon.spy(cloud.CloudStore, "update");
+    const updateCloud = sinon.spy(supabase.CloudStore, "update");
     const result = sinon.spy();
     await run(Thunk_cloudRestore(result));
     expect(result.firstCall.args[0]).to.deep.equal({ ok: true, value: true });

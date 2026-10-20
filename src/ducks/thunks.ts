@@ -76,12 +76,8 @@ import { ReportStore } from "../utils/reportStore";
 import { SetClipStore } from "../utils/setClipStore";
 import { FullBackupFile_build } from "../utils/fullBackupFile";
 import { CloudBackup_isAutoDue } from "../models/cloudBackup";
-import {
-  CloudBackupClient_download,
-  CloudBackupClient_upload,
-  CloudStore,
-  ICloudResult,
-} from "../utils/cloudBackupClient";
+import { CloudBackupClient_download, CloudBackupClient_upload } from "../utils/cloudBackupClient";
+import { CloudStore, ICloudResult } from "../utils/supabaseClient";
 import { DateUtils_formatYYYYMMDD, DateUtils_format } from "../utils/date";
 import { getInitialState } from "./reducer";
 import { IndexedDBUtils_set } from "../utils/indexeddb";
