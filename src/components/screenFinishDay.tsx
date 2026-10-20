@@ -1,3 +1,4 @@
+import { WorkoutReportCard } from "./workoutReportCard";
 import { ListenLinks_open } from "./listenLinksCard";
 import { JSX, useState } from "react";
 import { View, Pressable, Platform } from "react-native";
@@ -173,6 +174,15 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
         <View className="px-gutter py-4 mt-4">
           <PersonalRecords prs={allPrs} historyRecords={[record]} settings={props.settings} />
         </View>
+
+        {OfflineOnly_isEnabled() && (
+          <WorkoutReportCard
+            record={record}
+            history={props.history}
+            settings={props.settings}
+            dispatch={props.dispatch}
+          />
+        )}
 
         {OfflineOnly_isEnabled() && <WorkoutStoryCardSection record={record} settings={props.settings} />}
 

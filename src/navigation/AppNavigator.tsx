@@ -43,6 +43,7 @@ import { NavScreenGraphs } from "./screens/NavScreenGraphs";
 import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
 import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard";
 import { NavScreenMusic } from "./screens/NavScreenMusic";
+import { NavScreenReports } from "./screens/NavScreenReports";
 import { NavScreenBodyScans } from "./screens/NavScreenBodyScans";
 import { NavScreenFood } from "./screens/NavScreenFood";
 import { NavScreenFriends } from "./screens/NavScreenFriends";
@@ -245,6 +246,7 @@ function WorkoutStackScreen(): JSX.Element {
       />
       <WorkoutStack.Screen name="finishDay" component={NavScreenFinishDay} />
       <WorkoutStack.Screen name="music" component={NavScreenMusic} />
+      <WorkoutStack.Screen name="reports" component={NavScreenReports} />
       <WorkoutStack.Screen name="muscles" component={NavScreenMuscles} />
       <WorkoutStack.Screen name="exerciseStats" component={NavScreenExerciseStats} />
     </WorkoutStack.Navigator>
@@ -258,6 +260,7 @@ function GraphsStackScreen(): JSX.Element {
       <GraphsStack.Screen name="progressDashboard" component={NavScreenProgressDashboard} />
       <GraphsStack.Screen name="graphsList" component={NavScreenGraphs} />
       <GraphsStack.Screen name="music" component={NavScreenMusic} />
+      <GraphsStack.Screen name="reports" component={NavScreenReports} />
       <GraphsStack.Screen name="bodyScans" component={NavScreenBodyScans} />
       {OfflineOnly_isEnabled() && <GraphsStack.Screen name="programselect" component={NavScreenProgramSelect} />}
       {renderMeScreens(GraphsStack.Screen as unknown as typeof MeStack.Screen)}

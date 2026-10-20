@@ -246,6 +246,14 @@ export function ScreenProgressDashboard(): JSX.Element {
           onPress={() => dispatch(Thunk_pushScreen("music"))}
         />
       )}
+      {OfflineOnly_isEnabled() && (
+        <LinkRow
+          testID="progress-reports"
+          icon={<IconGraphs color={iconColor} />}
+          title="Workout reports"
+          onPress={() => dispatch(Thunk_pushScreen("reports"))}
+        />
+      )}
       <LinkRow
         testID="progress-exercise-stats"
         icon={<IconBarbell2 />}
