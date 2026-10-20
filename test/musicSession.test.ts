@@ -10,7 +10,7 @@ import {
   MusicSession_setKept,
   MusicSession_start,
 } from "../src/models/musicSession";
-import { MusicLog_empty, MusicLog_parse, MusicLog_putSession } from "../src/models/musicLog";
+import { MusicLog_empty, MusicLog_exportJson, MusicLog_parse, MusicLog_putSession } from "../src/models/musicLog";
 import { ISpotifyTrack, SpotifyTracks_parseHistory, SpotifyTracks_parseNowPlaying } from "../src/models/spotifyTracks";
 import {
   SpotifyAuth_authorizeUrl,
@@ -214,5 +214,19 @@ describe("MusicLog", () => {
     const stored = JSON.parse(JSON.stringify(log));
     stored.sessions.push({ id: "bad" });
     expect(MusicLog_parse(stored)).to.deep.equal(log);
+  });
+
+  it("exports the sessions without the Spotify tokens", () => {
+    const s = MusicSession_observe(MusicSession_start(7, t0), playing(track("a"), 1000), t0);
+    const log = MusicLog_putSession(
+      { ...MusicLog_empty(), displayName: "Paul", tokens: { accessToken: "a", refreshToken: "r", expiresAt: 5 } },
+      s
+    );
+    const json = MusicLog_exportJson(log);
+    expect(json).to.not.include("refreshToken");
+    expect(JSON.parse(json)).to.not.have.property("tokens");
+    const parsed = MusicLog_parse(JSON.parse(json));
+    expect(parsed.sessions).to.deep.equal(log.sessions);
+    expect(parsed.displayName).to.equal("Paul");
   });
 });

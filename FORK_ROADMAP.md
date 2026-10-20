@@ -32,12 +32,14 @@ Facts checked on 2026-10-16.
 - iOS limit: a Home Screen web app cannot read the "Now Playing" song from the Music or Spotify app, and it stops running when the screen locks. Only Spotify's `played_at` history gets around that.
 - Effort: 2 to 3 days for Spotify login, the history fetch and storing tracks on the workout. Add 1 day for likes and playlists.
 
-## Match the song playing to each set
+## Match the song playing to each set (built 2026-10-20)
 
-- Cost: free with Spotify. Not possible with Apple Music, because its history has no play times.
-- How: each completed set already stores a completion time. After the workout, fetch `recently-played` and give each set the track whose `played_at` window contains the set's time.
-- Accuracy: about one song length. Spotify records a play when the track starts, so a set near a track change can get the previous song.
-- Effort: 1 day on top of the Spotify work, mostly a pure matching function with tests.
+- Built: `SongPerSet_match` in `src/models/songPerSet.ts` gives each completed set the song playing at its `timestamp`, the time the set was ticked done. It reads the workout's music session, so it needs no extra Spotify call.
+- Song windows: a song starts at its `startedAt`. It ends where the next song starts, but never after its full length. A live song never ends before the progress the app last saw. A set in a gap between songs gets no song.
+- Shown: under each exercise in the Home tab history card, as "Set 3 · song · artist". The Music screen lists every completed set of the workout under "Song per set", with "no song" for a set that matched nothing.
+- Export: Progress → Workout music → "Export music log" writes the `bebear_music` IndexedDB value to a JSON file. `MusicLog_exportJson` leaves out the Spotify tokens, so the refresh token never lands in the file.
+- Accuracy: a song paused for a long rest may end early in the match, because the window is capped at the song's length.
+- Not possible with Apple Music, because its history has no play times.
 
 ## Daily AI-generated warmup
 

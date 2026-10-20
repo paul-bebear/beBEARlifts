@@ -17,6 +17,7 @@ import {
 } from "../utils/spotifyClient";
 import {
   MusicLog_disconnect,
+  MusicLog_exportJson,
   MusicLog_formatDuration,
   MusicLog_putSession,
   MusicLog_reviewable,
@@ -29,22 +30,28 @@ import {
 } from "../models/musicSession";
 import { SpotifyPlaylist_name } from "../models/spotifyPlaylist";
 import { SpotifyTracks_parseHistory } from "../models/spotifyTracks";
-import { IHistoryRecord } from "../types";
+import { IHistoryRecord, ISettings } from "../types";
+import { SongPerSet_hasAny, SongPerSet_match, SongPerSet_rowLabel } from "../models/songPerSet";
+import { Exercise_get } from "../models/exercise";
+import { Exporter_toFile } from "../utils/exporter";
 
 type IStatus = { kind: "busy" } | { kind: "message"; text: string; url?: string };
 
 function SessionCard(props: {
   session: IMusicSession;
+  record?: IHistoryRecord;
+  settings: ISettings;
   title: string;
   isExpanded: boolean;
   onToggle: () => void;
 }): JSX.Element {
-  const { session } = props;
+  const { session, record } = props;
   const [status, setStatus] = useState<IStatus | undefined>(undefined);
   const semantic = Tailwind_semantic();
   const counts = MusicSession_counts(session);
   const uris = MusicSession_keptTracks(session).map((t) => t.uri);
   const isBusy = status?.kind === "busy";
+  const songs = record != null ? SongPerSet_match(record, session) : [];
 
   const setKept = (index: number, isKept: boolean): void => {
     MusicStore_update((log) => MusicLog_putSession(log, MusicSession_setKept(session, index, isKept)));
@@ -106,6 +113,19 @@ function SessionCard(props: {
           ))}
           {session.current != null && (
             <Text className="py-2 text-sm text-text-secondary">Now: {session.current.track.name}</Text>
+          )}
+          {record != null && SongPerSet_hasAny(songs) && (
+            <View className="mt-3" testID="music-song-per-set" data-testid="music-song-per-set">
+              <Text className="mb-1 text-sm font-semibold">Song per set</Text>
+              {songs.map((song) => (
+                <Text key={`${song.entryIndex}-${song.setIndex}`} className="py-1 text-sm" numberOfLines={1}>
+                  {SongPerSet_rowLabel(
+                    song,
+                    Exercise_get(record.entries[song.entryIndex].exercise, props.settings.exercises).name
+                  )}
+                </Text>
+              ))}
+            </View>
           )}
           <View className="flex-row gap-2 mt-3">
             <FoodPrimaryButton
@@ -170,8 +190,7 @@ function HistoryDebug(): JSX.Element {
   );
 }
 
-function sessionTitle(session: IMusicSession, history: IHistoryRecord[]): string {
-  const record = history.find((h) => h.id === session.id);
+function sessionTitle(session: IMusicSession, record: IHistoryRecord | undefined): string {
   const date = new Date(session.startedAt).toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
@@ -183,6 +202,7 @@ function sessionTitle(session: IMusicSession, history: IHistoryRecord[]): string
 export function ScreenMusic(): JSX.Element {
   const state = useTrackedState();
   const history = untrack(state.storage.history);
+  const settings = untrack(state.storage.settings);
   const log = useMusicLog();
   const [error] = useState(() => SpotifyClient_takeError());
   const sessions = MusicLog_reviewable(log);
@@ -226,16 +246,37 @@ export function ScreenMusic(): JSX.Element {
           No workout music yet. Start a workout with Spotify playing on this account.
         </Text>
       ) : (
-        sessions.map((s) => (
-          <SessionCard
-            key={s.id}
-            session={s}
-            title={sessionTitle(s, history)}
-            isExpanded={expandedId === s.id}
-            onToggle={() => setExpandedId(expandedId === s.id ? undefined : s.id)}
-          />
-        ))
+        sessions.map((s) => {
+          const record = history.find((h) => h.id === s.id);
+          return (
+            <SessionCard
+              key={s.id}
+              session={s}
+              record={record}
+              settings={settings}
+              title={sessionTitle(s, record)}
+              isExpanded={expandedId === s.id}
+              onToggle={() => setExpandedId(expandedId === s.id ? undefined : s.id)}
+            />
+          );
+        })
       )}
+      <View className="px-4 pt-6">
+        <Text className="mb-3 text-sm text-text-secondary">
+          The main JSON export in Me does not include music. Export the music log here too. The Spotify login is left
+          out.
+        </Text>
+        <View className="flex-row">
+          <FoodPrimaryButton
+            title="Export music log"
+            kind="outline"
+            testID="music-export"
+            onPress={() =>
+              Exporter_toFile(`bebear_music_${new Date().toISOString().slice(0, 10)}.json`, MusicLog_exportJson(log))
+            }
+          />
+        </View>
+      </View>
       {log.tokens != null && <HistoryDebug />}
     </View>
   );
