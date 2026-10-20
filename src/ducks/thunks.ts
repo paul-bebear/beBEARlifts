@@ -75,6 +75,7 @@ import {
 } from "../models/fullBackup";
 import { FoodLogStore_load, FoodLogStore_replace } from "../utils/foodLogStore";
 import { MusicStore_load, MusicStore_update } from "../utils/musicStore";
+import { BodyScanStore_load, BodyScanStore_update } from "../utils/bodyScanStore";
 import { DateUtils_formatYYYYMMDD, DateUtils_format } from "../utils/date";
 import { getInitialState } from "./reducer";
 import { IndexedDBUtils_set } from "../utils/indexeddb";
@@ -1760,9 +1761,9 @@ export function Thunk_exportStorage(): IThunk {
 export function Thunk_exportEverything(): IThunk {
   return async (dispatch, getState) => {
     dispatch(Thunk_postevent("export-everything"));
-    const [food, music] = await Promise.all([FoodLogStore_load(), MusicStore_load()]);
+    const [food, music, body] = await Promise.all([FoodLogStore_load(), MusicStore_load(), BodyScanStore_load()]);
     const now = Date.now();
-    const backup = FullBackup_build(getState().storage, food, music, now);
+    const backup = FullBackup_build(getState().storage, food, music, body, now);
     Exporter_toFile(FullBackup_filename(now), JSON.stringify(backup, null, 2));
     BackupReminderMarks_recordBackup(now);
   };
@@ -1831,6 +1832,10 @@ export function Thunk_importStorage(maybeStorage: string): IThunk {
       const music = contents.music;
       if (music != null) {
         await MusicStore_update((current) => FullBackup_keepSpotifyLogin(music, current));
+      }
+      const body = contents.body;
+      if (body != null) {
+        await BodyScanStore_update(() => body);
       }
       Dialog_alert("Successfully imported");
     } else {
