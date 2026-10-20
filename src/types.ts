@@ -1666,6 +1666,7 @@ export interface ISettings {
   theme?: "dark" | "light";
   monochrome?: boolean;
   rateEachSet?: boolean;
+  listenLinks?: { cooldown?: string; mantra?: string; meditation?: string };
   currentBodyweight?: IWeight;
   affiliateEnabled?: boolean;
 }
@@ -1719,6 +1720,9 @@ const _VSettings = v.object({
   theme: v.optional(v.union([v.literal("dark"), v.literal("light")])),
   monochrome: v.optional(v.boolean()),
   rateEachSet: v.optional(v.boolean()),
+  listenLinks: v.optional(
+    v.object({ cooldown: v.optional(v.string()), mantra: v.optional(v.string()), meditation: v.optional(v.string()) })
+  ),
   currentBodyweight: v.optional(VWeight),
   affiliateEnabled: v.optional(v.boolean()),
 });
