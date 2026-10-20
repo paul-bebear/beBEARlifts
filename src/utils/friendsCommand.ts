@@ -9,6 +9,7 @@ import {
   FriendsClient_saveProfile,
 } from "./friendsClient";
 import { ICloudResult } from "./supabaseClient";
+import { FeedClient_refresh } from "./feedClient";
 
 function failed(result: { ok: false; error: string }): IFriendsFormEvent {
   return { type: "failed", error: Friends_errorText(result.error) };
@@ -25,8 +26,14 @@ async function thenLoad(result: ICloudResult<unknown>, message?: string): Promis
 
 async function run(command: IFriendsCommand): Promise<IFriendsFormEvent> {
   switch (command.type) {
-    case "load":
-      return thenLoad({ ok: true, value: undefined });
+    case "load": {
+      const loaded = await FriendsClient_load();
+      if (!loaded.ok) {
+        return failed(loaded);
+      }
+      const feed = await FeedClient_refresh();
+      return feed.ok ? { type: "done" } : failed(feed);
+    }
     case "saveProfile":
       return thenLoad(
         await FriendsClient_saveProfile(command.handle, command.displayName, command.isNew),

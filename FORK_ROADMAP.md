@@ -99,7 +99,9 @@ How it would work after Phase 2:
 
 ## Phase 2: cloud sync and sharing with friends
 
-- Built (2026-10-20): optional Supabase cloud backup with email-code sign-in, uploads after workouts, manual backup and confirmed restore. Settings → Import / Export holds the controls. The private `backups` bucket stores `latest.json` and seven weekday copies per account. Cloud and Spotify tokens stay out of exports. This saves whole files. Multi-device merge and sharing with friends remain unbuilt.
+- Built (2026-10-20): optional Supabase cloud backup with email-code sign-in, uploads after workouts, manual backup and confirmed restore. Settings → Import / Export holds the controls. The private `backups` bucket stores `latest.json` and seven weekday copies per account. Cloud and Spotify tokens stay out of exports. This saves whole files. Multi-device merge remains unbuilt.
+- Built (2026-10-21): friends and a workout feed on the same Supabase project. Tables `profiles`, `friendships` and `workout_posts`, each with row-level security. Strangers find each other only through `find_profile` and `request_friend`, which never return a user id. The finish screen has an opt-in "Share with friends" toggle that posts a summary. The Friends tab shows requests, friends and the feed, cached for offline use. README → "Friends and the workout feed" lists what a post holds and who can read it.
+- Next for the social layer, in order: workout stories (photo or short clip, gone after 24 hours), push notifications for requests and new posts (needs a service worker push subscription and an Edge Function), meals and music in the feed (opt-in per post), and a gym-mode feed that shows who is training now.
 
 For multi-device sync and sharing, compare these three options. The Docker option is the first one to try.
 

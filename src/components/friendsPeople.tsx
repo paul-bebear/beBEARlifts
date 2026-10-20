@@ -72,9 +72,44 @@ function Row(props: { link: IFriendLink; children: JSX.Element | JSX.Element[] }
   );
 }
 
+export function FriendsRequests(props: IProps): JSX.Element | null {
+  const busy = props.form.command != null;
+  const incoming = props.lists.incoming;
+  if (incoming.length === 0) {
+    return null;
+  }
+  return (
+    <View className="p-4 my-3 rounded-2xl bg-background-subtle" testID="friends-incoming">
+      <Text className="mb-1 text-base font-semibold">Requests</Text>
+      {incoming.map((link) => (
+        <Row key={link.other.userId} link={link}>
+          <Button
+            name="friends-accept"
+            kind="purple"
+            buttonSize="sm"
+            disabled={busy}
+            onClick={() => props.emit({ type: "accept", userId: link.other.userId })}
+          >
+            Accept
+          </Button>
+          <Button
+            name="friends-decline"
+            kind="lightgrayv3"
+            buttonSize="sm"
+            disabled={busy}
+            onClick={() => props.emit({ type: "remove", userId: link.other.userId })}
+          >
+            Decline
+          </Button>
+        </Row>
+      ))}
+    </View>
+  );
+}
+
 export function FriendsLists(props: IProps): JSX.Element {
   const busy = props.form.command != null;
-  const { friends, incoming, outgoing } = props.lists;
+  const { friends, outgoing } = props.lists;
   const remove = async (link: IFriendLink, question: string): Promise<void> => {
     if (await Dialog_confirm(question)) {
       props.emit({ type: "remove", userId: link.other.userId });
@@ -82,33 +117,6 @@ export function FriendsLists(props: IProps): JSX.Element {
   };
   return (
     <View>
-      {incoming.length > 0 && (
-        <View className="p-4 my-3 rounded-2xl bg-background-subtle" testID="friends-incoming">
-          <Text className="mb-1 text-base font-semibold">Requests</Text>
-          {incoming.map((link) => (
-            <Row key={link.other.userId} link={link}>
-              <Button
-                name="friends-accept"
-                kind="purple"
-                buttonSize="sm"
-                disabled={busy}
-                onClick={() => props.emit({ type: "accept", userId: link.other.userId })}
-              >
-                Accept
-              </Button>
-              <Button
-                name="friends-decline"
-                kind="lightgrayv3"
-                buttonSize="sm"
-                disabled={busy}
-                onClick={() => props.emit({ type: "remove", userId: link.other.userId })}
-              >
-                Decline
-              </Button>
-            </Row>
-          ))}
-        </View>
-      )}
       <View className="p-4 my-3 rounded-2xl bg-background-subtle" testID="friends-list">
         <Text className="mb-1 text-base font-semibold">Friends</Text>
         {friends.length === 0 && (

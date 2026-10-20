@@ -49,6 +49,7 @@ import { navigateToModal } from "../navigation/navigationService";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { WorkoutStoryCardSection } from "./workoutStoryCard";
 import { CloudBackupAfterWorkout } from "./cloudBackupAfterWorkout";
+import { FeedShareToggle } from "./feedShareToggle";
 
 interface IProps {
   history: IHistoryRecord[];
@@ -135,6 +136,10 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
             </View>
           </View>
         </View>
+
+        {OfflineOnly_isEnabled() && (
+          <FeedShareToggle record={record} history={props.history} settings={props.settings} />
+        )}
 
         {startedEntries.length > 0 && (
           <View className="px-4 py-2 mt-2 rounded-lg bg-background-purpledark" testID="completed-exercises">

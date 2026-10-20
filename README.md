@@ -17,7 +17,7 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - `Subscriptions_hasSubscription` in `src/utils/subscriptions.ts` always returns true. Every premium feature reads that one function.
 - `SubscriptionPlan_derive` reports "Free access", so no screen shows the purchase pitch. The Apple and Google receipt cleanups return before they call a server.
 - The offline build skips the startup cloud sync, the sign-up prompt, the "How'd you hear about us?" survey, the "I have an account" button, and the Account, Nickname, API Keys and Discord rows in Settings.
-- The tab bar hides during a live workout. It has five tabs, two on each side of the Workout button: Home, Friends, Food and Progress. Friends (`src/components/screenFriends.tsx`) is a placeholder for the friends feed. Progress (`src/components/screenProgressDashboard.tsx`) folds in Graphs and Me: a Program card, daily targets, latest weight, food days logged, workouts and streak, with the profile and settings buttons in its header. The Program card opens the program editor, which has a back arrow to Progress. The program list, the program preview and the 1RM screen open on the Progress tab too (`TabRouting_tabForScreen` in `src/models/tabRouting.ts`).
+- The tab bar hides during a live workout. It has five tabs, two on each side of the Workout button: Home, Friends, Food and Progress. Friends (`src/components/screenFriends.tsx`) holds friend requests and a feed of shared workouts. "Friends and the workout feed" below says how it works. Progress (`src/components/screenProgressDashboard.tsx`) folds in Graphs and Me: a Program card, daily targets, latest weight, food days logged, workouts and streak, with the profile and settings buttons in its header. The Program card opens the program editor, which has a back arrow to Progress. The program list, the program preview and the 1RM screen open on the Progress tab too (`TabRouting_tabForScreen` in `src/models/tabRouting.ts`).
 - An ad-hoc set added with "Add Set" gets the last set's numbers pre-filled but no target (`Reps_addSet` in `src/models/set.ts`). Upstream copied them as the target, so a later set with fewer reps turned red. Program sets keep the target, because progressions read it.
 - The finish screen has a story card (`src/components/workoutStoryCard.tsx`): a 1080 × 1920 PNG with weight lifted, duration, sets, a muscle map and a funny comparison such as "You moved 3 grand pianos", over your own photo if you add one. The comparison comes from 50 things (`src/models/liftEquivalents.ts`) and always lands between 2 and 999 of them. Shuffle picks another thing and phrase.
 - Four exercises come from other forks: Shoulder Press with a kettlebell, Squat Hops, Split Squat Hops and Calf Jump. They have no pictures yet, so the picker shows a text tile for them.
@@ -60,6 +60,27 @@ On a new phone, install the Home Screen app and sign in with the same email. If 
 For a new Supabase project on the free plan, configure custom SMTP under Authentication → Emails → SMTP Settings first. The dashboard requires custom SMTP before it allows template edits. Resend needs a verified sending domain and a sending-access API key. The sending address does not need an inbox.
 
 In Authentication → Emails → Templates, add `Your code: {{ .Token }}` to both "Magic link or OTP" and "Confirm sign up". A link alone opens Safari and cannot sign in the Home Screen app. This project's SMTP and both code templates were configured on 2026-10-20. Emails send through Resend from `noreply@mail.paulbebear.com` to the address entered in the app.
+
+## Friends and the workout feed
+
+Friends use the cloud backup sign-in. Signed out, the Friends tab links to Settings.
+
+1. Pick a handle in the Friends tab: 3 to 20 lowercase letters, numbers or `_`. Add a name if you want one.
+2. Type a friend's exact handle and tap "Find". Their name shows. Tap "Send request".
+3. Your friend sees the request at the top of their Friends tab and taps "Accept". If you both send a request, the second one accepts the first.
+4. "Remove", "Decline" and "Cancel" delete the link for both people.
+
+To share a workout, turn on "Share with friends" on the finish screen. It is off the first time. The app remembers your last choice and applies it to the next workout. Turning it off deletes that workout's post.
+
+A post holds a summary, built in `src/models/workoutPost.ts`: program and day name, start time, duration, total weight lifted, sets, the top set per exercise, records that beat an earlier set, and the number of kept songs. It holds no notes, photos, body weight, food or song names.
+
+The feed shows your posts and your friends' posts, newest first, up to 50. It reloads when you open the tab and when you pull down from the top. The last feed stays on the phone (`bebear_feed` and `bebear_friends` in IndexedDB), so it shows offline. A share made offline waits in the same store and goes out on the next finish screen or the next Friends tab visit.
+
+How privacy works. The tables are in Supabase project `bebearlifts`, and every table has row-level security. The SQL is in `supabase/migrations/`.
+
+- `profiles`: you read your own row and the rows of people you share a request or a friendship with. Search goes through `find_profile`, which returns only a handle and a name for an exact handle. It never returns a user id, and no one can list all handles.
+- `friendships`: only the two people in a row see it or delete it. Requests go through `request_friend`. Only the person asked can accept, and column grants let them change only the status.
+- `workout_posts`: the author and accepted friends read a post. A pending request shows nothing. Only the author can add, change or delete it.
 
 ## Run it locally
 

@@ -1,5 +1,18 @@
-import { JSX, useEffect, useReducer } from "react";
+import { JSX, useContext, useEffect, useReducer, useRef, useState } from "react";
 import { View } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
+import { NavScreenScrollContext } from "../navigation/NavScreenScrollContext";
+import { FeedStore } from "../utils/feedClient";
+import { Feed_items } from "../models/feed";
+import {
+  IPullState,
+  PullToRefresh_end,
+  PullToRefresh_idle,
+  PullToRefresh_isReady,
+  PullToRefresh_move,
+  PullToRefresh_start,
+} from "../models/pullToRefresh";
+import { FriendsFeed } from "./friendsFeed";
 import { Text } from "./primitives/text";
 import { TextInput } from "./primitives/textInput";
 import { Button } from "./button";
@@ -13,7 +26,7 @@ import { FriendsStore } from "../utils/friendsClient";
 import { FriendsCommand_run } from "../utils/friendsCommand";
 import { Friends_forUser, Friends_lists, IProfile } from "../models/friends";
 import { FriendsForm_empty, FriendsForm_reduce, IFriendsForm, IFriendsFormEvent } from "../models/friendsForm";
-import { FriendsAdd, FriendsLists } from "./friendsPeople";
+import { FriendsAdd, FriendsLists, FriendsRequests } from "./friendsPeople";
 
 const inputClass =
   "px-4 py-3 text-base border rounded-lg bg-background-default border-border-prominent text-text-primary";
@@ -24,13 +37,18 @@ export function ScreenFriends(): JSX.Element {
   const cloud = CloudStore.use();
   const userId = cloud.session?.userId;
   const friends = Friends_forUser(FriendsStore.use(), userId);
+  const feed = FeedStore.use();
   const [form, emit] = useReducer(FriendsForm_reduce, undefined, FriendsForm_empty);
+  const isFocused = useIsFocused();
+  const scroll = useContext(NavScreenScrollContext);
+  const pull = useRef<IPullState>(PullToRefresh_idle());
+  const [pullReady, setPullReady] = useState(false);
 
   useEffect(() => {
-    if (userId != null) {
+    if (userId != null && isFocused) {
       emit({ type: "load" });
     }
-  }, [userId]);
+  }, [userId, isFocused]);
 
   useEffect(() => {
     if (form.command != null) {
@@ -44,7 +62,8 @@ export function ScreenFriends(): JSX.Element {
         <IconFriends size={56} color={Tailwind_semantic().icon.neutral} />
         <Text className="pt-4 text-xl font-bold text-center">Sign in to add friends</Text>
         <Text className="pt-2 pb-4 text-base text-center text-text-secondary">
-          Friends use your cloud backup sign-in. Open Settings, then Cloud backup, and sign in with your email.
+          Friends use your cloud backup sign-in. Open Settings → Import / Export → Cloud backup and sign in with your
+          email.
         </Text>
         <Button name="friends-open-settings" kind="purple" onClick={() => dispatch(Thunk_pushScreen("settings"))}>
           Open Settings
@@ -56,17 +75,34 @@ export function ScreenFriends(): JSX.Element {
   const hasLoaded = friends.userId != null;
   const needsProfile = hasLoaded && friends.me == null;
   const lists = Friends_lists(friends);
+  const loading = form.command?.type === "load";
   return (
-    <View className="px-4 pb-8" testID="friends-screen">
-      {!hasLoaded && form.command?.type === "load" && <Text className="pt-4 text-sm">Loading…</Text>}
+    <View
+      className="flex-1 px-4 pb-8"
+      testID="friends-screen"
+      onTouchStart={(e) => {
+        pull.current = PullToRefresh_start(scroll?.scrollYRef.current ?? 0, e.nativeEvent.pageY);
+      }}
+      onTouchMove={(e) => {
+        pull.current = PullToRefresh_move(pull.current, e.nativeEvent.pageY);
+        setPullReady(PullToRefresh_isReady(pull.current));
+      }}
+      onTouchEnd={() => {
+        const end = PullToRefresh_end(pull.current);
+        pull.current = end.state;
+        setPullReady(false);
+        if (end.refresh) {
+          emit({ type: "load" });
+        }
+      }}
+    >
+      {(pullReady || loading) && (
+        <Text className="pt-3 text-sm text-center text-text-secondary" accessibilityLiveRegion="polite">
+          {loading ? "Loading…" : "Release to refresh"}
+        </Text>
+      )}
       {(needsProfile || form.editingProfile) && <ProfileForm form={form} emit={emit} isNew={needsProfile} />}
       {friends.me != null && !form.editingProfile && <ProfileLine me={friends.me} form={form} emit={emit} />}
-      {friends.me != null && (
-        <>
-          <FriendsAdd form={form} lists={lists} emit={emit} />
-          <FriendsLists form={form} lists={lists} emit={emit} />
-        </>
-      )}
       {form.error != null && (
         <Text className="mt-3 text-sm text-text-error" accessibilityRole="alert">
           {form.error}
@@ -76,6 +112,14 @@ export function ScreenFriends(): JSX.Element {
         <Text className="mt-3 text-sm" accessibilityLiveRegion="polite">
           {form.message}
         </Text>
+      )}
+      {friends.me != null && (
+        <>
+          <FriendsRequests form={form} lists={lists} emit={emit} />
+          <FriendsFeed items={Feed_items(feed, friends)} loadedAt={feed.loadedAt} now={Date.now()} />
+          <FriendsAdd form={form} lists={lists} emit={emit} />
+          <FriendsLists form={form} lists={lists} emit={emit} />
+        </>
       )}
     </View>
   );
