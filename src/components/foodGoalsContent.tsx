@@ -1,12 +1,14 @@
 import { JSX, useRef, useState } from "react";
 import { View, Platform } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_parse, FoodLog_setGoals, IFoodGoals } from "../models/foodLog";
+import { FoodLog_parse, FoodLog_setGoals, FoodLog_setProfile, IFoodGoals } from "../models/foodLog";
 import { FoodGoals_parseForm, IFoodGoalsForm, FoodGoals_toForm } from "../models/foodGoals";
 import { FoodLogStore_replace, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Exporter_toFile } from "../utils/exporter";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTargetsCalculator } from "./foodTargetsCalculator";
+import { IUnit, IWeight } from "../types";
 
 const rows: { key: keyof IFoodGoals; label: string; unit: string }[] = [
   { key: "calories", label: "Calories", unit: "cal" },
@@ -15,11 +17,28 @@ const rows: { key: keyof IFoodGoals; label: string; unit: string }[] = [
   { key: "fat", label: "Fat", unit: "g" },
 ];
 
-export function FoodGoalsContent(props: { onClose: () => void }): JSX.Element {
+export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IWeight; units: IUnit }): JSX.Element {
   const log = useFoodLog();
   const [form, setForm] = useState<IFoodGoalsForm>(FoodGoals_toForm(log.goals));
+  const [view, setView] = useState<"form" | "calculator" | "filled">("form");
   const fileRef = useRef<HTMLInputElement>(null);
   const parsed = FoodGoals_parseForm(form);
+
+  if (view === "calculator") {
+    return (
+      <FoodTargetsCalculator
+        profile={log.profile}
+        latestWeight={props.latestWeight}
+        units={props.units}
+        onCancel={() => setView("form")}
+        onFill={(goals, profile) => {
+          setForm(FoodGoals_toForm(goals));
+          setView("filled");
+          FoodLogStore_update((l) => FoodLog_setProfile(l, profile));
+        }}
+      />
+    );
+  }
 
   const onImport = async (file: File | undefined): Promise<void> => {
     if (file == null) {
@@ -46,6 +65,19 @@ export function FoodGoalsContent(props: { onClose: () => void }): JSX.Element {
         Set a low and a high number for each. For a lean bulk, protein of 1.6 to 2.2 g per kg of body weight is a common
         target.
       </Text>
+      <View className="flex-row mb-4">
+        <FoodPrimaryButton
+          testID="food-goals-calculate"
+          title="Calculate my targets"
+          kind="outline"
+          onPress={() => setView("calculator")}
+        />
+      </View>
+      {view === "filled" && (
+        <Text className="mb-3 text-sm text-text-success">
+          Filled in from your answers. Change any number, then tap Save targets.
+        </Text>
+      )}
       {rows.map((row) => (
         <View key={row.key} className="flex-row items-center mb-3">
           <Text className="flex-1 text-base">
