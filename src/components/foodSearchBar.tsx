@@ -5,6 +5,8 @@ import { IconMagnifyingGlass } from "./icons/iconMagnifyingGlass";
 import { IconCamera } from "./icons/iconCamera";
 import { IconBarcode } from "./icons/iconFoodUi";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
+import { AiConsent_showFeatures } from "../models/aiConsent";
+import { AiConsentStore } from "../utils/aiConsentClient";
 
 interface IProps {
   onSearch: () => void;
@@ -13,6 +15,7 @@ interface IProps {
 }
 
 export function FoodSearchBar(props: IProps): JSX.Element {
+  const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const blue = Tailwind_semantic().icon.blue;
   return (
     <View className="px-4 pt-2 pb-2 bg-background-default">
@@ -29,9 +32,11 @@ export function FoodSearchBar(props: IProps): JSX.Element {
         <Pressable className="px-3 py-3" testID="food-barcode" data-testid="food-barcode" onPress={props.onBarcode}>
           <IconBarcode size={24} color={blue} />
         </Pressable>
-        <Pressable className="py-3 pl-2 pr-4" testID="food-photo" data-testid="food-photo" onPress={props.onPhoto}>
-          <IconCamera size={24} color={blue} />
-        </Pressable>
+        {showAi && (
+          <Pressable className="py-3 pl-2 pr-4" testID="food-photo" data-testid="food-photo" onPress={props.onPhoto}>
+            <IconCamera size={24} color={blue} />
+          </Pressable>
+        )}
       </View>
     </View>
   );

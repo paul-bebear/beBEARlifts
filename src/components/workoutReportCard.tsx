@@ -5,6 +5,8 @@ import { IDispatch } from "../ducks/types";
 import { IHistoryRecord, ISettings } from "../types";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { ReportApi_summary, ReportStore } from "../utils/reportStore";
+import { AiConsent_showFeatures } from "../models/aiConsent";
+import { AiConsentStore } from "../utils/aiConsentClient";
 import {
   IWorkoutReport,
   WorkoutReport_answer,
@@ -21,6 +23,7 @@ function save(report: IWorkoutReport): Promise<void> {
 }
 
 export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Element {
+  const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const { report } = props;
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -71,11 +74,13 @@ export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Elemen
           )}
         </View>
       ))}
-      <Pressable onPress={writeSummary} disabled={isBusy} testID="report-summary" className="mt-1">
-        <Text className="text-sm font-semibold text-text-link">
-          {isBusy ? "Writing…" : report.summary != null ? "Rewrite the coach's note" : "Get the coach's note"}
-        </Text>
-      </Pressable>
+      {showAi && (
+        <Pressable onPress={writeSummary} disabled={isBusy} testID="report-summary" className="mt-1">
+          <Text className="text-sm font-semibold text-text-link">
+            {isBusy ? "Writing…" : report.summary != null ? "Rewrite the coach's note" : "Get the coach's note"}
+          </Text>
+        </Pressable>
+      )}
       {error != null && <Text className="mt-1 text-xs text-text-error">{error}</Text>}
     </View>
   );

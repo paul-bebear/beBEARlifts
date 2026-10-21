@@ -12,6 +12,8 @@ import * as food from "../src/utils/foodLogStore";
 import * as ai from "../src/utils/aiRequest";
 import { Thunk_importCsvData } from "../src/ducks/thunks";
 import ss1 from "../programdata/programs/builtin/ss1.json";
+import { AiConsent_decide } from "../src/models/aiConsent";
+import { AiConsentStore } from "../src/utils/aiConsentClient";
 
 const csv =
   "Workout DateTime,Program,Day Name,Exercise,Is Warmup Set?,Required Reps,Completed Reps,Is AMRAP?,Required RPE,Completed RPE,Log RPE?,Required Weight Value,Required Weight Unit,Completed Weight Value,Completed Weight Unit,Ask Weight?,Completed Reps Time,Target Muscles,Synergist Muscles,Notes\n2026-03-01T10:00:00.000Z,Plan,Day 1,Squat,0,5,5,0,,,0,60,kg,60,kg,0,,,,";
@@ -23,6 +25,7 @@ describe("Onboarding commands", () => {
   let foodLog = FoodLog_empty();
 
   beforeEach(() => {
+    sinon.stub(AiConsentStore, "load").resolves(AiConsent_decide(true, 123));
     state = { storage: Storage_getDefault(), programs: OnboardingCatalog_programs(), loading: { items: {} } } as IState;
     events = [];
     foodLog = FoodLog_empty();
@@ -53,6 +56,14 @@ describe("Onboarding commands", () => {
       expect(events[0].result).to.include({ name: "Fierce 5", days: 3 });
     }
     expect(state.storage.programs).to.have.length(0);
+    expect(request.called).to.equal(false);
+  });
+
+  it("uses the built-in plan when AI permission was revoked", async () => {
+    (AiConsentStore.load as sinon.SinonStub).resolves(AiConsent_decide(false, 123));
+    const request = sinon.stub(ai, "AiRequest_post");
+    await run({ ...Onboarding_empty(), useAi: true, command: "prepare" });
+    expect(events[0].type).to.equal("ready");
     expect(request.called).to.equal(false);
   });
   it("repairs an invalid Liftoscript answer once using the exact validation error", async () => {

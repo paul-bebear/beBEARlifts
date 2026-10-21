@@ -49,6 +49,9 @@ import { FoodQuickAddPanel } from "./foodQuickAddPanel";
 import { FoodLabelPanel } from "./foodLabelPanel";
 import { FoodSaveGroupPanel } from "./foodSaveGroupPanel";
 import { FoodMealPicker, FoodPrimaryButton } from "./foodUi";
+import { AiConsentGate } from "./aiConsentGate";
+import { AiConsent_isFoodAi } from "../models/aiConsent";
+import { AiConsent_ensure } from "../utils/aiConsentClient";
 
 type IStep =
   | { kind: "browse" }
@@ -177,7 +180,11 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
     navigation.goBack();
   };
 
-  const onTile = (tile: IFoodTile): void => setStep(tile === "describe" ? { kind: "describe" } : { kind: tile });
+  const onTile = async (tile: IFoodTile): Promise<void> => {
+    if (!AiConsent_isFoodAi(tile) || (await AiConsent_ensure())) {
+      setStep({ kind: tile });
+    }
+  };
 
   return (
     <NavScreenContent
@@ -294,12 +301,18 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             }}
           />
         )}
-        {step.kind === "photo" && <FoodPhotoPanel initialNote={step.note} onAdd={(c) => addChoices(c, "photo")} />}
+        {step.kind === "photo" && (
+          <AiConsentGate>
+            <FoodPhotoPanel initialNote={step.note} onAdd={(c) => addChoices(c, "photo")} />
+          </AiConsentGate>
+        )}
         {step.kind === "describe" && (
-          <FoodDescribePanel
-            onAdd={(c) => addChoices(c, "manual")}
-            onPhoto={(note) => setStep({ kind: "photo", note })}
-          />
+          <AiConsentGate>
+            <FoodDescribePanel
+              onAdd={(c) => addChoices(c, "manual")}
+              onPhoto={(note) => setStep({ kind: "photo", note })}
+            />
+          </AiConsentGate>
         )}
         {step.kind === "save" && (
           <FoodSaveGroupPanel

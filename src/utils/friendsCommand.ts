@@ -4,6 +4,7 @@ import {
   FriendsClient_accept,
   FriendsClient_find,
   FriendsClient_load,
+  FriendsClient_loadBlocks,
   FriendsClient_remove,
   FriendsClient_request,
   FriendsClient_saveProfile,
@@ -27,6 +28,10 @@ async function thenLoad(result: ICloudResult<unknown>, message?: string): Promis
 async function run(command: IFriendsCommand): Promise<IFriendsFormEvent> {
   switch (command.type) {
     case "load": {
+      const blocks = await FriendsClient_loadBlocks();
+      if (!blocks.ok) {
+        return failed(blocks);
+      }
       const loaded = await FriendsClient_load();
       if (!loaded.ok) {
         return failed(loaded);

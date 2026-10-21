@@ -221,6 +221,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A99000000000000000000001 /* AppBranding.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppBranding.xcconfig; sourceTree = "<group>"; };
 		0880623F1BFA46C212C4C21F /* Pods_Liftosaur.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Liftosaur.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C643222D97503FBA997CA59 /* RCTLiftosaurLiveActivity.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTLiftosaurLiveActivity.h; path = Liftosaur/RCTLiftosaurLiveActivity.h; sourceTree = "<group>"; };
 		0F867517A1458EA44579B682 /* RCTFastTextView.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTFastTextView.h; path = Liftosaur/FastText/RCTFastTextView.h; sourceTree = "<group>"; };
@@ -637,6 +638,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				A99000000000000000000001 /* AppBranding.xcconfig */,
 				13B07FAE1A68108700A75B9A /* Liftosaur */,
 				3AACC5192FB2A4BF001C68AA /* LiftosaurWorkoutWidgetExtension */,
 				3AACC5EE2FB3526B001C68AA /* LiftosaurWatch */,
@@ -1183,7 +1185,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX)";
 				PRODUCT_NAME = Liftosaur;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OBJC_BRIDGING_HEADER = "Liftosaur/Liftosaur-Bridging-Header.h";
@@ -1217,7 +1219,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX)";
 				PRODUCT_NAME = Liftosaur;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OBJC_BRIDGING_HEADER = "Liftosaur/Liftosaur-Bridging-Header.h";
@@ -1248,7 +1250,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiftosaurWorkoutWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = LiftosaurWorkoutWidgetExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)WorkoutWidgetExtension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1261,7 +1263,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "-DWIDGET_EXTENSION -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www.LiftosaurWorkoutWidgetExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX).LiftosaurWorkoutWidgetExtension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1297,7 +1299,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiftosaurWorkoutWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = LiftosaurWorkoutWidgetExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)WorkoutWidgetExtension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1309,7 +1311,7 @@
 				MARKETING_VERSION = 124;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "-DWIDGET_EXTENSION -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www.LiftosaurWorkoutWidgetExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX).LiftosaurWorkoutWidgetExtension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1344,10 +1346,10 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiftosaurWatch/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = LiftosaurWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)Watch";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "App will sync this data with Apple Health.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.liftosaur.www;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(APP_BUNDLE_PREFIX)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1357,7 +1359,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX).watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1397,10 +1399,10 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiftosaurWatch/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = LiftosaurWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)Watch";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "App will sync this data with Apple Health.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.liftosaur.www;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(APP_BUNDLE_PREFIX)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1409,7 +1411,7 @@
 				MARKETING_VERSION = 124;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX).watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1427,6 +1429,7 @@
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A99000000000000000000001 /* AppBranding.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CC = "$(SRCROOT)/scripts/ccache-clang.sh";
@@ -1536,6 +1539,7 @@
 		};
 		83CBBA211A601CBA00E9B192 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A99000000000000000000001 /* AppBranding.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CC = "$(SRCROOT)/scripts/ccache-clang.sh";
@@ -1656,7 +1660,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiftosaurWatchComplication/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Liftosaur;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1666,7 +1670,7 @@
 				MARKETING_VERSION = 124;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www.watchkitapp.complications;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX).watchkitapp.complications";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;
@@ -1702,7 +1706,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiftosaurWatchComplication/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Liftosaur;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1711,7 +1715,7 @@
 				);
 				MARKETING_VERSION = 124;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.liftosaur.www.watchkitapp.complications;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX).watchkitapp.complications";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;

@@ -8,6 +8,7 @@ import { OnboardingPicker_pick } from "../models/onboardingPicker";
 import { OnboardingProgram_prepare } from "../models/onboardingProgram";
 import { OnboardingAnswers_body } from "../models/onboardingAnswers";
 import { AiRequest_post, AiRequest_text } from "./aiRequest";
+import { AiConsent_ensure } from "./aiConsentClient";
 import { UidFactory_generateUid } from "./generator";
 import { FoodLogStore_update } from "./foodLogStore";
 import { FoodLog_setProfile } from "../models/foodLog";
@@ -103,7 +104,7 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         );
         return;
       }
-      if (form.command === "fallback") {
+      if (form.command === "fallback" || !(await AiConsent_ensure())) {
         fallback();
         return;
       }

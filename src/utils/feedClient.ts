@@ -11,6 +11,7 @@ import {
   IFeedOp,
 } from "../models/feed";
 import { IWorkoutPostSummary } from "../models/workoutPost";
+import { FeedModeration_reportError, IReportReason } from "../models/feedModeration";
 import { JsonStore_create } from "./jsonStore";
 import {
   CloudStore,
@@ -76,7 +77,7 @@ export async function FeedClient_refresh(): Promise<ICloudResult<undefined>> {
     return flushed;
   }
   const result = await SupabaseClient_authed(
-    `/rest/v1/workout_posts?select=user_id,workout_id,posted_at,summary&order=posted_at.desc&limit=${Feed_limit}`,
+    `/rest/v1/workout_posts?select=id,user_id,workout_id,posted_at,summary&order=posted_at.desc&limit=${Feed_limit}`,
     { method: "GET" }
   );
   if (!result.ok) {
@@ -102,6 +103,23 @@ export async function FeedClient_setShared(
       : { type: "remove", userId, workoutId, queuedAt };
   await FeedStore.update((state) => Feed_queue(Feed_setShareByDefault(state, summary != null), op));
   return FeedClient_flush();
+}
+
+export async function FeedClient_report(
+  postId: number | undefined,
+  reason: IReportReason,
+  note: string
+): Promise<ICloudResult<undefined>> {
+  const error = FeedModeration_reportError(reason, note);
+  if (error != null || postId == null) {
+    return { ok: false, error: error ?? "Refresh the feed before reporting this post." };
+  }
+  const init = SupabaseClient_json({ post_id: postId, reason, note: note.trim() || null });
+  const result = await SupabaseClient_authed("/rest/v1/post_reports", {
+    ...init,
+    headers: { ...(init.headers as Record<string, string>), Prefer: "return=minimal" },
+  });
+  return result.ok ? ok : result;
 }
 
 export async function FeedClient_shareOnFinish(

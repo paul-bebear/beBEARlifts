@@ -42,6 +42,7 @@ import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offli
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { CloudBackupCard } from "./cloudBackupCard";
+import { AppStoreSettings } from "./appStoreSettings";
 
 interface IProps {
   dispatch: IDispatch;
@@ -76,6 +77,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
 
   return (
     <View className="px-gutter">
+      <AppStoreSettings />
       <MenuItem
         shouldShowRightArrow={true}
         name="Program"

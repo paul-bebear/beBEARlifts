@@ -1,8 +1,11 @@
 import { JSX } from "react";
-import { View } from "react-native";
+import { Linking, Pressable, View } from "react-native";
 import { Feed_ago, IFeedItem } from "../models/feed";
 import { WorkoutPost_setText, WorkoutPost_statsLine } from "../models/workoutPost";
 import { Text } from "./primitives/text";
+import { FeedPostMenu } from "./feedPostMenu";
+import { Support_email } from "../utils/support";
+import { Dialog_alert } from "../utils/dialog";
 
 interface IProps {
   items: IFeedItem[];
@@ -49,6 +52,7 @@ function Post(props: { item: IFeedItem; now: number }): JSX.Element {
           {"\u{1F3B5}"} {summary.keptSongs} {summary.keptSongs === 1 ? "song" : "songs"} kept
         </Text>
       )}
+      <FeedPostMenu item={props.item} />
     </View>
   );
 }
@@ -71,6 +75,15 @@ export function FriendsFeed(props: IProps): JSX.Element {
           <Post key={`${item.post.userId}-${item.post.workoutId}`} item={item} now={props.now} />
         ))
       )}
+      <Pressable
+        className="py-4"
+        testID="feed-contact"
+        onPress={() =>
+          Linking.openURL(`mailto:${Support_email}`).catch(() => Dialog_alert(`Email us at ${Support_email}`))
+        }
+      >
+        <Text className="text-sm text-text-link">Contact us</Text>
+      </Pressable>
     </View>
   );
 }

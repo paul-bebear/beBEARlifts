@@ -6,6 +6,8 @@ import { INutritionLabelForm, NutritionLabel_toForm, NutritionLabel_toProduct } 
 import { FoodApi_readLabel } from "../utils/foodApi";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { AiConsent_showFeatures } from "../models/aiConsent";
+import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
 
 interface IProps {
   barcode?: string;
@@ -64,6 +66,7 @@ function LabelForm(props: { form: INutritionLabelForm; onChange: (form: INutriti
 }
 
 export function FoodLabelPanel(props: IProps): JSX.Element {
+  const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const inputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<INutritionLabelForm | undefined>(undefined);
   const [isReading, setIsReading] = useState(false);
@@ -141,12 +144,16 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
       )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
         <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />
-        {!isReading && (
+        {!isReading && showAi && (
           <FoodPrimaryButton
             testID="food-label-photo"
             title={form == null ? "Photo the label" : "New photo"}
             kind={form == null ? "primary" : "outline"}
-            onPress={() => inputRef.current?.click()}
+            onPress={async () => {
+              if (await AiConsent_ensure()) {
+                inputRef.current?.click();
+              }
+            }}
           />
         )}
         {form != null && !isReading && <FoodPrimaryButton testID="food-label-save" title="Save" onPress={save} />}
