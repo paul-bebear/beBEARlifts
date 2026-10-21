@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { Support_email } from "../../utils/support";
 
 export interface IAffiliatesContentProps {
   client: Window["fetch"];
@@ -35,8 +36,8 @@ export function AffiliatesContent(props: IAffiliatesContentProps): JSX.Element {
 
       <p className="mt-4">
         Interested? Shoot us an email -{" "}
-        <a className="font-bold underline text-text-link" href="mailto:info@liftosaur.com">
-          info@liftosaur.com
+        <a className="font-bold underline text-text-link" href={`mailto:${Support_email}`}>
+          {Support_email}
         </a>
         . Also let us know if you need help with creating a program.
       </p>

@@ -2,7 +2,7 @@
 
 ## Contact Us
 
-If you have any questions, don't hesitate to contact us at <a href="mailto:info@liftosaur.com">info@liftosaur.com</a>!
+If you have any questions, don't hesitate to contact us at <a href="mailto:support@paulbebear.com">support@paulbebear.com</a>!
 
 ## Workouts
 

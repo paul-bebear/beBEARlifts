@@ -4,6 +4,7 @@ import { IconYoutube } from "./icons/iconYoutube";
 import { IconReddit } from "./icons/iconReddit";
 import { IconDiscord } from "./icons/iconDiscord";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
+import { Support_email } from "../utils/support";
 
 interface IProps {
   maxWidth?: number;
@@ -57,8 +58,8 @@ export function FooterPage(props: IProps): JSX.Element {
               </div>
               <div className="mt-4 text-sm text-text-alwayswhite">
                 Questions?{" "}
-                <a href="mailto:info@liftosaur.com" className="text-purple-300 underline">
-                  info@liftosaur.com
+                <a href={`mailto:${Support_email}`} className="text-purple-300 underline">
+                  {Support_email}
                 </a>
               </div>
             </div>
