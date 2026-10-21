@@ -4,6 +4,11 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build:pwa",
   "outputDirectory": "dist",
+  "functions": {
+    "api/ai/onboard.mjs": {
+      "includeFiles": "llms/{program_builder_prompt,programs_guide,liftoscript_llm,exercises}.md"
+    }
+  },
   "redirects": [{ "source": "/", "destination": "/app/", "permanent": false }],
   "rewrites": [
     { "source": "/app", "destination": "/app/index.html" },
@@ -16,7 +21,10 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com https://qvqwvuuwfueccrmzwyct.supabase.co" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com https://qvqwvuuwfueccrmzwyct.supabase.co"
+        },
         { "key": "X-Robots-Tag", "value": "noindex" }
       ]
     },
