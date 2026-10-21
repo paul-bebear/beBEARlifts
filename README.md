@@ -30,7 +30,7 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 - The offline build names `app`, `vendors` and their CSS by content hash, for example `/app.736a0190.js`, and `HashedIndexPlugin` in `webpack.config.js` writes those names into `app/index.html`. Vercel ignores the query string on static files. With the old `/app.js?version=<commit>` names, a deploy could hand the service worker the previous `app.js` under the new name, and the phone kept it. The service worker reads the bundle names from the cached `/app/` page on install (`src/utils/bundleNames.ts`).
 - On a Home Screen app, JSON and CSV export open the iOS share sheet ("Save to Files", AirDrop, iCloud Drive).
 - A backup reminder asks once a week to export, when there is at least one workout and no export in the last 7 days.
-- `vercel.json` deploys `dist/`. It proxies `/externalimages/*` to Liftosaur's public exercise image bucket. Its `connect-src` allows the app's origin, in-memory files, Spotify and the Supabase project.
+- `vercel.json` deploys `dist/`. The `/externalimages/*` rewrite was removed in `ad42f5c5`; it no longer proxies exercise images. Its `connect-src` allows the app's origin, in-memory files, Spotify and the Supabase project.
 - The Food tab logs calories and macros per meal. Its layout follows Built With Science's Nutrition screen. The screen is `src/components/screenFood.tsx`, and the rules live in `src/models/foodLog.ts` and `src/models/foodAddFlow.ts`.
 - Adding food opens a full screen (`src/components/screenFoodAdd.tsx`): search, Barcode, AI Scan, Describe and Quick Log tiles, and Food, Meals and Recipes tabs. Ticked foods collect in an Item Log basket with portions, then log together (`src/models/foodBasket.ts`). Saved meals and batch recipes live in the food log (`src/models/savedMeals.ts`).
 - The food log has its own IndexedDB key, `bebear_foodlog`, outside Liftosaur's storage, so upstream merges do not touch it. The main JSON export does not include it. The targets sheet (the gear icon) has its own export and import.
@@ -51,11 +51,19 @@ Changes in this fork, first made in October 2026. AGPL section 5(a) asks a modif
 
 Open Settings → Import / Export → Cloud backup. Enter your email, tap "Send code", then enter the code and tap "Sign in".
 
-After each finished workout, the signed-in app uploads the same JSON as "Export everything". It includes workouts, programs, settings, body stats, food, music history, body scans, warmups and workout reports. Spotify tokens and the cloud session in `bebear_cloud` stay on the phone.
+After each finished workout, the signed-in app uploads the same JSON as "Export everything". It includes workouts, programs, settings, body stats, food, music history, body scans, warmups, reports, clip records and thumbnails, runs, goals, steps and checklist data. Spotify tokens and the cloud session in `bebear_cloud` stay on the phone. Progress photos and filmed video files are excluded. Save progress photos separately; they will stay on the old phone after a restore. Filmed videos stay in Photos or downloads.
 
-Backups go to the private `backups` bucket in Supabase project `bebearlifts` (`qvqwvuuwfueccrmzwyct`). Each account can read and write only its own folder. `latest.json` holds the restore file. Seven weekday files keep the latest backup from each weekday. "Back up now" also saves changes between workouts. "Last backup" shows when both uploads succeeded. A failed automatic upload leaves that time unchanged. Finish another workout or tap "Back up now" to retry.
+Backups go to the private `backups` bucket in Supabase project `bebearlifts` (`qvqwvuuwfueccrmzwyct`). Each account can read and write only its own folder. `latest.json` holds the restore file. Seven weekday files keep the latest backup from each weekday. The app restores only `latest.json`; it has no weekday restore picker.
 
-On a new phone, install the Home Screen app and sign in with the same email. If local workout history is empty, the app checks for a cloud backup and offers to restore it. Tap "Restore from cloud" and confirm. Restore replaces local workouts, settings, food, music, body scans, warmups and reports. It keeps this phone's cloud and Spotify logins. Sign out stops automatic uploads and leaves cloud files in place.
+"Back up now" also saves changes between workouts. "Last backup" shows when both uploads succeeded. A failed automatic upload leaves that time unchanged. Finish another workout or tap "Back up now" to retry.
+
+On a new phone, install the Home Screen app and sign in with the same email. With empty local workout history, sign-in checks for a cloud backup and shows a restore message inside the Settings card. The message disappears when the card closes. Tap "Restore from cloud" and confirm before logging a workout.
+
+Restore replaces the local data included in the backup. It keeps this phone's cloud and Spotify logins. Progress photos are excluded and stay on the old phone. Sign out stops automatic uploads and leaves cloud files in place.
+
+The app does not compare local and cloud history before uploading. A first workout on a new phone can overwrite the cloud backup with that phone's shorter history. Two phones can overwrite each other's backups. Export a file from the old phone before changing phones. Restore on the new phone before finishing a workout or tapping "Back up now". The weekly export reminder does not read cloud backup times, so signed-in users can still see it.
+
+The live bucket and its access policies exist, but their `backups_bucket` migration is missing from `supabase/migrations/`. A new project needs the private bucket and select, insert and update policies scoped to the user's folder. The October review tracks the missing migration as S14.
 
 For a new Supabase project on the free plan, configure custom SMTP under Authentication → Emails → SMTP Settings first. The dashboard requires custom SMTP before it allows template edits. Resend needs a verified sending domain and a sending-access API key. The sending address does not need an inbox.
 
@@ -63,11 +71,11 @@ In Authentication → Emails → Templates, add `Your code: {{ .Token }}` to bot
 
 ## Friends and the workout feed
 
-Friends use the cloud backup sign-in. Signed out, the Friends tab links to Settings.
+Friends use the cloud backup sign-in. Signed out, the Friends tab shows "Open Settings", but that button currently does nothing. Open Settings from Progress to sign in.
 
 1. Pick a handle in the Friends tab: 3 to 20 lowercase letters, numbers or `_`. Add a name if you want one.
 2. Type a friend's exact handle and tap "Find". Their name shows. Tap "Send request".
-3. Your friend sees the request at the top of their Friends tab and taps "Accept". If you both send a request, the second one accepts the first.
+3. Your friend sees the request at the top of their Friends tab and taps "Accept". If you both send a request, the second one accepts the first. The invite path also sends a request, so entering a handle can accept an existing request without another Accept tap.
 4. "Remove", "Decline" and "Cancel" delete the link for both people.
 
 To share a workout, turn on "Share with friends" on the finish screen. It is off the first time. The app remembers your last choice and applies it to the next workout. Turning it off deletes that workout's post.
@@ -78,9 +86,13 @@ The feed shows your posts and your friends' posts, newest first, up to 50. It re
 
 How privacy works. The tables are in Supabase project `bebearlifts`, and every table has row-level security. The SQL is in `supabase/migrations/`.
 
-- `profiles`: you read your own row and the rows of people you share a request or a friendship with. Search goes through `find_profile`, which returns only a handle and a name for an exact handle. It never returns a user id, and no one can list all handles.
-- `friendships`: only the two people in a row see it or delete it. Requests go through `request_friend`. Only the person asked can accept, and column grants let them change only the status.
+- `profiles`: you read your own row and the rows of people you share a request or a friendship with. Search goes through `find_profile`, which returns only a handle and a name for an exact handle. Repeated exact-handle searches can reveal which handles exist.
+- `friendships`: only the two people in a row see it or delete it. Both can read both user ids, including on pending requests. Requests go through `request_friend`, which accepts an existing request from the other person. Column grants limit direct updates to the status.
 - `workout_posts`: the author and accepted friends read a post. A pending request shows nothing. Only the author can add, change or delete it.
+
+The invite path creates a profile named "Lifter" with a default handle containing 13 characters from the user's id. It does not ask for a name or handle first. On iPhone, the manifest's `/app/` start URL drops `?invite=`. Enter the inviter's handle in the chat if needed. An invite link shows the installation guide in Safari; a plain `/app/` link opens the app without that guide.
+
+Post menus provide Report and Block, Settings provides Unblock, and the feed has Contact us. Reports currently have no review notification or reader workflow. Duplicate reports are not capped. Delete account is present in Settings, but returned 500 in the 2026-10-21 production review. The Vercel production environment was missing `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Run it locally
 
@@ -112,13 +124,15 @@ The repo has a git submodule (`lambda/scripts`) that points at a private SSH URL
 1. Open `https://<project>.vercel.app/app/` in Safari.
 2. Tap Share → "Add to Home Screen" → Add.
 3. Always open the app from the Home Screen icon. Safari tabs and the Home Screen app keep separate storage.
-4. Open the app once with a signal, so the service worker caches it. After that it starts in airplane mode.
+4. Open the app with a signal and let its assets download. The app has no offline-ready indicator. An interrupted precache can leave an install unable to start in airplane mode. Keep a connection until you have confirmed an offline launch.
 
 ## Build your program with your own AI
 
 Pick a built-in plan with the [programs guide](llms/programs_guide.md), grouped by experience, schedule, goal, and equipment.
 
-The app does not interview you yet. Until it does, an AI chat app such as ChatGPT or Claude can, with the prompt in [`llms/program_builder_prompt.md`](llms/program_builder_prompt.md).
+The first-launch chat can use AI to build a program after email-code sign-in and AI consent. "Continue without AI" uses a rules-based built-in picker. That picker filters equipment first and does not follow the guide's full selection order. "Skip, I'll pick myself" opens the program list. The AI can convert plan and history screenshots, but imported history currently has no count or date-range preview before Start applies it.
+
+You can also use an AI chat app such as ChatGPT or Claude with [`llms/program_builder_prompt.md`](llms/program_builder_prompt.md).
 
 1. Open the prompt file. Copy everything below its line and paste it into a new chat.
 2. The AI first says how to add the app to the Home Screen. Then it asks three questions, and you can skip any of them: your goal and days per week, your height, weight, age and experience, and whether you already follow a plan.
@@ -141,7 +155,7 @@ To add a program the AI wrote:
 5. Select all the text in the editor and paste.
 6. Tap "Save". The app goes to Home with the new program active.
 
-On the app's first launch, the "Choose your program" screen comes up by itself. Tap "Pick a built-in program" or "Create a program" there, in place of the two-arrows icon.
+On first launch, tap "Skip, I'll pick myself" to open the program list. Select a built-in program there or tap "Create New Program". Once a program is active, use Progress → Program card → two-arrows icon to return to that list.
 
 If a line is wrong, a red bar above the editor shows `Error:` with the line and column, for example `Syntax error (12:42)`. "Save" stays grey until the text parses. Paste the error into the chat, and the AI sends the fixed block.
 
@@ -151,14 +165,15 @@ The starting weights are guesses. Change any that feel wrong after the first wor
 
 ## Your data and backups
 
-Your data lives only in the phone's IndexedDB, under the origin you installed from. There is no cloud copy.
+Your working data lives in the phone's IndexedDB, under the origin you installed from. Optional cloud backup saves whole-file copies after workouts; it does not merge devices. See [Cloud backup](#cloud-backup) before restoring or moving to a new phone.
 
 - iOS does not apply Safari's 7-day storage cap to Home Screen apps. It can still clear data when the phone runs very low on storage. Deleting the Home Screen icon also deletes the data.
 - The app asks the browser for persistent storage (`navigator.storage.persist()`) on every launch.
 - Changing the URL (a new Vercel project name, a custom domain) starts with empty storage. Export first, then import on the new URL.
-- To back up, open Me → "Export data to JSON file" → "Save to Files" (pick iCloud Drive).
-- To restore, open Me → "Import data from JSON file" and pick the file. Import replaces all current data.
-- "Export history to CSV file" gives a spreadsheet copy, but only the JSON file can be imported back.
+- To back up, open Progress → Settings → Import / Export → "Export everything" → "Save to Files" (pick iCloud Drive). This includes the fork stores listed under Cloud backup, but excludes progress photos and filmed videos.
+- "Export data to JSON file" saves workouts, programs, settings and body stats without the fork stores.
+- To restore, open Progress → Settings → "Import data from JSON file" and pick the file. A full backup replaces workouts and the fork stores it contains. A plain Liftosaur JSON replaces workout storage and leaves fork stores unchanged. Cloud and Spotify logins stay on this phone.
+- "Export history to CSV file" gives a spreadsheet copy. "Paste history from clipboard" imports that history; it does not restore settings or fork stores.
 
 ## Pull updates from upstream Liftosaur
 
@@ -180,7 +195,108 @@ git push origin master        # Vercel redeploys
 
 The GitHub "Sync fork" button does the same merge when it has no conflicts. It does not run the build, so check the Vercel deploy log afterwards.
 
-Conflicts, when they happen, are in the files this fork touches: `src/index.html`, `src/webpushr-sw.ts`, `src/utils/subscriptions.ts`, `src/utils/subscriptionPlan.ts`, `src/utils/exporter.ts`, `src/ducks/thunks.ts`, `src/ducks/reducer.ts`, `src/components/screenSettings.tsx`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/models/exercise.ts`, `src/models/exerciseImage.ts`, `src/models/exerciseDescriptions.ts`, `src/types.ts`, `src/index.tsx`, `src/utils/theme.ts`, `src/utils/appliedTheme.ts`, `llms/exercises.md`, `.claude/settings.json`, `webpack.config.js`, `manifest.webmanifest`. Keep both sides, and keep every `OfflineOnly_isEnabled()` check. `src/models/exerciseDescriptions.ts` is generated: after a conflict there, run `npm run build:exercises`.
+Review upstream changes against the fork's modified files. Keep both sides' behavior and every `OfflineOnly_isEnabled()` check. Regenerate the inventory before each merge:
+
+```bash
+git diff --stat 7eef7634..master
+git diff --name-status --diff-filter=MD 7eef7634..master
+```
+
+The inventory below uses `master` at `a5153e38` on 2026-10-21, with `7eef7634` as the review's comparison base. Each directory lists changed or deleted text files that existed at that base. Added files appear in the full stat output too. Deleted paths can produce modify/delete conflicts, including `ios/.xcode.env.local`, which must stay machine-local.
+
+<details>
+
+<summary>Changed text files to check during an upstream merge</summary>
+
+- Repository root: `.gitignore`, `FORK_ROADMAP.md`, `README.md`, `app.json`, `babel.config.js`, `manifest.webmanifest`, `vercel.json`, `webpack.config.js`.
+- `android/app/src/main/`: `AndroidManifest.xml`.
+- `android/app/src/main/java/com/liftosaur/www/twa/`: `HealthPermissionsRationaleActivity.kt`.
+- `android/app/src/main/java/com/liftosaur/www/twa/lftupdater/`: `LftUpdater.kt`.
+- `android/app/src/main/java/com/liftosaur/www/twa/liveactivity/`: `WorkoutForegroundService.kt`.
+- `android/app/src/main/java/com/liftosaur/www/twa/share/`: `LiftosaurShareModule.kt`.
+- `android/app/src/main/java/com/liftosaur/www/twa/timer/`: `LiftosaurTimerModule.kt`, `TimerNotificationPublisher.kt`.
+- `android/app/src/main/res/values/`: `strings.xml`.
+- `api/`: `_food.mjs`.
+- `api/food/`: `barcode.mjs`, `photo.mjs`, `search.mjs`.
+- `docs/features/`: `custom-exercises.md`.
+- `images/`: `logo.svg`.
+- `ios/`: `.xcode.env.local`, `Podfile.lock`.
+- `ios/Liftosaur.xcodeproj/`: `project.pbxproj`.
+- `ios/Liftosaur.xcodeproj/xcshareddata/xcschemes/`: `Liftosaur.xcscheme`.
+- `ios/Liftosaur/`: `AppDelegate.swift`, `Info.plist`, `Liftosaur.entitlements`, `LiftosaurLiveActivityImpl.swift`, `LiftosaurShareImpl.swift`.
+- `ios/LiftosaurWatch/`: `ContentView.swift`, `Info.plist`, `LiftosaurWatch.entitlements`.
+- `ios/LiftosaurWatch/Engine/`: `WatchCacheManager.swift`, `WatchCrashReporter.swift`, `WatchSyncManager.swift`.
+- `ios/LiftosaurWatchComplication/`: `Info.plist`, `LiftosaurComplication.swift`, `LiftosaurWatchComplication.entitlements`.
+- `ios/LiftosaurWorkoutWidgetExtension/`: `Info.plist`, `LiftosaurWorkoutWidget.swift`, `LiftosaurWorkoutWidgetExtension.entitlements`, `LiveActivityViews.swift`, `WorkoutIntents.swift`.
+- `ios/Shared/`: `ComplicationStore.swift`, `EventManager.swift`, `Settings.swift`.
+- `ios/Shared/LftUpdater/`: `LftUpdaterPath.swift`.
+- `lambda/`: `index.ts`.
+- `lambda/mcp/`: `handler.ts`, `reference.ts`, `tools.ts`.
+- `lambda/utils/`: `programImageGenerator.ts`.
+- `programs/builtin/`: `gzcl-general-gainz-burrito-but-big.md`, `gzcl-general-gainz.md`, `gzcl-jacked-and-tan-2.md`, `gzcl-the-rippler.md`, `gzcl-uhf-5-weeks.md`, `gzcl-uhf-9-weeks.md`, `gzcl-vdip.md`, `gzclp.md`, `juggernaut-method.md`, `monolith531.md`, `tactical-barbell-operator.md`, `the531bbb.md`.
+- `scripts/`: `build-licenses.ts`, `food-api-dev.mjs`, `lint-views-baseline.json`, `release-ios-production.sh`.
+- `src/`: `App.native.tsx`, `editor.html`, `googleauthcallback-web.html`, `googleauthcallback.html`, `healthconnectprivacypolicy.html`, `index.html`, `index.tsx`, `internalLink.native.tsx`, `licenses.html`, `privacy.html`, `record.html`, `support.html`, `terms.html`, `types.ts`, `webpushr-sw.ts`.
+- `src/api/`: `service.ts`.
+- `src/components/`: `account.tsx`, `app.tsx`, `exerciseImage.tsx`, `foodAddContent.tsx`, `foodAmountPanel.tsx`, `foodBarcodeScanner.native.tsx`, `foodGoalsContent.tsx`, `foodPhotoPanel.native.tsx`, `foodPhotoPanel.tsx`, `foodQuickAddPanel.tsx`, `foodSearchBar.tsx`, `foodSearchPanel.tsx`, `footer2.tsx`, `footerButton.tsx`, `footerPage.tsx`, `historyEntry.tsx`, `historyRecord.tsx`, `historyRecordSets.tsx`, `historyRecordsNullState.tsx`, `importerLiftosaurCsv.tsx`, `importerStorage.tsx`, `modalAffiliate.tsx`, `modalAmrap.tsx`, `page.tsx`, `programHistory.tsx`, `programShareOutput.tsx`, `screenAccount.tsx`, `screenApiKeys.tsx`, `screenFinishDay.tsx`, `screenFood.tsx`, `screenSettings.tsx`, `screenSubscription.tsx`, `topNavMenu.tsx`, `workout.tsx`, `workoutExercise.tsx`, `workoutExerciseAllSets.tsx`, `workoutExerciseCard.tsx`, `workoutExerciseSet.tsx`, `workoutExerciseSetExpanded.tsx`, `workoutShareOutput.tsx`.
+- `src/components/admin/`: `adminHtml.tsx`.
+- `src/components/hearAboutUs/`: `hearAboutUsSurvey.tsx`.
+- `src/components/help/`: `helpEditProgramV2.tsx`.
+- `src/components/icons/`: `iconDefaultExercise.tsx`.
+- `src/components/primitives/`: `slider.native.tsx`, `slider.tsx`.
+- `src/components/tour/`: `programTourConfig.tsx`, `workoutTourConfig.tsx`.
+- `src/consent/`: `consentBanner.ts`.
+- `src/docs/content/`: `docs.md`.
+- `src/docs/layout/`: `page.html`.
+- `src/docs/layout/partials/`: `menu.hbs`.
+- `src/ducks/`: `reducer.ts`, `thunks.ts`.
+- `src/models/`: `exerciseImage.ts`, `foodLog.ts`, `foodPhotoEstimate.ts`, `liftoscriptDocs.ts`, `muscle.ts`, `openFoodFacts.ts`, `program.ts`, `progress.ts`, `screen.ts`, `set.ts`, `whatsnewParser.ts`.
+- `src/navigation/`: `AppNavigator.native.tsx`, `AppNavigator.tsx`, `navigationService.ts`, `types.ts`.
+- `src/navigation/modals/`: `NavModalCorruptedState.tsx`, `NavModalFoodGoals.tsx`, `NavModalHelp.tsx`.
+- `src/navigation/screens/`: `NavScreenHome.tsx`.
+- `src/pages/affiliateDashboard/`: `affiliateDashboardHtml.tsx`.
+- `src/pages/affiliates/`: `affiliatesContent.tsx`, `affiliatesHtml.tsx`.
+- `src/pages/ai/`: `aiPromptContent.tsx`, `aiPromptHtml.tsx`.
+- `src/pages/allExercises/`: `allExercisesHtml.tsx`.
+- `src/pages/docs/`: `docDetailsHtml.tsx`, `docsListContent.tsx`, `docsListHtml.tsx`.
+- `src/pages/exercise/`: `exerciseContent.tsx`, `exerciseHtml.tsx`.
+- `src/pages/features/`: `featureDetailsHtml.tsx`, `featuresListContent.tsx`, `featuresListHtml.tsx`.
+- `src/pages/login/`: `loginHtml.tsx`.
+- `src/pages/main/components/`: `testimonialsView.tsx`.
+- `src/pages/main/`: `mainHtml.tsx`.
+- `src/pages/oauthConsent/`: `oauthConsentHtml.tsx`.
+- `src/pages/paymentsDashboard/`: `paymentsDashboardHtml.tsx`.
+- `src/pages/planner/components/`: `plannerHelp.tsx`.
+- `src/pages/planner/`: `plannerBanner.tsx`, `plannerContent.tsx`, `plannerHtml.tsx`.
+- `src/pages/program/`: `programHtml.tsx`.
+- `src/pages/programs/programDetails/`: `programDetailsUpsell.tsx`.
+- `src/pages/programs/`: `programDetailsHtml.tsx`, `programPreviewHtml.tsx`.
+- `src/pages/programs/programList/`: `programsPageHtml.tsx`.
+- `src/pages/programsList/`: `programsListHtml.tsx`.
+- `src/pages/record/`: `recordHtml.tsx`.
+- `src/pages/repmax/`: `repMaxContent.tsx`, `repMaxHtml.tsx`.
+- `src/pages/resetPassword/`: `resetPasswordContent.tsx`, `resetPasswordHtml.tsx`.
+- `src/pages/user/`: `userHtml.tsx`.
+- `src/pages/userAffiliates/`: `userAffiliatesHtml.tsx`.
+- `src/pages/userDashboard/`: `userDashboardHtml.tsx`.
+- `src/pages/usersDashboard/`: `usersDashboardHtml.tsx`.
+- `src/pages/verifyEmail/`: `verifyEmailContent.tsx`, `verifyEmailHtml.tsx`.
+- `src/utils/`: `analytics.native.ts`, `appEnv.ts`, `bundledImagesSvg.native.ts`, `eventManager.native.ts`, `foodApi.ts`, `health.android.ts`, `health.ios.ts`, `health.ts`, `healthAdapter.ts`, `hostConfig.ts`, `iapHelpers.ts`, `imagePicker.native.ts`, `imageResize.ts`, `importFromHevy.ts`, `importFromLiftosaur.ts`, `offlineOnly.ts`, `signIn.native.ts`, `workoutExerciseUtils.ts`.
+- `test/`: `api.test.ts`, `foodPhotoEstimate.test.ts`, `importFromHevy.test.ts`, `importFromLiftosaur.test.ts`, `offlineOnly.test.ts`, `openFoodFacts.test.ts`, `setAddSet.test.ts`.
+- `test/utils/`: `mockHealthAdapter.ts`.
+
+</details>
+
+Changed binary assets also need review:
+
+- `icons/`: 6 changed binary files.
+- `icons/launch/`: 26 changed binary files.
+- `images/features/custom-exercises/`: 11 changed binary files.
+- `ios/Liftosaur/Images.xcassets/AppIcon.appiconset/`: 33 changed binary files.
+- `ios/Liftosaur/Images.xcassets/LaunchIcon.imageset/`: 3 changed binary files.
+- `ios/LiftosaurWatch/Assets.xcassets/AppIcon.appiconset/`: 1 changed binary file.
+- `ios/LiftosaurWorkoutWidgetExtension/Assets.xcassets/AppIcon.appiconset/`: 33 changed binary files.
+
+If an upstream merge changes generated exercise descriptions, regenerate them with `npm run build:exercises`.
 
 ## Credits
 

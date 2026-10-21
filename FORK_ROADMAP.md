@@ -21,8 +21,9 @@ Facts checked on 2026-10-16.
 - Built: Progress → Workout music connects Spotify with PKCE. During a workout `src/components/musicTracker.tsx` polls `currently-playing` every 8 seconds while the app is open. When the app comes back from a locked screen, it fills the gap from `recently-played`. A song heard for half its length, or to within 20 seconds of its end, is kept. Any other song is a skip (`src/models/musicSession.ts`).
 - Built: after the workout, the Music screen lists each song with a tick. "Save to Spotify" makes a private playlist of the kept songs. "Play next workout" starts them on the active Spotify device.
 - Spotify app: Client ID `3eaf01f171e440139aa2774df77e5f6f`, in Development Mode, 5 users added by email in the dashboard. Registered redirect URI `https://lifts.paulbebear.com/app/`. Local dev also needs `http://127.0.0.1:8080/app/` registered, because Spotify rejects `localhost`.
-- Not checked yet: no call has reached the real Spotify API. The playlist endpoints try `POST /me/playlists` and `/playlists/{id}/items` first, then fall back to `/users/{id}/playlists` and `/tracks` on a 404 or 410.
+- Not checked yet: playlist creation and playback against the real Spotify API. The playlist endpoints try `POST /me/playlists` and `/playlists/{id}/items` first, then fall back to `/users/{id}/playlists` and `/tracks` on a 404 or 410.
 - Checked on an iPhone on 2026-10-20: `played_at` is when a song ended, and it appears in `recently-played` at once. Songs skipped at 1:00 and 2:30 never appeared, so the list holds only songs played to the end. `SpotifyTracks_parseHistory` sets the start to `played_at` minus the song length. Progress → Workout music → "Show Spotify's recently played list (debug)" shows both times.
+- Review gaps (2026-10-21): the debug row still ships to testers. The playlist flow remains unverified against Spotify. A sixth tester can appear connected while `/me` returns 403; the app has no message explaining the 5-user limit. Locked-screen catch-up can mark a completed song skipped. Batch D covers these fixes.
 - Spotify, free to build. Use the Authorization Code with PKCE flow, which needs no server and no secret. `GET /me/player/recently-played` returns the last 50 tracks with a `played_at` time for each. That works with shuffle, and the app can fetch it after the workout ends.
 - Spotify limits since February 2026: an app in Development Mode needs its owner to have Spotify Premium. It allows at most 5 users, each added by hand in the developer dashboard. Extended quota is for companies with 250,000+ monthly users, so 5 people is the ceiling for this fork. Spotify also removed several endpoints from Development Mode.
 - "Liked this one": Spotify's save-to-library endpoint saves a track for the user. Free. Check its current path in the Web API reference, because the February 2026 migration moved some endpoints.
@@ -39,15 +40,15 @@ Facts checked on 2026-10-16.
 - Shown: under each exercise in the Home tab history card, as "Set 3 · song · artist". The Music screen lists every completed set of the workout under "Song per set", with "no song" for a set that matched nothing.
 - Export: Progress → Workout music → "Export music log" writes the `bebear_music` IndexedDB value to a JSON file. `MusicLog_exportJson` leaves out the Spotify tokens, so the refresh token never lands in the file.
 - Accuracy: a song paused for a long rest may end early in the match, because the window is capped at the song's length.
+- Review gap (2026-10-21): the Music screen's debug history row remains visible. "Export everything" already includes music history, despite stale text on that screen.
 - Not possible with Apple Music, because its history has no play times.
 
-## Daily AI-generated warmup
+## Daily AI-generated warmup (built)
 
-- Needs a paid LLM API. Claude Haiku 5.5 costs $0.10 per million input tokens and $0.50 per million output tokens. One warmup a day (about 500 tokens in, 1,000 out) costs about $0.0006, which is under $0.02 a month per person.
-- Needs: an Anthropic account with prepaid credit, and a Cloudflare Worker that holds the API key. The phone calls the Worker, never the API directly.
-- Offline: generate the warmup when there is a signal and keep it in local storage, so the gym needs no connection.
-- Free fallback: pick from a fixed set of warmups based on the day's exercises. That needs no API.
-- Effort: 1 day for the Worker and the call. Add half a day for caching and the UI.
+- Built: `src/components/workoutWarmupCard.tsx` calls the same-site Vercel function `api/ai/warmup.mjs` through `src/utils/warmupApi.ts`. AI calls need cloud sign-in and consent. Saved plans and completion ticks live in `bebear_warmups`.
+- Free fallback: `WarmupPlan_rules` picks warmups from the day's exercises when the AI request fails. It has no separate button. Declining AI consent hides "Make my warmup", so that path also hides the fallback.
+- Review gap (W3): live workouts use id 0. Every workout can therefore reuse the previous plan and its completion ticks. Matching plans to finished history ids needs Batch B.
+- The Vercel function is already built; a separate Cloudflare Worker is unnecessary for warmup requests.
 
 ### Can MCP replace the Worker? (checked 2026-10-16)
 
@@ -57,7 +58,7 @@ The direction is the reverse of the Worker plan. With the Worker, the app calls 
 
 The blocker is where the data lives. The MCP tools read and write the account data stored on the server (DynamoDB). This fork keeps all data in the phone's IndexedDB. A server cannot reach it, so the MCP server has nothing to read. Claude also reaches a custom connector over public HTTPS with OAuth, so the server must be online. A static Vercel site cannot host it.
 
-Verdict: MCP replaces the Worker only after Phase 2 sync exists. Until then the Worker (or the free fallback) is the only way to get an AI warmup into an offline PWA.
+The Vercel warmup function already handles requests from this PWA. Cloud backup stores whole JSON files, not the DynamoDB account data upstream's MCP tools expect. MCP would need an adapter or a sync backend before it could use this fork's data.
 
 How it would work after Phase 2:
 
@@ -88,19 +89,23 @@ How it would work after Phase 2:
 - Provider: `api/food/photo.mjs` calls Gemini when `GEMINI_API_KEY` is set, through Google's OpenAI-compatible endpoint, with `gemini-flash-lite-latest` on the free tier. Google may use free-tier prompts to improve its products. Without that key it calls `anthropic/claude-haiku-5.5` through Vercel AI Gateway with the OIDC token.
 - Cost per call, checked 2026-10-19: Claude Haiku 5.5 is $0.10 in and $0.50 out per million tokens. A 1024 × 768 photo is about 1,050 tokens, so a photo is about $0.0003 and a description about $0.0002. Claude Sonnet 5.5, the first default, was about $0.006 per photo.
 - Accuracy: calorie estimates from a photo have wide error, often 20 to 30% for mixed dishes. The review step lets you fix grams. Describe asks a question or suggests a photo when the text is too vague.
-- Not checked yet: no live AI call has run. The first try needs `GEMINI_API_KEY` in Vercel, or AI Gateway credit on the Vercel team.
+- Not checked yet: a real meal-photo or text estimate. The 2026-10-21 production review reached the photo route's auth check, confirming an AI credential exists. AI calls require email-code sign-in and consent; the first consent prompt uses browser OK and Cancel buttons.
 
 ## Tab bar, Progress dashboard and story card (built 2026-10-19)
 
-- Tab bar: Home, Program, Workout, Food, Progress, two on each side. Progress replaces Graphs and Me in the offline build. The upstream build keeps six tabs, so `footer2.tsx` has one branch for each.
+- Tab bar: Home, Friends, Workout, Food, Progress, two on each side. Program opens from the Progress card. Progress replaces Graphs and Me in the offline build. The upstream build keeps six tabs, so `footer2.tsx` has one branch for each.
 - Progress opens the Me screens on its own stack, so they get a back arrow. `renderMeScreens` in both navigators registers the Me screen list twice.
 - Story card: drawn with html-to-image at 3× from a 360 × 640 view. It shares through the iOS share sheet from a Home Screen app.
 - Not checked yet: sharing the PNG to Instagram from an iPhone.
+- Review gap (P1): sharing waits for three image renders, which may outlast iPhone's user-activation allowance. The share flow still needs a device check after Batch I.
+- During a workout, the tab bar stays hidden. To reach Food, return through Home first.
 
 ## Phase 2: cloud sync and sharing with friends
 
 - Built (2026-10-20): optional Supabase cloud backup with email-code sign-in, uploads after workouts, manual backup and confirmed restore. Settings → Import / Export holds the controls. The private `backups` bucket stores `latest.json` and seven weekday copies per account. Cloud and Spotify tokens stay out of exports. This saves whole files. Multi-device merge remains unbuilt.
-- Built (2026-10-21): friends and a workout feed on the same Supabase project. Tables `profiles`, `friendships` and `workout_posts`, each with row-level security. Strangers find each other only through `find_profile` and `request_friend`, which never return a user id. The finish screen has an opt-in "Share with friends" toggle that posts a summary. The Friends tab shows requests, friends and the feed, cached for offline use. README → "Friends and the workout feed" lists what a post holds and who can read it.
+- Review gaps (2026-10-21): uploads do not compare local and remote history, so a new phone can replace a longer cloud backup. The app restores only `latest.json`, excludes progress photos, and shows its initial restore message only inside the Settings card. The bucket migration is missing from the repo. README → "Cloud backup" describes these limits.
+- Built (2026-10-21): friends and a workout feed on the same Supabase project. Tables `profiles`, `friendships` and `workout_posts`, each with row-level security. Exact-handle search returns a handle and name; friendship rows expose both user ids to both parties, including pending requests. The finish screen has an opt-in "Share with friends" toggle that posts a summary. The Friends tab shows requests, friends and the feed, cached for offline use. README → "Friends and the workout feed" lists the invite and privacy limits.
+- Review gaps (2026-10-21): entering an invite handle creates a "Lifter" profile and can accept an incoming request. Report, Block, Unblock and Contact us are built, but reports have no notification or reader workflow. Delete account is built but returned 500 because production lacked `SUPABASE_SERVICE_ROLE_KEY`.
 - Next for the social layer, in order: workout stories (photo or short clip, gone after 24 hours), push notifications for requests and new posts (needs a service worker push subscription and an Edge Function), meals and music in the feed (opt-in per post), and a gym-mode feed that shows who is training now.
 
 For multi-device sync and sharing, compare these three options. The Docker option is the first one to try.
@@ -114,11 +119,11 @@ For multi-device sync and sharing, compare these three options. The Docker optio
 
 ## Copy exercise images into the fork
 
-- Today: `vercel.json` sends `/externalimages/*` to upstream's S3 bucket (`liftosaurimages2`). The service worker caches each image after its first view. If upstream moves, renames or locks the bucket, images stop loading for exercises not yet cached.
+- Today: the `/externalimages/*` rewrite was removed from `vercel.json` in `ad42f5c5`. The deployment no longer proxies those paths to upstream's S3 bucket (`liftosaurimages2`). The service worker can only cache images it successfully fetches; uncached images need a working source.
 - Size: 374 small images (about 15 KB each) and 374 large ones (about 180 KB each), so about 70 MB. Converting the large ones to WebP would cut that to roughly 20 MB, but then `src/models/exerciseImage.ts` must change its `.png` paths.
-- How: a script downloads every key in `availableSmallImages` and `availableLargeImages` to the same paths under a folder that the build copies into `dist/externalimages/exercises/`. Then remove the rewrite from `vercel.json`. `ExerciseImageUtils_url` keeps its paths, so the app code does not change.
+- How: a script downloads every key in `availableSmallImages` and `availableLargeImages` to the same paths under a folder that the build copies into `dist/externalimages/exercises/`. `ExerciseImageUtils_url` keeps its paths, so the app code does not change.
 - Where: committing 70 MB into git makes every clone 70 MB bigger. Two alternatives: download the images in the Vercel build step (still needs the bucket at build time, not at run time), or keep them in a separate repo or a Vercel Blob store.
-- Licence check first: upstream's `add-exercise` skill says the illustrations are bought from gymvisual.com. They are not in upstream's git repo, so the AGPL may not cover them. Ask Anton Astashov, or read gymvisual's licence, before putting the files in a public repo. The current proxy serves the same files, so it raises the same question at a smaller scale.
+- Licence check first: upstream's `add-exercise` skill says the illustrations are bought from gymvisual.com. They are not in upstream's git repo, so the AGPL may not cover them. Ask Anton Astashov, or read gymvisual's licence, before putting the files in a public repo.
 - New exercises: the four exercises added from other forks have no images in the bucket. Once the images live in the fork, we can add our own pictures for them.
 - Effort: 2 hours for the download script and the build copy, once the licence question is settled.
 
@@ -140,7 +145,7 @@ Items found while comparing six public forks. Each is left out on purpose for no
 - ishank26/Sabertooth: `personal/` is a separate 574-line PWA, not Liftosaur. Nothing to reuse.
 - shoriminimoe/liftosaur: deletes the subscription screen, the paywall overlay (`locker.tsx`), the coupon modal and the Instagram and TikTok sharing, about 2,900 lines in all. Our single `Subscriptions_hasSubscription` switch already hides every one of these in the PWA, and the PWA shows no Instagram or TikTok buttons. Deleting the files would make each upstream merge conflict.
 - shoriminimoe/liftosaur: a configurable over-the-air update URL and an Android APK build in CI. Native only.
-- Finish screen "Copy Link" still shows on the PWA. It needs an account, so in the offline build it only says "You should be logged in". Hide it in `src/components/screenFinishDay.tsx` (10 minutes, one more file in the merge list).
-- Me → "Contact Us", "Privacy Policy" and "Terms & Conditions" point at liftosaur.com and Liftosaur's own service. Decide whether this fork needs its own text.
+- Finish screen "Copy Link" still shows on the PWA. It needs an upstream account, so the offline build only says "You should be logged in". U15 assigns its removal to Batch I in `src/components/screenFinishDay.tsx`, estimated at 0.5 hours including verification.
+- Fork privacy and terms are present in `src/privacy.html` and `src/terms.html`. Remaining branding gaps include the dinosaur empty-state artwork and upstream release notes relabeled as beBEAR. U29 assigns those fixes to Batch K.
 - EqyMMxpb/liftosaur, commit 0203a735f: Farmers Walk, smith-machine Standing Calf Raise and EZ-bar Upright Row. Not requested. None have images in the bucket.
 - EqyMMxpb/liftosaur, commit d58d490d5: the Chest Press muscle fix is already in upstream.

@@ -2,7 +2,7 @@
 
 How to ship this fork as a native iPhone app on TestFlight. Written 2026-10-21 against master at `638c5dec`.
 
-Current configuration after `HANDOFF-xcode.md`: native startup disables upstream services, Release disables OTA, and native food photos use the camera picker. `ios/AppBranding.xcconfig` owns the display name, bundle prefix, signing team, and derived App Group. The signing team remains empty. Device testing and App Store Connect setup remain separate steps.
+Current configuration: native startup disables upstream services, Release disables OTA, and native food photos use the camera picker. `ios/AppBranding.xcconfig` owns the display name, bundle prefix, signing team, and derived App Group. The signing team remains empty. Device testing and App Store Connect setup remain separate steps.
 
 Verified on 2026-10-21 with Xcode 26.6 and SDKs 26.5:
 
@@ -95,7 +95,7 @@ Works on native with no change:
 
 - Exports ("Export everything", food log, music log): `src/utils/exporter.ts` uses `navigator.share`, but upstream's `exporter.native.ts` takes over on native and opens the iOS share sheet.
 - Cloud backup: `src/utils/cloudBackupClient.ts` calls the Supabase URL directly with `fetch`.
-- Storage: every fork store goes through `JsonStore_create` and `IndexedDBUtils_*`, which upstream maps to MMKV on native.
+- Storage: fork stores use `IndexedDBUtils_*`, which upstream maps to MMKV on native. Four stores still duplicate `JsonStore_create`; Batch B consolidates and hardens those stores.
 
 ## Vercel functions from the native app
 
@@ -103,7 +103,9 @@ The web app calls its own origin, so `fetch("/api/food/search")` reaches lifts.p
 
 `src/utils/apiUrl.ts` returns the path unchanged for the web. `src/utils/apiUrl.native.ts` prefixes `https://lifts.paulbebear.com`. Native `fetch` does not apply CORS, so the functions need no change. `vercel.json`'s Content-Security-Policy only applies to web pages.
 
-The functions in `api/` check no origin and no key. Anyone who finds the URL can call `api/ai/warmup` and `api/ai/report`, which spend the fork's AI credit. That is true today for the web app too, and the native app does not change it. A shared secret in the app would not stop a determined caller, because anyone can read it from the app bundle.
+AI requests from web and native use `src/utils/aiRequest.ts` with a Supabase access token in `Authorization: Bearer`. `api/_auth.mjs` checks that token through `ai_usage_take` before warmup, report, onboarding and food-photo requests reach the provider. The cap is 60 calls per account per UTC day unless `AI_DAILY_CAP` changes it. The food search, barcode and USDA proxies still allow anonymous requests.
+
+The 2026-10-21 review found sign-up open and no global AI ceiling. Per-account limits therefore leave total spending unbounded. Batch E covers server limits; sign-up restrictions, the AI Gateway budget and Firewall rules need owner configuration. AI consent already runs before sending personal data. Its current prompt uses browser OK and Cancel buttons; a consent sheet remains pending.
 
 ## Spotify login on native
 
@@ -122,7 +124,7 @@ Size: 1 day, plus 1 hour of testing on the phone.
 
 ## Upstream services to switch off in the native build
 
-Completed by `HANDOFF-xcode.md`:
+Completed native configuration:
 
 - OTA: all four Release configurations define `DISABLE_OTA`. `effectiveBundleURL` ignores cached downloads and returns embedded JS. Watch bundle fetching is disabled.
 - Rollbar, AppsFlyer and EventManager telemetry return without initialization or uploads when the offline flag is on. Native Watch telemetry, saved event retries, and crash reports are also disabled.
@@ -199,7 +201,9 @@ In order. "Codex" means a written handoff can do the task without a phone. "Phon
 13. Set clips on native with `react-native-image-picker` in video mode. 1 day. Codex for the code. Phone for filming.
 14. Before any public App Store release: send the message to Anton and wait for a yes.
 
-Friends on Supabase is being built in another session. Its code must also avoid `localStorage`, `window` and relative URLs, or carry a `.native.ts` variant, so it runs in this build.
+Friends and the feed are built, and the native navigator includes Friends. Report, Block, Unblock and Contact us are present. Reports still lack a notification or review workflow. Delete account is present but returned 500 in the production review because `SUPABASE_SERVICE_ROLE_KEY` was missing from Vercel.
+
+Music tracking runs only in the web shell. Native and Watch song-per-set tracking remain unbuilt. Camera, AI results, HealthKit and Watch behavior still need device testing; the successful builds only verified compilation.
 
 ## Build problems found and fixed
 
