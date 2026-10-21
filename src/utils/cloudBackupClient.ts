@@ -1,10 +1,19 @@
-import { CloudBackup_empty, CloudBackup_paths, ICloudSession } from "../models/cloudBackup";
+import {
+  CloudBackup_empty,
+  CloudBackup_path,
+  CloudBackup_paths,
+  ICloudCopy,
+  ICloudSession,
+} from "../models/cloudBackup";
 import { AccountDeletion_result, AccountDeletion_signInMessage } from "../models/accountDeletion";
 import { Friends_empty } from "../models/friends";
 import { FeedModeration_empty } from "../models/feedModeration";
+import { Feed_empty } from "../models/feed";
 import { ApiUrl_for } from "./apiUrl";
 import { FriendsStore } from "./friendsClient";
 import { BlocksStore } from "./moderationStore";
+import { FeedStore } from "./feedClient";
+import { InviteStore } from "./inviteClient";
 import {
   CloudStore,
   ICloudResult,
@@ -43,7 +52,10 @@ async function put(path: string, text: string): Promise<ICloudResult<string>> {
   return result.ok ? { ok: true, value: result.value.userId } : result;
 }
 
-export async function CloudBackupClient_upload(text: string): Promise<ICloudResult<number>> {
+export async function CloudBackupClient_upload(
+  text: string,
+  marks: { exportedAt: string; workouts: string }
+): Promise<ICloudResult<number>> {
   const session = (await CloudStore.load()).session;
   if (session == null) {
     return { ok: false, error: Supabase_notSignedIn };
@@ -58,16 +70,33 @@ export async function CloudBackupClient_upload(text: string): Promise<ICloudResu
   if (!daily.ok) {
     return daily;
   }
-  await CloudStore.update((state) => ({ ...state, lastBackupAt: now }));
+  await CloudStore.update((state) => ({
+    ...state,
+    lastBackupAt: now,
+    syncedExportedAt: marks.exportedAt,
+    backedUpWorkouts: marks.workouts,
+    restoreOffer: undefined,
+  }));
   return { ok: true, value: now };
 }
 
-export async function CloudBackupClient_download(): Promise<ICloudResult<string | undefined>> {
+export async function CloudBackupClient_saveReplaced(text: string): Promise<ICloudResult<undefined>> {
   const session = (await CloudStore.load()).session;
   if (session == null) {
     return { ok: false, error: Supabase_notSignedIn };
   }
-  const path = CloudBackup_paths(session.userId, Date.now()).latest;
+  const result = await put(CloudBackup_path(session.userId, "replaced"), text);
+  return result.ok ? { ok: true, value: undefined } : result;
+}
+
+export async function CloudBackupClient_download(
+  copy: ICloudCopy = "latest"
+): Promise<ICloudResult<string | undefined>> {
+  const session = (await CloudStore.load()).session;
+  if (session == null) {
+    return { ok: false, error: Supabase_notSignedIn };
+  }
+  const path = CloudBackup_path(session.userId, copy);
   const result = await SupabaseClient_authed(`/storage/v1/object/authenticated/${bucket}/${path}`, { method: "GET" });
   if (!result.ok) {
     return /^Object not found$/i.test(result.error) ? { ok: true, value: undefined } : result;
@@ -75,8 +104,22 @@ export async function CloudBackupClient_download(): Promise<ICloudResult<string 
   return { ok: true, value: await result.value.response.text() };
 }
 
+async function clearAccountCaches(): Promise<void> {
+  await Promise.all([
+    CloudStore.update(() => CloudBackup_empty()),
+    FriendsStore.update(() => Friends_empty()),
+    BlocksStore.update(() => FeedModeration_empty()),
+    FeedStore.update(() => Feed_empty()),
+    InviteStore.update(() => ({})),
+  ]);
+}
+
+// scope=local ends only this phone's session. The default, global, would also sign out the user's other phone.
 export async function CloudBackupClient_signOut(): Promise<void> {
-  await CloudStore.update(() => CloudBackup_empty());
+  if ((await CloudStore.load()).session != null) {
+    await SupabaseClient_authed("/auth/v1/logout?scope=local", { method: "POST" }).catch(() => undefined);
+  }
+  await clearAccountCaches();
 }
 
 export async function CloudBackupClient_deleteAccount(): Promise<ICloudResult<undefined>> {
@@ -97,10 +140,6 @@ export async function CloudBackupClient_deleteAccount(): Promise<ICloudResult<un
   if (!result.ok) {
     return result;
   }
-  await Promise.all([
-    CloudStore.update(() => CloudBackup_empty()),
-    FriendsStore.update(() => Friends_empty()),
-    BlocksStore.update(() => FeedModeration_empty()),
-  ]);
+  await clearAccountCaches();
   return { ok: true, value: undefined };
 }

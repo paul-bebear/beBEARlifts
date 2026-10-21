@@ -47,11 +47,9 @@ export async function SupabaseClient_saveSession(response: Response): Promise<IC
   if (session == null) {
     return { ok: false, error: "Supabase sent an answer the app could not read" };
   }
-  await CloudStore.update((state) => ({
-    ...state,
-    session,
-    lastBackupAt: state.session?.userId === session.userId ? state.lastBackupAt : undefined,
-  }));
+  await CloudStore.update((state) =>
+    state.session?.userId === session.userId ? { ...state, session } : { ...CloudBackup_empty(), session }
+  );
   return { ok: true, value: session };
 }
 

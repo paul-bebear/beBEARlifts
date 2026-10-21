@@ -5,6 +5,8 @@ import { CloudBackupForm_empty, CloudBackupForm_reduce } from "../models/cloudBa
 import { AccountDeletion_confirmWord, AccountDeletion_isConfirmed } from "../models/accountDeletion";
 import { CloudStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
+import { CloudBackup_olderCopies } from "../models/cloudBackup";
+import { CloudRestoreChoice } from "./cloudRestoreBanner";
 import { Button } from "./button";
 import { Text } from "./primitives/text";
 import { TextInput } from "./primitives/textInput";
@@ -33,8 +35,13 @@ export function CloudBackupCard(props: { dispatch: IDispatch }): JSX.Element {
           <Text className="text-sm text-text-secondary">
             Last backup: {cloud.lastBackupAt == null ? "Never" : new Date(cloud.lastBackupAt).toLocaleString()}
           </Text>
-          {form.offerRestore && (
-            <Text className="text-sm">A cloud backup is available. Restore it to bring your data to this phone.</Text>
+          {cloud.restoreOffer != null && (
+            <CloudRestoreChoice
+              offer={cloud.restoreOffer}
+              busy={busy}
+              onRestore={() => emit({ type: "request", operation: "restore" })}
+              onKeep={() => emit({ type: "request", operation: "keepPhone" })}
+            />
           )}
           <Button
             name="cloud-backup-now"
@@ -52,6 +59,33 @@ export function CloudBackupCard(props: { dispatch: IDispatch }): JSX.Element {
           >
             Restore from cloud
           </Button>
+          <Button
+            name="cloud-older-copies"
+            kind="lightpurple"
+            disabled={busy}
+            onClick={() => emit({ type: "toggleOlderCopies" })}
+          >
+            {form.showOlderCopies ? "Hide older copies" : "Restore an older copy"}
+          </Button>
+          {form.showOlderCopies && (
+            <View className="p-3 border rounded-lg border-border-prominent" style={{ gap: 8 }}>
+              <Text className="text-sm text-text-secondary">
+                Each upload also saves a copy for its weekday, so these go back up to 7 days. Tap one to see what it
+                holds before restoring.
+              </Text>
+              {CloudBackup_olderCopies(Date.now()).map((choice) => (
+                <Button
+                  key={choice.copy}
+                  name={`cloud-copy-${choice.copy}`}
+                  kind="lightgrayv3"
+                  disabled={busy}
+                  onClick={() => emit({ type: "request", operation: "restore", copy: choice.copy })}
+                >
+                  {choice.label}
+                </Button>
+              ))}
+            </View>
+          )}
           <Button
             name="cloud-sign-out"
             kind="lightgrayv3"

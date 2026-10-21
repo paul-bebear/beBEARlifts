@@ -67,21 +67,9 @@ import { ImportFileError } from "../utils/importTypes";
 import { StringUtils_pluralize } from "../utils/string";
 import { CSV_toString } from "../utils/csv";
 import { Exporter_toFile } from "../utils/exporter";
-import { FullBackup_filename, FullBackup_keepSpotifyLogin, FullBackup_unwrap } from "../models/fullBackup";
-import { FoodLogStore_replace } from "../utils/foodLogStore";
-import { MusicStore_update } from "../utils/musicStore";
-import { BodyScanStore_update } from "../utils/bodyScanStore";
-import { WarmupStore_update } from "../utils/warmupStore";
-import { ReportStore } from "../utils/reportStore";
-import { SetClipStore } from "../utils/setClipStore";
-import { RunStore } from "../utils/runStore";
-import { ProgramGoalStore } from "../utils/programGoalStore";
-import { StepsStore } from "../utils/stepsStore";
-import { ChecklistStore } from "../utils/checklistStore";
-import { FullBackupFile_build } from "../utils/fullBackupFile";
-import { CloudBackup_isAutoDue } from "../models/cloudBackup";
-import { CloudBackupClient_download, CloudBackupClient_upload } from "../utils/cloudBackupClient";
-import { CloudStore, ICloudResult } from "../utils/supabaseClient";
+import { FullBackup_filename, FullBackup_unwrap } from "../models/fullBackup";
+import { FullBackupFile_build, FullBackupFile_restore } from "../utils/fullBackupFile";
+import { CloudStore } from "../utils/supabaseClient";
 import { DateUtils_formatYYYYMMDD, DateUtils_format } from "../utils/date";
 import { getInitialState } from "./reducer";
 import { IndexedDBUtils_set } from "../utils/indexeddb";
@@ -1538,11 +1526,13 @@ export function Thunk_maybeShowOnloadModal(): IThunk {
   };
 }
 
-// Offline-only builds have no cloud copy, so the JSON export is the only backup.
+// Offline-only builds keep data on the phone. A recent cloud upload counts as a backup, as a JSON export does.
 export function Thunk_maybeRemindBackup(): IThunk {
   return async (dispatch, getState) => {
     const now = Date.now();
-    const marks = BackupReminderMarks_read();
+    const local = BackupReminderMarks_read();
+    const cloudAt = (await CloudStore.load()).lastBackupAt;
+    const marks = { ...local, lastBackupAt: Math.max(local.lastBackupAt ?? 0, cloudAt ?? 0) || undefined };
     if (!OfflineOnly_isEnabled() || !BackupReminder_isDue(marks, getState().storage.history.length, now)) {
       return;
     }
@@ -1777,72 +1767,6 @@ export function Thunk_exportEverything(): IThunk {
   };
 }
 
-export function Thunk_cloudBackup(
-  force: boolean,
-  onResult?: (result: ICloudResult<number | undefined>) => void
-): IThunk {
-  return async (dispatch, getState) => {
-    let result: ICloudResult<number | undefined>;
-    try {
-      const cloud = await CloudStore.load();
-      const latest = getState().storage.history[0];
-      if (!force && !CloudBackup_isAutoDue(cloud, latest?.endTime ?? latest?.startTime)) {
-        onResult?.({ ok: true, value: undefined });
-        return;
-      }
-      const { text } = await FullBackupFile_build(() => getState().storage);
-      result = await CloudBackupClient_upload(text);
-    } catch (error) {
-      result = { ok: false, error: error instanceof Error ? error.message : "Could not save cloud backup" };
-    }
-    if (onResult != null) {
-      onResult(result);
-    } else if (force && !result.ok) {
-      Dialog_alert(result.error);
-    }
-  };
-}
-
-export function Thunk_cloudRestore(onResult?: (result: ICloudResult<boolean>) => void): IThunk {
-  return async (dispatch, getState, env) => {
-    try {
-      if (
-        !(await Dialog_confirm(
-          "Restore from cloud? This replaces local workouts, settings, food, music, body scans, warmups, reports and clip records."
-        ))
-      ) {
-        onResult?.({ ok: true, value: false });
-        return;
-      }
-      const result = await CloudBackupClient_download();
-      if (!result.ok || result.value == null) {
-        const failure = result.ok ? { ok: false as const, error: "No cloud backup yet" } : result;
-        if (onResult != null) {
-          onResult(failure);
-        } else {
-          Dialog_alert(failure.error);
-        }
-        return;
-      }
-      await Thunk_importStorage(result.value, (success) => onResult?.({ ok: true, value: success }))(
-        dispatch,
-        getState,
-        env
-      );
-    } catch (error) {
-      const failure = {
-        ok: false as const,
-        error: error instanceof Error ? error.message : "Could not restore cloud backup",
-      };
-      if (onResult != null) {
-        onResult(failure);
-      } else {
-        Dialog_alert(failure.error);
-      }
-    }
-  };
-}
-
 export function Thunk_exportProgramToFile(program: IProgram): IThunk {
   return async (dispatch, getState, env) => {
     dispatch(Thunk_postevent("export-program-to-file"));
@@ -1899,52 +1823,22 @@ export function Thunk_importStorage(maybeStorage: string, onImported?: (success:
     }
     const contents = FullBackup_unwrap(parsedMaybeStorage);
     const result = Storage_get(contents.storage as Record<string, unknown>, false);
-    if (result.success) {
-      updateState(dispatch, [lb<IState>().p("storage").record(result.data)], "Importing Storage");
-      if (contents.food != null) {
-        await FoodLogStore_replace(contents.food);
-      }
-      const music = contents.music;
-      if (music != null) {
-        await MusicStore_update((current) => FullBackup_keepSpotifyLogin(music, current));
-      }
-      const body = contents.body;
-      if (body != null) {
-        await BodyScanStore_update(() => body);
-      }
-      const warmups = contents.warmups;
-      if (warmups != null) {
-        await WarmupStore_update(() => warmups);
-      }
-      const reports = contents.reports;
-      if (reports != null) {
-        await ReportStore.update(() => reports);
-      }
-      const clips = contents.clips;
-      if (clips != null) {
-        await SetClipStore.update(() => clips);
-      }
-      const runs = contents.runs;
-      if (runs != null) {
-        await RunStore.update(() => runs);
-      }
-      const goal = contents.goal;
-      if (goal != null) {
-        await ProgramGoalStore.update(() => goal);
-      }
-      const steps = contents.steps;
-      if (steps != null) {
-        await StepsStore.update(() => steps);
-      }
-      const checklist = contents.checklist;
-      if (checklist != null) {
-        await ChecklistStore.update(() => checklist);
-      }
-      Dialog_alert("Successfully imported");
-    } else {
+    if (!result.success) {
       Dialog_alert(`Couldn't import the storage, errors: \n${result.error.join("\n")}`);
+      onImported?.(false);
+      return;
     }
-    onImported?.(result.success);
+    try {
+      await FullBackupFile_restore(contents);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      Dialog_alert(`Couldn't import. Nothing on this phone was changed.\n\n${reason}`);
+      onImported?.(false);
+      return;
+    }
+    updateState(dispatch, [lb<IState>().p("storage").record(result.data)], "Importing Storage");
+    Dialog_alert("Successfully imported");
+    onImported?.(true);
   };
 }
 
