@@ -189,7 +189,7 @@ Both use submaximal percentages of a training max and AMRAP sets, but they diffe
 
 ### What accessories should I do on the Juggernaut Method?
 
-The original book doesn't prescribe specific accessories. Pick 2-4 exercises per session that target your weak points. Common choices: rows and chin-ups for back, leg press or lunges for quads, hamstring curls for posterior chain, lateral raises and face pulls for shoulders, and direct arm work. This Liftosaur implementation includes a default accessory selection you can swap freely.
+The original book doesn't prescribe specific accessories. Pick 2-4 exercises per session that target your weak points. Common choices: rows and chin-ups for back, leg press or lunges for quads, hamstring curls for posterior chain, lateral raises and face pulls for shoulders, and direct arm work. This beBEAR implementation includes a default accessory selection you can swap freely.
 
 ### Can I skip the deload weeks on the Juggernaut Method?
 
@@ -201,7 +201,7 @@ The Inverted Juggernaut Method flips the set and rep scheme. Instead of 5 sets o
 
 ### How do I calculate my training max for the Juggernaut Method?
 
-In this Liftosaur implementation, you don't need to calculate a separate training max. Just enter your actual 1RM for each lift - the percentages are already pre-converted to account for the ~90% training max factor. If you don't know your 1RM, use a calculator with a recent heavy set: Weight x Reps x 0.0333 + Weight.
+In this beBEAR implementation, you don't need to calculate a separate training max. Just enter your actual 1RM for each lift - the percentages are already pre-converted to account for the ~90% training max factor. If you don't know your 1RM, use a calculator with a recent heavy set: Weight x Reps x 0.0333 + Weight.
 
 ### What do I do if I can't beat the rep standard on my AMRAP set?
 

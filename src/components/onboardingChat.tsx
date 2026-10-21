@@ -43,7 +43,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
         style={{ paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}
       >
         <div className="max-w-lg mx-auto space-y-6">
-          <p className="text-sm font-semibold text-text-secondary">beBEARlifts · Your training setup</p>
+          <p className="text-sm font-semibold text-text-secondary">beBEAR · Your training setup</p>
           {form.step === "auth" ? (
             <>
               <h1 className="text-3xl font-bold">Let’s set up your training.</h1>

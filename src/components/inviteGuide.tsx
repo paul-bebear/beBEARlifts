@@ -7,13 +7,13 @@ export function InviteGuide(props: { handle: string }): JSX.Element {
       style={{ paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}
     >
       <h1 className="text-3xl font-bold">Train with {props.handle}</h1>
-      <p className="text-lg">Add beBEARlifts to your Home Screen before setting up your program.</p>
+      <p className="text-lg">Add beBEAR to your Home Screen before setting up your program.</p>
       <ol className="list-decimal pl-6 space-y-5 text-lg">
         <li>
           In Safari, tap Share <span aria-label="Share icon">↑</span> (the square with an arrow).
         </li>
         <li>Tap “Add to Home Screen”, then “Add”.</li>
-        <li>Open beBEARlifts from your Home Screen.</li>
+        <li>Open beBEAR from your Home Screen.</li>
       </ol>
       <p>
         When the chat asks who invited you, enter <strong>{props.handle}</strong>.

@@ -1,7 +1,7 @@
 {
-  "short_name": "beBEARlifts",
-  "name": "beBEARlifts: personal weight lifting tracker",
-  "description": "Offline-only fork of the Liftosaur weightlifting tracker",
+  "short_name": "beBEAR",
+  "name": "beBEAR: Lift & Track",
+  "description": "Your personal weight lifting tracker",
   "icons": [
     {
       "src": "/icons/icon192.png",

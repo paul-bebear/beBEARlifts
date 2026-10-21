@@ -91,7 +91,7 @@ function Mascot({ size }: { size: number }): JSX.Element {
       source={{ uri: ImagePreloader_uri("/images/dino-scope.png") }}
       style={{ width: size, height: size }}
       resizeMode="contain"
-      accessibilityLabel="Liftosaur mascot with a telescope"
+      accessibilityLabel="beBEAR mascot with a telescope"
     />
   );
 }
@@ -187,7 +187,7 @@ export function HearAboutUsSurvey(props: IProps): JSX.Element {
           <Mascot size={64} />
           <View className="flex-1">
             {!isScreen && (
-              <Text className="mb-1 text-xl font-bold text-text-primary">How did you hear about Liftosaur?</Text>
+              <Text className="mb-1 text-xl font-bold text-text-primary">How did you hear about beBEAR?</Text>
             )}
             <Text className="text-sm font-semibold text-text-secondary">
               It'd really help us out - just a tap or two.

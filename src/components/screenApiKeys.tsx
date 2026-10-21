@@ -87,7 +87,7 @@ export function ScreenApiKeys(props: IProps): JSX.Element {
       {!isLoggedIn ? (
         <View className="py-8">
           <Text className="mb-4 text-center text-text-secondary">
-            API keys let you integrate Liftosaur with external tools, LLMs, and MCP servers. You can read and edit your
+            API keys let you integrate beBEAR with external tools, LLMs, and MCP servers. You can read and edit your
             workout history and programs, and simulate workouts via the playground endpoint.
           </Text>
           <Text className="text-center text-text-secondary">You need to log in first to manage API keys.</Text>
@@ -100,7 +100,7 @@ export function ScreenApiKeys(props: IProps): JSX.Element {
       ) : !isSubscribed ? (
         <View className="py-8">
           <Text className="mb-4 text-center text-text-secondary">
-            API keys let you integrate Liftosaur with external tools, LLMs, and MCP servers. You can read and edit your
+            API keys let you integrate beBEAR with external tools, LLMs, and MCP servers. You can read and edit your
             workout history and programs, and simulate workouts via the playground endpoint.
           </Text>
           <View className="items-center">

@@ -465,7 +465,7 @@ export function EmailAuthForm(props: IEmailAuthFormProps): JSX.Element {
       setError(emailAuthErrorMessages[result.error] || "Something went wrong, please try again");
     } else if (result.confirmationSent) {
       setInfo(
-        "This email already has a Liftosaur account. We've emailed you a link to set a password for it - check your email."
+        "This email already has a beBEAR account. We've emailed you a link to set a password for it - check your email."
       );
     }
   }

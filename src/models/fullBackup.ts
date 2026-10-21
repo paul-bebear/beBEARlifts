@@ -14,7 +14,7 @@ export const FullBackup_format = "bebearlifts-backup";
 
 // The AI reading the file has no other context, so the file explains itself.
 const readme = [
-  "Backup of the beBEARlifts app (a fork of Liftosaur). Weights use the unit in workouts.settings.units.",
+  "Backup of the beBEAR app. Weights use the unit in workouts.settings.units.",
   "workouts.history: one record per finished workout. Each of its entries is an exercise; each set has reps, weight, completedReps, completedWeight, completedRpe (10 minus reps in reserve) and timestamp (ms, when the set was ticked).",
   "workouts.stats: body measurements over time, under weight, length and percentage (body fat). workouts.programs: the training programs, written in Liftoscript.",
   "food.entries: food eaten, with calories and macros per entry. food.goals: daily targets. food.profile: height, sex, birth year, activity, goal.",

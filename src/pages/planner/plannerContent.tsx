@@ -16,14 +16,7 @@ import { Settings_webEditorInitial, Settings_webEditorSettingsRequest } from "..
 import { getLatestMigrationVersion } from "../../migrations/migrations";
 import { canRedo, canUndo, redo, undo, undoRedoMiddleware, useUndoRedo } from "../builder/utils/undoredo";
 import { UndoingFlag_set } from "../../utils/undoingFlag";
-import {
-  IPartialStorage,
-  IPlannerProgram,
-  IPlannerProgramDay,
-  IPlannerProgramWeek,
-  IStats,
-  IUnit,
-} from "../../types";
+import { IPartialStorage, IPlannerProgram, IPlannerProgramDay, IPlannerProgramWeek, IStats, IUnit } from "../../types";
 import { Service } from "../../api/service";
 import {
   PlannerProgram_hasNonSelectedWeightUnit,
@@ -44,12 +37,7 @@ import { UidFactory_generateUid } from "../../utils/generator";
 import { IAccount } from "../../models/account";
 import { PlannerBanner } from "./plannerBanner";
 import { UrlUtils_build, UrlUtils_buildSafe } from "../../utils/url";
-import {
-  IExportedProgram,
-  Program_create,
-  Program_evaluate,
-  Program_exportProgram,
-} from "../../models/program";
+import { IExportedProgram, Program_create, Program_evaluate, Program_exportProgram } from "../../models/program";
 import { ModalPlannerProgramRevisions } from "./modalPlannerProgramRevisions";
 import { Weight_oppositeUnit } from "../../models/weight";
 import { ModalPlannerPictureExport } from "./components/modalPlannerPictureExport";
@@ -486,7 +474,7 @@ export function PlannerContent(props: IPlannerContentProps): JSX.Element {
                   [lbProgram.p("name").record(v), lb<IPlannerState>().p("current").p("program").p("name").record(v)],
                   "Update program name"
                 );
-                document.title = `Liftosaur: Weight Lifting Tracking App | ${HtmlUtils_escapeHtml(v)}`;
+                document.title = `beBEAR: Weight Lifting Tracking App | ${HtmlUtils_escapeHtml(v)}`;
               }}
             />
           </h1>

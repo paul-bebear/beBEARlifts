@@ -430,7 +430,7 @@ export function ImportFromHevy_convertHevyCsvToHistoryRecords(hevyCsvRaw: string
   const kind = ImportUtils_detectCsvKind((parsed.meta.fields ?? []).map((f) => `${f}`));
   if (kind === "liftosaur") {
     throw new ImportFileError(
-      'This looks like a Liftosaur history CSV. Use "Import history from CSV file" in Settings instead.'
+      'This looks like a beBEAR history CSV. Use "Import history from CSV file" in Settings instead.'
     );
   }
   if (kind !== "hevy") {

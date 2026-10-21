@@ -98,7 +98,7 @@ function jsonLdToSchema(ld: IJsonLd): object {
         headline: ld.headline,
         ...(ld.description ? { description: ld.description } : {}),
         ...(ld.author ? { author: { "@type": "Person", name: ld.author } } : {}),
-        publisher: { "@type": "Organization", name: "Liftosaur", url: "https://www.liftosaur.com" },
+        publisher: { "@type": "Organization", name: "beBEAR", url: "https://www.liftosaur.com" },
         ...(ld.image ? { image: ld.image } : {}),
         ...(ld.mainEntityOfPage ? { mainEntityOfPage: ld.mainEntityOfPage } : {}),
         ...(ld.datePublished ? { datePublished: ld.datePublished } : {}),

@@ -1260,9 +1260,9 @@ const emailSignupHandler: RouteHandler<IPayload, APIGatewayProxyResult, typeof e
         await di.ses.sendEmail({
           destination: email,
           source: "info@liftosaur.com",
-          subject: "Liftosaur - set a password for your account",
+          subject: "beBEAR - set a password for your account",
           body:
-            `You (or someone else) tried to add an email/password login to the Liftosaur account for ${email}.\n\n` +
+            `You (or someone else) tried to add an email/password login to the beBEAR account for ${email}.\n\n` +
             `This account currently signs in with Google or Apple. If you'd like to add a password, choose one here:\n\n` +
             `${webUrl}/resetpassword?token=${token}\n\n` +
             `The link expires in 1 hour. If that wasn't you, just ignore this email - nothing will change and no password is set.`,
@@ -1280,9 +1280,9 @@ const emailSignupHandler: RouteHandler<IPayload, APIGatewayProxyResult, typeof e
     await di.ses.sendEmail({
       destination: email,
       source: "info@liftosaur.com",
-      subject: "Liftosaur - verify your email",
+      subject: "beBEAR - verify your email",
       body:
-        `Welcome to Liftosaur!\n\n` +
+        `Welcome to beBEAR!\n\n` +
         `Please verify your email by opening this link:\n\n` +
         `${webUrl}/verifyemail?token=${token}\n\n` +
         `Verifying makes sure you can reset your password later if you forget it.`,
@@ -1394,9 +1394,9 @@ const forgotPasswordHandler: RouteHandler<IPayload, APIGatewayProxyResult, typeo
     await di.ses.sendEmail({
       destination: email,
       source: "info@liftosaur.com",
-      subject: "Liftosaur - reset your password",
+      subject: "beBEAR - reset your password",
       body:
-        `You (or someone else) requested a password reset for the Liftosaur account ${email}.\n\n` +
+        `You (or someone else) requested a password reset for the beBEAR account ${email}.\n\n` +
         `To set a new password, open this link:\n\n` +
         `${getWebUrl(event)}/resetpassword?token=${token}\n\n` +
         `The link expires in 1 hour. If that wasn't you, just ignore this email - your password won't change.`,

@@ -10,7 +10,7 @@ struct LiftosaurComplicationProvider: TimelineProvider {
     func placeholder(in context: Context) -> LiftosaurComplicationEntry {
         LiftosaurComplicationEntry(
             date: Date(),
-            info: ComplicationInfo(isOngoing: false, programName: "Liftosaur", dayName: "Day 1")
+            info: ComplicationInfo(isOngoing: false, programName: "beBEAR", dayName: "Day 1")
         )
     }
 
@@ -56,7 +56,7 @@ struct LiftosaurComplicationView: View {
         HStack(spacing: 6) {
             dino
                 .frame(width: 24, height: 24)
-            Text("Liftosaur")
+            Text("beBEAR")
                 .font(.headline)
             Spacer(minLength: 0)
         }
@@ -76,13 +76,13 @@ struct LiftosaurComplicationView: View {
                 .scaledToFit()
                 .frame(width: 26, height: 26)
                 .widgetAccentable()
-                .widgetLabel(info?.dayName ?? "Liftosaur")
+                .widgetLabel(info?.dayName ?? "beBEAR")
         case .accessoryInline:
             Label {
                 if let info = info {
                     Text(info.dayName)
                 } else {
-                    Text("Liftosaur")
+                    Text("beBEAR")
                 }
             } icon: {
                 // accessoryInline only renders SF Symbols, not raster images,
@@ -131,8 +131,8 @@ struct LiftosaurComplication: Widget {
                     ComplicationBackground()
                 }
         }
-        .configurationDisplayName("Liftosaur")
-        .description("Open Liftosaur to start or continue your workout.")
+        .configurationDisplayName("beBEAR")
+        .description("Open beBEAR to start or continue your workout.")
         .supportedFamilies([
             .accessoryCircular,
             .accessoryCorner,

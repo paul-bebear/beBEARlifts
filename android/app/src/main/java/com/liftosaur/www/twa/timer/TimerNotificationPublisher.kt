@@ -66,7 +66,7 @@ class TimerNotificationPublisher : BroadcastReceiver() {
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = intent.getStringExtra("title") ?: "Liftosaur"
+        val title = intent.getStringExtra("title") ?: "beBEAR"
         val subtitle = intent.getStringExtra("subtitle")
         val body = intent.getStringExtra("body")
         val channelId = if (ignoreDoNotDisturb) LiftosaurTimerModule.CHANNEL_ID_DND else LiftosaurTimerModule.CHANNEL_ID

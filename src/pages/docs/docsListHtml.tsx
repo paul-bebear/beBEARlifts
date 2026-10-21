@@ -11,10 +11,10 @@ interface IProps {
 
 export function DocsListHtml(props: IProps): JSX.Element {
   const { client, isLoggedIn, ...data } = props;
-  const title = "Documentation - Liftosaur";
+  const title = "Documentation - beBEAR";
   const url = "https://www.liftosaur.com/doc";
   const description =
-    "Liftosaur documentation - learn how to use the app, create workout programs, and write Liftoscript.";
+    "beBEAR documentation - learn how to use the app, create workout programs, and write Liftoscript.";
 
   const jsonLd: IJsonLd[] = [
     {

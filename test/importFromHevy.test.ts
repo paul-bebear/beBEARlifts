@@ -149,7 +149,7 @@ describe("ImportFromHevy", () => {
       "2026-03-01T10:00:00.000Z,P,Day 1,Squat,0,5,5,0,,,0,225,lb,225,lb,0,2026-03-01T10:05:00.000Z,,,";
     expect(() => ImportFromHevy_convertHevyCsvToHistoryRecords(liftosaurCsv, buildSettings())).to.throw(
       ImportFileError,
-      /Liftosaur/
+      /beBEAR/
     );
   });
 

@@ -81,7 +81,7 @@ Again, this is just a short description, and for full information and details, p
 
 Check the interactive playground below to see how the program works, and what the weights/sets/reps look like for each week. You can edit the 2RM, 5RM, etc weights for each exercise, and see how the weight changes.
 
-You can run the GZCL: UHF 9 weeks program in the Liftosaur app.
+You can run the GZCL: UHF 9 weeks program in the beBEAR app.
 
 <!-- faq -->
 
