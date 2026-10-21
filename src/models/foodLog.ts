@@ -72,11 +72,15 @@ export type IFoodProgressMode = "consumed" | "remaining";
 const maxRecents = 30;
 
 export const FoodLog_defaultGoals: IFoodGoals = {
-  calories: { min: 2800, max: 3000 },
-  protein: { min: 140, max: 180 },
-  carbs: { min: 300, max: 400 },
-  fat: { min: 70, max: 100 },
+  calories: { min: 0, max: 0 },
+  protein: { min: 0, max: 0 },
+  carbs: { min: 0, max: 0 },
+  fat: { min: 0, max: 0 },
 };
+
+export function FoodLog_hasGoals(goals: IFoodGoals): boolean {
+  return Object.values(goals).some((range) => range.max > 0);
+}
 
 export const FoodLog_mealNames: Record<IFoodMeal, string> = {
   breakfast: "Breakfast",

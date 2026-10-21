@@ -9,12 +9,14 @@ import {
   FoodLog_empty,
   FoodLog_entriesFor,
   FoodLog_formatRange,
+  FoodLog_hasGoals,
   FoodLog_mealForHour,
   FoodLog_parse,
   FoodLog_progress,
   FoodLog_remove,
   FoodLog_scale,
   FoodLog_setGrams,
+  FoodLog_setGoals,
   FoodLog_shiftDay,
   IFoodEntry,
 } from "../src/models/foodLog";
@@ -146,6 +148,41 @@ describe("FoodLog_progress", () => {
 });
 
 describe("FoodLog_parse", () => {
+  it("starts without targets and keeps them empty when an old log has no goals", () => {
+    const emptyGoals = {
+      calories: { min: 0, max: 0 },
+      protein: { min: 0, max: 0 },
+      carbs: { min: 0, max: 0 },
+      fat: { min: 0, max: 0 },
+    };
+    expect(FoodLog_empty().goals).to.deep.equal(emptyGoals);
+    expect(FoodLog_parse({ entries: [entry({})] }).goals).to.deep.equal(emptyGoals);
+    expect(FoodLog_hasGoals(FoodLog_empty().goals)).to.equal(false);
+  });
+
+  it("preserves saved targets, including a zero-carb target", () => {
+    const goals = {
+      calories: { min: 1800, max: 2000 },
+      protein: { min: 100, max: 130 },
+      carbs: { min: 0, max: 0 },
+      fat: { min: 60, max: 80 },
+    };
+    const log = FoodLog_setGoals(FoodLog_empty(), goals);
+    const parsed = FoodLog_parse(JSON.parse(JSON.stringify(log)));
+    expect(parsed.goals).to.deep.equal(goals);
+    expect(FoodLog_hasGoals(parsed.goals)).to.equal(true);
+  });
+
+  it("preserves explicit targets matching the old defaults", () => {
+    const goals = {
+      calories: { min: 2800, max: 3000 },
+      protein: { min: 140, max: 180 },
+      carbs: { min: 300, max: 400 },
+      fat: { min: 70, max: 100 },
+    };
+    expect(FoodLog_parse({ goals }).goals).to.deep.equal(goals);
+  });
+
   it("returns an empty log for missing or broken data", () => {
     expect(FoodLog_parse(undefined)).to.deep.equal(FoodLog_empty());
     expect(FoodLog_parse("nonsense")).to.deep.equal(FoodLog_empty());

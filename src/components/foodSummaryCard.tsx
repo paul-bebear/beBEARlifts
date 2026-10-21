@@ -4,6 +4,7 @@ import { Text } from "./primitives/text";
 import {
   FoodLog_formatNumber,
   FoodLog_formatRange,
+  FoodLog_hasGoals,
   FoodLog_progress,
   IFoodGoals,
   IFoodProgressMode,
@@ -12,6 +13,8 @@ import {
 } from "../models/foodLog";
 import { IconChevronDown } from "./icons/iconFoodUi";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
+import { navigateToModal } from "../navigation/navigationService";
+import { FoodPrimaryButton } from "./foodUi";
 
 interface IProps {
   totals: INutrients;
@@ -78,6 +81,27 @@ function BreakdownRow(props: { label: string; value: number; range: IFoodRange; 
 
 export function FoodSummaryCard(props: IProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(false);
+  if (!FoodLog_hasGoals(props.goals)) {
+    return (
+      <View className="p-4 mx-4 mt-2 rounded-2xl bg-background-subtle" testID="food-summary" data-testid="food-summary">
+        <Text className="mb-3 text-base text-text-secondary">No targets yet</Text>
+        <FoodPrimaryButton
+          testID="food-set-targets"
+          title="Set your targets"
+          onPress={() => navigateToModal("foodGoalsModal")}
+        />
+        <Text className="mt-3 text-lg font-semibold">{Math.round(props.totals.calories)} cal consumed</Text>
+        <View className="flex-row mt-3" style={{ gap: 12 }}>
+          {macros.map((m) => (
+            <View key={m.key} className="flex-1">
+              <Text className="text-base">{m.label}</Text>
+              <Text className="text-sm text-text-secondary">{FoodLog_formatNumber(props.totals[m.key])}g</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  }
   const calories = FoodLog_progress(props.totals.calories, props.goals.calories, props.mode);
   return (
     <View className="p-4 mx-4 mt-2 rounded-2xl bg-background-subtle" testID="food-summary" data-testid="food-summary">

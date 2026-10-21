@@ -267,8 +267,9 @@ export function FoodTargets_fromCalories(
   const raw = roundTo(dailyCalories, 10);
   const target = Math.max(floor, raw);
   const calories = { min: Math.max(floor, target - calorieSpread), max: target + calorieSpread };
-  const protein = gramsRange(body.weightKg, proteinPerKg);
-  const fat = gramsRange(body.weightKg, fatPerKg);
+  const macroWeightKg = Math.min(body.weightKg, body.heightCm - 100);
+  const protein = gramsRange(macroWeightKg, proteinPerKg);
+  const fat = gramsRange(macroWeightKg, fatPerKg);
   const otherCalories = ((protein.min + protein.max) / 2) * 4 + ((fat.min + fat.max) / 2) * 9;
   const carbs = {
     min: Math.max(0, roundTo((calories.min - otherCalories) / 4, 5)),
