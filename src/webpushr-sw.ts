@@ -2,21 +2,26 @@ import { UrlUtils_build } from "./utils/url";
 import { BundleNames_assetsInPage, BundleNames_hashedAsset } from "./utils/bundleNames";
 
 declare let __COMMIT_HASH__: string;
+declare let __OFFLINE_ONLY__: boolean;
 const cacheName = `liftosaur-sw-${__COMMIT_HASH__}`;
 
 const filesToCache = [
-  `/app.css?version=${__COMMIT_HASH__}`,
-  `/app.js?version=${__COMMIT_HASH__}`,
+  ...(__OFFLINE_ONLY__
+    ? []
+    : [
+        `/app.css?version=${__COMMIT_HASH__}`,
+        `/app.js?version=${__COMMIT_HASH__}`,
+        `/main.css?version=${__COMMIT_HASH__}`,
+        `/main.js?version=${__COMMIT_HASH__}`,
+        `/vendors.css?vendor=${__COMMIT_HASH__}`,
+        `/vendors.js?vendor=${__COMMIT_HASH__}`,
+      ]),
   "/app/",
   "/manifest.webmanifest",
   /\/chunks\/.*\.(js|css)$/,
   BundleNames_hashedAsset,
   /\/programdata\//,
   /\/images\//,
-  `/main.css?version=${__COMMIT_HASH__}`,
-  `/main.js?version=${__COMMIT_HASH__}`,
-  `/vendors.css?vendor=${__COMMIT_HASH__}`,
-  `/vendors.js?vendor=${__COMMIT_HASH__}`,
   `/images/back-muscles.svg`,
   `/images/front-muscles.svg`,
   `/images/svgs/muscles-combined.svg`,
@@ -48,16 +53,16 @@ function cacheRequest(request: Request, response: Response): Promise<Response> {
 function initialize(service: ServiceWorkerGlobalScope): void {
   service.addEventListener("install", (event) => {
     event.waitUntil(
-      // One file at a time: cache.addAll rejects the whole install if any single file 404s
-      // (e.g. /vendors.css, which the current build does not emit), and then nothing works offline.
       caches.open(cacheName).then(async (cache) => {
+        await cache.addAll(["/app/"]);
+        const page = await cache.match("/app/");
+        if (page == null) {
+          throw new Error("[Service Worker] App page missing from cache");
+        }
+        await cache.addAll(BundleNames_assetsInPage(await page.text()));
         const add = (urls: string[]): Promise<unknown> =>
           Promise.all(urls.map((u) => cache.add(u).catch((err) => console.warn("[Service Worker] Skip", u, err))));
-        await add(filesToCache.filter((f) => typeof f === "string") as string[]);
-        const page = await cache.match("/app/");
-        if (page != null) {
-          await add(BundleNames_assetsInPage(await page.text()));
-        }
+        await add(filesToCache.filter((f) => typeof f === "string" && f !== "/app/") as string[]);
       })
     );
   });
@@ -125,13 +130,17 @@ function initialize(service: ServiceWorkerGlobalScope): void {
     }
   });
 
-  self.addEventListener("activate", async (event: object) => {
-    console.log("Activate Service Worker", event);
-    const keys = (await caches.keys()).filter((k) => k !== cacheName);
-    console.log(keys);
-    for (const key of keys) {
-      await caches.delete(key);
-    }
+  service.addEventListener("activate", (event) => {
+    event.waitUntil(
+      (async () => {
+        console.log("Activate Service Worker", event);
+        const keys = (await caches.keys()).filter((k) => k !== cacheName);
+        console.log(keys);
+        for (const key of keys) {
+          await caches.delete(key);
+        }
+      })()
+    );
   });
 }
 
