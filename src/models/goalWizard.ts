@@ -106,7 +106,7 @@ export function GoalWizard_latestLengths(stats: IStats): IGoalWizardStartInput["
 
 export function GoalWizard_start(input: IGoalWizardStartInput): IGoalWizard {
   const { current, profile, lengthUnit, latest } = input;
-  const sex = profile.sex;
+  const sex = current?.sex ?? profile.sex;
   const isPace = input.mode === "pace" && current != null && current.kind !== "maintain";
   return {
     mode: isPace ? "pace" : "goal",
@@ -313,6 +313,7 @@ export function GoalWizard_finish(w: IGoalWizard, ctx: IGoalWizardContext): IGoa
           ...(pace != null ? { pace } : {}),
           ...(bodyFatPct != null ? { bodyFatPct } : {}),
           ...(w.method != null ? { bodyFatMethod: w.method } : {}),
+          ...(w.sex != null ? { sex: w.sex } : {}),
           ...(ctx.latestWeight != null ? { startWeight: ctx.latestWeight } : {}),
         };
   const body = bodyFor(w, ctx);

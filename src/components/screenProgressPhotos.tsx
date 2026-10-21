@@ -4,7 +4,13 @@ import { Text } from "./primitives/text";
 import { FoodPrimaryButton } from "./foodUi";
 import { ActionMenu } from "./actionMenu";
 import { useNavOptions } from "../navigation/useNavOptions";
-import { ProgressPhotos_add, ProgressPhotos_remove } from "../models/progressPhotos";
+import {
+  ProgressPhotos_add,
+  ProgressPhotos_fullMessage,
+  ProgressPhotos_isFull,
+  ProgressPhotos_remove,
+  ProgressPhotos_removeTakenAt,
+} from "../models/progressPhotos";
 import { ProgressHub_formatDate } from "../models/progressHub";
 import { ProgressPhotoStore } from "../utils/progressPhotoStore";
 import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
@@ -19,17 +25,30 @@ export function ScreenProgressPhotos(): JSX.Element {
 
   useNavOptions({ navTitle: "Progress photos" });
 
+  const save = async (dataUrl: string): Promise<void> => {
+    const takenAt = Date.now();
+    try {
+      await ProgressPhotoStore.update((l) => ProgressPhotos_add(l, dataUrl, takenAt));
+      setSelectedId(undefined);
+    } catch (e) {
+      await ProgressPhotoStore.update((l) => ProgressPhotos_removeTakenAt(l, takenAt)).catch(() => undefined);
+      Dialog_alert("The photo could not be saved. The phone may be out of space.");
+    }
+  };
+
   const add = async (source: "camera" | "photo-library"): Promise<void> => {
+    if (ProgressPhotos_isFull(log)) {
+      Dialog_alert(ProgressPhotos_fullMessage);
+      return;
+    }
     setIsBusy(true);
     try {
       const dataUrl = await ProgressPhotoPick_pick(source);
       if (dataUrl != null) {
-        const takenAt = Date.now();
-        await ProgressPhotoStore.update((l) => ProgressPhotos_add(l, dataUrl, takenAt));
-        setSelectedId(undefined);
+        await save(dataUrl);
       }
     } catch (e) {
-      Dialog_alert(e instanceof Error ? e.message : "The photo could not be saved.");
+      Dialog_alert(e instanceof Error ? e.message : "The photo could not be read.");
     } finally {
       setIsBusy(false);
     }

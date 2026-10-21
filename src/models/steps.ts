@@ -98,13 +98,10 @@ export function Steps_parseCount(text: string): number | undefined {
 }
 
 export function Steps_setManual(log: IStepsLog, day: string, count: number): IStepsLog {
-  const days = { ...log.days };
-  if (count <= 0) {
-    delete days[day];
-  } else {
-    days[day] = { count: Math.round(count), source: "manual" };
+  if (!validCount(count)) {
+    return log;
   }
-  return { ...log, days: prune(days) };
+  return { ...log, days: prune({ ...log.days, [day]: { count: Math.round(count), source: "manual" } }) };
 }
 
 export function Steps_fromHealth(samples: { timestamp: number; value: number }[]): { day: string; count: number }[] {

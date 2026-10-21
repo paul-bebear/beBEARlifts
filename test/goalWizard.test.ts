@@ -133,11 +133,27 @@ describe("GoalWizard", () => {
       startedAt: 5000,
       bodyFatPct: 30,
       bodyFatMethod: "visual",
+      sex: "male",
       startWeight: { value: 80, unit: "kg" },
     });
     expect(save?.food?.profile.goal).to.equal("lose");
     expect(save?.food?.profile.activity).to.equal("active");
     expect(save?.bodyFatPct).to.equal(30);
+  });
+
+  it("keeps the recommended pace after saving without a food profile", () => {
+    const bare: IFoodProfile = { activity: "moderate", goal: "maintain" };
+    let w = GoalWizard_pickActivity(GoalWizard_pickGoal(GoalWizard_next(start(bare)), "loseFat"), "5to10k");
+    w = GoalWizard_setVisual(GoalWizard_setSex(GoalWizard_pickMethod(w, "visual"), "female"), 30);
+    w = GoalWizard_next(w);
+    expect(w.pace).to.equal("moderate");
+    const save = GoalWizard_finish({ ...w, updateTargets: false }, ctx({ profile: bare }));
+    expect(save?.goal.sex).to.equal("female");
+    const reopened = start(bare, save?.goal, "pace");
+    expect(
+      GoalWizard_preview(reopened, ctx({ profile: bare, current: save?.goal })).paceOptions.find((o) => o.isRecommended)
+        ?.pace
+    ).to.equal("moderate");
   });
 
   it("skips the food update when the user turns it off", () => {

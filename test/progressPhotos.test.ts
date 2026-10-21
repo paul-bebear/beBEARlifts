@@ -4,8 +4,11 @@ import {
   ProgressPhotos_add,
   ProgressPhotos_empty,
   ProgressPhotos_fitSize,
+  ProgressPhotos_isFull,
+  ProgressPhotos_maxPhotos,
   ProgressPhotos_parse,
   ProgressPhotos_remove,
+  ProgressPhotos_removeTakenAt,
 } from "../src/models/progressPhotos";
 
 const jpeg = "data:image/jpeg;base64,AAAA";
@@ -28,6 +31,22 @@ describe("ProgressPhotos", () => {
     expect(log.photos.map((p) => p.id).sort()).to.deep.equal([10, 11]);
     expect(ProgressPhotos_add(log, "not a photo", 20)).to.equal(log);
     expect(ProgressPhotos_remove(log, 10).photos.map((p) => p.id)).to.deep.equal([11]);
+  });
+
+  it("refuses photo 201 and keeps the oldest", () => {
+    let log = ProgressPhotos_empty();
+    for (let i = 1; i <= ProgressPhotos_maxPhotos; i += 1) {
+      log = ProgressPhotos_add(log, jpeg, i);
+    }
+    expect(ProgressPhotos_isFull(log)).to.equal(true);
+    const after = ProgressPhotos_add(log, jpeg, 1000);
+    expect(after).to.equal(log);
+    expect(after.photos.some((p) => p.timestamp === 1)).to.equal(true);
+  });
+
+  it("rolls back the photo added at a given time", () => {
+    const log = ProgressPhotos_add(ProgressPhotos_add(ProgressPhotos_empty(), jpeg, 5), jpeg, 9);
+    expect(ProgressPhotos_removeTakenAt(log, 9).photos.map((p) => p.timestamp)).to.deep.equal([5]);
   });
 
   it("fits the long side to 1080 px and never enlarges", () => {

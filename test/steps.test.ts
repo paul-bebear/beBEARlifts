@@ -56,7 +56,14 @@ describe("Steps", () => {
     ]);
     expect(merged.days["2026-10-20"]).to.deep.equal({ count: 9000, source: "manual" });
     expect(merged.days["2026-10-21"]).to.deep.equal({ count: 3000, source: "health" });
-    expect(Steps_setManual(merged, "2026-10-21", 0).days["2026-10-21"]).to.equal(undefined);
+  });
+
+  it("keeps a typed zero, so Health does not refill the day and the average counts it", () => {
+    const zero = Steps_setManual(log({ "2026-10-21": 5000, "2026-10-20": 6000 }), "2026-10-21", 0);
+    const merged = Steps_mergeHealth(zero, [{ day: "2026-10-21", count: 5000 }]);
+    expect(merged.days["2026-10-21"]).to.deep.equal({ count: 0, source: "manual" });
+    expect(Steps_chart(merged, "2026-10-21").average).to.equal(3000);
+    expect(Steps_setManual(merged, "2026-10-21", -4)).to.equal(merged);
   });
 
   it("buckets Health samples by local day", () => {

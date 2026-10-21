@@ -18,7 +18,9 @@ import {
   Steps_setManual,
   Steps_setSync,
 } from "../models/steps";
-import { StepsStore, StepsStore_canSyncHealth, StepsStore_syncHealth } from "../utils/stepsStore";
+import { useIsFocused } from "@react-navigation/native";
+import { StepsStore, StepsStore_canSyncHealth } from "../utils/stepsStore";
+import { useStepsHealthSync } from "../utils/useStepsHealthSync";
 import { Dialog_alert } from "../utils/dialog";
 
 function Tile(props: { testID: string; label: string; value: string }): JSX.Element {
@@ -60,11 +62,7 @@ export function ScreenSteps(): JSX.Element {
     StepsStore_canSyncHealth().then(setCanSync);
   }, []);
 
-  useEffect(() => {
-    if (log.syncHealth) {
-      StepsStore_syncHealth().catch(() => undefined);
-    }
-  }, [log.syncHealth]);
+  useStepsHealthSync(log.syncHealth, useIsFocused());
 
   const saveTyped = (): void => {
     const value = Steps_parseCount(typed);

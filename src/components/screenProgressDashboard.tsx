@@ -1,4 +1,4 @@
-import { JSX, ReactNode, useEffect, useMemo } from "react";
+import { JSX, ReactNode, useMemo } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
@@ -16,7 +16,9 @@ import {
 import { ProgressHub_build, ProgressHub_plannedPerWeek } from "../models/progressHub";
 import { Program_evaluate, Program_isEmpty } from "../models/program";
 import { ProgramGoalStore } from "../utils/programGoalStore";
-import { StepsStore, StepsStore_syncHealth } from "../utils/stepsStore";
+import { StepsStore } from "../utils/stepsStore";
+import { useStepsHealthSync } from "../utils/useStepsHealthSync";
+import { useIsFocused } from "@react-navigation/native";
 import { ProgressPhotoStore } from "../utils/progressPhotoStore";
 import {
   ProgressDetailLine,
@@ -95,9 +97,10 @@ export function ScreenProgressDashboard(): JSX.Element {
   const stats = untrack(state.storage.stats);
   const settings = untrack(state.storage.settings);
   const foodLog = useFoodLog();
+  const isFocused = useIsFocused();
   const dashboard = useMemo(
     () => ProgressDashboard_build({ history, stats, foodLog, settings, now: Date.now() }),
-    [history, stats, foodLog, settings]
+    [history, stats, foodLog, settings, isFocused]
   );
   const currentProgramId = state.storage.currentProgramId;
   const program = untrack(
@@ -117,14 +120,10 @@ export function ScreenProgressDashboard(): JSX.Element {
   const hub = useMemo(
     () =>
       ProgressHub_build({ goalLog, history, stats, foodLog, steps, photos, plannedPerWeek, settings, now: Date.now() }),
-    [goalLog, history, stats, foodLog, steps, photos, plannedPerWeek, settings]
+    [goalLog, history, stats, foodLog, steps, photos, plannedPerWeek, settings, isFocused]
   );
 
-  useEffect(() => {
-    if (steps.syncHealth) {
-      StepsStore_syncHealth().catch(() => undefined);
-    }
-  }, [steps.syncHealth]);
+  useStepsHealthSync(steps.syncHealth, isFocused);
   const semantic = Tailwind_semantic();
   const iconColor = semantic.icon.neutral;
   const blue = semantic.icon.blue;

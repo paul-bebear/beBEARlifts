@@ -21,6 +21,7 @@ export interface IProgramGoal {
   activity: IStepsBand;
   bodyFatPct?: number;
   bodyFatMethod?: IBodyFatMethod;
+  sex?: IFoodSex;
   startedAt: number;
   startWeight?: IWeight;
 }
@@ -100,6 +101,9 @@ function parseGoal(raw: unknown): IProgramGoal | undefined {
   }
   if (isOneOf(r.bodyFatMethod, ["visual", "measure"] as const)) {
     goal.bodyFatMethod = r.bodyFatMethod;
+  }
+  if (isOneOf(r.sex, ["male", "female"] as const)) {
+    goal.sex = r.sex;
   }
   const startWeight = parseWeight(r.startWeight);
   if (startWeight != null) {
