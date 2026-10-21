@@ -19,10 +19,21 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com https://qvqwvuuwfueccrmzwyct.supabase.co"
+          "value": "connect-src 'self' blob: data: https://api.spotify.com https://accounts.spotify.com https://qvqwvuuwfueccrmzwyct.supabase.co; frame-ancestors 'none'"
         },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Permissions-Policy", "value": "camera=(self), geolocation=(self), microphone=()" },
         { "key": "X-Robots-Tag", "value": "noindex" }
       ]
+    },
+    {
+      "source": "/:bundle(app|vendors)\\.:hash([0-9a-f]{20})\\.:extension(js|css)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/chunks/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
       "source": "/webpushr-sw.js",

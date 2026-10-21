@@ -1,5 +1,5 @@
-import { fetchJson, json } from "../_food.mjs";
-import { aiProvider } from "../_ai.mjs";
+import { json } from "../_food.mjs";
+import { aiChat, aiProvider } from "../_ai.mjs";
 import { AiAuth_check } from "../_auth.mjs";
 
 // About 400 tokens in and 400 out, so one warmup is about $0.0003 on Claude Haiku 5.5.
@@ -44,42 +44,21 @@ export async function POST(request) {
     return json({ error: "The workout has no exercises" }, 400);
   }
   const ai = await aiProvider();
-  if (!ai.token) {
-    return json({ error: "The server has no AI key. Set AI_GATEWAY_API_KEY in Vercel." }, 500);
-  }
-  const denied = await AiAuth_check(request);
+  const denied = await AiAuth_check(request, ai);
   if (denied != null) {
     return denied;
   }
-  try {
-    const {
-      status,
-      body: answer,
-      text: raw,
-    } = await fetchJson(
-      ai.url,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${ai.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: ai.model,
-          max_tokens: 700,
-          temperature: 0.4,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Today's workout:\n${describe(exercises)}` },
-          ],
-        }),
-      },
-      30000
-    );
-    if (status !== 200) {
-      const message = answer?.error?.message ?? raw.slice(0, 200);
-      return json({ error: `${ai.name} returned ${status}: ${message}` }, 502);
-    }
-    const content = answer?.choices?.[0]?.message?.content;
-    return json({ text: typeof content === "string" ? content : "" });
-  } catch {
-    return json({ error: "The AI did not answer in 30 seconds" }, 504);
-  }
+  const result = await aiChat(
+    ai,
+    {
+      maxTokens: 700,
+      temperature: 0.4,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Today's workout:\n${describe(exercises)}` },
+      ],
+    },
+    30000
+  );
+  return result.ok ? json({ text: result.text }) : json({ error: result.error }, result.status);
 }

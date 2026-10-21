@@ -1,5 +1,5 @@
-import { fetchJson, json } from "../_food.mjs";
-import { aiProvider } from "../_ai.mjs";
+import { json } from "../_food.mjs";
+import { aiChat, aiProvider } from "../_ai.mjs";
 import { AiAuth_check } from "../_auth.mjs";
 
 // The phone shrinks plates to 1024px and labels to 1600px JPEG, under 1 MB as base64. Vercel caps bodies at 4.5 MB.
@@ -59,7 +59,7 @@ export async function POST(request) {
   } catch {
     return json({ error: "Send JSON with an image or text field" }, 400);
   }
-  const task = tasks[body?.kind] ?? tasks.meal;
+  const task = Object.hasOwn(tasks, body?.kind) ? tasks[body.kind] : tasks.meal;
   const image = typeof body?.image === "string" ? body.image : undefined;
   const text = typeof body?.text === "string" ? body.text.trim().slice(0, maxTextChars) : "";
   if (task.needsImage && (image == null || !/^data:image\/(jpeg|png|webp);base64,/.test(image))) {
@@ -72,43 +72,23 @@ export async function POST(request) {
     return json({ error: "The photo is too large" }, 413);
   }
   const ai = await aiProvider();
-  if (!ai.token) {
-    return json({ error: "The server has no AI key. Set GEMINI_API_KEY or turn on AI Gateway." }, 500);
-  }
-  const denied = await AiAuth_check(request);
+  const denied = await AiAuth_check(request, ai);
   if (denied != null) {
     return denied;
   }
-  try {
-    const {
-      status,
-      body: answer,
-      text: raw,
-    } = await fetchJson(
-      ai.url,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${ai.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: ai.model,
-          max_tokens: task.maxTokens,
-          temperature: 0.2,
-          messages: [
-            { role: "system", content: task.system },
-            { role: "user", content: userContent(task, task.needsImage ? image : undefined, text) },
-          ],
-        }),
-      },
-      45000
-    );
-    if (status !== 200) {
-      const message = answer?.error?.message ?? answer?.[0]?.error?.message ?? raw.slice(0, 200);
-      return json({ error: `${ai.name} returned ${status}: ${message}` }, 502);
-    }
-    const choice = answer?.choices?.[0];
-    const content = choice?.message?.content;
-    return json({ text: typeof content === "string" ? content : "", finishReason: choice?.finish_reason });
-  } catch {
-    return json({ error: "The AI did not answer in 45 seconds" }, 504);
-  }
+  const result = await aiChat(
+    ai,
+    {
+      maxTokens: task.maxTokens,
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: task.system },
+        { role: "user", content: userContent(task, task.needsImage ? image : undefined, text) },
+      ],
+    },
+    45000
+  );
+  return result.ok
+    ? json({ text: result.text, finishReason: result.finishReason })
+    : json({ error: result.error }, result.status);
 }
