@@ -1,5 +1,5 @@
 import type { IHistoryRecord, ISettings, IStats, IWeight } from "../types";
-import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
+import { FoodLog_dayKey, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import {
   IProgramGoalLog,
   ProgramGoal_formatWeight,
@@ -31,7 +31,6 @@ export interface IProgressHub {
     daysLogged: number;
     daysTracked: number;
     since: string;
-    calories?: { text: string; tone: IProgressHubTone };
   };
   consistency: { percent: number; done: number; planned: number; windowDays: number };
   steps: { today?: number; goal: number; fraction: number };
@@ -98,18 +97,6 @@ function weightRow(input: IProgressHubInput): IProgressHub["weight"] {
   };
 }
 
-function caloriesPill(foodLog: IFoodLog, today: string): IProgressHub["nutrition"]["calories"] {
-  const target = Math.round((foodLog.goals.calories.min + foodLog.goals.calories.max) / 2);
-  if (target <= 0) {
-    return undefined;
-  }
-  const left = target - Math.round(FoodLog_dayTotals(foodLog, today).calories);
-  if (left >= 0) {
-    return { text: `${left.toLocaleString("en-US")} Cal left today`, tone: "neutral" };
-  }
-  return { text: `${(-left).toLocaleString("en-US")} Cal over today`, tone: "warn" };
-}
-
 function nutritionRow(input: IProgressHubInput): IProgressHub["nutrition"] {
   const { foodLog, now, goalLog } = input;
   const today = FoodLog_dayKey(new Date(now));
@@ -121,7 +108,6 @@ function nutritionRow(input: IProgressHubInput): IProgressHub["nutrition"] {
     daysLogged: logged.size,
     daysTracked,
     since: startedAt != null ? "since the goal started" : "in the last 7 days",
-    calories: caloriesPill(foodLog, today),
   };
 }
 
