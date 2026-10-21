@@ -18,6 +18,11 @@ import { SetClips_empty } from "../src/models/setClips";
 import { RunLog_empty } from "../src/models/runLog";
 import { ProgramGoal_empty, ProgramGoal_set } from "../src/models/programGoal";
 import { Steps_empty, Steps_setManual } from "../src/models/steps";
+import {
+  DailyChecklist_commit,
+  DailyChecklist_empty,
+  DailyChecklist_toggleCheckIn,
+} from "../src/models/dailyChecklist";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 
@@ -33,6 +38,7 @@ function parts(overrides: Partial<IFullBackupParts>): IFullBackupParts {
     runs: RunLog_empty(),
     goal: ProgramGoal_empty(),
     steps: Steps_empty(),
+    checklist: DailyChecklist_empty(),
     ...overrides,
   };
 }
@@ -137,8 +143,14 @@ describe("FullBackup", () => {
     const contents = FullBackup_unwrap(JSON.parse(JSON.stringify(backup)));
     expect(contents.goal).to.deep.equal(goal);
     expect(contents.steps).to.deep.equal(steps);
-    const { goal: _goal, steps: _steps, ...older } = backup;
+    const { goal: _goal, steps: _steps, checklist: _checklist, ...older } = backup;
     expect(FullBackup_unwrap(older).goal).to.equal(undefined);
+  });
+
+  it("round-trips the checklist check-ins and commitment", () => {
+    const checklist = DailyChecklist_commit(DailyChecklist_toggleCheckIn(DailyChecklist_empty(), "2026-10-19"), now);
+    const backup = FullBackup_build(parts({ checklist }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).checklist).to.deep.equal(checklist);
   });
 
   it("keeps the phone's Spotify login when restoring music", () => {

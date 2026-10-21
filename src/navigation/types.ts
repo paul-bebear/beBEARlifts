@@ -58,6 +58,7 @@ export type IGraphsStackParamList = IMeStackParamList & {
   goalWizard: IGoalWizardScreenParams | undefined;
   steps: undefined;
   progressPhotos: undefined;
+  streak: undefined;
   graphsList: undefined;
 };
 

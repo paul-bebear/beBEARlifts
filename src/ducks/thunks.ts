@@ -77,6 +77,7 @@ import { SetClipStore } from "../utils/setClipStore";
 import { RunStore } from "../utils/runStore";
 import { ProgramGoalStore } from "../utils/programGoalStore";
 import { StepsStore } from "../utils/stepsStore";
+import { ChecklistStore } from "../utils/checklistStore";
 import { FullBackupFile_build } from "../utils/fullBackupFile";
 import { CloudBackup_isAutoDue } from "../models/cloudBackup";
 import { CloudBackupClient_download, CloudBackupClient_upload } from "../utils/cloudBackupClient";
@@ -1933,6 +1934,10 @@ export function Thunk_importStorage(maybeStorage: string, onImported?: (success:
       const steps = contents.steps;
       if (steps != null) {
         await StepsStore.update(() => steps);
+      }
+      const checklist = contents.checklist;
+      if (checklist != null) {
+        await ChecklistStore.update(() => checklist);
       }
       Dialog_alert("Successfully imported");
     } else {

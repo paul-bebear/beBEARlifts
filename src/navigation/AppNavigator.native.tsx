@@ -50,6 +50,7 @@ import { NavScreenRuns } from "./screens/NavScreenRuns";
 import { NavScreenGoalWizard } from "./screens/NavScreenGoalWizard";
 import { NavScreenSteps } from "./screens/NavScreenSteps";
 import { NavScreenProgressPhotos } from "./screens/NavScreenProgressPhotos";
+import { NavScreenStreak } from "./screens/NavScreenStreak";
 import { NavScreenFriends } from "./screens/NavScreenFriends";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { NavModalExerciseLiftoEditor } from "./modals/NavModalExerciseLiftoEditor";
@@ -341,6 +342,7 @@ function GraphsStackScreen(): JSX.Element {
         <GraphsStack.Screen name="goalWizard" component={NavScreenGoalWizard} />
         <GraphsStack.Screen name="steps" component={NavScreenSteps} />
         <GraphsStack.Screen name="progressPhotos" component={NavScreenProgressPhotos} />
+        <GraphsStack.Screen name="streak" component={NavScreenStreak} />
         {OfflineOnly_isEnabled() && <GraphsStack.Screen name="programselect" component={NavScreenProgramSelect} />}
         {renderMeScreens(GraphsStack.Screen as unknown as typeof MeStack.Screen)}
       </GraphsStack.Group>
