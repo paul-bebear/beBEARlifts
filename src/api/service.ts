@@ -24,6 +24,7 @@ import {
   IHistoryDeltaLocal,
 } from "../utils/historyDelta";
 import { HistoryIds_MAX } from "../utils/historyIds";
+import { ProgramsHost_pick } from "../utils/programsHost";
 
 export type IPostSyncHistory = { mode: "page" } | { mode: "none" } | { mode: "delta"; local: IHistoryDeltaLocal };
 
@@ -1017,13 +1018,20 @@ export class Service {
     }
   }
 
+  private programsHost(): string {
+    const isDev = typeof __DEV__ !== "undefined" && __DEV__;
+    return ProgramsHost_pick({ isWeb: Platform.OS === "web", isDev, pageHost: __HOST__ });
+  }
+
   public async programsIndex(): Promise<IProgramIndexEntry[]> {
-    const response = await this.client(`${__HOST__}/programdata/index.json?v=${__COMMIT_HASH__}`);
+    const response = await this.client(`${this.programsHost()}/programdata/index.json?v=${__COMMIT_HASH__}`);
     return response.json();
   }
 
   public async programDetail(id: string, category: string = "builtin"): Promise<IProgramDetail> {
-    const response = await this.client(`${__HOST__}/programdata/programs/${category}/${id}.json?v=${__COMMIT_HASH__}`);
+    const response = await this.client(
+      `${this.programsHost()}/programdata/programs/${category}/${id}.json?v=${__COMMIT_HASH__}`
+    );
     return response.json();
   }
 
