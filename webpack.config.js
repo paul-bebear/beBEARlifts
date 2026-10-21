@@ -194,10 +194,13 @@ const watchConfig = {
       window: "globalThis",
       __BUNDLE_VERSION_WATCH_IOS__: bundleVersionWatchIos,
       __BUNDLE_VERSION_WATCH_ANDROID__: bundleVersionWatchAndroid,
+      __OFFLINE_ONLY__: JSON.stringify(process.env.LFT_OFFLINE_ONLY !== "0"),
       __COMMIT_HASH__: JSON.stringify(commitHash),
       __FULL_COMMIT_HASH__: JSON.stringify(fullCommitHash),
       __HOST__: JSON.stringify(
-        process.env.NODE_ENV === "production"
+        process.env.LFT_OFFLINE_ONLY !== "0"
+          ? "https://lifts.paulbebear.com"
+          : process.env.NODE_ENV === "production"
           ? process.env.STAGE
             ? "https://stage.liftosaur.com"
             : "https://www.liftosaur.com"

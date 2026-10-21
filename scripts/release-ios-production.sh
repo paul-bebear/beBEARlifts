@@ -7,8 +7,11 @@ PBXPROJ="ios/Liftosaur.xcodeproj/project.pbxproj"
 KEY_ID="F286YBUYZ7"
 KEY_ISSUER_ID="4c82c687-0990-4745-ac91-89ab459a6c5c"
 KEY="$ROOT/lambda/scripts/AuthKey_$KEY_ID.p8"
-TEAM_ID="7V6ZVS97Z2"
-BUNDLE_ID="com.liftosaur.www"
+branding_setting() {
+  awk -F ' = ' -v key="$1" '$1 == key { print $2; exit }' "$ROOT/ios/AppBranding.xcconfig"
+}
+TEAM_ID=$(branding_setting APP_DEVELOPMENT_TEAM)
+BUNDLE_ID=$(branding_setting APP_BUNDLE_PREFIX)
 NOTES_DIR="$ROOT/ios/release-notes/en-US"
 NOTES_FILE="$NOTES_DIR/production.txt"
 ANDROID_NOTES_FILE="$ROOT/android/app/src/main/play/release-notes/en-US/production.txt"
@@ -54,6 +57,11 @@ if [[ $NO_SUBMIT -eq 1 && ($DRY_RUN -eq 1 || $TESTFLIGHT -eq 1) ]]; then
   exit 1
 fi
 
+if [[ -z "$TEAM_ID" || -z "$BUNDLE_ID" ]]; then
+  echo "ERROR: set APP_DEVELOPMENT_TEAM and APP_BUNDLE_PREFIX in ios/AppBranding.xcconfig." >&2
+  exit 1
+fi
+
 if [[ ! -f "$KEY" ]]; then
   echo "ERROR: App Store Connect API key not found at:" >&2
   echo "  $KEY" >&2
@@ -69,7 +77,8 @@ build_setting_for() {
       sub(/;.*/, "", value)
       gsub(/[ \t"]/, "", value)
     }
-    index($0, "PRODUCT_BUNDLE_IDENTIFIER = " bid ";") > 0 { print value; exit }
+    index($0, "PRODUCT_BUNDLE_IDENTIFIER = " bid ";") > 0 ||
+    index($0, "PRODUCT_BUNDLE_IDENTIFIER = \"$(APP_BUNDLE_PREFIX)\";") > 0 { print value; exit }
   '
 }
 

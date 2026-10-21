@@ -2,6 +2,8 @@ import { Platform } from "react-native";
 import appsFlyer, { ConversionData } from "react-native-appsflyer";
 import { createMMKV } from "react-native-mmkv";
 import { IAttributionData } from "../models/state";
+import { ForkServices_plan } from "./forkServices";
+import { OfflineOnly_isEnabled } from "./offlineOnly";
 
 const APPSFLYER_DEV_KEY = "7WaUEAvZKS2HaM3Nmtt5B4";
 const APPLE_APP_ID = "1661880849";
@@ -48,7 +50,7 @@ function landingPageFromDeepLink(data: Record<string, unknown>): string | undefi
 }
 
 export function Analytics_initialize(opts: IAnalyticsInitOptions): () => void {
-  if (initialized) {
+  if (!ForkServices_plan(OfflineOnly_isEnabled()).analytics || initialized) {
     return () => undefined;
   }
   initialized = true;
@@ -104,14 +106,23 @@ export function Analytics_initialize(opts: IAnalyticsInitOptions): () => void {
 }
 
 export function Analytics_setUserId(userId: string): void {
+  if (!ForkServices_plan(OfflineOnly_isEnabled()).analytics) {
+    return;
+  }
   appsFlyer.setCustomerUserId(userId, () => undefined);
 }
 
 export function Analytics_trackFinishWorkout(): void {
+  if (!ForkServices_plan(OfflineOnly_isEnabled()).analytics) {
+    return;
+  }
   appsFlyer.logEvent("af_add_to_cart", {}).catch(() => undefined);
 }
 
 export function Analytics_trackSignUp(): void {
+  if (!ForkServices_plan(OfflineOnly_isEnabled()).analytics) {
+    return;
+  }
   appsFlyer.logEvent("af_complete_registration", {}).catch(() => undefined);
 }
 
@@ -133,6 +144,9 @@ function markPurchaseTracked(transactionId: string): void {
 }
 
 export function Analytics_trackPurchase(event: IAnalyticsPurchaseEvent): void {
+  if (!ForkServices_plan(OfflineOnly_isEnabled()).analytics) {
+    return;
+  }
   // StoreKit re-delivers transactions across launches and replays old ones on restore, so
   // dedup by transaction id (persisted - re-deliveries span sessions) and drop transactions
   // that happened long ago (restores on a fresh install arrive with an empty dedup store).

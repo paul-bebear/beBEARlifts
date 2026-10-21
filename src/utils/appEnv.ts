@@ -16,8 +16,12 @@ import { WorkoutMirroring } from "./nativeWorkoutMirroringBridge";
 import { HeartRateStore } from "./heartRateStore";
 import { Persistence } from "./persistence";
 import { PushSyncClient } from "./pushSyncClient";
+import { ForkServices_plan } from "./forkServices";
+import { OfflineOnly_isEnabled } from "./offlineOnly";
+import { Subscriptions_isUnlockedByFork } from "./subscriptions";
 
 export function AppEnv_build(persistence: Persistence): IEnv {
+  const services = ForkServices_plan(OfflineOnly_isEnabled(), Subscriptions_isUnlockedByFork());
   const service = new Service(fetch);
   const timer = new TimerBridge();
   const mirroring = new WorkoutMirroring();
@@ -28,9 +32,11 @@ export function AppEnv_build(persistence: Persistence): IEnv {
     persistence,
     navigationRef,
     getCurrentScreenData,
-    iap: new IapAdapter(),
+    iap: services.storeKit ? new IapAdapter() : undefined,
     health: new HealthAdapter(),
-    push: new PushSyncClient(service, NativeLiftosaurPush, Platform.OS === "ios" ? "ios" : "android"),
+    push: services.push
+      ? new PushSyncClient(service, NativeLiftosaurPush, Platform.OS === "ios" ? "ios" : "android")
+      : undefined,
     timer,
     mirroring,
     heartRate: new HeartRateStore(mirroring),

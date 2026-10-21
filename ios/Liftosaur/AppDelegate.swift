@@ -36,13 +36,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // A launch from a watch message never reaches setEventEmitter, so the session is activated here.
     LiftosaurWatchImpl.shared.activateIfNeeded()
 
-    if let cachedUserId = UserDefaults.standard.string(forKey: "LiftosaurCachedUserId") {
+    if !AppConfiguration.offlineOnly, let cachedUserId = UserDefaults.standard.string(forKey: "LiftosaurCachedUserId") {
       let config = Rollbar.configuration().mutableCopy()
       config.setPersonId(cachedUserId, username: nil, email: nil)
       Rollbar.update(withConfiguration: config)
     }
 
-    ConversionManager.sharedInstance.setFirstLaunchTime(Date())
+    if !AppConfiguration.offlineOnly {
+      ConversionManager.sharedInstance.setFirstLaunchTime(Date())
+    }
 
     RCTFastTextRegistrar.registerComponent()
     RCTLiftoEditorRegistrar.registerComponent()

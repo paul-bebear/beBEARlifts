@@ -132,6 +132,10 @@
 		95D0C1ECBFE44A7CB61734C1 /* Iosevka-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1A72802BA6B84B4A91C55832 /* Iosevka-Regular.ttf */; };
 		9CFD04038647D1D4AFBE4A93 /* RCTLiftosaurLiveActivity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7A4672A3F2BF6A135AE9 /* RCTLiftosaurLiveActivity.mm */; };
 		ABAB4E16DB2DC920D7412751 /* LiftosaurShareImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = E883E351A4F90F4F9BB4EFE5 /* LiftosaurShareImpl.swift */; };
+		BEBEA0000000000000000001 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA0000000000000000005 /* AppConfiguration.swift */; };
+		BEBEA0000000000000000002 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA0000000000000000005 /* AppConfiguration.swift */; };
+		BEBEA0000000000000000003 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA0000000000000000005 /* AppConfiguration.swift */; };
+		BEBEA0000000000000000004 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA0000000000000000005 /* AppConfiguration.swift */; };
 		C0FF1C00000000000000C001 /* LiftosaurComplicationBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FF1C00000000000000B001 /* LiftosaurComplicationBundle.swift */; };
 		C0FF1C00000000000000C002 /* LiftosaurComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FF1C00000000000000B002 /* LiftosaurComplication.swift */; };
 		C0FF1C00000000000000C004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C0FF1C00000000000000B004 /* Assets.xcassets */; };
@@ -221,7 +225,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A99000000000000000000001 /* AppBranding.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppBranding.xcconfig; sourceTree = "<group>"; };
 		0880623F1BFA46C212C4C21F /* Pods_Liftosaur.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Liftosaur.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C643222D97503FBA997CA59 /* RCTLiftosaurLiveActivity.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTLiftosaurLiveActivity.h; path = Liftosaur/RCTLiftosaurLiveActivity.h; sourceTree = "<group>"; };
 		0F867517A1458EA44579B682 /* RCTFastTextView.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTFastTextView.h; path = Liftosaur/FastText/RCTFastTextView.h; sourceTree = "<group>"; };
@@ -334,7 +337,9 @@
 		A0A41D91319A9E1C5A962BD7 /* FastText.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = FastText.swift; path = Liftosaur/FastText/FastText.swift; sourceTree = "<group>"; };
 		A75D3E4A16A1FE2BA878A07B /* LiftosaurImageResizerImpl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiftosaurImageResizerImpl.swift; path = Liftosaur/LiftosaurImageResizerImpl.swift; sourceTree = "<group>"; };
 		A95E3F373AF047269613648A /* Poppins-SemiBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-SemiBoldItalic.ttf"; path = "../assets/fonts/Poppins-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
+		A99000000000000000000001 /* AppBranding.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppBranding.xcconfig; sourceTree = "<group>"; };
 		B65E29D489BF686568C6787C /* LiftosaurTimerImpl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiftosaurTimerImpl.swift; path = Liftosaur/LiftosaurTimerImpl.swift; sourceTree = "<group>"; };
+		BEBEA0000000000000000005 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		C0FF1C00000000000000A001 /* LiftosaurWatchComplication.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiftosaurWatchComplication.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0FF1C00000000000000B001 /* LiftosaurComplicationBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiftosaurComplicationBundle.swift; sourceTree = "<group>"; };
 		C0FF1C00000000000000B002 /* LiftosaurComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiftosaurComplication.swift; sourceTree = "<group>"; };
@@ -622,6 +627,7 @@
 		3AACC6162FB355BA001C68AA /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				BEBEA0000000000000000005 /* AppConfiguration.swift */,
 				C0FF1C00000000000000B010 /* ComplicationStore.swift */,
 				3AACC61D2FB35653001C68AA /* Settings.swift */,
 				3AACC6102FB355BA001C68AA /* EventManager.swift */,
@@ -809,8 +815,8 @@
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			packageReferences = (
-				3AACC60D2FB35357001C68AA /* XCLocalSwiftPackageReference "Packages/QuickJSCore" */,
-				ED17A00000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Runestone" */,
+				3AACC60D2FB35357001C68AA /* XCLocalSwiftPackageReference "QuickJSCore" */,
+				ED17A00000000000000000D3 /* XCLocalSwiftPackageReference "Runestone" */,
 			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
@@ -935,13 +941,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Liftosaur/Pods-Liftosaur-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Liftosaur/Pods-Liftosaur-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -993,13 +995,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Liftosaur/Pods-Liftosaur-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Liftosaur/Pods-Liftosaur-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1030,6 +1028,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BEBEA0000000000000000001 /* AppConfiguration.swift in Sources */,
 				3AACC6272FB35CFD001C68AA /* RCTLiftosaurWatch.mm in Sources */,
 				3AACC6292FB35D3A001C68AA /* Logger+Extension.swift in Sources */,
 				3AACC75C00000000000C0002 /* StoragePayloadCompression.swift in Sources */,
@@ -1070,6 +1069,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BEBEA0000000000000000002 /* AppConfiguration.swift in Sources */,
 				3AACC51A2FB2A4BF001C68AA /* SetInfoViews.swift in Sources */,
 				3AACC62A2FB35D68001C68AA /* Logger+Extension.swift in Sources */,
 				3AACC51B2FB2A4BF001C68AA /* WorkoutIntents.swift in Sources */,
@@ -1086,6 +1086,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BEBEA0000000000000000003 /* AppConfiguration.swift in Sources */,
 				C0FF1C00000000000000C010 /* ComplicationStore.swift in Sources */,
 				EE0048000000000000000048 /* LftUpdater.swift in Sources */,
 				EE0049000000000000000049 /* LftUpdaterPath.swift in Sources */,
@@ -1134,6 +1135,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BEBEA0000000000000000004 /* AppConfiguration.swift in Sources */,
 				C0FF1C00000000000000C002 /* LiftosaurComplication.swift in Sources */,
 				C0FF1C00000000000000C001 /* LiftosaurComplicationBundle.swift in Sources */,
 				C0FF1C00000000000000C011 /* ComplicationStore.swift in Sources */,
@@ -1170,7 +1172,7 @@
 				CODE_SIGN_ENTITLEMENTS = Liftosaur/Liftosaur.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Liftosaur/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -1205,7 +1207,7 @@
 				CODE_SIGN_ENTITLEMENTS = Liftosaur/Liftosaur.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				INFOPLIST_FILE = Liftosaur/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1222,6 +1224,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_PREFIX)";
 				PRODUCT_NAME = Liftosaur;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DISABLE_OTA";
 				SWIFT_OBJC_BRIDGING_HEADER = "Liftosaur/Liftosaur-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1245,7 +1248,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1294,7 +1297,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1315,6 +1318,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DISABLE_OTA";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1340,7 +1344,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -1393,7 +1397,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -1416,6 +1420,7 @@
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DISABLE_OTA";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -1655,7 +1660,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1701,7 +1706,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 7V6ZVS97Z2;
+				DEVELOPMENT_TEAM = "$(APP_DEVELOPMENT_TEAM)";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1720,6 +1725,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DISABLE_OTA";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -1779,11 +1785,11 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		3AACC60D2FB35357001C68AA /* XCLocalSwiftPackageReference "Packages/QuickJSCore" */ = {
+		3AACC60D2FB35357001C68AA /* XCLocalSwiftPackageReference "QuickJSCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/QuickJSCore;
 		};
-		ED17A00000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Runestone" */ = {
+		ED17A00000000000000000D3 /* XCLocalSwiftPackageReference "Runestone" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Runestone;
 		};

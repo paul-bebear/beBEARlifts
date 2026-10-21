@@ -5,7 +5,8 @@ import { IFoodProduct } from "../models/openFoodFacts";
 import { INutritionLabelForm, NutritionLabel_toForm, NutritionLabel_toProduct } from "../models/nutritionLabel";
 import { FoodApi_readLabel } from "../utils/foodApi";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodPrimaryButton } from "./foodUi";
+import { FoodLabelForm } from "./foodLabelForm";
 import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
 
@@ -16,54 +17,6 @@ interface IProps {
 }
 
 const labelMaxSidePx = 1600;
-
-const textFields: { key: keyof INutritionLabelForm; label: string; placeholder: string }[] = [
-  { key: "name", label: "Name", placeholder: "e.g. Buldak ramen" },
-  { key: "brand", label: "Brand (optional)", placeholder: "e.g. Samyang" },
-];
-
-const numberFields: { key: keyof INutritionLabelForm; label: string }[] = [
-  { key: "servingGrams", label: "Serving (g)" },
-  { key: "calories", label: "Calories" },
-  { key: "protein", label: "Protein (g)" },
-  { key: "carbs", label: "Carbs (g)" },
-  { key: "fat", label: "Fat (g)" },
-];
-
-function LabelForm(props: { form: INutritionLabelForm; onChange: (form: INutritionLabelForm) => void }): JSX.Element {
-  const { form } = props;
-  return (
-    <View>
-      {textFields.map((f) => (
-        <View key={f.key} className="mb-3">
-          <Text className="mb-1.5 text-sm font-semibold">{f.label}</Text>
-          <FoodTextInput
-            testID={`food-label-${f.key}`}
-            value={form[f.key]}
-            onChangeText={(text) => props.onChange({ ...form, [f.key]: text })}
-            placeholder={f.placeholder}
-          />
-        </View>
-      ))}
-      <Text className="mb-1.5 text-xs font-semibold tracking-wide uppercase text-text-secondary">Per serving</Text>
-      <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-        {numberFields.map((f) => (
-          <View key={f.key} style={{ width: "48%" }}>
-            <Text className="mb-1.5 text-sm font-semibold">{f.label}</Text>
-            <FoodTextInput
-              testID={`food-label-${f.key}`}
-              value={form[f.key]}
-              onChangeText={(text) => props.onChange({ ...form, [f.key]: text })}
-              keyboardType="decimal-pad"
-              inputMode="decimal"
-              placeholder="0"
-            />
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
 
 export function FoodLabelPanel(props: IProps): JSX.Element {
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
@@ -128,7 +81,7 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
         </View>
       )}
       {form != null && !isReading && (
-        <LabelForm
+        <FoodLabelForm
           form={form}
           onChange={(changed) => {
             setForm(changed);

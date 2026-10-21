@@ -1,6 +1,8 @@
 import { AppState, AppStateStatus } from "react-native";
 import { createMMKV } from "react-native-mmkv";
 import NativeLiftosaurEventReporter from "../specs/NativeLiftosaurEventReporter";
+import { ForkServices_plan } from "./forkServices";
+import { OfflineOnly_isEnabled } from "./offlineOnly";
 
 type IStoredEvent = { id: string; data: string; timestamp: number };
 
@@ -229,7 +231,7 @@ function handleAppStateChange(next: AppStateStatus): void {
 }
 
 function initIfNeeded(): void {
-  if (initialized) {
+  if (!EventManager_isAvailable() || initialized) {
     return;
   }
   initialized = true;
@@ -245,10 +247,13 @@ function initIfNeeded(): void {
 initIfNeeded();
 
 export function EventManager_isAvailable(): boolean {
-  return true;
+  return ForkServices_plan(OfflineOnly_isEnabled()).telemetry;
 }
 
 export function EventManager_log(data: string): void {
+  if (!EventManager_isAvailable()) {
+    return;
+  }
   if (!data || data.length === 0 || data.length >= MAX_EVENT_SIZE) {
     return;
   }
@@ -264,6 +269,9 @@ export function EventManager_log(data: string): void {
 }
 
 export function EventManager_flush(): Promise<void> {
+  if (!EventManager_isAvailable()) {
+    return Promise.resolve();
+  }
   return flushInternal();
 }
 
@@ -274,7 +282,7 @@ export type IEventManagerTelemetryHandler = (event: {
 }) => void;
 
 export function EventManager_initTelemetry(handler: IEventManagerTelemetryHandler): void {
-  if (telemetryInitialized) {
+  if (!EventManager_isAvailable() || telemetryInitialized) {
     return;
   }
   telemetryInitialized = true;

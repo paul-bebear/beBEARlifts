@@ -571,6 +571,7 @@ class WatchSyncManager: ObservableObject {
 
     // Fetch full storage from server using sync2 (for initial sync when phone unavailable)
     func fetchStorageFromServer() async -> Bool {
+        guard !AppConfiguration.offlineOnly else { return false }
         guard AuthManager.shared.isAuthenticated,
               let token = AuthManager.shared.token else {
             Logger.sync.info(" not authenticated for storage fetch")
@@ -675,6 +676,7 @@ class WatchSyncManager: ObservableObject {
     }
 
     private func syncViaServer() async {
+        guard !AppConfiguration.offlineOnly else { return }
         guard !isSyncing else {
             Logger.sync.info(" sync already in progress")
             return

@@ -1,13 +1,84 @@
-import { JSX } from "react";
+import { JSX, useEffect, useReducer, useState } from "react";
+import { ActivityIndicator, Image, View } from "react-native";
 import { Text } from "./primitives/text";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
+import { FoodPhoto_empty, FoodPhoto_reduce } from "../models/foodCapture";
+import { NativeFoodCapture_meal } from "../utils/nativeFoodCapture.native";
+import { FoodChoicesReview } from "./foodChoicesReview";
+import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
 
 interface IProps {
   initialNote?: string;
   onAdd: (choices: IFoodPhotoChoice[]) => void;
 }
 
-// The web panel needs <input type="file"> and a canvas. NATIVE_PLAN.md has the react-native-image-picker fix.
-export function FoodPhotoPanel(_props: IProps): JSX.Element {
-  return <Text className="py-6 text-base text-center">Plate photos work in the web app only.</Text>;
+export function FoodPhotoPanel(props: IProps): JSX.Element {
+  const [state, emit] = useReducer(FoodPhoto_reduce, undefined, FoodPhoto_empty);
+  const [note, setNote] = useState(props.initialNote ?? "");
+  useEffect(() => {
+    emit({ type: "start" });
+    NativeFoodCapture_meal("camera", props.initialNote ?? "").then(emit);
+  }, []);
+  return (
+    <View testID="food-photo-panel">
+      {state.preview != null && (
+        <Image
+          source={{ uri: state.preview }}
+          resizeMode="cover"
+          accessibilityLabel="Selected food photo"
+          style={{ width: "100%", aspectRatio: 4 / 3, borderRadius: 16, marginBottom: 12 }}
+        />
+      )}
+      <Text className="pb-3 text-sm text-text-secondary">
+        Take a photo from above with the whole plate in view. Check the portions before adding your food.
+      </Text>
+      <FoodTextInput
+        testID="food-photo-note"
+        value={note}
+        onChangeText={setNote}
+        placeholder="Optional note, e.g. half the rice was left"
+        editable={!state.busy}
+      />
+      {state.busy && (
+        <View className="items-center py-6">
+          <ActivityIndicator />
+          <Text className="mt-2 text-sm">Looking at your plate…</Text>
+        </View>
+      )}
+      {state.error != null && (
+        <Text className="py-3 text-sm text-text-error" accessibilityRole="alert">
+          {state.error}
+        </Text>
+      )}
+      {state.note != null && <Text className="pt-3 text-sm text-text-secondary">{state.note}</Text>}
+      {!state.busy && state.choices != null && state.choices.length > 0 && (
+        <FoodChoicesReview
+          choices={state.choices}
+          onChange={(choices) => emit({ type: "choices", choices })}
+          onAdd={props.onAdd}
+        />
+      )}
+      {!state.busy && (
+        <View className="flex-row mt-3" style={{ gap: 8 }}>
+          <FoodPrimaryButton
+            testID="food-photo-camera"
+            title="Take photo"
+            onPress={async () => {
+              emit({ type: "start" });
+              emit(await NativeFoodCapture_meal("camera", note));
+            }}
+          />
+          <FoodPrimaryButton
+            testID="food-photo-library"
+            title="Choose photo"
+            kind="outline"
+            onPress={async () => {
+              emit({ type: "start" });
+              emit(await NativeFoodCapture_meal("photo-library", note));
+            }}
+          />
+        </View>
+      )}
+    </View>
+  );
 }

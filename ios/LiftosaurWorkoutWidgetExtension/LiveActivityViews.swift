@@ -38,7 +38,7 @@ struct CachedImage: View {
 
     private func loadImageFromCache() -> Data? {
         guard let sharedContainer = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: "group.com.liftosaur.workout"
+            forSecurityApplicationGroupIdentifier: AppConfiguration.appGroupId
         ) else {
             return nil
         }

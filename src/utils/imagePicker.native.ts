@@ -1,7 +1,7 @@
 import { Platform, PermissionsAndroid } from "react-native";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 
-async function ensureCameraPermission(): Promise<boolean> {
+export async function ImagePicker_ensureCameraPermission(): Promise<boolean> {
   if (Platform.OS !== "android") {
     return true;
   }
@@ -19,7 +19,7 @@ async function ensureCameraPermission(): Promise<boolean> {
 // assetRepresentationMode "current" keeps the original format (alpha intact); the downscale happens
 // later in the native LiftosaurImageResizer, which preserves transparency.
 export async function ImagePicker_pick(source: "camera" | "photo-library"): Promise<string | undefined> {
-  if (source === "camera" && !(await ensureCameraPermission())) {
+  if (source === "camera" && !(await ImagePicker_ensureCameraPermission())) {
     return undefined;
   }
   const fn = source === "camera" ? launchCamera : launchImageLibrary;

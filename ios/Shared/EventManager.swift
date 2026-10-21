@@ -52,6 +52,7 @@ class EventManager {
         self.apiUrl = apiUrl
         self.delegate = delegate
 
+        guard !AppConfiguration.offlineOnly else { return }
         cachedUserId = UserDefaults.standard.string(forKey: cachedUserIdKey)
         cachedCommitHash = UserDefaults.standard.string(forKey: cachedCommitHashKey)
 
@@ -73,6 +74,7 @@ class EventManager {
     }
 
     public func setCredentials(userId: String, commitHash: String) {
+        guard !AppConfiguration.offlineOnly else { return }
         queue.async { [weak self] in
             guard let self = self else { return }
             self.cachedUserId = userId
@@ -91,6 +93,7 @@ class EventManager {
     }
 
     public func logEvent(data: String, userId: String? = nil, commitHash: String? = nil) {
+        guard !AppConfiguration.offlineOnly else { return }
         guard !data.isEmpty, data.count < 1_000_000 else {
             Logger.events.warning("EventManager: Invalid event data (empty or too large)")
             return
@@ -130,6 +133,7 @@ class EventManager {
     }
 
     public func logNativeEvent(name: String, timestamp: Date? = nil, extra: [String: String]? = nil) {
+        guard !AppConfiguration.offlineOnly else { return }
         guard let userId = cachedUserId, let commitHash = cachedCommitHash else {
             queue.async { [weak self] in
                 self?.pendingNativeEvents.append((name: name, timestamp: timestamp, extra: extra))
@@ -164,6 +168,7 @@ class EventManager {
     // MARK: - Timer Management
 
     public func startTimer() {
+        guard !AppConfiguration.offlineOnly else { return }
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
 
@@ -191,6 +196,7 @@ class EventManager {
     }
 
     public func handleDidBecomeActive() {
+        guard !AppConfiguration.offlineOnly else { return }
         recoverFromCrash()
         loadPendingEvents()
         processFailedEvents()
@@ -200,6 +206,10 @@ class EventManager {
     // MARK: - Flush
 
     public func flushEvents(force: Bool = false) {
+        guard !AppConfiguration.offlineOnly else {
+            delegate?.eventManagerDidFinishProcessing()
+            return
+        }
         queue.async { [weak self] in
             guard let self = self else { return }
 

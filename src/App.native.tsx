@@ -9,6 +9,8 @@ import { AppAttribution_get } from "./utils/appAttribution";
 import { Ota_init, Ota_activeBundleIdSync } from "./utils/ota";
 import { RN_COMMIT_HASH, RN_FULL_COMMIT_HASH } from "./rnBuildInfo";
 import { localdomain, localapidomain, localport, localapiport } from "./localdomain";
+import { ForkServices_hosts, ForkServices_plan } from "./utils/forkServices";
+import { OfflineOnly_isEnabled } from "./utils/offlineOnly";
 
 declare let Rollbar: RB;
 
@@ -22,10 +24,13 @@ declare const __PERF__: boolean | undefined;
 // its own dev/api/streaming ports (see scripts/worktree-create.sh).
 // A PERF=1 release build also targets local: its traces post to the devserver's /api/_dev/perf.
 const useLocal = __DEV__ || (typeof __PERF__ !== "undefined" && __PERF__ === true);
-const nativeHost = useLocal ? `https://${localdomain}.liftosaur.com:${localport}` : "https://www.liftosaur.com";
-const nativeApiHost = useLocal
-  ? `https://${localapidomain}.liftosaur.com:${localapiport}`
-  : "https://api3.liftosaur.com";
+const forkServices = ForkServices_plan(OfflineOnly_isEnabled(), Subscriptions_isUnlockedByFork());
+const nativeHosts = ForkServices_hosts(
+  OfflineOnly_isEnabled(),
+  useLocal,
+  `https://${localdomain}.liftosaur.com:${localport}`,
+  `https://${localapidomain}.liftosaur.com:${localapiport}`
+);
 const globalAny = globalThis as unknown as {
   __HOST__: string;
   __API_HOST__: string;
@@ -33,8 +38,8 @@ const globalAny = globalThis as unknown as {
   __COMMIT_HASH__: string;
   __FULL_COMMIT_HASH__: string;
 };
-globalAny.__HOST__ = nativeHost;
-globalAny.__API_HOST__ = nativeApiHost;
+globalAny.__HOST__ = nativeHosts.host;
+globalAny.__API_HOST__ = nativeHosts.apiHost;
 globalAny.__ENV__ = Platform.OS === "ios" ? "ios-rn" : "android-rn";
 globalAny.__COMMIT_HASH__ = RN_COMMIT_HASH;
 globalAny.__FULL_COMMIT_HASH__ = RN_FULL_COMMIT_HASH;
@@ -99,36 +104,38 @@ function rollbarClientAttribution(): Record<string, unknown> {
   return {};
 }
 
-const rollbarClient = new RollbarClient({
-  accessToken: "f29180c0746c4922996ff41dfc2527d2",
-  captureUncaught: true,
-  captureUnhandledRejections: true,
-  payload: {
-    environment: Platform.OS === "ios" ? "ios-rn" : "android-rn",
-    client: {
-      javascript: {
-        source_map_enabled: true,
-        code_version: RN_FULL_COMMIT_HASH,
-        guess_uncaught_frames: true,
+const rollbarClient = forkServices.rollbar
+  ? new RollbarClient({
+      accessToken: "f29180c0746c4922996ff41dfc2527d2",
+      captureUncaught: true,
+      captureUnhandledRejections: true,
+      payload: {
+        environment: Platform.OS === "ios" ? "ios-rn" : "android-rn",
+        client: {
+          javascript: {
+            source_map_enabled: true,
+            code_version: RN_FULL_COMMIT_HASH,
+            guess_uncaught_frames: true,
+          },
+          ...rollbarClientAttribution(),
+        },
       },
-      ...rollbarClientAttribution(),
-    },
-  },
-  transform: rewriteRollbarFrames,
-});
+      transform: rewriteRollbarFrames,
+    })
+  : undefined;
 
 const rollbarShim = {
-  error: (obj: unknown, extra?: unknown) => rollbarClient.error(obj as never, extra as never),
-  warning: (obj: unknown, extra?: unknown) => rollbarClient.warning(obj as never, extra as never),
-  warn: (obj: unknown, extra?: unknown) => rollbarClient.warning(obj as never, extra as never),
-  info: (obj: unknown, extra?: unknown) => rollbarClient.info(obj as never, extra as never),
-  debug: (obj: unknown, extra?: unknown) => rollbarClient.debug(obj as never, extra as never),
-  critical: (obj: unknown, extra?: unknown) => rollbarClient.critical(obj as never, extra as never),
-  log: (obj: unknown, extra?: unknown) => rollbarClient.log(obj as never, extra as never),
+  error: (obj: unknown, extra?: unknown) => rollbarClient?.error(obj as never, extra as never),
+  warning: (obj: unknown, extra?: unknown) => rollbarClient?.warning(obj as never, extra as never),
+  warn: (obj: unknown, extra?: unknown) => rollbarClient?.warning(obj as never, extra as never),
+  info: (obj: unknown, extra?: unknown) => rollbarClient?.info(obj as never, extra as never),
+  debug: (obj: unknown, extra?: unknown) => rollbarClient?.debug(obj as never, extra as never),
+  critical: (obj: unknown, extra?: unknown) => rollbarClient?.critical(obj as never, extra as never),
+  log: (obj: unknown, extra?: unknown) => rollbarClient?.log(obj as never, extra as never),
   configure: (config: { payload?: { person?: { id?: string; email?: string; username?: string } } }) => {
     const person = config?.payload?.person;
     if (person?.id) {
-      rollbarClient.setPerson(person.id, person.username ?? null, person.email ?? null);
+      rollbarClient?.setPerson(person.id, person.username ?? null, person.email ?? null);
     }
   },
 };
@@ -246,11 +253,13 @@ import {
   PerfScorecard_setContextProvider,
 } from "./utils/perfScorecard";
 
-GoogleSignin.configure({
-  webClientId: "944666871420-p8kv124sgte8o0p6ev2ah6npudsl7e4f.apps.googleusercontent.com",
-  iosClientId: "944666871420-of5rtcpja10vsp2jbe5m6amob7u5qvjq.apps.googleusercontent.com",
-  offlineAccess: false,
-});
+if (forkServices.upstreamLogin) {
+  GoogleSignin.configure({
+    webClientId: "944666871420-p8kv124sgte8o0p6ev2ah6npudsl7e4f.apps.googleusercontent.com",
+    iosClientId: "944666871420-of5rtcpja10vsp2jbe5m6amob7u5qvjq.apps.googleusercontent.com",
+    offlineAccess: false,
+  });
+}
 
 const watchAuthEvents: Record<IWatchAuthSource, { stale: string; readFail: string }> = {
   startup: { stale: "ls-keychain-stale-on-startup", readFail: "ls-keychain-get-auth-fail-startup" },
@@ -258,6 +267,10 @@ const watchAuthEvents: Record<IWatchAuthSource, { stale: string; readFail: strin
 };
 
 function handOffWatchAuth(env: IEnv, getState: () => IState, source: IWatchAuthSource): void {
+  if (!forkServices.upstreamLogin) {
+    env.watch.sendClearAuthToWatch();
+    return;
+  }
   const apply = (auth: IAuthToken | undefined): void => {
     const state = getState();
     const accountId = WatchAuthHandoff_accountId(state.user, state.storage);
@@ -327,6 +340,9 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
   }, [env, heartRateWorkoutId, heartRateWorkoutStatus, heartRateExpectWatch]);
 
   useEffect(() => {
+    if (!forkServices.push) {
+      return undefined;
+    }
     return env.push?.start({
       identity: PushRegistration_identityOf(stateRef.current),
       getLocalOriginalId: () => stateRef.current.storage.originalId,
@@ -384,7 +400,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
 
   useEffect(() => {
     // A debug sandbox must not register the target-derived id with native analytics/attribution.
-    if (AdminDebug_isDebugAccountId(stateRef.current.storage.tempUserId)) {
+    if (!forkServices.analytics || AdminDebug_isDebugAccountId(stateRef.current.storage.tempUserId)) {
       return undefined;
     }
     return Analytics_initialize({
@@ -415,7 +431,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
   const personId = isDebugSandbox ? undefined : (state.user?.id ?? state.storage.tempUserId);
   const personEmail = state.user && !isDebugSandbox ? state.storage.email : undefined;
   useEffect(() => {
-    if (!personId) {
+    if (!personId || !forkServices.analytics) {
       return;
     }
     Analytics_setUserId(personId);
@@ -426,6 +442,9 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
     // EventManager_initTelemetry is one-shot, so the callback must resolve identity from current
     // state at event time rather than closing over personId - otherwise a session that later enters
     // a debug sandbox keeps emitting telemetry under the stale (admin) identity.
+    if (!forkServices.telemetry) {
+      return;
+    }
     EventManager_initTelemetry((event) => {
       const current = stateRef.current;
       if (AdminDebug_isDebugAccountId(current.storage.tempUserId)) {
@@ -461,6 +480,9 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
       }
       ImportExporter_handleUniversalLink(dispatch, url, fetch).catch(() => undefined);
     };
+    if (!forkServices.universalLinks) {
+      return undefined;
+    }
     Linking.getInitialURL()
       .then(handleLink)
       .catch(() => undefined);
@@ -474,7 +496,9 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
         dispatch(Thunk_postevent("wake"));
         env.queue.clearStaleOperations();
         dispatch(Thunk_sync2({ force: true }));
-        env.push?.setIdentity(PushRegistration_identityOf(stateRef.current));
+        if (forkServices.push) {
+          env.push?.setIdentity(PushRegistration_identityOf(stateRef.current));
+        }
         dispatch(Thunk_syncHealthKit());
         // JS is suspended while backgrounded, so a set timer can overrun its target unprocessed. On wake,
         // catch the model up (auto-complete the timed set, backdating the rest it starts), then re-push the
@@ -493,7 +517,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
 
   useEffect(() => {
     const iap = env.iap;
-    if (!iap || Subscriptions_isUnlockedByFork()) {
+    if (!iap || !forkServices.storeKit) {
       return;
     }
     const unsubPurchase = iap.onPurchaseUpdated((purchase) => {
@@ -759,7 +783,9 @@ export function App(): React.JSX.Element {
       setInitialState(state);
     }
     load();
-    Ota_init();
+    if (forkServices.ota) {
+      Ota_init();
+    }
   }, []);
 
   if (!initialState) {
