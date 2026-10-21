@@ -7,9 +7,12 @@ import { WarmupStore_load } from "./warmupStore";
 import { ReportStore } from "./reportStore";
 import { SetClipStore } from "./setClipStore";
 import { RunStore } from "./runStore";
+import { ProgramGoalStore } from "./programGoalStore";
+import { StepsStore } from "./stepsStore";
+import { ChecklistStore } from "./checklistStore";
 
 export async function FullBackupFile_build(getStorage: () => IStorage): Promise<{ text: string; now: number }> {
-  const [food, music, body, warmups, reports, clips, runs] = await Promise.all([
+  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist] = await Promise.all([
     FoodLogStore_load(),
     MusicStore_load(),
     BodyScanStore_load(),
@@ -17,8 +20,14 @@ export async function FullBackupFile_build(getStorage: () => IStorage): Promise<
     ReportStore.load(),
     SetClipStore.load(),
     RunStore.load(),
+    ProgramGoalStore.load(),
+    StepsStore.load(),
+    ChecklistStore.load(),
   ]);
   const now = Date.now();
-  const backup = FullBackup_build({ storage: getStorage(), food, music, body, warmups, reports, clips, runs }, now);
+  const backup = FullBackup_build(
+    { storage: getStorage(), food, music, body, warmups, reports, clips, runs, goal, steps, checklist },
+    now
+  );
   return { text: JSON.stringify(backup, null, 2), now };
 }

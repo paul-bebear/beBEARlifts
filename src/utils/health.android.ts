@@ -20,6 +20,7 @@ import {
   IHealthDailyValue,
   IHealthMeasurement,
   IHealthMeasurementsPayload,
+  IHealthStepsDay,
   IHealthSyncArgs,
   IHealthSyncResult,
   IHealthWorkoutPayload,
@@ -242,6 +243,11 @@ export class HealthAdapter implements IHealthAdapter {
       }
     }
     return { values };
+  }
+
+  // Health Connect steps need a READ_STEPS entry in AndroidManifest.xml, which this fork has not added yet.
+  public async readDailySteps(_windowDays: number): Promise<IHealthStepsDay[]> {
+    return [];
   }
 
   public async saveWorkout(args: IHealthWorkoutPayload): Promise<void> {

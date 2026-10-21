@@ -57,11 +57,17 @@ export interface IHealthDailyResult {
   values: IHealthDailyValue[];
 }
 
+export interface IHealthStepsDay {
+  timestamp: number;
+  value: number;
+}
+
 export interface IHealthAdapter {
   isAvailable(): Promise<boolean>;
   requestPermissions(): Promise<boolean>;
   syncMeasurements(args: IHealthSyncArgs): Promise<IHealthSyncResult>;
   syncDailyMetrics(args: IHealthDailyArgs): Promise<IHealthDailyResult>;
+  readDailySteps(windowDays: number): Promise<IHealthStepsDay[]>;
   saveWorkout(args: IHealthWorkoutPayload): Promise<void>;
   saveMeasurements(args: IHealthMeasurementsPayload): Promise<void>;
 }

@@ -3,6 +3,7 @@ import {
   IHealthDailyArgs,
   IHealthDailyResult,
   IHealthMeasurementsPayload,
+  IHealthStepsDay,
   IHealthSyncArgs,
   IHealthSyncResult,
   IHealthWorkoutPayload,
@@ -20,6 +21,9 @@ export class HealthAdapter implements IHealthAdapter {
   }
   public async syncDailyMetrics(_args: IHealthDailyArgs): Promise<IHealthDailyResult> {
     return { values: [] };
+  }
+  public async readDailySteps(_windowDays: number): Promise<IHealthStepsDay[]> {
+    return [];
   }
   public async saveWorkout(_args: IHealthWorkoutPayload): Promise<void> {}
   public async saveMeasurements(_args: IHealthMeasurementsPayload): Promise<void> {}

@@ -62,7 +62,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>$(APP_DISPLAY_NAME) uses your camera to film sets, take progress and food photos, scan barcodes and nutrition labels, and create workout share backgrounds.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>$(APP_DISPLAY_NAME) reads your bodyweight, body fat, waist, sleep, and nutrition (calories and protein) from Apple Health to show them alongside your workouts.</string>
+	<string>$(APP_DISPLAY_NAME) reads your bodyweight, body fat, waist, sleep, steps, and nutrition (calories and protein) from Apple Health to show them alongside your workouts.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>$(APP_DISPLAY_NAME) writes your bodyweight, body fat, and waist measurements, plus completed workouts and their active energy, to Apple Health.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

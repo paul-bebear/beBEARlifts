@@ -55,6 +55,10 @@ export type IGraphsStackParamList = IMeStackParamList & {
   reports: undefined;
   bodyScans: undefined;
   runs: undefined;
+  goalWizard: IGoalWizardScreenParams | undefined;
+  steps: undefined;
+  progressPhotos: undefined;
+  streak: undefined;
   graphsList: undefined;
 };
 
@@ -208,6 +212,8 @@ export type IRootStackParamList = {
 };
 
 export type IFoodEditModalParams = { entryId: string };
+
+export type IGoalWizardScreenParams = { mode?: "goal" | "pace" };
 
 export type IFoodAddScreenParams = { day: string; meal: IFoodMeal; mode?: "barcode" | "photo" | "describe" | "quick" };
 
