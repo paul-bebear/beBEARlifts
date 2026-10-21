@@ -41,6 +41,7 @@ import { EffortRating_isEnabled } from "../models/effortRating";
 import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offlineOnly";
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
+import { ProgramsHost_fork } from "../utils/programsHost";
 import { CloudBackupCard } from "./cloudBackupCard";
 import { AppStoreSettings } from "./appStoreSettings";
 
@@ -581,13 +582,13 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       )}
       <Pressable
         className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://www.liftosaur.com/privacy.html")}
+        onPress={() => openExternal(`${ProgramsHost_fork}/privacy.html`)}
       >
         <Text className="text-base text-text-primary">Privacy Policy</Text>
       </Pressable>
       <Pressable
         className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://www.liftosaur.com/terms.html")}
+        onPress={() => openExternal(`${ProgramsHost_fork}/terms.html`)}
       >
         <Text className="text-base text-text-primary">Terms & Conditions</Text>
       </Pressable>
