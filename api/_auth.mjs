@@ -1,4 +1,5 @@
 import { fetchJson, json } from "./_food.mjs";
+import { aiUnavailableMessage } from "./_ai.mjs";
 
 // Same project and publishable key as src/utils/supabaseClient.ts. The key is public by design.
 export const Supabase_origin = "https://qvqwvuuwfueccrmzwyct.supabase.co";
@@ -23,6 +24,9 @@ export function AiAuth_decide(status, usedToday, cap) {
   if (status === 401 || status === 403) {
     return { ok: false, status: 401, error: AiAuth_signInMessage };
   }
+  if (status === 429) {
+    return { ok: false, status: 429, error: "The app's daily AI allowance is used up. Try again tomorrow UTC." };
+  }
   if (status !== 200 || typeof usedToday !== "number") {
     return { ok: false, status: 503, error: checkFailedMessage };
   }
@@ -37,10 +41,13 @@ export function AiAuth_decide(status, usedToday, cap) {
 }
 
 // Supabase checks the token's signature and expiry before it runs ai_usage_take, so one call both signs the user in and counts the call.
-export async function AiAuth_check(request) {
+export async function AiAuth_check(request, ai) {
   const token = AiAuth_bearerToken(request.headers.get("authorization"));
   if (token == null) {
     return json({ error: AiAuth_signInMessage }, 401);
+  }
+  if (ai != null && !ai.token) {
+    return json({ error: aiUnavailableMessage }, 503);
   }
   let answer;
   try {
@@ -48,7 +55,11 @@ export async function AiAuth_check(request) {
       `${Supabase_origin}/rest/v1/rpc/ai_usage_take`,
       {
         method: "POST",
-        headers: { apikey: Supabase_publishableKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: {
+          apikey: Supabase_publishableKey,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: "{}",
       },
       5000

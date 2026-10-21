@@ -1,7 +1,6 @@
 const { defineConfig, globalIgnores } = require("eslint/config");
 
 const globals = require("globals");
-const babelParser = require("babel-eslint");
 const tsParser = require("@typescript-eslint/parser");
 const typescriptEslint = require("@typescript-eslint/eslint-plugin");
 const js = require("@eslint/js");
@@ -16,16 +15,11 @@ const compat = new FlatCompat({
 
 module.exports = defineConfig([
   {
-    files: ["**/*.ts", "**/*.tsx"],
+    files: ["**/*.ts", "**/*.tsx", "api/**/*.mjs"],
     extends: compat.extends("plugin:prettier/recommended"),
 
     languageOptions: {
-      globals: {
-        ...globals.browser,
-      },
-
-      parser: babelParser,
-      ecmaVersion: 2017,
+      ecmaVersion: "latest",
       parserOptions: {},
     },
 
@@ -90,9 +84,17 @@ module.exports = defineConfig([
     },
   },
   {
+    files: ["api/**/*.mjs"],
+    languageOptions: {
+      globals: { ...globals.node },
+      sourceType: "module",
+    },
+  },
+  {
     files: ["**/*.ts", "**/*.tsx"],
 
     languageOptions: {
+      globals: { ...globals.browser },
       parser: tsParser,
       sourceType: "module",
 

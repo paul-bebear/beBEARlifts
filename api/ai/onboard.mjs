@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { fetchJson, json } from "../_food.mjs";
-import { aiProvider } from "../_ai.mjs";
+import { json } from "../_food.mjs";
+import { aiChat, aiProvider, aiUnavailableMessage } from "../_ai.mjs";
 import { AiAuth_check } from "../_auth.mjs";
 
 export const maxDuration = 120;
@@ -78,15 +78,12 @@ export async function POST(request) {
   if (error != null) {
     return json({ error }, 400);
   }
-  const denied = await AiAuth_check(request);
+  const ai = await aiProvider();
+  const denied = await AiAuth_check(request, ai);
   if (denied != null) {
     return denied;
   }
   try {
-    const ai = await aiProvider();
-    if (!ai.token) {
-      return json({ error: "AI setup is unavailable. Use a built-in plan." }, 503);
-    }
     const messages = [
       { role: "system", content: await systemPrompt() },
       {
@@ -101,22 +98,10 @@ export async function POST(request) {
       messages.push({ role: "assistant", content: body.previousAnswer ?? "" });
       messages.push({ role: "user", content: `The app rejected your answer: ${body.validationError}. Correct it.` });
     }
-    const result = await fetchJson(
-      ai.url,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${ai.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: ai.model, temperature: 0.2, max_tokens: 12000, messages }),
-      },
-      90000
-    );
-    if (result.status !== 200) {
-      console.error("Onboarding provider status", result.status);
-      return json({ error: "AI setup failed. Try again or use a built-in plan." }, 502);
-    }
-    const text = result.body?.choices?.[0]?.message?.content;
-    return typeof text === "string" ? json({ text }) : json({ error: "The AI sent an empty answer." }, 502);
-  } catch {
-    return json({ error: "AI setup did not finish. Try again or use a built-in plan." }, 504);
+    const result = await aiChat(ai, { messages, temperature: 0.2, maxTokens: 12000 }, 90000);
+    return result.ok ? json({ text: result.text }) : json({ error: result.error }, result.status);
+  } catch (failure) {
+    console.error("AI onboarding failed", failure);
+    return json({ error: aiUnavailableMessage }, 504);
   }
 }
