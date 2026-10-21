@@ -1,5 +1,14 @@
 import "mocha";
 import { expect } from "chai";
+import sinon from "sinon";
+import * as musicStore from "../src/utils/musicStore";
+import {
+  SpotifyClient_handleRedirect,
+  SpotifyClient_takeCameBackFromLogin,
+  SpotifyClient_takeError,
+  SpotifyClient_testerLimitMessage,
+} from "../src/utils/spotifyClient";
+import { ListenLinks_normalize, ListenLinks_spotifyUri } from "../src/models/listenLinks";
 import {
   IMusicPlay,
   MusicSession_counts,
@@ -36,6 +45,44 @@ function playing(
 const t0 = 1_000_000;
 
 describe("MusicSession", () => {
+  it("keeps the song playing before lock and sorts it before songs recovered from history", () => {
+    const a = track("a", 240000);
+    const b = track("b", 240000);
+    const history = [
+      { track: a, startedAt: t0, endedAt: t0 + 240000 },
+      { track: b, startedAt: t0 + 240000, endedAt: t0 + 480000 },
+    ];
+    let s = MusicSession_observe(MusicSession_start(1, t0), playing(a, 30000), t0 + 30000);
+    s = MusicSession_mergeHistory(s, history, t0 + 500000);
+    expect(s.current?.maxProgressMs).to.equal(240000);
+    s = MusicSession_observe(s, playing(track("c"), 20000), t0 + 500000);
+    expect(s.plays.map((p) => [p.track.id, p.heardMs, p.isKept])).to.deep.equal([
+      ["a", 240000, true],
+      ["b", 240000, true],
+    ]);
+    s = MusicSession_mergeHistory(s, history, t0 + 500000);
+    s = MusicSession_finish(s, t0 + 510000);
+    expect(s.plays.map((p) => p.track.id)).to.deep.equal(["a", "b", "c"]);
+  });
+
+  it("repairs a finalized live play when a poll returns before history", () => {
+    const a = track("a", 240000);
+    let s = MusicSession_observe(MusicSession_start(1, t0), playing(a, 30000), t0 + 30000);
+    s = MusicSession_observe(s, playing(track("c"), 20000), t0 + 500000);
+    expect(s.plays[0].isKept).to.equal(false);
+    s = MusicSession_mergeHistory(s, [{ track: a, startedAt: t0, endedAt: t0 + 240000 }], t0 + 500000);
+    expect(s.plays.map((p) => [p.heardMs, p.isKept, p.source])).to.deep.equal([[240000, true, "live"]]);
+  });
+
+  it("matches history to the nearest repeat and does not shorten a longer live observation", () => {
+    const a = track("a", 240000);
+    let s = MusicSession_observe(MusicSession_start(1, t0), playing(a, 300000), t0 + 300000);
+    s = MusicSession_observe(s, playing(a, 1000), t0 + 301000);
+    s = MusicSession_mergeHistory(s, [{ track: a, startedAt: t0, endedAt: t0 + 240000 }], t0 + 310000);
+    expect(s.plays[0].heardMs).to.equal(300000);
+    expect(s.current?.maxProgressMs).to.equal(1000);
+  });
+
   it("keeps a song heard for half its length or to within 20 seconds of the end", () => {
     expect(MusicSession_isKept(100000, 200000)).to.equal(true);
     expect(MusicSession_isKept(99000, 200000)).to.equal(false);
@@ -181,7 +228,8 @@ describe("MusicSession", () => {
     s = MusicSession_finish(s, t0);
     expect(MusicSession_keptTracks(s).map((t) => t.id)).to.deep.equal(["a", "c"]);
     expect(MusicSession_counts(s)).to.deep.equal({ kept: 3, skipped: 1 });
-    expect(MusicSession_keptTracks(MusicSession_setKept(s, 3, false)).map((t) => t.id)).to.deep.equal(["a"]);
+    const cIndex = s.plays.findIndex((p) => p.track.id === "c");
+    expect(MusicSession_keptTracks(MusicSession_setKept(s, cIndex, false)).map((t) => t.id)).to.deep.equal(["a"]);
   });
 });
 
@@ -290,5 +338,107 @@ describe("MusicLog", () => {
     const parsed = MusicLog_parse(JSON.parse(json));
     expect(parsed.sessions).to.deep.equal(log.sessions);
     expect(parsed.displayName).to.equal("Paul");
+  });
+});
+
+describe("Spotify tester login", () => {
+  let log: ReturnType<typeof MusicLog_empty>;
+  let fetchStub: sinon.SinonStub;
+  let storage: Map<string, string>;
+  let windowDescriptor: PropertyDescriptor | undefined;
+  let storageDescriptor: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    log = MusicLog_empty();
+    storage = new Map([["bebear_spotify_pkce", JSON.stringify({ state: "s1", verifier: "v1" })]]);
+    windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, "window");
+    storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: {
+        location: { href: "https://x.com/app/?code=c1&state=s1", origin: "https://x.com" },
+        history: { replaceState: sinon.stub() },
+      },
+    });
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (key: string) => storage.get(key) ?? null,
+        setItem: (key: string, value: string) => storage.set(key, value),
+        removeItem: (key: string) => storage.delete(key),
+      },
+    });
+    sinon.stub(musicStore, "MusicStore_load").callsFake(async () => log);
+    sinon.stub(musicStore, "MusicStore_update").callsFake(async (update) => {
+      log = update(log);
+    });
+    fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub
+      .onFirstCall()
+      .resolves(new Response(JSON.stringify({ access_token: "a", refresh_token: "r", expires_in: 3600 })));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+    SpotifyClient_takeCameBackFromLogin();
+    if (windowDescriptor != null) {
+      Object.defineProperty(globalThis, "window", windowDescriptor);
+    } else {
+      Reflect.deleteProperty(globalThis, "window");
+    }
+    if (storageDescriptor != null) {
+      Object.defineProperty(globalThis, "localStorage", storageDescriptor);
+    } else {
+      Reflect.deleteProperty(globalThis, "localStorage");
+    }
+  });
+
+  it("stores the tester limit message and disconnects when the profile returns 403", async () => {
+    fetchStub.onSecondCall().resolves(new Response("User not registered in the Developer Dashboard", { status: 403 }));
+    expect(await SpotifyClient_handleRedirect()).to.equal(true);
+    expect(fetchStub.secondCall.args[0]).to.equal("https://api.spotify.com/v1/me");
+    expect(log.tokens).to.equal(undefined);
+    expect(SpotifyClient_takeError()).to.equal(SpotifyClient_testerLimitMessage);
+    expect(SpotifyClient_takeError()).to.equal(undefined);
+  });
+
+  it("keeps an approved tester connected and reads their display name", async () => {
+    fetchStub.onSecondCall().resolves(new Response(JSON.stringify({ id: "tester", display_name: "Tester" })));
+    expect(await SpotifyClient_handleRedirect()).to.equal(true);
+    expect(log.tokens?.accessToken).to.equal("a");
+    expect(log.displayName).to.equal("Tester");
+    expect(SpotifyClient_takeError()).to.equal(undefined);
+  });
+
+  it("reports a network failure without calling it a tester limit", async () => {
+    fetchStub.onSecondCall().rejects(new TypeError("Failed to fetch"));
+    await SpotifyClient_handleRedirect();
+    expect(SpotifyClient_takeError()).to.equal("Could not reach Spotify. Check the connection and try again.");
+  });
+});
+
+describe("Spotify listen links", () => {
+  it("stores HTTPS links and derives app links for Spotify content", () => {
+    for (const kind of ["playlist", "album", "show", "episode", "track", "artist"]) {
+      const uri = `spotify:${kind}:abc123`;
+      const url = `https://open.spotify.com/${kind}/abc123`;
+      expect(ListenLinks_normalize(uri)).to.equal(url);
+      expect(ListenLinks_spotifyUri(`${url}?si=share`)).to.equal(uri);
+      expect(ListenLinks_spotifyUri(uri)).to.equal(uri);
+    }
+    expect(ListenLinks_spotifyUri("https://open.spotify.com/intl-es/track/abc123")).to.equal("spotify:track:abc123");
+  });
+
+  it("leaves other HTTPS links as web links and rejects unsupported Spotify paths", () => {
+    expect(ListenLinks_normalize("https://example.com/listen")).to.equal("https://example.com/listen");
+    for (const url of [
+      "https://example.com/playlist/abc123",
+      "https://open.spotify.com.evil.com/track/abc123",
+      "https://open.spotify.com/user/abc123",
+      "http://open.spotify.com/track/abc123",
+      "not a URL",
+    ]) {
+      expect(ListenLinks_spotifyUri(url)).to.equal(undefined);
+    }
   });
 });

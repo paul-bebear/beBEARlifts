@@ -54,6 +54,8 @@ export function ScreenRuns(): JSX.Element {
   const finish = async (run: IRun | undefined): Promise<void> => {
     if (run != null) {
       await RunStore.update((value) => RunLog_put(value, run));
+    } else {
+      Dialog_alert("This run had too few GPS points to save.");
     }
     await RunDraftStore.update(() => undefined);
     setRecording(undefined);

@@ -1,9 +1,9 @@
 import { JSX, useState } from "react";
-import { View, Pressable, Linking, Platform } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import { Text } from "./primitives/text";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
-import { ListenLinksCard } from "./listenLinksCard";
+import { ListenLink, ListenLinksCard } from "./listenLinksCard";
 import { FoodPrimaryButton } from "./foodUi";
 import { IconCheckCircle } from "./icons/iconCheckCircle";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
@@ -12,9 +12,9 @@ import { MusicStore_update, useMusicLog } from "../utils/musicStore";
 import {
   SpotifyClient_login,
   SpotifyClient_play,
-  SpotifyClient_rawHistory,
   SpotifyClient_savePlaylist,
   SpotifyClient_takeError,
+  SpotifyClient_testerLimitMessage,
 } from "../utils/spotifyClient";
 import {
   MusicLog_disconnect,
@@ -31,7 +31,6 @@ import {
   MusicSession_setKept,
 } from "../models/musicSession";
 import { SpotifyPlaylist_name } from "../models/spotifyPlaylist";
-import { SpotifyTracks_parseHistory } from "../models/spotifyTracks";
 import { IHistoryRecord, ISettings } from "../types";
 import { SongPerSet_hasAny, SongPerSet_match, SongPerSet_rowLabel } from "../models/songPerSet";
 import { Exercise_get } from "../models/exercise";
@@ -147,45 +146,9 @@ function SessionCard(props: {
           {status?.kind === "message" && (
             <Text className="mt-3 text-sm" testID="music-status" data-testid="music-status">
               {status.text}
-              {status.url != null && (
-                <Text className="text-text-link" onPress={() => Linking.openURL(status.url!).catch(() => undefined)}>
-                  {" "}
-                  Open in Spotify
-                </Text>
-              )}
+              {status.url != null && <ListenLink url={status.url} title="Open in Spotify" />}
             </Text>
           )}
-        </View>
-      )}
-    </View>
-  );
-}
-
-function HistoryDebug(): JSX.Element {
-  const [rows, setRows] = useState<string[] | undefined>(undefined);
-  const load = async (): Promise<void> => {
-    const raw = await SpotifyClient_rawHistory().catch(() => undefined);
-    setRows(
-      SpotifyTracks_parseHistory(raw).map(
-        (h) =>
-          `${new Date(h.startedAt).toLocaleTimeString()} to ${new Date(h.endedAt).toLocaleTimeString()} · ${h.track.name}`
-      )
-    );
-  };
-  return (
-    <View className="px-4 pt-6">
-      <Pressable onPress={load} testID="music-debug" data-testid="music-debug">
-        <Text className="text-sm text-text-link">Show Spotify's recently played list (debug)</Text>
-      </Pressable>
-      {rows != null && (
-        <View className="mt-2">
-          <Text className="mb-1 text-xs text-text-secondary">start to end · song</Text>
-          {rows.length === 0 && <Text className="text-sm text-text-secondary">Spotify returned no songs.</Text>}
-          {rows.map((row, i) => (
-            <Text key={i} className="text-xs" style={{ fontFamily: "monospace" }}>
-              {row}
-            </Text>
-          ))}
         </View>
       )}
     </View>
@@ -235,6 +198,7 @@ export function ScreenMusic(): JSX.Element {
             <View className="flex-row">
               <FoodPrimaryButton title="Connect Spotify" testID="music-connect" onPress={SpotifyClient_login} />
             </View>
+            <Text className="mt-3 text-sm text-text-secondary">{SpotifyClient_testerLimitMessage}</Text>
           </>
         ) : (
           <View className="flex-row items-center">
@@ -270,10 +234,7 @@ export function ScreenMusic(): JSX.Element {
         })
       )}
       <View className="px-4 pt-6">
-        <Text className="mb-3 text-sm text-text-secondary">
-          The main JSON export in Me does not include music. Export the music log here too. The Spotify login is left
-          out.
-        </Text>
+        <Text className="mb-3 text-sm text-text-secondary">Export everything in Settings includes this log.</Text>
         <View className="flex-row">
           <FoodPrimaryButton
             title="Export music log"
@@ -285,7 +246,6 @@ export function ScreenMusic(): JSX.Element {
           />
         </View>
       </View>
-      {log.tokens != null && <HistoryDebug />}
     </View>
   );
 }

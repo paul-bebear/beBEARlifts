@@ -61,7 +61,7 @@ function finalize(session: IMusicSession): IMusicSession {
     source: "live",
     isKept: MusicSession_isKept(current.maxProgressMs, current.track.durationMs),
   };
-  return { ...session, plays: [...session.plays, play], current: undefined };
+  return { ...session, plays: [...session.plays, play].sort((a, b) => a.startedAt - b.startedAt), current: undefined };
 }
 
 // Nothing playing leaves the current track open, so a pause between sets is not a skip.
@@ -95,22 +95,32 @@ export function MusicSession_mergeHistory(
   now: number
 ): IMusicSession {
   const end = session.endedAt ?? now;
-  const known = [
-    ...session.plays,
-    ...(session.current != null ? [{ track: session.current.track, startedAt: session.current.firstSeenAt }] : []),
-  ];
-  const added: IMusicPlay[] = [];
+  let current = session.current;
+  const plays = [...session.plays];
   for (const item of history) {
     if (item.endedAt <= session.startedAt || item.startedAt > end) {
       continue;
     }
-    const isKnown = known.some(
-      (p) =>
-        isSameSong(p.track, item.track) &&
-        Math.abs(p.startedAt - item.startedAt) <= item.track.durationMs + historySlackMs
-    );
-    if (!isKnown) {
-      added.push({
+    const matches = plays.map((p, index) => ({ track: p.track, startedAt: p.startedAt, index }));
+    if (current != null) {
+      matches.push({ track: current.track, startedAt: current.firstSeenAt, index: -1 });
+    }
+    const match = matches
+      .filter(
+        (p) =>
+          isSameSong(p.track, item.track) &&
+          Math.abs(p.startedAt - item.startedAt) <= item.track.durationMs + historySlackMs
+      )
+      .sort((a, b) => Math.abs(a.startedAt - item.startedAt) - Math.abs(b.startedAt - item.startedAt))[0];
+    if (match?.index === -1 && current != null) {
+      current = { ...current, maxProgressMs: Math.max(current.maxProgressMs, item.track.durationMs) };
+    } else if (match != null) {
+      const play = plays[match.index];
+      if (play.source === "live") {
+        plays[match.index] = { ...play, heardMs: Math.max(play.heardMs, item.track.durationMs), isKept: true };
+      }
+    } else {
+      plays.push({
         track: item.track,
         startedAt: item.startedAt,
         heardMs: item.track.durationMs,
@@ -119,10 +129,7 @@ export function MusicSession_mergeHistory(
       });
     }
   }
-  if (added.length === 0) {
-    return session;
-  }
-  return { ...session, plays: [...session.plays, ...added].sort((a, b) => a.startedAt - b.startedAt) };
+  return { ...session, current, plays: plays.sort((a, b) => a.startedAt - b.startedAt) };
 }
 
 function mergeCopies(a: IMusicPlay, b: IMusicPlay): IMusicPlay {
