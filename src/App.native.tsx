@@ -10,6 +10,7 @@ import { Ota_init, Ota_activeBundleIdSync } from "./utils/ota";
 import { RN_COMMIT_HASH, RN_FULL_COMMIT_HASH } from "./rnBuildInfo";
 import { localdomain, localapidomain, localport, localapiport } from "./localdomain";
 import { ForkServices_hosts, ForkServices_plan } from "./utils/forkServices";
+import { ProgramsHost_fork } from "./utils/programsHost";
 import { OfflineOnly_isEnabled } from "./utils/offlineOnly";
 
 declare let Rollbar: RB;
@@ -61,7 +62,7 @@ const BUNDLE_FRAME_PATTERN = /main\.jsbundle|index\.android\.bundle|\/updates\/[
 
 function rewriteRollbarFrames(payload: IRollbarPayload): void {
   const updateId = Ota_activeBundleIdSync() ?? "embedded";
-  const canonical = `https://www.liftosaur.com/bundle/${updateId}-${Platform.OS}.js`;
+  const canonical = `${ProgramsHost_fork}/bundle/${updateId}-${Platform.OS}.js`;
   const traces = [payload?.body?.trace, ...(payload?.body?.trace_chain ?? [])];
   for (const trace of traces) {
     const frames = trace?.frames;
@@ -469,8 +470,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
       } catch {
         return;
       }
-      const isLiftosaurHost = parsed.host === "liftosaur.com" || parsed.host === "www.liftosaur.com";
-      if (!isLiftosaurHost) {
+      if (parsed.origin !== ProgramsHost_fork) {
         return;
       }
       const isImportPath =

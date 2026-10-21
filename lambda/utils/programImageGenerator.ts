@@ -3,7 +3,11 @@ import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import * as fs from "fs";
 import * as path from "path";
 import { IProgramIndexEntry } from "../../src/models/program";
-import { ExerciseImageUtils_exists, ExerciseImageUtils_id } from "../../src/models/exerciseImage";
+import {
+  ExerciseImageUtils_exists,
+  ExerciseImageUtils_id,
+  ExerciseImageUtils_libraryUrl,
+} from "../../src/models/exerciseImage";
 import { equipmentName } from "../../src/models/exercise";
 import { Program_exerciseRangeFormat } from "../../src/models/program";
 import { StringUtils_pluralize } from "../../src/utils/string";
@@ -131,15 +135,14 @@ export class ProgramImageGenerator {
     const exercisesRange = indexEntry.exercisesRange;
 
     const imageExercises = exercises.filter((e) => ExerciseImageUtils_exists(e, "small"));
-    const cdnHost = process.env.HOST || "https://www.liftosaur.com";
+    const cdnHost = process.env.HOST || "https://lifts.paulbebear.com";
     const maxImages = 12;
     const displayExercises = imageExercises.slice(0, maxImages);
 
     const imageDataUris: (string | undefined)[] = await Promise.all(
       displayExercises.map((e) => {
-        const imgId = ExerciseImageUtils_id(e);
-        const url = `${cdnHost}/externalimages/exercises/single/small/${imgId}_single_small.png`;
-        return fetchImageAsDataUri(fetchFn, url);
+        const imagePath = ExerciseImageUtils_libraryUrl(ExerciseImageUtils_id(e), "small");
+        return imagePath ? fetchImageAsDataUri(fetchFn, `${cdnHost}${imagePath}`) : Promise.resolve(undefined);
       })
     );
 

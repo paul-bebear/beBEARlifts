@@ -520,6 +520,14 @@ ${summary}
     </ul>
 ${lgplSection}
 
+    <h2>Exercise images</h2>
+    <p>
+      The exercise photos come from
+      <a href="https://github.com/yuhonas/free-exercise-db">Free Exercise DB</a> by Clint Plummer (yuhonas) and contributors,
+      built on <a href="https://github.com/wrkout/exercises.json">exercises.json</a> by Ollie Jennings.
+      Both are dedicated to the public domain under <a href="https://unlicense.org">The Unlicense</a>.
+    </p>
+
     <h2>Fonts</h2>
 ${groupByText(fontEntries).map(renderGroup).join("\n")}
 

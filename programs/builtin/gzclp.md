@@ -2,7 +2,7 @@
 id: gzclp
 name: GZCLP
 author: Cody Lefever
-url: "https://www.liftosaur.com/programs/gzclp"
+url: ""
 shortDescription: Another good “next step” program after Basic Beginner or Starting Strength..  Do it after 3-9 months in gym.
 isMultiweek: true
 tags: []

@@ -18,7 +18,7 @@ class HealthPermissionsRationaleActivity : AppCompatActivity() {
 
         val webView: WebView = findViewById(R.id.webView)
         webView.webViewClient = WebViewClient()
-        webView.loadUrl("https://www.liftosaur.com/healthconnectprivacypolicy.html")
+        webView.loadUrl("https://lifts.paulbebear.com/healthconnectprivacypolicy.html")
     }
 
     override fun onSupportNavigateUp(): Boolean {

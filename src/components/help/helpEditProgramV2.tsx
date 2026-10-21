@@ -7,6 +7,7 @@ import { IconMusclesD } from "../icons/iconMusclesD";
 import { IconMusclesW } from "../icons/iconMusclesW";
 import { Link } from "../link";
 import { IconDoc } from "../icons/iconDoc";
+import { Support_docsUrl } from "../../utils/support";
 
 export function HelpEditProgramV2(): JSX.Element {
   const script = "Squat / 3x3-5\nRomanian Deadlift / 3x8";
@@ -84,7 +85,7 @@ export function HelpEditProgramV2(): JSX.Element {
       <Text className="mb-2 text-sm">
         The exercise syntax supports RPEs (Rate of Perceived Exertion - a subjective measure of how hard the set was),
         rest timers, various progressive overload types, etc. It's very powerful, read more about all the features{" "}
-        <Link className="text-sm" href="https://www.liftosaur.com/doc">
+        <Link className="text-sm" href={Support_docsUrl}>
           in the docs
         </Link>
         !

@@ -70,8 +70,7 @@
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
-            <data android:host="liftosaur.com" />
-            <data android:host="www.liftosaur.com" />
+            <data android:host="lifts.paulbebear.com" />
             <data android:path="/program" />
             <data android:pathPrefix="/p/" />
         </intent-filter>

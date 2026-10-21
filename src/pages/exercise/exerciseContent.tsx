@@ -19,7 +19,8 @@ import { Settings_build } from "../../models/settings";
 import { equipments, exerciseKinds, IExerciseType, IMuscle } from "../../types";
 import { StringUtils_capitalize } from "../../utils/string";
 import { muscleDescriptions } from "../../models/muscleDescriptions";
-import { Muscle_getAvailableMuscleGroups, Muscle_getMuscleGroupName, Muscle_imageUrl } from "../../models/muscle";
+import { Muscle_getAvailableMuscleGroups, Muscle_getMuscleGroupName } from "../../models/muscle";
+import { MuscleImage } from "../../components/muscleImage";
 import { exerciseDescriptions } from "../../models/exerciseDescriptions";
 import { Markdown } from "../../components/markdown";
 import { UrlUtils_build } from "../../utils/url";
@@ -536,7 +537,7 @@ function MuscleDescription(props: { muscle: IMuscle; insideModal: boolean }): JS
     <div className="px-2 py-4 pr-4" style={{ width: props.insideModal ? "100%" : "560px" }}>
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="w-full text-center sm:w-48" style={{ minHeight: "8rem" }}>
-          <img src={Muscle_imageUrl(props.muscle)} className="inline-block w-32 sm:w-full" />
+          <MuscleImage muscle={props.muscle} size={128} />
         </div>
         <div className="flex-1 text-left">
           <div className="font-bold">{props.muscle}</div>

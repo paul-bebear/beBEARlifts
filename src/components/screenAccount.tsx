@@ -38,6 +38,7 @@ import { IIapActiveSubscription } from "../utils/iapAdapter";
 import { SubscriptionPlan_derive, ISubscriptionPlanKind, IDerivedSubscriptionPlan } from "../utils/subscriptionPlan";
 import { DateUtils_format } from "../utils/date";
 import { StoreRuntime_isIos } from "../utils/storeRuntime";
+import { Support_email } from "../utils/support";
 
 declare let __HOST__: string;
 
@@ -380,7 +381,7 @@ export function ScreenAccount(props: IProps): JSX.Element {
                       Dialog_alert("Account deleted from cloud.");
                     } else {
                       Dialog_alert(
-                        "Couldn't delete the account from the cloud - error happened. Please send an email to info@liftosaur.com to delete it."
+                        `Couldn't delete the account from the cloud - error happened. Please send an email to ${Support_email} to delete it.`
                       );
                     }
                   })

@@ -7,7 +7,7 @@ import TikTokOpenShareSDK
   @objc static let shared = LiftosaurShareImpl()
 
   private static let igAppId = "3448767138535273"
-  private static let tiktokRedirectURI = "https://www.liftosaur.com/app"
+  private static let tiktokRedirectURI = "https://lifts.paulbebear.com/app"
 
   private func loadImage(_ path: String) -> UIImage? {
     if path.hasPrefix("data:") {
