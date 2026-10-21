@@ -13,7 +13,8 @@ export interface IFoodPhotoEstimate {
 }
 
 function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) && value >= 0 ? value : undefined;
+  const n = typeof value === "string" ? parseFloat(value.replace(/^[^\d.]+/, "")) : value;
+  return typeof n === "number" && isFinite(n) && n >= 0 ? n : undefined;
 }
 
 function parseItem(raw: unknown): IFoodPhotoItem | undefined {
@@ -39,10 +40,41 @@ function parseItem(raw: unknown): IFoodPhotoItem | undefined {
   };
 }
 
+export const FoodPhotoEstimate_cutOffNote = "The answer was cut off, so some foods may be missing. Add them by hand.";
+
+function salvageItems(text: string): IFoodPhotoEstimate | undefined {
+  const start = text.indexOf('"items"');
+  if (start === -1) {
+    return undefined;
+  }
+  const items: IFoodPhotoItem[] = [];
+  for (const match of text.slice(start).match(/\{[^{}]*\}/g) ?? []) {
+    try {
+      const item = parseItem(JSON.parse(match));
+      if (item != null) {
+        items.push(item);
+      }
+    } catch {
+      continue;
+    }
+  }
+  return items.length > 0 ? { items, note: FoodPhotoEstimate_cutOffNote } : undefined;
+}
+
+export function FoodPhotoEstimate_failure(text: string, finishReason: string | undefined, retryHint: string): string {
+  if (text.trim() === "") {
+    return "The AI sent back an empty answer. Try again.";
+  }
+  if (finishReason === "length") {
+    return "The answer was too long. Scan fewer foods at once, or describe them in two parts.";
+  }
+  return `The AI answer could not be read. ${retryHint}`;
+}
+
 export function FoodPhotoEstimate_parse(text: string): IFoodPhotoEstimate | undefined {
   const json = JsonInText_extract(text);
   if (json == null || typeof json !== "object") {
-    return undefined;
+    return salvageItems(text);
   }
   const r = json as Record<string, unknown>;
   const items = Array.isArray(r.items) ? r.items.map(parseItem).filter((i): i is IFoodPhotoItem => i != null) : [];
