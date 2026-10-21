@@ -267,7 +267,7 @@ export function ScreenProgressDashboard(): JSX.Element {
         testID="progress-exercise-stats"
         icon={<IconBarbell2 />}
         title="Exercise stats"
-        onPress={() => dispatch(Thunk_pushScreen("exerciseStats"))}
+        onPress={() => dispatch(Thunk_pushScreen("exercises"))}
       />
       <LinkRow
         testID="progress-settings-row"
