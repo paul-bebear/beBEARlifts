@@ -1,4 +1,5 @@
 import { JSX, useEffect, useMemo, useRef, useCallback, useState } from "react";
+import { Platform } from "react-native";
 import { ModalStateProvider } from "../navigation/ModalStateContext";
 import { ActiveSheetHeightProvider } from "../navigation/ActiveSheetHeightContext";
 import { reducerWrapper, defaultOnActions, IAction } from "../ducks/reducer";
@@ -327,11 +328,12 @@ export function AppView(props: IProps): JSX.Element | null {
     typeof window !== "undefined" && window?.location
       ? !!UrlUtils_build(window.location.href).searchParams.get("skipintro")
       : false;
-  const initialScreen = props.initialState.storage.currentProgramId
-    ? "main"
-    : shouldSkipIntro
-      ? "programselect"
-      : "first";
+  const initialScreen =
+    props.initialState.storage.currentProgramId || (Platform.OS === "web" && OfflineOnly_isEnabled())
+      ? "main"
+      : shouldSkipIntro
+        ? "programselect"
+        : "first";
 
   const progress = Progress_getCurrentProgress(state);
   const currentScreenName = navigationRef.isReady()

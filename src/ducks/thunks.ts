@@ -1954,13 +1954,20 @@ async function importWithSpinner<T>(dispatch: IDispatch, cb: () => T): Promise<T
   }
 }
 
-export function Thunk_importCsvData(rawCsv: string): IThunk {
+export function Thunk_importCsvData(rawCsv: string, mode: "preview" | "apply" = "preview"): IThunk {
   return async (dispatch, getState, env) => {
     try {
       dispatch(Thunk_postevent("import-csv-data"));
       const result = await importWithSpinner(dispatch, () =>
         ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords(rawCsv, getState().storage.settings)
       );
+      if (mode === "apply") {
+        if (result.historyRecords.length === 0 || result.errors.length > 0) {
+          throw new Error("The history CSV has unreadable rows.");
+        }
+        await Thunk_applyImport(result.historyRecords, result.customExercises, "liftosaurCsv")(dispatch, getState, env);
+        return;
+      }
       if (result.historyRecords.length === 0) {
         Dialog_alert("No workouts found in the file.");
         return;
@@ -1972,6 +1979,9 @@ export function Thunk_importCsvData(rawCsv: string): IThunk {
       );
       dispatch(Thunk_pushScreen("importPreview"));
     } catch (e) {
+      if (mode === "apply") {
+        throw e;
+      }
       if (e instanceof ImportFileError) {
         Dialog_alert(e.message);
       } else {

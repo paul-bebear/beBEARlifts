@@ -26,6 +26,9 @@ import {
 } from "./utils/offlineOnly";
 import { PressFeedback_install } from "./utils/pressFeedback";
 import { SpotifyClient_handleRedirect } from "./utils/spotifyClient";
+import { Invite_fromUrl, Invite_surface } from "./models/invite";
+import { InviteGuide } from "./components/inviteGuide";
+import { InviteRequest } from "./components/inviteRequest";
 
 if (OfflineOnly_isEnabled()) {
   OfflineOnly_installFetchGuard(window);
@@ -64,14 +67,17 @@ async function initialize(loadedData: ILocalStorage | undefined): Promise<void> 
     const queue = new AsyncQueue();
     (window as any).queue = queue;
     createRoot(document.getElementById("app")!).render(
-      <AppView
-        initialState={initialState}
-        client={client}
-        audio={audio}
-        queue={queue}
-        persistence={persistence}
-        timer={timer}
-      />
+      <>
+        {OfflineOnly_isEnabled() && <InviteRequest />}
+        <AppView
+          initialState={initialState}
+          client={client}
+          audio={audio}
+          queue={queue}
+          persistence={persistence}
+          timer={timer}
+        />
+      </>
     );
   } catch (e) {
     console.error(e);
@@ -82,6 +88,15 @@ async function initialize(loadedData: ILocalStorage | undefined): Promise<void> 
 IndexedDBUtils_getAllKeys();
 
 async function main(): Promise<void> {
+  const handle = Invite_fromUrl(window.location.href);
+  const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (
+    Invite_surface({ offline: OfflineOnly_isEnabled(), standalone, handle, historyCount: 0, programCount: 0 }) ===
+    "guide"
+  ) {
+    createRoot(document.getElementById("app")!).render(<InviteGuide handle={handle!} />);
+    return;
+  }
   persistence
     .load(await getIdbKey(userId, !!adminKey))
     .then(initialize)
