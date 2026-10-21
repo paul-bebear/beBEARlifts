@@ -22,8 +22,10 @@ import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedDispatch } from "../navigation/TrackedStateContext";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { IconFriends } from "./icons/iconFriends";
-import { Thunk_pushScreen } from "../ducks/thunks";
 import { CloudStore } from "../utils/supabaseClient";
+import { CloudBackupCard } from "./cloudBackupCard";
+import { InviteClient_share } from "../utils/inviteClient";
+import { Invite_shareMessage } from "../models/invite";
 import { FriendsStore } from "../utils/friendsClient";
 import { FriendsCommand_run } from "../utils/friendsCommand";
 import { Friends_forUser, Friends_lists, IProfile } from "../models/friends";
@@ -61,16 +63,15 @@ export function ScreenFriends(): JSX.Element {
 
   if (userId == null) {
     return (
-      <View className="items-center px-8 pt-16" testID="friends-signed-out" data-testid="friends-signed-out">
-        <IconFriends size={56} color={Tailwind_semantic().icon.neutral} />
-        <Text className="pt-4 text-xl font-bold text-center">Sign in to add friends</Text>
-        <Text className="pt-2 pb-4 text-base text-center text-text-secondary">
-          Friends use your cloud backup sign-in. Open Settings → Import / Export → Cloud backup and sign in with your
-          email.
-        </Text>
-        <Button name="friends-open-settings" kind="purple" onClick={() => dispatch(Thunk_pushScreen("settings"))}>
-          Open Settings
-        </Button>
+      <View className="px-4 pt-12" testID="friends-signed-out" data-testid="friends-signed-out">
+        <View className="items-center px-4">
+          <IconFriends size={56} color={Tailwind_semantic().icon.neutral} />
+          <Text className="pt-4 text-xl font-bold text-center">Sign in to add friends</Text>
+          <Text className="pt-2 text-base text-center text-text-secondary">
+            Sign in with an email code. The same sign-in turns on cloud backup and AI features.
+          </Text>
+        </View>
+        <CloudBackupCard dispatch={dispatch} compact />
       </View>
     );
   }
@@ -119,12 +120,13 @@ export function ScreenFriends(): JSX.Element {
       {friends.me != null && (
         <>
           <FriendsRequests form={form} lists={lists} emit={emit} />
+          {lists.friends.length === 0 && <FriendsAdd form={form} lists={lists} emit={emit} />}
           <FriendsFeed
             items={FeedModeration_items(Feed_items(feed, friends), blocked)}
             loadedAt={feed.loadedAt}
             now={Date.now()}
           />
-          <FriendsAdd form={form} lists={lists} emit={emit} />
+          {lists.friends.length > 0 && <FriendsAdd form={form} lists={lists} emit={emit} />}
           <FriendsLists form={form} lists={lists} emit={emit} />
         </>
       )}
@@ -133,20 +135,39 @@ export function ScreenFriends(): JSX.Element {
 }
 
 function ProfileLine(props: { me: IProfile; form: IFriendsForm; emit: (e: IFriendsFormEvent) => void }): JSX.Element {
+  const [shareMessage, setShareMessage] = useState<string>();
   return (
-    <View className="flex-row items-center justify-between pt-4" testID="friends-me">
-      <Text className="flex-1 text-sm">
-        You are <Text className="font-bold">{props.me.displayName}</Text> @{props.me.handle}
-      </Text>
+    <View className="pt-4" style={{ gap: 8 }} testID="friends-me">
+      <View className="flex-row items-center justify-between">
+        <Text className="flex-1 text-sm">
+          You are <Text className="font-bold">{props.me.displayName}</Text> @{props.me.handle}
+        </Text>
+        <Button
+          name="friends-edit-profile"
+          kind="lightgrayv3"
+          buttonSize="sm"
+          disabled={props.form.command != null}
+          onClick={() =>
+            props.emit({ type: "editProfile", handle: props.me.handle, displayName: props.me.displayName })
+          }
+        >
+          Edit
+        </Button>
+      </View>
       <Button
-        name="friends-edit-profile"
-        kind="lightgrayv3"
-        buttonSize="sm"
-        disabled={props.form.command != null}
-        onClick={() => props.emit({ type: "editProfile", handle: props.me.handle, displayName: props.me.displayName })}
+        name="friends-invite"
+        kind="purple"
+        onClick={() =>
+          InviteClient_share(props.me.handle, props.me.displayName).then((r) => setShareMessage(Invite_shareMessage(r)))
+        }
       >
-        Edit
+        Invite a friend
       </Button>
+      {shareMessage != null && (
+        <Text className="text-sm" accessibilityLiveRegion="polite">
+          {shareMessage}
+        </Text>
+      )}
     </View>
   );
 }

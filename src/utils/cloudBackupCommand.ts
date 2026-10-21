@@ -12,6 +12,7 @@ import {
   CloudBackupClient_signOut,
   CloudBackupClient_verify,
 } from "./cloudBackupClient";
+import { SentCodeStore } from "./supabaseClient";
 
 export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (event: ICloudBackupEvent) => void): IThunk {
   return async (dispatch, getState, env) => {
@@ -19,12 +20,16 @@ export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (even
       switch (command.operation) {
         case "sendCode": {
           const result = await CloudBackupClient_sendCode(command.email);
+          if (result.ok) {
+            await SentCodeStore.update(() => ({ email: command.email, sentAt: Date.now() })).catch(() => undefined);
+          }
           emit(result.ok ? { type: "sent" } : { type: "failed", error: result.error });
           break;
         }
         case "verify": {
           const result = await CloudBackupClient_verify(command.email, command.code);
           if (result.ok) {
+            await SentCodeStore.update(() => ({})).catch(() => undefined);
             await Thunk_cloudCheck()(dispatch, getState, env);
           }
           emit(result.ok ? { type: "verified" } : { type: "failed", error: result.error });

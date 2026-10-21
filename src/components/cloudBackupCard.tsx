@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { CloudBackupForm_empty, CloudBackupForm_reduce } from "../models/cloudBackupForm";
 import { AccountDeletion_confirmWord, AccountDeletion_isConfirmed } from "../models/accountDeletion";
-import { CloudStore } from "../utils/supabaseClient";
+import { CloudStore, SentCodeStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
 import { CloudBackup_olderCopies } from "../models/cloudBackup";
 import { CloudRestoreChoice } from "./cloudRestoreBanner";
@@ -11,10 +11,16 @@ import { Button } from "./button";
 import { Text } from "./primitives/text";
 import { TextInput } from "./primitives/textInput";
 
-export function CloudBackupCard(props: { dispatch: IDispatch }): JSX.Element {
+export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean }): JSX.Element {
   const cloud = CloudStore.use();
   const [form, emit] = useReducer(CloudBackupForm_reduce, undefined, CloudBackupForm_empty);
   const busy = form.command != null;
+
+  useEffect(() => {
+    SentCodeStore.load()
+      .then((sent) => emit({ type: "resume", sent, now: Date.now() }))
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     emit({ type: "session", email: cloud.session?.email });
@@ -28,8 +34,20 @@ export function CloudBackupCard(props: { dispatch: IDispatch }): JSX.Element {
 
   return (
     <View className="p-4 my-3 rounded-2xl bg-background-subtle" testID="cloud-backup-card">
-      <Text className="mb-2 text-base font-semibold">Cloud backup</Text>
-      {cloud.session != null ? (
+      {!props.compact && <Text className="mb-2 text-base font-semibold">Cloud backup</Text>}
+      {cloud.session != null && props.compact ? (
+        <View style={{ gap: 12 }}>
+          <Text className="text-sm">Signed in as {cloud.session.email}</Text>
+          {cloud.restoreOffer != null && (
+            <CloudRestoreChoice
+              offer={cloud.restoreOffer}
+              busy={busy}
+              onRestore={() => emit({ type: "request", operation: "restore" })}
+              onKeep={() => emit({ type: "request", operation: "keepPhone" })}
+            />
+          )}
+        </View>
+      ) : cloud.session != null ? (
         <View style={{ gap: 12 }}>
           <Text className="text-sm">{cloud.session.email}</Text>
           <Text className="text-sm text-text-secondary">
@@ -145,9 +163,11 @@ export function CloudBackupCard(props: { dispatch: IDispatch }): JSX.Element {
         </View>
       ) : (
         <View style={{ gap: 12 }}>
-          <Text className="text-sm text-text-secondary">
-            Sign in with an email code to save a backup after each workout.
-          </Text>
+          {!props.compact && (
+            <Text className="text-sm text-text-secondary">
+              Sign in with an email code to save a backup after each workout.
+            </Text>
+          )}
           {form.step === "code" ? (
             <>
               <Text className="text-sm">Code sent to {form.email}</Text>

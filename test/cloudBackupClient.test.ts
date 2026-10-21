@@ -52,11 +52,11 @@ describe("CloudBackupClient", () => {
   });
   afterEach(() => sinon.restore());
 
-  it("sends email codes and keeps the server's error text", async () => {
+  it("sends email codes and explains the hourly email limit", async () => {
     fetchStub.resolves(new Response(JSON.stringify({ msg: "Email rate limit exceeded" }), { status: 429 }));
     expect(await CloudBackupClient_sendCode(" paul@example.com ")).to.deep.equal({
       ok: false,
-      error: "Email rate limit exceeded",
+      error: "Too many sign-in emails went out this hour. Try again later.",
     });
     expect(JSON.parse(fetchStub.firstCall.args[1].body)).to.deep.equal({
       email: "paul@example.com",

@@ -1,8 +1,11 @@
 import { lb } from "lens-shmens";
 import { IThunk } from "../ducks/types";
-import { Thunk_importCsvData } from "../ducks/thunks";
+import { Thunk_applyImport } from "../ducks/thunks";
 import { IState, updateState } from "../models/state";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
+import { IOnboardingHistory, OnboardingHistory_build } from "../models/onboardingHistory";
+import { ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords } from "./importFromLiftosaur";
+import { IHistoryRecord, ISettings } from "../types";
 import { OnboardingAnswer_parse } from "../models/onboardingAnswer";
 import { OnboardingPicker_pick } from "../models/onboardingPicker";
 import { OnboardingProgram_prepare } from "../models/onboardingProgram";
@@ -20,6 +23,9 @@ import {
   OnboardingCatalog_ids,
   OnboardingCatalog_programs,
 } from "./onboardingCatalog";
+
+// api/ai/onboard.mjs gives the model 90 s, so the phone waits a little longer before it gives up.
+const onboardTimeoutMs = 100_000;
 
 export async function OnboardingCommand_images(
   files: FileList | null,
@@ -41,7 +47,21 @@ export async function OnboardingCommand_images(
   }
 }
 
+// OnboardingProgram_prepare has already rejected a CSV with unreadable rows and asked the AI to repair it.
+function readHistory(
+  csv: string | undefined,
+  settings: ISettings,
+  existing: IHistoryRecord[]
+): IOnboardingHistory | undefined {
+  if (!csv?.trim()) {
+    return undefined;
+  }
+  const parsed = ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords(csv, settings);
+  return OnboardingHistory_build(parsed.historyRecords, parsed.customExercises, existing);
+}
+
 export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnboardingEvent) => void): IThunk {
+  const run = form.run;
   return async (dispatch, getState, env) => {
     try {
       const state = getState();
@@ -53,9 +73,6 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         OnboardingProgram_prepare(answer, programs, settings, UidFactory_generateUid(8), Date.now());
       const fallback = (reason?: string): void => {
         const picked = OnboardingPicker_pick(form.answers);
-        if (reason != null) {
-          picked.note = `${reason} ${picked.note}`;
-        }
         if (form.images.length > 0 || form.answers.plan.trim() !== "") {
           picked.note += " Screenshots and custom plan details need AI. This built-in plan does not import them.";
         }
@@ -63,11 +80,13 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         const prepared = prepare(answer);
         emit({
           type: "ready",
+          run,
           result: {
             answer,
             program: prepared.program,
             name: prepared.program.name,
             days: OnboardingCatalog_days(answer.builtin!) ?? prepared.days,
+            fallbackReason: reason,
           },
         });
       };
@@ -75,8 +94,12 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         const program = form.result.program ?? prepare(form.result.answer).program;
         const body = OnboardingAnswers_body(form.answers, new Date().getFullYear());
         await FoodLogStore_update((log) => FoodLog_setProfile(log, { ...log.profile, ...body.profile }));
-        if (form.result.answer.historyCsv?.trim()) {
-          await Thunk_importCsvData(form.result.answer.historyCsv, "apply")(dispatch, getState, env);
+        const imported = form.result.history;
+        if (form.importHistory && imported != null) {
+          const fresh = OnboardingHistory_build(imported.records, imported.customExercises, getState().storage.history);
+          if (fresh.records.length > 0) {
+            await Thunk_applyImport(fresh.records, fresh.customExercises, "liftosaurCsv")(dispatch, getState, env);
+          }
         }
         updateState(
           dispatch,
@@ -111,12 +134,11 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
       let previousAnswer: string | undefined;
       let validationError: string | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
-        const result = await AiRequest_post("/api/ai/onboard", {
-          answers: form.answers,
-          images: form.images,
-          previousAnswer,
-          validationError,
-        });
+        const result = await AiRequest_post(
+          "/api/ai/onboard",
+          { answers: form.answers, images: form.images, previousAnswer, validationError },
+          onboardTimeoutMs
+        );
         if (!result.ok) {
           fallback(result.error);
           return;
@@ -131,11 +153,13 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
           const prepared = prepare(answer);
           emit({
             type: "ready",
+            run,
             result: {
               answer,
               program: prepared.program,
               name: prepared.program.name,
               days: answer.builtin == null ? prepared.days : (OnboardingCatalog_days(answer.builtin) ?? prepared.days),
+              history: readHistory(answer.historyCsv, settings, state.storage.history),
             },
           });
           return;
@@ -145,7 +169,7 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
       }
       throw new Error(`${validationError} Use a built-in plan or edit your answers and try again.`);
     } catch (error) {
-      emit({ type: "failed", error: error instanceof Error ? error.message : "Setup failed. Try again." });
+      emit({ type: "failed", run, error: error instanceof Error ? error.message : "Setup failed. Try again." });
     }
   };
 }

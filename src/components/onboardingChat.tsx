@@ -1,5 +1,7 @@
 import { JSX, ReactNode, useEffect, useReducer, useRef } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
+import { OnboardingAnswers_empty } from "../models/onboardingAnswers";
+import { OnboardingHistory_summary } from "../models/onboardingHistory";
 import { IDispatch } from "../ducks/types";
 import { Onboarding_empty, Onboarding_reduce } from "../models/onboarding";
 import { OnboardingCommand_run } from "../utils/onboardingCommand";
@@ -15,7 +17,9 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
   const cloud = CloudStore.use();
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const pending = InviteStore.use();
-  const [form, emit] = useReducer(Onboarding_reduce, undefined, () => Onboarding_empty(InviteClient_current()));
+  const [form, emit] = useReducer(Onboarding_reduce, undefined, () =>
+    Onboarding_empty(InviteClient_current(), OnboardingAnswers_empty(navigator.language))
+  );
   const screen = useRef<HTMLElement>(null);
   useEffect(() => {
     screen.current?.focus();
@@ -24,7 +28,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
     if (form.command != null) {
       props.dispatch(OnboardingCommand_run(form, emit));
     }
-  }, [form.command]);
+  }, [form.run]);
   useEffect(() => {
     if (pending.handle != null) {
       emit({ type: "invite", value: pending.handle });
@@ -47,10 +51,10 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
           {form.step === "auth" ? (
             <>
               <h1 className="text-3xl font-bold">Let’s set up your training.</h1>
-              <p>Sign in with an email code for AI setup. Then answer three quick questions.</p>
-              <CloudBackupCard dispatch={props.dispatch} />
+              <p>Sign in with an email code for AI setup, cloud backup and friends. You can also skip it.</p>
+              <CloudBackupCard dispatch={props.dispatch} compact />
               <label className="block">
-                Who invited you? (handle, optional)
+                Who invited you? Their handle (optional)
                 <input
                   className="w-full p-3 border rounded-lg bg-background-default border-border-prominent text-text-primary"
                   value={form.invite}
@@ -74,18 +78,51 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
                     .catch(() => emit({ type: "failed", error: "Could not save the invite. Try again." }))
                 }
               >
-                {cloud.session == null || !showAi ? "Continue without AI" : "Continue with AI"}
+                {cloud.session == null
+                  ? "Continue without signing in"
+                  : showAi
+                    ? "Continue with AI"
+                    : "Continue without AI"}
               </button>
             </>
           ) : form.step === "working" ? (
-            <p role="status">Building your program…</p>
+            <div role="status" className="space-y-4">
+              <View className="items-start">
+                <ActivityIndicator />
+              </View>
+              <p>Building your program… This can take up to a minute.</p>
+              {form.command === "prepare" && (
+                <button className="p-3 text-text-link" onClick={() => emit({ type: "fallback" })}>
+                  Stop and use a built-in plan
+                </button>
+              )}
+            </div>
           ) : form.step === "done" && form.result != null ? (
             <>
               <h1 className="text-3xl font-bold">Your plan is ready.</h1>
               <h2 className="text-2xl font-semibold">{form.result.name}</h2>
               <p>{form.result.days} training days per week</p>
+              {form.result.fallbackReason != null && (
+                <p className="text-text-secondary">AI setup did not finish: {form.result.fallbackReason}</p>
+              )}
               <p>{form.result.answer.note}</p>
-              {form.result.answer.historyCsv && <p>Your recent workouts will be added to Home.</p>}
+              {form.result.history != null && (
+                <div className="space-y-2">
+                  <p>{OnboardingHistory_summary(form.result.history)}</p>
+                  {form.result.history.records.length > 0 && (
+                    <label className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="w-6 h-6"
+                        checked={form.importHistory}
+                        disabled={busy}
+                        onChange={() => emit({ type: "toggleHistory" })}
+                      />
+                      Add these workouts to my history
+                    </label>
+                  )}
+                </div>
+              )}
               {form.result.answer.renamed.length > 0 && (
                 <div>
                   <h3 className="font-semibold">Renamed exercises</h3>

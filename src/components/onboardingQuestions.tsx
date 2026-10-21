@@ -1,9 +1,11 @@
 import { Dispatch, JSX } from "react";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
-import { IOnboardingAnswers } from "../models/onboardingAnswers";
+import { IOnboardingAnswers, OnboardingAnswers_daysLabel } from "../models/onboardingAnswers";
 import { OnboardingCommand_images } from "../utils/onboardingCommand";
 
 const field = "w-full p-3 border rounded-lg bg-background-default border-border-prominent text-text-primary";
+const chip = "px-4 py-2 border rounded-full border-border-prominent text-text-primary";
+const chipActive = "px-4 py-2 border rounded-full border-purple-600 bg-purple-600 text-white";
 
 export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispatch<IOnboardingEvent> }): JSX.Element {
   const { form, emit } = props;
@@ -14,7 +16,6 @@ export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispa
       {form.step === "goal" && (
         <>
           <h2 className="text-2xl font-bold">What is your goal, and how many days can you train?</h2>
-          <p>You can skip any question. Defaults: muscle and strength, 3 days, 60 minutes, full gym, beginner.</p>
           <label className="block">
             Goal
             <select
@@ -33,7 +34,7 @@ export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispa
             <select className={field} value={a.days} onChange={(e) => patch({ days: Number(e.currentTarget.value) })}>
               {[2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>
-                  {n}
+                  {OnboardingAnswers_daysLabel(n, form.useAi)}
                 </option>
               ))}
             </select>
@@ -71,35 +72,71 @@ export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispa
         <>
           <h2 className="text-2xl font-bold">What are your height, weight, age, and lifting experience?</h2>
           <p>Body details are optional. They prefill your food calculator.</p>
-          <label className="block">
-            Height (cm)
+          <fieldset className="space-y-2">
+            <legend>Height</legend>
+            <div className="flex gap-2">
+              {(["ftin", "cm"] as const).map((unit) => (
+                <button
+                  key={unit}
+                  className={unit === a.heightUnit ? chipActive : chip}
+                  aria-pressed={unit === a.heightUnit}
+                  onClick={() => patch({ heightUnit: unit })}
+                >
+                  {unit === "cm" ? "cm" : "ft in"}
+                </button>
+              ))}
+            </div>
+            {a.heightUnit === "cm" ? (
+              <input
+                className={field}
+                aria-label="Height in cm"
+                inputMode="decimal"
+                value={a.height}
+                onChange={(e) => patch({ height: e.currentTarget.value })}
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  className={field}
+                  aria-label="Height, feet"
+                  inputMode="numeric"
+                  value={a.heightFt}
+                  onChange={(e) => patch({ heightFt: e.currentTarget.value })}
+                />
+                <span>ft</span>
+                <input
+                  className={field}
+                  aria-label="Height, inches"
+                  inputMode="numeric"
+                  value={a.heightIn}
+                  onChange={(e) => patch({ heightIn: e.currentTarget.value })}
+                />
+                <span>in</span>
+              </div>
+            )}
+          </fieldset>
+          <fieldset className="space-y-2">
+            <legend>Weight</legend>
+            <div className="flex gap-2">
+              {(["lb", "kg"] as const).map((unit) => (
+                <button
+                  key={unit}
+                  className={unit === a.unit ? chipActive : chip}
+                  aria-pressed={unit === a.unit}
+                  onClick={() => patch({ unit })}
+                >
+                  {unit}
+                </button>
+              ))}
+            </div>
             <input
               className={field}
-              inputMode="decimal"
-              value={a.height}
-              onChange={(e) => patch({ height: e.currentTarget.value })}
-            />
-          </label>
-          <label className="block">
-            Weight
-            <input
-              className={field}
+              aria-label={`Weight in ${a.unit}`}
               inputMode="decimal"
               value={a.weight}
               onChange={(e) => patch({ weight: e.currentTarget.value })}
             />
-          </label>
-          <label className="block">
-            Weight unit
-            <select
-              className={field}
-              value={a.unit}
-              onChange={(e) => patch({ unit: e.currentTarget.value as "kg" | "lb" })}
-            >
-              <option value="lb">lb</option>
-              <option value="kg">kg</option>
-            </select>
-          </label>
+          </fieldset>
           <label className="block">
             Age
             <input
