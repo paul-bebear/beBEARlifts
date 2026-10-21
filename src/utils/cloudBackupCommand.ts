@@ -1,9 +1,13 @@
-import { Thunk_cloudBackup, Thunk_cloudRestore } from "../ducks/thunks";
+import {
+  Thunk_cloudBackup,
+  Thunk_cloudCheck,
+  Thunk_cloudKeepPhone,
+  Thunk_cloudRestore,
+} from "../ducks/cloudBackupThunks";
 import { IThunk } from "../ducks/types";
 import { ICloudBackupCommand, ICloudBackupEvent } from "../models/cloudBackupForm";
 import {
   CloudBackupClient_deleteAccount,
-  CloudBackupClient_download,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
   CloudBackupClient_verify,
@@ -20,26 +24,29 @@ export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (even
         }
         case "verify": {
           const result = await CloudBackupClient_verify(command.email, command.code);
-          emit(
-            result.ok
-              ? { type: "verified", hasHistory: getState().storage.history.length > 0 }
-              : { type: "failed", error: result.error }
-          );
-          break;
-        }
-        case "findBackup": {
-          const result = await CloudBackupClient_download();
-          emit(result.ok ? { type: "found", exists: result.value != null } : { type: "failed", error: result.error });
+          if (result.ok) {
+            await Thunk_cloudCheck()(dispatch, getState, env);
+          }
+          emit(result.ok ? { type: "verified" } : { type: "failed", error: result.error });
           break;
         }
         case "backup":
-          await Thunk_cloudBackup(true, (result) =>
+          await Thunk_cloudBackup("manual", (result) =>
             emit(result.ok ? { type: "done", message: "Backup saved." } : { type: "failed", error: result.error })
           )(dispatch, getState, env);
           break;
         case "restore":
-          await Thunk_cloudRestore((result) =>
+          await Thunk_cloudRestore(command.copy ?? "latest", (result) =>
             emit(result.ok ? { type: "done" } : { type: "failed", error: result.error })
+          )(dispatch, getState, env);
+          break;
+        case "keepPhone":
+          await Thunk_cloudKeepPhone((result) =>
+            emit(
+              result.ok
+                ? { type: "done", message: result.value ? "Backup saved." : undefined }
+                : { type: "failed", error: result.error }
+            )
           )(dispatch, getState, env);
           break;
         case "signOut":

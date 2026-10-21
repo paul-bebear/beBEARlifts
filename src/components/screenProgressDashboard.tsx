@@ -49,6 +49,7 @@ import { IconChevronRight } from "./icons/iconFoodUi";
 import { IconSpeaker } from "./icons/iconSpeaker";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { RunSensors_isAvailable } from "../utils/runSensors";
+import { CloudRestoreBanner } from "./cloudRestoreBanner";
 
 function ProgramCardView(props: { card: IProgramCard; onPress: () => void }): JSX.Element {
   return (
@@ -181,6 +182,7 @@ export function ScreenProgressDashboard(): JSX.Element {
 
   return (
     <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
+      {OfflineOnly_isEnabled() && <CloudRestoreBanner dispatch={dispatch} />}
       <ProgressCalendarHeader
         streak={streak}
         calendar={calendar}

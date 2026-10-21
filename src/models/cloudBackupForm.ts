@@ -1,12 +1,19 @@
-import { CloudBackup_isCode, CloudBackup_isEmail } from "./cloudBackup";
+import { CloudBackup_isCode, CloudBackup_isEmail, ICloudCopy } from "./cloudBackup";
 import {
   AccountDeletion_confirmWord,
   AccountDeletion_doneMessage,
   AccountDeletion_isConfirmed,
 } from "./accountDeletion";
 
-export type ICloudBackupOperation = "sendCode" | "verify" | "backup" | "restore" | "signOut" | "deleteAccount";
-export type ICloudBackupCommand = { operation: ICloudBackupOperation | "findBackup"; email: string; code: string };
+export type ICloudBackupOperation =
+  | "sendCode"
+  | "verify"
+  | "backup"
+  | "restore"
+  | "keepPhone"
+  | "signOut"
+  | "deleteAccount";
+export type ICloudBackupCommand = { operation: ICloudBackupOperation; email: string; code: string; copy?: ICloudCopy };
 
 export interface ICloudBackupForm {
   step: "email" | "code" | "signedIn";
@@ -15,27 +22,26 @@ export interface ICloudBackupForm {
   command?: ICloudBackupCommand;
   error?: string;
   message?: string;
-  offerRestore: boolean;
+  showOlderCopies: boolean;
   // undefined while the delete confirmation is closed.
   deleteText?: string;
 }
 
 export type ICloudBackupEvent =
   | { type: "email" | "code" | "deleteText"; value: string }
-  | { type: "deleteOpen" | "deleteCancel" }
+  | { type: "deleteOpen" | "deleteCancel" | "toggleOlderCopies" }
   | { type: "deleted" }
   | { type: "session"; email?: string }
-  | { type: "request"; operation: ICloudBackupOperation }
+  | { type: "request"; operation: ICloudBackupOperation; copy?: ICloudCopy }
   | { type: "sent" }
-  | { type: "verified"; hasHistory: boolean }
-  | { type: "found"; exists: boolean }
+  | { type: "verified" }
   | { type: "done"; message?: string }
   | { type: "signedOut" }
   | { type: "failed"; error: string }
   | { type: "changeEmail" };
 
 export function CloudBackupForm_empty(): ICloudBackupForm {
-  return { step: "email", email: "", code: "", offerRestore: false };
+  return { step: "email", email: "", code: "", showOlderCopies: false };
 }
 
 export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBackupEvent): ICloudBackupForm {
@@ -57,15 +63,12 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
       ...state,
       step: "signedIn",
       code: "",
-      command: event.hasHistory ? undefined : { operation: "findBackup", email: state.email, code: "" },
+      command: undefined,
       message: "Signed in. Backups upload after each workout.",
     };
   }
-  if (event.type === "found") {
-    return { ...state, command: undefined, offerRestore: event.exists };
-  }
   if (event.type === "done") {
-    return { ...state, command: undefined, message: event.message, offerRestore: false };
+    return { ...state, command: undefined, message: event.message, showOlderCopies: false };
   }
   if (event.type === "signedOut") {
     return CloudBackupForm_empty();
@@ -84,6 +87,9 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
   }
   if (event.type === "deleteOpen") {
     return state.step === "signedIn" ? { ...state, deleteText: "", error: undefined, message: undefined } : state;
+  }
+  if (event.type === "toggleOlderCopies") {
+    return { ...state, showOlderCopies: !state.showOlderCopies, error: undefined, message: undefined };
   }
   if (event.type === "deleteCancel") {
     return { ...state, deleteText: undefined, error: undefined };
@@ -109,7 +115,7 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
       ...state,
       error: undefined,
       message: undefined,
-      command: { operation: event.operation, email: state.email.trim(), code: state.code.trim() },
+      command: { operation: event.operation, email: state.email.trim(), code: state.code.trim(), copy: event.copy },
     };
   }
   return state;

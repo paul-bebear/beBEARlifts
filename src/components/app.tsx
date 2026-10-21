@@ -14,6 +14,7 @@ import {
   Thunk_fetchInitial,
   Thunk_debugTestLogin,
 } from "../ducks/thunks";
+import { Thunk_cloudCatchUp } from "../ducks/cloudBackupThunks";
 import { Service } from "../api/service";
 import { NativeEffects_apply } from "../models/nativeEffects";
 import { ITimerBridge } from "../utils/timerBridge";
@@ -136,6 +137,20 @@ export function AppView(props: IProps): JSX.Element | null {
   });
   useEffect(() => {
     return ScreenRemovalCleanup_subscribe(dispatch);
+  }, []);
+
+  useEffect(() => {
+    if (!OfflineOnly_isEnabled() || typeof document === "undefined") {
+      return undefined;
+    }
+    const catchUp = (): void => {
+      if (document.visibilityState === "visible") {
+        dispatch(Thunk_cloudCatchUp());
+      }
+    };
+    catchUp();
+    document.addEventListener("visibilitychange", catchUp);
+    return () => document.removeEventListener("visibilitychange", catchUp);
   }, []);
 
   useEffect(() => {

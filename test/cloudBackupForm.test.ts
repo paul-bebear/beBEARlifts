@@ -33,16 +33,20 @@ describe("CloudBackupForm", () => {
     expect(state.command?.operation).to.equal("verify");
   });
 
-  it("offers a found backup only after sign-in with no local history", () => {
-    let state = reduce(emailStep(), { type: "verified", hasHistory: false });
+  it("signs in, opens the older copies and restores the one tapped", () => {
+    let state = reduce(emailStep(), { type: "verified" });
     expect(state.step).to.equal("signedIn");
     expect(state.code).to.equal("");
-    expect(state.command?.operation).to.equal("findBackup");
-    state = reduce(state, { type: "found", exists: true });
-    expect(state.offerRestore).to.equal(true);
     expect(state.command).to.equal(undefined);
-    expect(reduce(emailStep(), { type: "verified", hasHistory: true }).command).to.equal(undefined);
-    expect(reduce(state, { type: "found", exists: false }).offerRestore).to.equal(false);
+    state = reduce(state, { type: "toggleOlderCopies" });
+    expect(state.showOlderCopies).to.equal(true);
+    state = reduce(state, { type: "request", operation: "restore", copy: "day-3" });
+    expect(state.command?.operation).to.equal("restore");
+    expect(state.command?.copy).to.equal("day-3");
+    expect(reduce(state, { type: "toggleOlderCopies" })).to.equal(state);
+    state = reduce(state, { type: "done" });
+    expect(state.showOlderCopies).to.equal(false);
+    expect(reduce(state, { type: "request", operation: "keepPhone" }).command?.operation).to.equal("keepPhone");
   });
 
   it("resends the code and can change the email", () => {

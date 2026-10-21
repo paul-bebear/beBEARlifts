@@ -4,6 +4,7 @@ import sinon from "sinon";
 import {
   CloudBackupClient_deleteAccount,
   CloudBackupClient_download,
+  CloudBackupClient_saveReplaced,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
   CloudBackupClient_upload,
@@ -14,6 +15,9 @@ import { ICloudState } from "../src/models/cloudBackup";
 import { AccountDeletion_signInMessage } from "../src/models/accountDeletion";
 import { FriendsStore } from "../src/utils/friendsClient";
 import { BlocksStore } from "../src/utils/moderationStore";
+import { FeedStore } from "../src/utils/feedClient";
+import { InviteStore } from "../src/utils/inviteClient";
+import { Feed_empty } from "../src/models/feed";
 
 const now = Date.UTC(2026, 9, 20, 18);
 const session = {
@@ -24,9 +28,12 @@ const session = {
   expiresAt: now + 3600000,
 };
 
+const marks = { exportedAt: "2026-10-20T18:00:00.000Z", workouts: "3:7" };
+
 describe("CloudBackupClient", () => {
   let state: ICloudState;
   let fetchStub: sinon.SinonStub;
+  let stores: Record<"friends" | "blocks" | "feed" | "invite", sinon.SinonStub>;
 
   beforeEach(() => {
     state = { version: 1, session };
@@ -35,6 +42,12 @@ describe("CloudBackupClient", () => {
     sinon.stub(CloudStore, "update").callsFake(async (update) => {
       state = update(state);
     });
+    stores = {
+      friends: sinon.stub(FriendsStore, "update").resolves(),
+      blocks: sinon.stub(BlocksStore, "update").resolves(),
+      feed: sinon.stub(FeedStore, "update").resolves(),
+      invite: sinon.stub(InviteStore, "update").resolves(),
+    };
     fetchStub = sinon.stub(globalThis, "fetch");
   });
   afterEach(() => sinon.restore());
@@ -76,11 +89,15 @@ describe("CloudBackupClient", () => {
   });
 
   it("uploads latest and weekday files with auth and marks success after both", async () => {
+    state.restoreOffer = { cloud: { workouts: 2, foodDays: 0 }, phone: { workouts: 1, foodDays: 0 } };
     fetchStub.callsFake(async () => {
       expect(state.lastBackupAt).to.equal(undefined);
       return new Response("{}");
     });
-    expect(await CloudBackupClient_upload("backup")).to.deep.equal({ ok: true, value: now });
+    expect(await CloudBackupClient_upload("backup", marks)).to.deep.equal({ ok: true, value: now });
+    expect(state.syncedExportedAt).to.equal(marks.exportedAt);
+    expect(state.backedUpWorkouts).to.equal("3:7");
+    expect(state.restoreOffer).to.equal(undefined);
     expect(fetchStub.firstCall.args[0]).to.equal(`${CloudBackup_origin}/storage/v1/object/backups/u1/latest.json`);
     expect(fetchStub.secondCall.args[0]).to.match(/\/u1\/day-\d.json$/);
     const request = fetchStub.firstCall.args[1] as RequestInit;
@@ -97,13 +114,26 @@ describe("CloudBackupClient", () => {
     state.lastBackupAt = now - 1000;
     fetchStub.onFirstCall().resolves(new Response("{}"));
     fetchStub.onSecondCall().resolves(new Response(JSON.stringify({ message: "Quota exceeded" }), { status: 413 }));
-    expect(await CloudBackupClient_upload("backup")).to.deep.equal({ ok: false, error: "Quota exceeded" });
+    expect(await CloudBackupClient_upload("backup", marks)).to.deep.equal({ ok: false, error: "Quota exceeded" });
     expect(state.lastBackupAt).to.equal(now - 1000);
     fetchStub.reset();
     fetchStub.resolves(new Response(JSON.stringify({ message: "Permission denied" }), { status: 403 }));
-    expect(await CloudBackupClient_upload("backup")).to.deep.equal({ ok: false, error: "Permission denied" });
+    expect(await CloudBackupClient_upload("backup", marks)).to.deep.equal({ ok: false, error: "Permission denied" });
     expect(fetchStub.callCount).to.equal(1);
     expect(state.lastBackupAt).to.equal(now - 1000);
+    expect(state.syncedExportedAt).to.equal(undefined);
+  });
+
+  it("saves the replaced backup and downloads an older copy by weekday", async () => {
+    fetchStub.onFirstCall().resolves(new Response("{}"));
+    fetchStub.onSecondCall().resolves(new Response("monday"));
+    expect(await CloudBackupClient_saveReplaced("old")).to.deep.equal({ ok: true, value: undefined });
+    expect(fetchStub.firstCall.args[0]).to.equal(`${CloudBackup_origin}/storage/v1/object/backups/u1/replaced.json`);
+    expect(fetchStub.firstCall.args[1].body).to.equal("old");
+    expect(await CloudBackupClient_download("day-1")).to.deep.equal({ ok: true, value: "monday" });
+    expect(fetchStub.secondCall.args[0]).to.equal(
+      `${CloudBackup_origin}/storage/v1/object/authenticated/backups/u1/day-1.json`
+    );
   });
 
   it("refreshes expired tokens before downloading and keeps the backup time", async () => {
@@ -140,14 +170,25 @@ describe("CloudBackupClient", () => {
     expect(await CloudBackupClient_download()).to.deep.equal({ ok: false, error: "No connection" });
     await CloudBackupClient_signOut();
     fetchStub.resetHistory();
-    expect(await CloudBackupClient_upload("backup")).to.deep.equal({ ok: false, error: "Not signed in" });
+    expect(await CloudBackupClient_upload("backup", marks)).to.deep.equal({ ok: false, error: "Not signed in" });
     expect(fetchStub.called).to.equal(false);
     expect(state).to.deep.equal({ version: 1 });
   });
 
+  it("ends only this phone's session on sign-out and clears friends' cached posts", async () => {
+    fetchStub.resolves(new Response(null, { status: 204 }));
+    await CloudBackupClient_signOut();
+    expect(fetchStub.firstCall.args[0]).to.equal(`${CloudBackup_origin}/auth/v1/logout?scope=local`);
+    expect(fetchStub.firstCall.args[1].headers.Authorization).to.equal("Bearer a");
+    expect(state).to.deep.equal({ version: 1 });
+    expect(stores.feed.firstCall.args[0]({ posts: [1] })).to.deep.equal(Feed_empty());
+    expect(stores.invite.firstCall.args[0]({ handle: "x" })).to.deep.equal({});
+    expect(stores.friends.calledOnce).to.equal(true);
+    expect(stores.blocks.calledOnce).to.equal(true);
+  });
+
   it("deletes the account through the API and clears the cloud, friends and blocks caches only on success", async () => {
-    const friends = sinon.stub(FriendsStore, "update").resolves();
-    const blocks = sinon.stub(BlocksStore, "update").resolves();
+    const { friends, blocks, feed } = stores;
     fetchStub.resolves(new Response(JSON.stringify({ error: "Could not delete the account" }), { status: 502 }));
     expect(await CloudBackupClient_deleteAccount()).to.deep.equal({
       ok: false,
@@ -163,6 +204,7 @@ describe("CloudBackupClient", () => {
     expect(state).to.deep.equal({ version: 1 });
     expect(friends.calledOnce).to.equal(true);
     expect(blocks.calledOnce).to.equal(true);
+    expect(feed.calledOnce).to.equal(true);
 
     fetchStub.resetHistory();
     expect(await CloudBackupClient_deleteAccount()).to.deep.equal({
