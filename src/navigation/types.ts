@@ -54,6 +54,7 @@ export type IGraphsStackParamList = IMeStackParamList & {
   music: undefined;
   reports: undefined;
   bodyScans: undefined;
+  runs: undefined;
   graphsList: undefined;
 };
 

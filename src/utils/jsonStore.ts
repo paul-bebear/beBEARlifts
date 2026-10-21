@@ -8,7 +8,12 @@ export interface IJsonStore<T> {
 }
 
 // One IndexedDB key holding one JSON value, with listeners so every screen shows the same copy.
-export function JsonStore_create<T>(key: string, parse: (raw: unknown) => T, empty: () => T): IJsonStore<T> {
+export function JsonStore_create<T>(
+  key: string,
+  parse: (raw: unknown) => T,
+  empty: () => T,
+  persist: (storeKey: string, value?: string) => Promise<void> = IndexedDBUtils_set
+): IJsonStore<T> {
   let current = empty();
   let loadPromise: Promise<void> | undefined;
   let writeChain: Promise<void> = Promise.resolve();
@@ -37,7 +42,7 @@ export function JsonStore_create<T>(key: string, parse: (raw: unknown) => T, emp
     current = fn(current);
     notify();
     const snapshot = JSON.stringify(current);
-    writeChain = writeChain.then(() => IndexedDBUtils_set(key, snapshot));
+    writeChain = writeChain.catch(() => undefined).then(() => persist(key, snapshot));
     return writeChain;
   }
 

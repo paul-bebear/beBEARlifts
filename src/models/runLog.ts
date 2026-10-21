@@ -21,6 +21,16 @@ export function RunLog_empty(): IRunLog {
   return { version: 1, runs: [] };
 }
 
+export function RunLog_date(startedAt: number): string {
+  return new Date(startedAt).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function nonnegative(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
@@ -35,10 +45,7 @@ function parseLatLon(raw: unknown): ILatLon | undefined {
     return undefined;
   }
   const [lat, lon] = raw;
-  return typeof lat === "number" &&
-    typeof lon === "number" &&
-    Math.abs(lat) <= 90 &&
-    Math.abs(lon) <= 180
+  return typeof lat === "number" && typeof lon === "number" && Math.abs(lat) <= 90 && Math.abs(lon) <= 180
     ? [lat, lon]
     : undefined;
 }

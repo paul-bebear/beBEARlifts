@@ -52,7 +52,14 @@ export function RunTrack_distanceM(a: Pick<IRunPoint, "lat" | "lon">, b: Pick<IR
 }
 
 export function RunTrack_judge(previous: IRunPoint | undefined, point: IRunPoint): IRunPointVerdict {
-  if (!(point.acc <= RunTrack_maxAccuracyM)) {
+  if (
+    !Number.isFinite(point.t) ||
+    !Number.isFinite(point.lat) ||
+    !Number.isFinite(point.lon) ||
+    Math.abs(point.lat) > 90 ||
+    Math.abs(point.lon) > 180 ||
+    !(point.acc >= 0 && point.acc <= RunTrack_maxAccuracyM)
+  ) {
     return "inaccurate";
   }
   if (previous == null) {
@@ -130,8 +137,8 @@ function smooth(values: number[]): number[] {
   });
 }
 
-export function RunTrack_elevationGainM(altitudes: number[]): number {
-  const smoothed = smooth(altitudes);
+export function RunTrack_elevationGainM(heights: number[]): number {
+  const smoothed = smooth(heights);
   let gain = 0;
   let reference = smoothed[0];
   for (const altitude of smoothed.slice(1)) {

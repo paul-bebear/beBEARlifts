@@ -1,4 +1,11 @@
-import { IRunPoint, IRunSegment, RunTrack_judge, RunTrack_stats } from "./runTrack";
+import {
+  IRunPoint,
+  IRunSegment,
+  RunTrack_judge,
+  RunTrack_maxAccuracyM,
+  RunTrack_recentPace,
+  RunTrack_stats,
+} from "./runTrack";
 import { ILatLon, RunRoute_simplify } from "./runRoute";
 import { IRun } from "./runLog";
 
@@ -58,8 +65,11 @@ export function RunRecording_resume(recording: IRunRecording, now: number): IRun
 }
 
 export function RunRecording_addPoint(recording: IRunRecording, point: IRunPoint): IRunRecording {
-  const withFix = { ...recording, lastFix: { t: point.t, acc: point.acc } };
   const segment = recording.segments[recording.segments.length - 1];
+  if (point.t < (segment?.startedAt ?? 0) || point.t < (recording.lastFix?.t ?? 0)) {
+    return recording;
+  }
+  const withFix = { ...recording, lastFix: { t: point.t, acc: point.acc } };
   if (recording.status !== "recording" || segment == null) {
     return withFix;
   }
@@ -95,6 +105,30 @@ export function RunRecording_restore(saved: IRunRecording): IRunRecording {
 
 export function RunRecording_hasFreshFix(recording: IRunRecording, now: number): boolean {
   return recording.lastFix != null && now - recording.lastFix.t < RunRecording_fixStaleMs;
+}
+
+export function RunRecording_fixText(recording: IRunRecording, now: number): string {
+  if (recording.status === "paused") {
+    return "GPS paused";
+  }
+  if (!RunRecording_hasFreshFix(recording, now)) {
+    return "Waiting for GPS. Keep the app open outside.";
+  }
+  const accuracy = Math.round(recording.lastFix!.acc);
+  return accuracy > RunTrack_maxAccuracyM
+    ? `GPS ±${accuracy} m. Waiting for accuracy within 25 m.`
+    : `GPS ±${accuracy} m`;
+}
+
+export function RunRecording_recentPace(recording: IRunRecording, now: number): number | undefined {
+  const segment = recording.segments[recording.segments.length - 1];
+  const last = segment?.points[segment.points.length - 1];
+  return recording.status === "recording" &&
+    RunRecording_hasFreshFix(recording, now) &&
+    last != null &&
+    now - last.t < RunRecording_fixStaleMs
+    ? RunTrack_recentPace(segment)
+    : undefined;
 }
 
 export function RunRecording_pointCount(recording: IRunRecording): number {
@@ -136,7 +170,15 @@ function finite(value: unknown): value is number {
 
 function parsePoint(raw: unknown): IRunPoint | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  if (!finite(r.t) || !finite(r.lat) || !finite(r.lon) || !finite(r.acc)) {
+  if (
+    !finite(r.t) ||
+    !finite(r.lat) ||
+    !finite(r.lon) ||
+    !finite(r.acc) ||
+    Math.abs(r.lat) > 90 ||
+    Math.abs(r.lon) > 180 ||
+    r.acc < 0
+  ) {
     return undefined;
   }
   return { t: r.t, lat: r.lat, lon: r.lon, acc: r.acc, ...(finite(r.alt) ? { alt: r.alt } : {}) };
@@ -147,9 +189,7 @@ function parseSegment(raw: unknown): IRunSegment | undefined {
   if (!finite(r.startedAt)) {
     return undefined;
   }
-  const points = Array.isArray(r.points)
-    ? r.points.map(parsePoint).filter((p): p is IRunPoint => p != null)
-    : [];
+  const points = Array.isArray(r.points) ? r.points.map(parsePoint).filter((p): p is IRunPoint => p != null) : [];
   return { startedAt: r.startedAt, ...(finite(r.endedAt) ? { endedAt: r.endedAt } : {}), points };
 }
 

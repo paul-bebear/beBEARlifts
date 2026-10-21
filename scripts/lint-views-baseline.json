@@ -165,6 +165,9 @@
   "src/components/restTimer.tsx": {
     "decision-in-view:useEffect#1": "predates the rule"
   },
+  "src/components/runRecorder.tsx": {
+    "decision-in-view:useEffect#1": "Registers the timer and visibility listener, then releases them on unmount. runRecording.ts owns save timing and pause transitions."
+  },
   "src/components/screenAccount.tsx": {
     "long-view": "predates the rule"
   },

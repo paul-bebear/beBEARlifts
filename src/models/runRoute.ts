@@ -33,11 +33,12 @@ function project(segments: ILatLon[][], from: ILatLon): IXY[][] {
 function offsetFromLine(p: IXY, a: IXY, b: IXY): number {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
-  const length = Math.hypot(dx, dy);
-  if (length === 0) {
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared === 0) {
     return Math.hypot(p.x - a.x, p.y - a.y);
   }
-  return Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / length;
+  const fraction = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSquared));
+  return Math.hypot(p.x - (a.x + fraction * dx), p.y - (a.y + fraction * dy));
 }
 
 export function RunRoute_douglasPeucker(points: IXY[], toleranceM: number): number[] {
@@ -71,6 +72,26 @@ function roundCoordinate(value: number): number {
   return Math.round(value * 100000) / 100000;
 }
 
+function boundPoints(segments: ILatLon[][]): ILatLon[][] {
+  const count = segments.reduce((sum, line) => sum + line.length, 0);
+  if (count < RunRoute_pointLimit) {
+    return segments;
+  }
+  const indices = new Set(
+    Array.from({ length: RunRoute_pointLimit - 1 }, (_, i) => Math.round((i * (count - 1)) / (RunRoute_pointLimit - 2)))
+  );
+  let index = 0;
+  return segments
+    .map((line) =>
+      line.filter(() => {
+        const keep = indices.has(index);
+        index += 1;
+        return keep;
+      })
+    )
+    .filter((line) => line.length > 0);
+}
+
 // The tolerance grows until the whole route fits the limit, so short runs keep every corner.
 export function RunRoute_simplify(segments: ILatLon[][]): ILatLon[][] {
   const nonEmpty = segments.filter((s) => s.length > 0);
@@ -88,7 +109,7 @@ export function RunRoute_simplify(segments: ILatLon[][]): ILatLon[][] {
     }
     tolerance *= toleranceGrowth;
   }
-  return result.map((s) => s.map(([lat, lon]) => [roundCoordinate(lat), roundCoordinate(lon)] as ILatLon));
+  return boundPoints(result).map((s) => s.map(([lat, lon]) => [roundCoordinate(lat), roundCoordinate(lon)] as ILatLon));
 }
 
 function svgNumber(value: number): string {
