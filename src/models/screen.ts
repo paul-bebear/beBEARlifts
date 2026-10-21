@@ -27,6 +27,7 @@ export type IScreenData =
   | { name: "goalWizard"; params?: IGoalWizardScreenParams }
   | { name: "steps"; params?: Record<string, never> }
   | { name: "progressPhotos"; params?: Record<string, never> }
+  | { name: "streak"; params?: Record<string, never> }
   | { name: "food"; params?: Record<string, never> }
   | { name: "friends"; params?: Record<string, never> }
   | { name: "foodAdd"; params: IFoodAddScreenParams }
@@ -140,6 +141,7 @@ export function Screen_tab(screen: IScreen): ITab {
     case "goalWizard":
     case "steps":
     case "progressPhotos":
+    case "streak":
     case "bodyScans": {
       return "graphs";
     }
