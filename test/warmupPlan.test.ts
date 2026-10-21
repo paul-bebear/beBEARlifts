@@ -17,6 +17,7 @@ import { PlannerTestUtils_get } from "./utils/plannerTestUtils";
 import { Program_nextHistoryRecord } from "../src/models/program";
 import { Settings_build } from "../src/models/settings";
 import { Stats_getEmpty } from "../src/models/stats";
+import { SetClips_workoutId } from "../src/models/setClips";
 
 const legDay: IWarmupExercise[] = [{ name: "Squat", muscles: ["Quadriceps", "Gluteus Maximus"], sets: "3 sets of 5" }];
 const pushDay: IWarmupExercise[] = [
@@ -74,5 +75,36 @@ describe("WarmupPlan", () => {
       WarmupPlan_toggle(WarmupPlan_build(7, "ai", WarmupPlan_rules(legDay), 1), 0)
     );
     expect(WarmupPlan_parseLog(JSON.parse(JSON.stringify(log)))).to.deep.equal(log);
+  });
+
+  it("keeps running workouts' warmups and ticks separate, then finds them in history", () => {
+    const { program } = PlannerTestUtils_get(`# Week 1\n## Day 1\nSquat, Barbell / 3x5 / 100kg\n`);
+    const progress = Program_nextHistoryRecord(program, Settings_build(), Stats_getEmpty(), 0);
+    expect(progress.id).to.equal(0);
+    const monday = { ...progress, startTime: 1000 };
+    const wednesday = { ...progress, startTime: 2000 };
+    const legPlan = WarmupPlan_toggle(
+      WarmupPlan_build(SetClips_workoutId(monday), "rules", WarmupPlan_rules(legDay), 1100),
+      0
+    );
+    const log = WarmupPlan_put(WarmupPlan_empty(), legPlan);
+    expect(WarmupPlan_find(log, SetClips_workoutId(wednesday))).to.equal(undefined);
+
+    const pushPlan = WarmupPlan_build(SetClips_workoutId(wednesday), "ai", WarmupPlan_rules(pushDay), 2100);
+    const both = WarmupPlan_parseLog(WarmupPlan_put(log, pushPlan));
+    expect(both.plans).to.have.length(2);
+    expect(WarmupPlan_find(both, SetClips_workoutId(monday))).to.deep.equal(legPlan);
+    expect(WarmupPlan_doneCount(WarmupPlan_find(both, SetClips_workoutId(wednesday))!)).to.equal(0);
+    const finished = { ...monday, id: monday.startTime };
+    expect(WarmupPlan_find(both, SetClips_workoutId(finished))).to.deep.equal(legPlan);
+  });
+
+  it("rewrites legacy zero ids to createdAt once and preserves items and ticks", () => {
+    const legacy = WarmupPlan_toggle(WarmupPlan_build(0, "ai", WarmupPlan_rules(legDay), 1234), 1);
+    const existing = WarmupPlan_build(5678, "rules", WarmupPlan_rules(pushDay), 6000);
+    const parsed = WarmupPlan_parseLog({ version: 1, plans: [legacy, existing] });
+    expect(parsed.plans).to.deep.equal([{ ...legacy, workoutId: 1234 }, existing]);
+    expect(WarmupPlan_find(parsed, 0)).to.equal(undefined);
+    expect(WarmupPlan_parseLog(JSON.parse(JSON.stringify(parsed)))).to.deep.equal(parsed);
   });
 });

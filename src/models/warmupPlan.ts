@@ -1,5 +1,6 @@
 import { IHistoryRecord, IMuscle, ISettings } from "../types";
 import { Exercise_get, Exercise_targetMuscles } from "./exercise";
+import { SetClips_workoutId } from "./setClips";
 
 export interface IWarmupItem {
   name: string;
@@ -184,7 +185,13 @@ function parsePlan(raw: unknown): IWarmupPlan | undefined {
     return undefined;
   }
   const done = items.map((_, i) => Array.isArray(r.done) && r.done[i] === true);
-  return { workoutId: r.workoutId, source: r.source === "ai" ? "ai" : "rules", items, done, createdAt: r.createdAt };
+  return {
+    workoutId: SetClips_workoutId({ id: r.workoutId, startTime: r.createdAt }),
+    source: r.source === "ai" ? "ai" : "rules",
+    items,
+    done,
+    createdAt: r.createdAt,
+  };
 }
 
 export function WarmupPlan_parseLog(raw: unknown): IWarmupLog {

@@ -9,6 +9,7 @@ import { WarmupApi_generate } from "../utils/warmupApi";
 import { MusicLog_formatDuration } from "../models/musicLog";
 import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
+import { SetClips_workoutId } from "../models/setClips";
 import {
   IWarmupPlan,
   WarmupPlan_build,
@@ -25,12 +26,13 @@ function save(plan: IWarmupPlan): Promise<void> {
 }
 
 export function WorkoutWarmupCard(props: {
-  progress: Pick<IHistoryRecord, "id" | "entries">;
+  progress: Pick<IHistoryRecord, "id" | "startTime" | "entries">;
   settings: ISettings;
 }): JSX.Element | null {
   const log = useWarmupLog();
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
-  const plan = WarmupPlan_find(log, props.progress.id);
+  const workoutId = SetClips_workoutId(props.progress);
+  const plan = WarmupPlan_find(log, workoutId);
   const [isOpen, setIsOpen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -45,13 +47,16 @@ export function WorkoutWarmupCard(props: {
       return;
     }
     setIsBusy(true);
-    const exercises = WarmupPlan_exercises(props.progress, props.settings);
-    const result = await WarmupApi_generate(exercises);
-    const items = result.ok ? result.items : WarmupPlan_rules(exercises);
-    await save(WarmupPlan_build(props.progress.id, result.ok ? "ai" : "rules", items, Date.now()));
-    setError(result.ok ? undefined : result.error);
-    setIsBusy(false);
-    setIsOpen(true);
+    try {
+      const exercises = WarmupPlan_exercises(props.progress, props.settings);
+      const result = await WarmupApi_generate(exercises);
+      const items = result.ok ? result.items : WarmupPlan_rules(exercises);
+      await save(WarmupPlan_build(workoutId, result.ok ? "ai" : "rules", items, Date.now()));
+      setError(result.ok ? undefined : result.error);
+      setIsOpen(true);
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   if (plan == null) {

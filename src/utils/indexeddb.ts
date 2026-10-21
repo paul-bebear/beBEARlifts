@@ -2,17 +2,23 @@ import { lg } from "./posthog";
 
 type ITransactionMode = "readonly" | "readwrite";
 
-function runTransaction<T>(
+async function runTransaction<T>(
   mode: ITransactionMode,
   operation: (objectStore: IDBObjectStore) => IDBRequest<T>
 ): Promise<T> {
-  return new Promise<T>(async (resolve, reject) => {
-    const db = await IndexedDBUtils_initialize();
-    if (db == null) {
-      lg("ls-indexeddb-empty");
+  const db = await IndexedDBUtils_initialize();
+  if (db == null) {
+    throw new Error("IndexedDB is not available");
+  }
+  return new Promise<T>((resolve, reject) => {
+    let transaction: IDBTransaction;
+    try {
+      transaction = db.transaction("keyval", mode);
+    } catch (error) {
+      db.close();
+      reject(error);
       return;
     }
-    const transaction = db.transaction("keyval", mode);
     const objectStore = transaction.objectStore("keyval");
 
     let result: T;
@@ -139,12 +145,13 @@ export async function IndexedDBUtils_getAllKeys(): Promise<string[]> {
   }
 }
 
-export async function IndexedDBUtils_get(key: string): Promise<unknown> {
+export async function IndexedDBUtils_get(key: string, strict: boolean = false): Promise<unknown> {
   const userid =
     typeof window !== "undefined"
       ? (window.tempUserId ?? (key.startsWith("liftosaur_") ? key.replace("liftosaur_", "") : undefined))
       : undefined;
-  const result = await withTransaction("readonly", (objectStore) => objectStore.getAll(key)).then(
+  const transaction = strict ? runTransaction : withTransaction;
+  const result = await transaction("readonly", (objectStore) => objectStore.getAll(key)).then(
     (results: unknown[] | undefined) => {
       return results?.[0];
     }
