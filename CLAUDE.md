@@ -27,8 +27,7 @@ npm run lint       # ESLint for TypeScript files
 
 ### Backend / Lambda Development
 There is **no local Lambda emulation**. The backend runs locally through `devserver.ts` —
-use `npm run start:server` (above). The `start:lambda` / `sam-start-api` / `cdk-synth`
-scripts are dead leftovers from the old SAM setup; `sam local start-api` is not used.
+use `npm run start:server` (above).
 
 `npm run build:lambda` builds the deployable bundle. Deploys run in CodeBuild: pushing
 `redesign` deploys the dev/stage stack, `master` deploys prod.

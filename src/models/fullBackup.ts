@@ -19,7 +19,7 @@ const readme = [
   "workouts.stats: body measurements over time, under weight, length and percentage (body fat). workouts.programs: the training programs, written in Liftoscript.",
   "food.entries: food eaten, with calories and macros per entry. food.goals: daily targets. food.profile: height, sex, birth year, activity, goal.",
   "body.scans: gym scale scans (weight, body fat %, muscle mass, body water %, bone mass, visceral fat, BMR, metabolic age), newest first. Masses use each scan's unit.",
-  "warmups.plans: the warmup made for each workout (workoutId matches workouts.history id), with which items were ticked done.",
+  "warmups.plans: saved warmup items and their completion ticks. A workoutId of 0 does not identify a finished workout; do not assume every plan matches a workouts.history id.",
   "reports.reports: the report after each workout: what changed per exercise against the last 4 weeks, the user's answers (onPurpose, feltOff, hurt, mistake, better, same, worse) and the coach's note.",
   "music.sessions: songs played during each workout, matched by session id to workouts.history id. startedAt is ms; heardMs is how long the song played; isKept false means skipped.",
   "clips.clips: filmed sets matched by workoutId, setId and exerciseId. timestamp is ms, size is bytes, duration is seconds. Includes small JPEG thumbnails; video files stay in Photos or downloads.",

@@ -107,7 +107,7 @@ A built-in program fits when it matches my days, minutes, goal, experience and e
 
 If one fits, name it exactly as written above. Tell me in two sentences why it fits. Then ask whether I want it or a personal program.
 
-If I want the built-in one, give me these steps, then stop. In the app, open the Program tab and tap the two-arrows icon right of the program name. Open "Built-in", search for the name, tap the program, then tap "Clone". On the app's first launch, tap "Pick a built-in program" instead of the icon.
+If I want the built-in one, give me these steps, then stop. In the app, open Progress → Program card → two-arrows icon right of the program name. Open "Built-in", search for the name, tap the program, then tap "Clone". On first launch, tap "Skip, I'll pick myself" to reach the program list, then select the built-in program there.
 
 If none fits, or I ask for a personal program, go to step 3.
 
@@ -177,6 +177,8 @@ After the block, give me these steps to add it:
 1. In the app, open the Progress tab, tap the Program card, tap the two-arrows icon, then "Create New Program". Type a name and tap "Create".
 2. Tap "Edit", then the curly-braces icon just left of "Save".
 3. Select all the text, paste the block, and tap "Save".
+
+On first launch, tap "Skip, I'll pick myself" to reach the program list, then "Create New Program". Continue with the editor steps.
 
 Then add one line: "To set your daily macros, open the Food tab, tap the targets, then 'Calculate my targets'."
 
