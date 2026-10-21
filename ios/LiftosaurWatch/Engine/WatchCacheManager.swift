@@ -25,8 +25,12 @@ class WatchCacheManager {
     }
 
     var shouldFetchBundle: Bool {
+#if DISABLE_OTA
+        return false
+#else
         guard let lastFetch = lastBundleFetchTime else { return true }
         return Date().timeIntervalSince(lastFetch) > WatchCacheManager.fetchIntervalSeconds
+#endif
     }
 
     // MARK: Public methods

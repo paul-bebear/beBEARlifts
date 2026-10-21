@@ -9,7 +9,7 @@ struct ComplicationInfo: Codable, Equatable {
 // Bridges the watch app and the complication extension, which run in separate
 // processes and can only share data through the App Group container.
 enum ComplicationStore {
-    static let appGroupId = "group.com.liftosaur.workout"
+    static let appGroupId = AppConfiguration.appGroupId
     private static let key = "complicationInfo"
 
     private static var defaults: UserDefaults? {

@@ -81,6 +81,9 @@ struct LftUpdaterConfig {
   }
 
   func effectiveBundleURL() -> URL? {
+#if DISABLE_OTA
+    return embeddedBundleURL
+#else
     let active = activeBundleURL
     if FileManager.default.fileExists(atPath: active.path) {
       // Documents/ survives app updates, so an update downloaded for the previous binary is
@@ -101,6 +104,7 @@ struct LftUpdaterConfig {
     let embedded = embeddedBundleURL
     Logger.ota.info("effectiveBundleURL: using embedded bundle (\(embedded?.lastPathComponent ?? "<missing>"))")
     return embedded
+#endif
   }
 
   func activeUpdateId() -> String? {

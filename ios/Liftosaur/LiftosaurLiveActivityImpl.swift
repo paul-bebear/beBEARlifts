@@ -3,7 +3,7 @@ import ActivityKit
 import OSLog
 import UIKit
 
-private let kAppGroup = "group.com.liftosaur.workout"
+private let kAppGroup = AppConfiguration.appGroupId
 
 // A Live Activity "Complete Set" tap can't optimistically update the widget
 // (next-set/exercise depends on JS-only logic: supersets, update scripts,

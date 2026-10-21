@@ -7,7 +7,7 @@ private let kCompleteSetRequestedDarwinName = "com.liftosaur.workout.completeSet
 
 @available(iOS 16.2, *)
 func checkAndEndActivityIfAppKilled() async {
-    guard let sharedDefaults = UserDefaults(suiteName: "group.com.liftosaur.workout") else {
+    guard let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupId) else {
         return
     }
     if let lastHeartbeat = sharedDefaults.object(forKey: "appHeartbeat") as? TimeInterval {
@@ -77,7 +77,7 @@ struct AdjustRestTimerIntent: LiveActivityIntent {
             }
         }
 
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.liftosaur.workout") {
+        if let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupId) {
             sharedDefaults.set(action, forKey: "adjustRestTimerAction")
             sharedDefaults.set(entryIndex, forKey: "adjustRestTimerEntryIndex")
             sharedDefaults.set(setIndex, forKey: "adjustRestTimerSetIndex")
@@ -137,7 +137,7 @@ struct CompleteSetIntent: LiveActivityIntent {
         }
 
         let requestId = "\(self.entryIndex)-\(self.setIndex)-\(Int(Date().timeIntervalSince1970 * 1000))"
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.liftosaur.workout") {
+        if let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupId) {
             sharedDefaults.removeObject(forKey: "completeSetAckRequestId")
             sharedDefaults.set(self.entryIndex, forKey: "completeSetEntryIndex")
             sharedDefaults.set(self.setIndex, forKey: "completeSetSetIndex")
@@ -169,7 +169,7 @@ struct CompleteSetIntent: LiveActivityIntent {
     }
 
     private static func waitForCompleteSetAck(requestId: String, timeout: TimeInterval) async {
-        let defaults = UserDefaults(suiteName: "group.com.liftosaur.workout")
+        let defaults = UserDefaults(suiteName: AppConfiguration.appGroupId)
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             if defaults?.string(forKey: "completeSetAckRequestId") == requestId {
@@ -222,7 +222,7 @@ struct RecordSetTimerIntent: LiveActivityIntent {
 
         let elapsedSeconds = max(0, Int((Date().timeIntervalSince1970 * 1000 - Double(setTimerSince)) / 1000.0))
         let requestId = "record-\(entryIndex)-\(setIndex)-\(Int(Date().timeIntervalSince1970 * 1000))"
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.liftosaur.workout") {
+        if let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupId) {
             sharedDefaults.removeObject(forKey: "completeSetAckRequestId")
             sharedDefaults.set(entryIndex, forKey: "recordSetTimerEntryIndex")
             sharedDefaults.set(setIndex, forKey: "recordSetTimerSetIndex")
@@ -250,7 +250,7 @@ struct RecordSetTimerIntent: LiveActivityIntent {
     }
 
     private static func waitForAck(requestId: String, timeout: TimeInterval) async {
-        let defaults = UserDefaults(suiteName: "group.com.liftosaur.workout")
+        let defaults = UserDefaults(suiteName: AppConfiguration.appGroupId)
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             if defaults?.string(forKey: "completeSetAckRequestId") == requestId {
@@ -304,7 +304,7 @@ struct StartSetTimerWorkIntent: LiveActivityIntent {
         // suspended, and the work clock has to start when the user actually tapped.
         let tappedAt = Int(Date().timeIntervalSince1970 * 1000)
         let requestId = "startwork-\(tappedAt)"
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.liftosaur.workout") {
+        if let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupId) {
             sharedDefaults.removeObject(forKey: "completeSetAckRequestId")
             sharedDefaults.set(true, forKey: "startSetTimerWork")
             sharedDefaults.set(entryIndex, forKey: "startSetTimerWorkEntryIndex")
@@ -330,7 +330,7 @@ struct StartSetTimerWorkIntent: LiveActivityIntent {
     }
 
     private static func waitForAck(requestId: String, timeout: TimeInterval) async {
-        let defaults = UserDefaults(suiteName: "group.com.liftosaur.workout")
+        let defaults = UserDefaults(suiteName: AppConfiguration.appGroupId)
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             if defaults?.string(forKey: "completeSetAckRequestId") == requestId {
@@ -382,7 +382,7 @@ struct OpenWorkoutRecordSetTimerIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         let elapsedSeconds = max(0, Int((Date().timeIntervalSince1970 * 1000 - Double(setTimerSince)) / 1000.0))
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.liftosaur.workout") {
+        if let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupId) {
             sharedDefaults.set(entryIndex, forKey: "recordSetTimerEntryIndex")
             sharedDefaults.set(setIndex, forKey: "recordSetTimerSetIndex")
             sharedDefaults.set(elapsedSeconds, forKey: "recordSetTimerElapsedSeconds")
@@ -436,7 +436,7 @@ struct OpenWorkoutIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         Logger.liveActivity.debug("OpenWorkoutIntent.perform (completeSet=\(self.completeSet))")
         if completeSet {
-            if let sharedDefaults = UserDefaults(suiteName: "group.com.liftosaur.workout") {
+            if let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupId) {
                 sharedDefaults.removeObject(forKey: "completeSetRequestId")
                 sharedDefaults.set(entryIndex, forKey: "completeSetEntryIndex")
                 sharedDefaults.set(setIndex, forKey: "completeSetSetIndex")

@@ -173,6 +173,7 @@ import {
 import { IAuthToken } from "../utils/keychain";
 import { Analytics_trackPurchase, Analytics_trackSignUp } from "../utils/analytics";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { ForkServices_plan } from "../utils/forkServices";
 import { TabRouting_programTab } from "../models/tabRouting";
 import { BackupReminder_isDue, BackupReminder_message } from "../models/backupReminder";
 import {
@@ -2413,6 +2414,9 @@ export function Thunk_fetchInitial(): IThunk {
       WhatsNew_updateStorage(dispatch);
     }
     dispatch(Thunk_fetchPrograms());
+    if (!ForkServices_plan(OfflineOnly_isEnabled()).serverStartup) {
+      return;
+    }
     // A debug sandbox must not verify the target's subscription receipts or restore IAPs.
     if (AdminDebug_isDebugAccountId(getState().storage.tempUserId)) {
       return;

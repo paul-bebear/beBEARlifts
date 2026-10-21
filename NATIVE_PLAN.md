@@ -2,7 +2,36 @@
 
 How to ship this fork as a native iPhone app on TestFlight. Written 2026-10-21 against master at `638c5dec`.
 
-Status: step 1 of 14 is done (the native build compiles with the fork's tabs). The task list at the end has the rest.
+Current configuration after `HANDOFF-xcode.md`: native startup disables upstream services, Release disables OTA, and native food photos use the camera picker. `ios/AppBranding.xcconfig` owns the display name, bundle prefix, signing team, and derived App Group. The signing team remains empty. Device testing and App Store Connect setup remain separate steps.
+
+Verified on 2026-10-21 with Xcode 26.6 and SDKs 26.5:
+
+- Full Debug scheme built for arm64 iOS Simulator, including the Watch app. No simulator was booted or app launched.
+- An unsigned Release archive built for `generic/platform=iOS`. All four archived plists contain beBEAR, the derived App Group, and offline mode.
+- The archive contains the Hermes phone bundle and the production watch bundle. The watch bundle uses the fork host.
+- TypeScript, changed-file ESLint, and 48 focused mocha tests passed. Camera, AI results, HealthKit, and Watch behavior still need device testing.
+
+Build Debug without launching a simulator:
+
+```bash
+npm run ensure:localdomain
+npm run build:watch-bundle
+cd ios
+RCT_USE_PREBUILT_RNCORE=1 RCT_NEW_ARCH_ENABLED=1 USE_FRAMEWORKS=static pod install
+cd ..
+xcodebuild -workspace ios/Liftosaur.xcworkspace -scheme Liftosaur -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build
+```
+
+Rebuild the embedded watch bundle for Release, then create an unsigned archive:
+
+```bash
+NODE_ENV=production npm run build:watch-bundle
+xcodebuild -workspace ios/Liftosaur.xcworkspace -scheme Liftosaur -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO archive
+```
+
+All four Release targets define `DISABLE_OTA` and read `AppGroupIdentifier` from their processed plists. Cached OTA bundles are ignored. `forkServices.ts` disables Rollbar, AppsFlyer, telemetry, upstream login, push, purchases, and receipt checks when the offline flag is on. The phone and watch use the fork's host. Watch server sync is disabled. The scheme has no StoreKit test configuration. The phone retains HealthKit and App Groups entitlements.
+
+Set `APP_DEVELOPMENT_TEAM` and the friend's bundle prefix in `ios/AppBranding.xcconfig` before signing. Register the resulting `APP_GROUP_IDENTIFIER` for all four targets. The release script reads those settings and stops while the team is empty. Configure the friend's App Store Connect credentials separately before uploading.
 
 ## Why native
 
@@ -21,7 +50,7 @@ The PWA on lifts.paulbebear.com cannot read Apple Health, cannot talk to an Appl
 `babel.config.js` now inlines `__OFFLINE_ONLY__` for Metro builds. Metro identifies itself to Babel as the caller `metro`, so the web build and the mocha tests do not see this plugin.
 
 - Default: on. Xcode builds from the GUI carry no custom environment, so an archive gets the fork's offline app with no extra setup.
-- Off: `LFT_OFFLINE_ONLY=0` builds upstream's online app. Metro caches transformed files, so start Metro with `--reset-cache` after changing the variable.
+- Off: `LFT_OFFLINE_ONLY=0` opts JavaScript into upstream services. Reset Metro's cache after changing the variable. Removed entitlements, Release OTA protection, and the native `ForkOfflineOnly` plist flag remain unchanged.
 
 What the flag changes on native, all through `OfflineOnly_isEnabled()`:
 
@@ -31,7 +60,7 @@ What the flag changes on native, all through `OfflineOnly_isEnabled()`:
 - `lg()` in `src/utils/log.ts` sends no events. The signup prompt and "hear about us" prompt never show.
 - Effort rating per set is on by default, and the weekly backup reminder runs.
 
-The web build also installs `OfflineOnly_installFetchGuard`, which blocks every origin except Spotify and Supabase. Native has no such guard. Upstream calls that are not behind the flag still reach upstream's servers on native. The section on upstream services lists them.
+The web build also installs `OfflineOnly_installFetchGuard`. Native gates upstream startup services through `ForkServices_plan`. Fork APIs and Supabase remain available.
 
 ## Fork features that use web-only code
 
@@ -45,10 +74,13 @@ Fixed in the first PR:
 - Music screen: `SpotifyClient_takeError` read `localStorage` during render, which throws a ReferenceError on native and takes down the screen. It now returns nothing when `localStorage` is missing. The "Connect Spotify" button is replaced on native with a line that says login is not in the iPhone app yet.
 - Native navigator: `src/navigation/AppNavigator.native.tsx` had no Friends tab and no Music, Reports or Body scans screens. The footer would show a Friends button with no screen behind it. The native navigator now mirrors the web one.
 
-Already stubbed on native before this work (each `.native.tsx` file shows one line of text or renders nothing):
+Native camera support:
+
+- Plate and nutrition label photos use `react-native-image-picker`. `nativeFoodCapture.native.ts` checks AI consent before camera permission or library access. The picker limits images to 1024 pixels for meals and 1600 for labels. Results use the existing `FoodApi_*` calls. Label values remain editable before saving. Cancellation and permission denial send no photo.
+
+Still stubbed on native:
 
 - Barcode scanner, `src/components/foodBarcodeScanner.tsx`: uses `@zxing/browser` and a `<video>` element. Native fix: `react-native-vision-camera` has a built-in code scanner that reads EAN-13, EAN-8, UPC-A and UPC-E. It is a new pod and needs a camera permission text. Size: 1 day, most of it testing scans on the phone.
-- Plate photo, `src/components/foodPhotoPanel.tsx`, and nutrition label photo, `src/components/foodLabelPanel.tsx`: use `<input type="file">` and a canvas resize in `src/utils/imageResize.ts`. Native fix: `react-native-image-picker` is already installed (upstream uses it for share backgrounds). Its `maxWidth`, `maxHeight` and `includeBase64` options replace the canvas resize, and the result goes to the same `FoodApi_*` calls. Size: 4 hours for both panels.
 - Story card, `src/components/workoutStoryCard.tsx`: draws HTML `<div>`s and turns them into a PNG with `html-to-image`. Native fix: rebuild the card from React Native views, capture it with `react-native-view-shot`, and share it with `react-native-share`. Both are installed. Size: 2 days, because the layout is CSS and every piece needs a native equivalent.
 
 Hidden on native by an existing `Platform.OS === "web"` check:
@@ -90,45 +122,44 @@ Size: 1 day, plus 1 hour of testing on the phone.
 
 ## Upstream services to switch off in the native build
 
-The offline flag covers sync and in-app events. These still reach upstream's servers or use upstream's keys on native:
+Completed by `HANDOFF-xcode.md`:
 
-- Over-the-air JS updates. This one matters most. `ios/Shared/LftUpdater/` downloads new JS from `https://www.liftosaur.com/api/updates/manifest` (the `LftUpdatesManifestURL` key in `Info.plist`). A Release build would replace the fork's JS with upstream's Liftosaur. The Swift code already has a `DISABLE_OTA` switch. Add `DISABLE_OTA` to `SWIFT_ACTIVE_COMPILATION_CONDITIONS` for Release in all four targets, so the app always loads the embedded `main.jsbundle` and `watch-bundle.js`.
-- Rollbar: `App.native.tsx` configures Rollbar with upstream's token, so the fork's crashes would land in upstream's dashboard with the user's id. Turn it off when the offline flag is on.
-- AppsFlyer and EventManager telemetry: `Analytics_initialize` and `EventManager_initTelemetry` in `App.native.tsx` use upstream's keys and API. Turn both off when the flag is on.
-- `Thunk_fetchInitial`: fetches upstream's program list and checks subscription receipts. The receipts check does nothing for the fork, because `Subscriptions_isUnlockedByFork()` already unlocks premium. Skip the server parts when the flag is on.
-- Login: Settings already hides Account. Remove Sign in with Apple (`com.apple.developer.applesignin`) and the Google URL scheme from the entitlements and `Info.plist`, because the friend's App ID does not have them set up.
-- Paywall and purchases: premium is already unlocked by `Subscriptions_isUnlockedByFork()`. The StoreKit listener in `App.native.tsx` still starts. Skip it when the flag is on, and remove `ios/Store.storekit` from the scheme.
-- Universal links: the `applinks:liftosaur.com` entitlement only works for upstream's team ID. Remove it. `ImportExporter_handleUniversalLink` then never runs.
-- Push: `aps-environment` is set for upstream's server push (`LiftosaurPushImpl.swift`). The live activity starts with `pushType: nil`, so it updates locally. Remove the entitlement and skip push registration when the flag is on.
+- OTA: all four Release configurations define `DISABLE_OTA`. `effectiveBundleURL` ignores cached downloads and returns embedded JS. Watch bundle fetching is disabled.
+- Rollbar, AppsFlyer and EventManager telemetry return without initialization or uploads when the offline flag is on. Native Watch telemetry, saved event retries, and crash reports are also disabled.
+- `Thunk_fetchInitial` loads the fork's program catalog, then skips upstream subscription and account requests.
+- Login: Apple sign-in and the Google URL scheme are removed. Google SDK setup and watch auth handoff are disabled offline.
+- Purchases: the IAP adapter and StoreKit listener are disabled offline. The scheme has no StoreKit configuration.
+- Universal links and push: the upstream entitlements and startup registration are removed. Local live activities remain available.
+- Watch: Release hosts and webpack's default watch host point to the fork. Watch server sync and cached-auth server fetches are disabled offline.
 - TikTok and Google Ads pods: used by upstream's share and ad attribution. They stay unused. Removing them from `ios/Podfile` is optional and shortens the build.
 
-Size: 4 hours for the JS gates, 3 hours for the Xcode and plist clean-up.
+The pure decisions and startup behavior are covered by `test/forkServices.test.ts`.
 
 ## Apple Health, Apple Watch and live activities
 
 All three come from upstream and need no new code. They need the right capabilities on the friend's App IDs and a shared App Group.
 
-- Apple Health: `src/utils/health.ios.ts` and `Thunk_syncHealthKit`. It runs without an account. The user turns it on in Settings → Apple Health. Needs the HealthKit capability on the main app and the watch app. Rewrite the two `NSHealth*UsageDescription` texts in `Info.plist`, because they say "Liftosaur".
-- Live activity and lock-screen rest timer: `LiftosaurWorkoutWidgetExtension`, with `NSSupportsLiveActivities` set. The app and the widget share data through the App Group `group.com.liftosaur.workout`.
+- Apple Health: `src/utils/health.ios.ts` and `Thunk_syncHealthKit` run without an account. Enable HealthKit for the phone and watch App IDs. The permission descriptions use beBEAR.
+- Live activity and lock-screen rest timer: `LiftosaurWorkoutWidgetExtension`, with `NSSupportsLiveActivities` set. The app and widget share `APP_GROUP_IDENTIFIER`.
 - Apple Watch: `LiftosaurWatch` and `LiftosaurWatchComplication`. The watch runs the fork's JS in QuickJS from `watch-bundle.js`. It syncs with the phone over WatchConnectivity, which needs no account. Its server sync path (`WatchSyncManager.syncViaServer`) only runs with upstream login, so it stays unused.
-- App Group rename: the group ID appears in 4 entitlements files and 14 places in 5 Swift files (`LiftosaurLiveActivityImpl.swift`, `ComplicationStore.swift` and three widget files). The friend's team cannot use `group.com.liftosaur.workout`, so all of them move to the new group ID.
+- App Group: all four entitlements use `$(APP_GROUP_IDENTIFIER)`. Shared Swift code reads the expanded `AppGroupIdentifier` plist value.
 - Watch build on a Mac: Xcode refuses to build the `Liftosaur` scheme without the watchOS simulator runtime: "This scheme builds an embedded Apple Watch app. watchOS 26.5 must be installed". Install it in Xcode → Settings → Components, or with `xcodebuild -downloadPlatform watchOS`. It is several GB.
 
 ## Name, bundle ID and signing
 
-Proposed. The user and the friend decide.
+The user selected beBEAR. The bundle prefix waits for the friend's Apple team.
 
-- Display name: "beBEAR lifts", the name the story card and the playlist description already use.
-- Bundle IDs: `com.paulbebear.lifts`, `com.paulbebear.lifts.watchkitapp`, `com.paulbebear.lifts.watchkitapp.complications` and `com.paulbebear.lifts.LiftosaurWorkoutWidgetExtension`.
-- App Group: `group.com.paulbebear.lifts`.
+- Display name: `beBEAR`. The App Store name is `beBEAR: Lift & Track`.
+- Bundle IDs derive from `APP_BUNDLE_PREFIX`, currently `com.liftosaur.www` as a placeholder.
+- App Group: `group.$(APP_BUNDLE_PREFIX).workout`. All four targets read the expanded value from `Info.plist`.
 - App icon and launch screen: replace upstream's Liftosaur dinosaur. The name and logo are upstream's branding, and the licence does not cover them.
 - Encryption: add `ITSAppUsesNonExemptEncryption = NO` to `Info.plist`. The app uses only HTTPS, so App Store Connect stops asking at every upload.
 
 What the friend does with their Apple Developer account:
 
 1. In Certificates, Identifiers & Profiles, register the 4 bundle IDs and the App Group. Turn on HealthKit for the app and the watch app, and App Groups for all 4.
-2. In App Store Connect, create a new app with the main bundle ID and the name "beBEAR lifts".
-3. In Xcode, open `ios/Liftosaur.xcworkspace`. For each of the 4 targets, pick their team under Signing & Capabilities and keep "Automatically manage signing" on.
+2. In App Store Connect, create a new app with the main bundle ID and the name "beBEAR: Lift & Track".
+3. Set `APP_DEVELOPMENT_TEAM` and `APP_BUNDLE_PREFIX` in `ios/AppBranding.xcconfig`. Open `ios/Liftosaur.xcworkspace` and verify all four targets inherit those settings.
 4. Choose the "Any iOS Device (arm64)" destination, then Product → Archive. It needs the pods installed, the watch bundle built and the watchOS platform installed.
 5. In the Organizer, Distribute App → App Store Connect → Upload.
 6. In App Store Connect → TestFlight, wait for processing (10 to 30 minutes). Then add the build to an external testing group and turn on the public link.
@@ -154,13 +185,13 @@ Draft message to Anton:
 In order. "Codex" means a written handoff can do the task without a phone. "Phone" means it needs testing on the iPhone.
 
 1. Done in the first PR: native build with the offline flag on, the fork's tabs, and web-only features guarded. 1 day.
-2. Make the build the fork's own: bundle IDs, display name, icon, App Group in 4 entitlements and 14 Swift references, remove applinks, Sign in with Apple, the Google URL scheme and `aps-environment`, `DISABLE_OTA` for Release, `ITSAppUsesNonExemptEncryption`. 3 hours. Codex, with the exact list from the upstream-services and signing sections. The icon artwork comes from the user.
-3. Switch off upstream services in JS: Rollbar, AppsFlyer, EventManager telemetry, the server parts of `Thunk_fetchInitial`, the StoreKit listener. 4 hours. Codex.
+2. Done: beBEAR display name, shared identity settings, derived App Group, upstream entitlements removed, Release OTA disabled. Icon artwork remains separate.
+3. Done: upstream analytics, telemetry, startup account requests, push and StoreKit are disabled offline.
 4. The friend signs, archives and uploads build 1 to TestFlight. 2 hours of the friend's time, plus up to 48 hours of Beta App Review.
 5. The user tests build 1 on the iPhone: a workout, the lock-screen timer, Apple Health, Food search, warmup, cloud backup, export. 1 hour. Phone.
 6. Spotify login on native. 1 day. Codex can write it. Phone for the redirect.
 7. Music tracking on native with `AppState`. 2 hours. Codex. Phone to check the lock-screen catch-up.
-8. Plate and label photos with `react-native-image-picker`. 4 hours. Codex. Phone.
+8. Code complete: plate and label photos with `react-native-image-picker`. Camera, consent and AI results need iPhone testing.
 9. Barcode scanner with `react-native-vision-camera`. 1 day. Codex for the code. Phone for real scans.
 10. Food log import with `FileImport_pickFile`. 1 hour. Codex.
 11. Apple Watch: install the watchOS platform, build, pair, and run a workout on the watch. Half a day. Phone and watch.
@@ -173,8 +204,9 @@ Friends on Supabase is being built in another session. Its code must also avoid 
 ## Build problems found and fixed
 
 - `ios/.xcode.env.local` was committed with upstream's node path, `/opt/homebrew/Cellar/node/23.5.0/bin/node`. Every Xcode script phase that runs node failed on a machine without that exact version. Xcode reported it as "Internal inconsistency error: never received target ended message" after the "[Hermes] Replace Hermes for the right configuration" phase failed with no output. Fix: the file is untracked and in `.gitignore`. `pod install` writes it per machine. If it is missing, run `echo "export NODE_BINARY=$(command -v node)" > ios/.xcode.env.local`.
-- The watchOS runtime error in the section on Apple Watch. For a compile check without it, remove the "Embed Watch Content" phase and the `LiftosaurWatch` dependency from the `Liftosaur` target in a scratch copy. Never commit that.
+- watchOS 26.5 was installed with the user's permission for this handoff. Keep the embedded Watch target enabled during build verification.
+- A symlinked `node_modules` caused Metro resolution failures and invalid CocoaPods header-copy paths. Use a local dependency directory, then rerun `pod install`.
 
 ## Next action
 
-Send the friend the eight signing steps from the bundle ID section. Ask for their Team ID, so task 2 can use the right bundle IDs.
+Set the friend's Team ID in `ios/AppBranding.xcconfig` before signing a device build.

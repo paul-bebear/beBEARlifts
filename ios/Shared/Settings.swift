@@ -13,9 +13,9 @@ let baseApiUrl = URL(string: "https://local-api.liftosaur.com:3000")!
 let baseImageUrl = URL(string: "https://local.liftosaur.com:8080")!
 // let baseImageUrl = URL(string: "https://stage.liftosaur.com")!
 #else
-let baseUrl = URL(string: "https://www.liftosaur.com")!
-let baseApiUrl = URL(string: "https://api3.liftosaur.com")!
-let baseImageUrl = URL(string: "https://www.liftosaur.com")!
+let baseUrl = URL(string: "https://lifts.paulbebear.com")!
+let baseApiUrl = URL(string: "https://lifts.paulbebear.com")!
+let baseImageUrl = URL(string: "https://lifts.paulbebear.com")!
 #endif
 
 let rollbarAccessToken = "d37f0af379b741a7b0b0fcc6b9e9a673"

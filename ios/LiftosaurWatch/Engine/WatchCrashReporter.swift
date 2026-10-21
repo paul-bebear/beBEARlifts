@@ -47,6 +47,10 @@ class WatchCrashReporter {
     }
 
     func checkAndReportPreviousCrash() {
+        guard !AppConfiguration.offlineOnly else {
+            cleanup()
+            return
+        }
         guard let breadcrumbURL = breadcrumbURL else { return }
 
         let breadcrumbs = (try? String(contentsOf: breadcrumbURL, encoding: .utf8)) ?? ""
