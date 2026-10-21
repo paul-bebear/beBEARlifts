@@ -101,7 +101,6 @@ import {
 import { UidFactory_generateUid } from "../utils/generator";
 import { ProgramSet_getEvaluatedWeight } from "./programSet";
 import { Stats_getCurrentMovingAverageBodyweight, Stats_getEmpty } from "./stats";
-import { EffortRating_shouldAsk } from "./effortRating";
 import { IChangeAMRAPAction, ICompleteSetAction } from "../ducks/reducer";
 import {
   LiveActivityManager_updateProgressLiveActivity,
@@ -1169,7 +1168,6 @@ export function Progress_completeSet(
     (set?.completedReps == null || (isUnilateral && set?.completedRepsLeft == null)) &&
     (!!set?.isAmrap || set.reps == null);
   const shouldAskWeight = set?.completedWeight == null && (!!set?.askWeight || set.weight == null);
-  const rateEffort = mode === "workout" && EffortRating_shouldAsk(set, settings, !!isPlayground);
   if (mode === "warmup") {
     return lf(progress)
       .p("entries")
@@ -1186,7 +1184,7 @@ export function Progress_completeSet(
           isCompleted: !progressSet.isCompleted,
         };
       });
-  } else if (Progress_shouldShowAmrapModal(entry, setIndex, mode, hasUserPromptedVars, settings) || rateEffort) {
+  } else if (Progress_shouldShowAmrapModal(entry, setIndex, mode, hasUserPromptedVars, settings)) {
     return {
       ...progress,
       amrapModal: {
@@ -1197,7 +1195,6 @@ export function Progress_completeSet(
         userVars: shouldPromptUserVars,
         isAmrap: isAmrap,
         askWeight: shouldAskWeight,
-        rateEffort: rateEffort || undefined,
       },
     };
   } else {
@@ -2250,8 +2247,7 @@ export function Progress_changeAmrapAction(
     action.amrapLeftValue == null &&
     action.rpeValue == null &&
     action.weightValue == null &&
-    ObjectUtils_keys(action.userVars || {}).length === 0 &&
-    !action.rateEffort
+    ObjectUtils_keys(action.userVars || {}).length === 0
   ) {
     return { ...newProgress, amrapModal: undefined };
   }
@@ -2261,7 +2257,7 @@ export function Progress_changeAmrapAction(
   if (action.amrapLeftValue != null) {
     newProgress = Progress_updateAmrapRepsLeftInExercise(newProgress, action.amrapLeftValue);
   }
-  if (action.logRpe || (action.rateEffort && action.rpeValue != null)) {
+  if (action.logRpe) {
     newProgress = Progress_updateRpeInExercise(newProgress, action.rpeValue);
   }
   if (action.weightValue != null) {

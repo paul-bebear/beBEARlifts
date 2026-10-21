@@ -1,6 +1,6 @@
 import "mocha";
 import { expect } from "chai";
-import { IHistoryRecord, ISet } from "../src/types";
+import { IEffort, IHistoryRecord, ISet } from "../src/types";
 import { Settings_build } from "../src/models/settings";
 import {
   WorkoutReport_answer,
@@ -24,7 +24,7 @@ interface ISetSpec {
   reps: number;
   done?: number;
   minReps?: number;
-  rpe?: number;
+  effort?: IEffort;
 }
 
 function set(spec: ISetSpec): ISet {
@@ -36,7 +36,7 @@ function set(spec: ISetSpec): ISet {
     weight: { value: spec.kg, unit: "kg" },
     completedWeight: { value: spec.kg, unit: "kg" },
     completedReps: spec.done ?? spec.reps,
-    completedRpe: spec.rpe,
+    completedEffort: spec.effort,
     isCompleted: true,
   } as ISet;
 }
@@ -54,7 +54,7 @@ function workout(id: number, daysAgo: number, entries: Record<string, ISetSpec[]
   } as unknown as IHistoryRecord;
 }
 
-const three = (kg: number, reps: number, rpe?: number): ISetSpec[] => [1, 2, 3].map(() => ({ kg, reps, rpe }));
+const three = (kg: number, reps: number, effort?: IEffort): ISetSpec[] => [1, 2, 3].map(() => ({ kg, reps, effort }));
 
 describe("WorkoutReport", () => {
   const history = [
@@ -89,7 +89,7 @@ describe("WorkoutReport", () => {
   });
 
   it("reads the effort ratings: too hard keeps the weight, all easy adds weight", () => {
-    const today = workout(3, 0, { squat: three(100, 5, 10), legExtension: three(50, 12, 6) });
+    const today = workout(3, 0, { squat: three(100, 5, "hard"), legExtension: three(50, 12, "easy") });
     const items = WorkoutReport_build(today, history, undefined, settings).items;
     expect(items.map((i) => i.kind)).to.deep.equal(["tooHard", "tooEasy"]);
   });

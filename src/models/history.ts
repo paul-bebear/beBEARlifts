@@ -141,6 +141,7 @@ export function History_finishProgramDay(
               completedReps: set.isCompleted ? set.completedReps : undefined,
               completedRepsLeft: isUnilateral && set.isCompleted ? set.completedRepsLeft : undefined,
               completedRpe: set.isCompleted ? set.completedRpe : undefined,
+              completedEffort: set.isCompleted ? set.completedEffort : undefined,
               completedWeight: set.isCompleted ? set.completedWeight : undefined,
             };
           }),

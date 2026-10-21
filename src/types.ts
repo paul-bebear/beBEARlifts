@@ -467,6 +467,10 @@ void _VCustomExerciseMatches;
 export const VCustomExercise: v.GenericSchema<ICustomExercise> = _VCustomExercise;
 export type IAllCustomExercises = Partial<Record<string, ICustomExercise>>;
 
+export const efforts = ["easy", "right", "hard"] as const;
+export const VEffort = v.picklist(efforts);
+export type IEffort = v.InferOutput<typeof VEffort>;
+
 export interface ISet {
   vtype: "set";
   index: number;
@@ -491,6 +495,7 @@ export interface ISet {
   completedReps?: number;
   completedWeight?: IWeight;
   completedRpe?: number;
+  completedEffort?: IEffort;
   completedSetTimer?: number;
   completedSetTimerLeft?: number;
   programSetIndex?: number;
@@ -519,6 +524,7 @@ const _VSet = v.object({
   completedReps: v.optional(v.number()),
   completedWeight: v.optional(VWeight),
   completedRpe: v.optional(v.number()),
+  completedEffort: v.optional(VEffort),
   completedSetTimer: v.optional(v.number()),
   completedSetTimerLeft: v.optional(v.number()),
   programSetIndex: v.optional(v.number()),
@@ -1025,7 +1031,6 @@ export interface IHistoryRecord {
     logRpe?: boolean;
     askWeight?: boolean;
     userVars?: boolean;
-    rateEffort?: boolean;
     nonce?: number;
   };
   // The exercise the workout screen is scrolled to. Lives on the record (not under `ui`) so it version-syncs
@@ -1092,7 +1097,6 @@ const _VHistoryRecord = v.object({
       logRpe: v.optional(v.boolean()),
       askWeight: v.optional(v.boolean()),
       userVars: v.optional(v.boolean()),
-      rateEffort: v.optional(v.boolean()),
       nonce: v.optional(v.number()),
     })
   ),

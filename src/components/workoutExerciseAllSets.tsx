@@ -40,6 +40,8 @@ import { memo, useCallback, useMemo } from "react";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { useTrackClick } from "../utils/clickTracking";
 import { useRem } from "../utils/useRem";
+import { EffortRating_stripSetIndex } from "../models/effortRating";
+import { EffortRatingStrip } from "./effortRatingStrip";
 
 interface IWorkoutExerciseAllSets {
   clipWorkoutId?: number;
@@ -156,6 +158,7 @@ function WorkoutExerciseAllSetsInner(props: IWorkoutExerciseAllSets): JSX.Elemen
   const expandedSet =
     expanded != null ? (expanded.mode === "warmup" ? warmupSets : sets)[expanded.setIndex] : undefined;
   const isLastInColumn = settings.workoutSettings.targetType === "lasttime";
+  const effortSetIndex = EffortRating_stripSetIndex(sets, settings, isCurrentProgress, props.isPlayground);
   const previousLines = useMemo(
     () =>
       expansion && expanded && expandedSet
@@ -300,6 +303,14 @@ function WorkoutExerciseAllSetsInner(props: IWorkoutExerciseAllSets): JSX.Elemen
         ))}
       </View>
       <Animated.View layout={WorkoutLayoutTransition}>
+        {effortSetIndex != null && (
+          <EffortRatingStrip
+            set={sets[effortSetIndex]}
+            setIndex={effortSetIndex}
+            lbSet={lbSetByIndex[effortSetIndex]}
+            dispatch={dispatch}
+          />
+        )}
         {showExpandHint && (
           <Text className="px-4 pt-1 text-xs text-text-secondary" testID="workout-expand-hint">
             Tap a set to expand or collapse it

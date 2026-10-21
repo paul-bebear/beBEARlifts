@@ -1,55 +1,95 @@
-import { ISet, ISettings } from "../types";
+import { IEffort, IHistoryRecord, ISet, ISettings } from "../types";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
-
-export type IEffort = "easy" | "right" | "hard";
 
 export interface IEffortOption {
   effort: IEffort;
   label: string;
   detail: string;
-  rpe: number;
 }
 
-// Stored as RPE (10 minus reps in reserve), so Liftoscript progressions and graphs can read it.
 export const EffortRating_options: IEffortOption[] = [
-  { effort: "easy", label: "Too easy", detail: "4+ reps left", rpe: 6 },
-  { effort: "right", label: "Just right", detail: "1–3 reps left", rpe: 8 },
-  { effort: "hard", label: "Too hard", detail: "0 reps left", rpe: 10 },
+  { effort: "easy", label: "Too easy", detail: "4+ reps left" },
+  { effort: "right", label: "Just right", detail: "1–3 reps left" },
+  { effort: "hard", label: "Too hard", detail: "0 reps left" },
 ];
 
-export function EffortRating_fromRpe(rpe: number | undefined): IEffort | undefined {
-  if (rpe == null) {
-    return undefined;
-  }
-  if (rpe >= 10) {
-    return "hard";
-  }
-  return rpe >= 7 ? "right" : "easy";
-}
+// PR #18 stored the rating as completedRpe 6, 8 or 10. It shipped on this day, so older RPE values are real logged RPE.
+const legacyRatingSince = Date.UTC(2026, 9, 20);
+const legacyRpeToEffort: Partial<Record<number, IEffort>> = { 6: "easy", 8: "right", 10: "hard" };
 
 // On by default in this fork's offline build only, so upstream's build and tests keep completing sets in one tap.
 export function EffortRating_isEnabled(settings: ISettings): boolean {
   return settings.rateEachSet ?? OfflineOnly_isEnabled();
 }
 
-// Timed sets finish through the set-timer flow, and a program's own logRpe already asks for a number.
-export function EffortRating_shouldAsk(set: ISet | undefined, settings: ISettings, isPlayground: boolean): boolean {
-  return (
-    set != null &&
-    !isPlayground &&
-    EffortRating_isEnabled(settings) &&
-    !set.isCompleted &&
-    set.setTimer == null &&
-    !set.logRpe
-  );
+// Timed sets have no reps in reserve, and a program's own logRpe already asks for a number.
+export function EffortRating_canRate(set: ISet): boolean {
+  return !!set.isCompleted && set.setTimer == null && !set.logRpe;
+}
+
+export function EffortRating_lastTickedSetIndex(sets: ISet[]): number | undefined {
+  let latest: number | undefined;
+  sets.forEach((set, index) => {
+    if (set.isCompleted && (latest == null || (set.timestamp ?? 0) >= (sets[latest].timestamp ?? 0))) {
+      latest = index;
+    }
+  });
+  return latest;
+}
+
+export function EffortRating_stripSetIndex(
+  sets: ISet[],
+  settings: ISettings,
+  isCurrentProgress: boolean,
+  isPlayground: boolean
+): number | undefined {
+  if (!isCurrentProgress || isPlayground || !EffortRating_isEnabled(settings)) {
+    return undefined;
+  }
+  const index = EffortRating_lastTickedSetIndex(sets);
+  return index != null && EffortRating_canRate(sets[index]) ? index : undefined;
+}
+
+// Tapping the chosen button again clears it, so a mis-tap can be undone from the strip.
+export function EffortRating_rate(set: ISet, effort: IEffort): ISet {
+  return { ...set, completedEffort: set.completedEffort === effort ? undefined : effort };
 }
 
 // Green is the 1–3 reps-in-reserve target. Both too easy and too hard are yellow. Missed reps stay red upstream.
 export function EffortRating_color(sets: ISet[]): "green" | "yellow" | undefined {
-  const efforts = sets.filter((s) => s.isCompleted).map((s) => EffortRating_fromRpe(s.completedRpe));
-  const rated = efforts.filter((e): e is IEffort => e != null);
+  const rated = EffortRating_efforts(sets);
   if (rated.length === 0) {
     return undefined;
   }
   return rated.every((e) => e === "right") ? "green" : "yellow";
+}
+
+export function EffortRating_efforts(sets: ISet[]): IEffort[] {
+  return sets.filter((s) => s.isCompleted && s.completedEffort != null).map((s) => s.completedEffort as IEffort);
+}
+
+export function EffortRating_moveLegacyRating(set: ISet, recordStartTime: number): ISet {
+  const effort = set.completedRpe != null ? legacyRpeToEffort[set.completedRpe] : undefined;
+  if (effort == null || set.logRpe || set.completedEffort != null || recordStartTime < legacyRatingSince) {
+    return set;
+  }
+  return { ...set, completedRpe: undefined, completedEffort: effort };
+}
+
+export function EffortRating_moveLegacyRatings(record: IHistoryRecord): IHistoryRecord {
+  const amrapModal = record.amrapModal as (IHistoryRecord["amrapModal"] & { rateEffort?: boolean }) | undefined;
+  const isEffortOnlyModal =
+    amrapModal?.rateEffort &&
+    !amrapModal.isAmrap &&
+    !amrapModal.logRpe &&
+    !amrapModal.askWeight &&
+    !amrapModal.userVars;
+  return {
+    ...record,
+    amrapModal: isEffortOnlyModal ? undefined : record.amrapModal,
+    entries: record.entries.map((entry) => ({
+      ...entry,
+      sets: entry.sets.map((set) => EffortRating_moveLegacyRating(set, record.startTime)),
+    })),
+  };
 }
