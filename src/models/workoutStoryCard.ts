@@ -1,7 +1,69 @@
 import { IHistoryRecord, IScreenMuscle, ISettings, IWeight } from "../types";
-import { History_totalRecordSets, History_totalRecordWeight, History_workoutTime } from "./history";
-import { Exercise_synergistMusclesGroups, Exercise_targetMusclesGroups } from "./exercise";
+import {
+  History_totalEntryWeight,
+  History_totalRecordSets,
+  History_totalRecordWeight,
+  History_workoutTime,
+  IPersonalRecords,
+} from "./history";
+import { Exercise_get, Exercise_synergistMusclesGroups, Exercise_targetMusclesGroups } from "./exercise";
 import { Weight_convertTo } from "./weight";
+import { BearTier_progress, IBearTierProgress } from "./bearTier";
+import { BearBadges_forRecord, IBearBadgeCard } from "./bearBadges";
+import { IShareAchievements } from "./shareAchievements";
+import { ILiftEquivalent, LiftEquivalents_pick } from "./liftEquivalents";
+
+export type IShareCardStyle = "rank" | "receipt" | "count" | "photo";
+export type IShareCardPage = IShareCardStyle | "collage";
+
+export const WorkoutStoryCard_styles: readonly IShareCardStyle[] = ["rank", "receipt", "count", "photo"];
+export const WorkoutStoryCard_pages: readonly IShareCardPage[] = [...WorkoutStoryCard_styles, "collage"];
+
+const pageLabels: Record<IShareCardPage, string> = {
+  rank: "Rank",
+  receipt: "Receipt",
+  count: "Count",
+  photo: "Photo",
+  collage: "Collage",
+};
+
+export interface IReceiptLine {
+  name: string;
+  detail: string;
+  volume: string;
+}
+
+export interface IWorkoutReceipt {
+  title: string;
+  date: string;
+  lines: IReceiptLine[];
+  moreCount: number;
+  total: string;
+  prCount: number;
+}
+
+export interface IWorkoutShareData {
+  stats: IWorkoutStoryStats;
+  tier: IBearTierProgress;
+  toNext: string;
+  badge: IBearBadgeCard;
+  receipt: IWorkoutReceipt;
+  equivalent?: ILiftEquivalent;
+  iconCount: number;
+  muscles: Partial<Record<IScreenMuscle, number>>;
+}
+
+export interface IWorkoutShareInput {
+  record: IHistoryRecord;
+  settings: ISettings;
+  prs: IPersonalRecords;
+  achievements: IShareAchievements;
+  seed: number;
+}
+
+const receiptMaxLines = 6;
+const maxIcons = 24;
+const kgPerLb = 0.45359237;
 
 export interface IWorkoutStoryStats {
   weight: IWeight;
@@ -21,6 +83,37 @@ export function WorkoutStoryCard_duration(ms: number): string {
 
 export function WorkoutStoryCard_weightNumber(weight: IWeight): string {
   return Math.round(weight.value).toLocaleString("en-US");
+}
+
+export interface IWorkoutHeadline {
+  label: string;
+  value: string;
+  unit: string;
+}
+
+function setsWord(sets: number): string {
+  return sets === 1 ? "set" : "sets";
+}
+
+export function WorkoutStoryCard_isLoaded(stats: IWorkoutStoryStats): boolean {
+  return stats.weightKg > 0;
+}
+
+export function WorkoutStoryCard_headline(stats: IWorkoutStoryStats): IWorkoutHeadline {
+  return WorkoutStoryCard_isLoaded(stats)
+    ? { label: "LIFTED TODAY", value: WorkoutStoryCard_weightNumber(stats.weight), unit: stats.weight.unit }
+    : { label: "TRAINED TODAY", value: `${stats.sets}`, unit: setsWord(stats.sets) };
+}
+
+export function WorkoutStoryCard_setsText(sets: number): string {
+  return `${sets} ${setsWord(sets)}`;
+}
+
+export function WorkoutStoryCard_summary(stats: IWorkoutStoryStats, tail: string): string {
+  const weight = WorkoutStoryCard_isLoaded(stats)
+    ? [`${WorkoutStoryCard_weightNumber(stats.weight)} ${stats.weight.unit}`]
+    : [];
+  return [...weight, stats.duration, tail].join(" · ");
 }
 
 export function WorkoutStoryCard_stats(record: IHistoryRecord, settings: ISettings): IWorkoutStoryStats {
@@ -63,4 +156,75 @@ export function WorkoutStoryCard_muscles(
     normalized[muscle] = Math.round((value / max) * 100) / 100;
   }
   return normalized;
+}
+
+export function WorkoutStoryCard_pageLabel(page: IShareCardPage): string {
+  return pageLabels[page];
+}
+
+export function WorkoutStoryCard_prCount(record: IHistoryRecord, prs: IPersonalRecords): number {
+  return Object.values(prs[record.id] ?? {}).filter((pr) => pr?.prevMaxWeightSet != null || pr?.prevMax1RMSet != null)
+    .length;
+}
+
+function setsDetail(reps: number[]): string {
+  return reps.every((r) => r === reps[0]) ? `${reps.length}×${reps[0]}` : `${reps.length} sets`;
+}
+
+function entryVolume(weight: IWeight): string {
+  return weight.value > 0 ? WorkoutStoryCard_weightNumber(weight) : "";
+}
+
+export function WorkoutStoryCard_receipt(
+  record: IHistoryRecord,
+  settings: ISettings,
+  prs: IPersonalRecords
+): IWorkoutReceipt {
+  const entries = record.entries.filter((e) => e.sets.some((s) => (s.completedReps ?? 0) > 0));
+  const lines = entries.slice(0, receiptMaxLines).map((entry) => ({
+    name: Exercise_get(entry.exercise, settings.exercises).name,
+    detail: setsDetail(entry.sets.filter((s) => (s.completedReps ?? 0) > 0).map((s) => s.completedReps ?? 0)),
+    volume: entryVolume(History_totalEntryWeight(entry, settings)),
+  }));
+  const stats = WorkoutStoryCard_stats(record, settings);
+  return {
+    title: record.dayName,
+    date: new Date(record.startTime).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+    lines,
+    moreCount: Math.max(0, entries.length - lines.length),
+    total: WorkoutStoryCard_isLoaded(stats)
+      ? `${WorkoutStoryCard_weightNumber(stats.weight)} ${stats.weight.unit}`
+      : WorkoutStoryCard_setsText(stats.sets),
+    prCount: WorkoutStoryCard_prCount(record, prs),
+  };
+}
+
+export function WorkoutStoryCard_toNext(tier: IBearTierProgress, settings: ISettings): string {
+  if (tier.next == null) {
+    return "Top of the food chain";
+  }
+  const amount = settings.units === "lb" ? tier.kgToNext / kgPerLb : tier.kgToNext;
+  return `${Math.ceil(amount).toLocaleString("en-US")} ${settings.units} to ${tier.next.name}`;
+}
+
+export function WorkoutStoryCard_iconCount(count: number): number {
+  return Math.max(1, Math.min(maxIcons, Math.round(count)));
+}
+
+export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShareData {
+  const { record, settings, prs, achievements } = input;
+  const stats = WorkoutStoryCard_stats(record, settings);
+  const lifetime = achievements.lifetimeKg.get(record.id) ?? { beforeKg: 0, afterKg: stats.weightKg };
+  const tier = BearTier_progress(lifetime.beforeKg, lifetime.afterKg);
+  const equivalent = LiftEquivalents_pick(stats.weightKg, input.seed);
+  return {
+    stats,
+    tier,
+    toNext: WorkoutStoryCard_toNext(tier, settings),
+    badge: BearBadges_forRecord(achievements.badges, record),
+    receipt: WorkoutStoryCard_receipt(record, settings, prs),
+    equivalent,
+    iconCount: WorkoutStoryCard_iconCount(equivalent?.count ?? 0),
+    muscles: WorkoutStoryCard_muscles(record, settings),
+  };
 }

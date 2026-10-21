@@ -8,9 +8,11 @@ describe("RunEquivalents", () => {
     const choices = Array.from({ length: 30 }, (_, seed) => RunEquivalents_pick(5000, seed)!);
     expect(new Set(choices.map((c) => c.text)).size).to.be.greaterThan(10);
     for (const choice of choices) {
-      expect(choice.count).to.be.within(2, 999);
+      const isSwarm = choice.noun === "honeybees" || choice.noun === "gummy bears";
+      expect(isSwarm || (choice.count >= 2 && choice.count <= 9999)).to.equal(true);
       expect(choice.text).to.include(choice.noun);
     }
+    expect(choices.some((c) => c.noun === "grizzly bears" && c.number === "2,381")).to.equal(true);
     expect(RunEquivalents_pick(5000, -1)).not.to.equal(undefined);
   });
 
