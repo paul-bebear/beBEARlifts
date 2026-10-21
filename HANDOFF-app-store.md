@@ -31,9 +31,13 @@ Since late 2025 Apple wants the app to name the third-party AI that gets persona
 - Add `ITSAppUsesNonExemptEncryption` = `false`. The app only uses HTTPS, so App Store Connect stops asking about export compliance on every upload.
 - Rewrite the camera and photo library strings. Today they only mention share backgrounds; the fork also uses them for set filming and progress photos.
 
-## 4. One place for the app name and bundle id (Guidelines 4.1 and 4.3)
+## 4. Rename the app to beBEAR (Guidelines 4.1 and 4.3)
 
-The app is still "Liftosaur" with bundle id `com.liftosaur.www`. That id belongs to Liftosaur's owner, and an app branded as a copy of a listed app gets rejected. The user has not picked a name yet, so keep today's values and make the change one edit.
+The app is still "Liftosaur" with bundle id `com.liftosaur.www`. That id belongs to Liftosaur's owner, and an app branded as a copy of a listed app gets rejected. The user picked the name **beBEAR**, written exactly that way: lowercase "be", uppercase "BEAR". The App Store name will be "beBEAR: Lift & Track". The bundle id waits for the friend's Apple team, so keep `com.liftosaur.www` for now and make that change one edit.
+
+- **Display name:** set `APP_DISPLAY_NAME` to `beBEAR`. The watch app shows the same name.
+- **User-facing text:** replace "Liftosaur" with "beBEAR" in every string a user can read. That covers screen titles, onboarding, settings, share text, notifications, the permission strings in `Info.plist`, the web `<title>` and the PWA manifest `name` / `short_name`. Leave code identifiers, file names, import paths, domains, URLs and API hosts alone. The "Liftoscript" language name stays, because it is the program format.
+- **Credit upstream:** add one line to the About or licenses screen: "beBEAR is based on Liftosaur by Anton Astashov (AGPL-3.0)". The AGPL requires keeping that notice.
 
 - **Targets:** the app, `LiftosaurWatch`, the watch complication and `LiftosaurWorkoutWidgetExtension` each set `PRODUCT_BUNDLE_IDENTIFIER` in `ios/Liftosaur.xcodeproj/project.pbxproj`. Move the prefix into an `.xcconfig` setting (for example `APP_BUNDLE_PREFIX`) and the display name into `APP_DISPLAY_NAME`, and use them in every target and `Info.plist`.
 - **List every other place** that has to change for the rename in the PR body: App Group ids, entitlements, the URL scheme, the watch bundle download URL, `app.json`, and user-facing "Liftosaur" strings in the permission texts.
