@@ -33,7 +33,10 @@ describe("Fork services", () => {
       host: "https://dev.invalid",
       apiHost: "https://api.invalid",
     });
-    expect(ForkServices_hosts(false, false, "", "").apiHost).to.equal("https://api3.liftosaur.com");
+    expect(ForkServices_hosts(false, false, "", "")).to.deep.equal({
+      host: "https://lifts.paulbebear.com",
+      apiHost: "https://lifts.paulbebear.com",
+    });
   });
 
   it("still loads programs but never verifies legacy receipts at offline startup", async () => {

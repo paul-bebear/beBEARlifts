@@ -2,7 +2,7 @@
 id: gzcl-vdip
 name: "GZCL: VDIP"
 author: Cody Lefever
-url: "https://www.liftosaur.com/programs/gzcl-vdip"
+url: ""
 shortDescription: Beginner-intermediate program where each set is AMRAP.
 isMultiweek: true
 tags: []

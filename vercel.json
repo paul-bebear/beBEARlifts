@@ -11,11 +11,7 @@
   },
   "redirects": [{ "source": "/", "destination": "/app/", "permanent": false }],
   "rewrites": [
-    { "source": "/app", "destination": "/app/index.html" },
-    {
-      "source": "/externalimages/:path*",
-      "destination": "https://liftosaurimages2.s3-us-west-2.amazonaws.com/:path*"
-    }
+    { "source": "/app", "destination": "/app/index.html" }
   ],
   "headers": [
     {

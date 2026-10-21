@@ -42,7 +42,7 @@ struct LftUpdaterConfig {
     switch manifestSource {
     case .infoPlist:
       return (Bundle.main.infoDictionary?["LftUpdatesManifestURL"] as? String)
-        ?? "https://www.liftosaur.com/api/updates/manifest"
+        ?? "https://lifts.paulbebear.com/api/updates/manifest"
     case .baseUrl:
       return baseUrl.appendingPathComponent("api/updates/manifest").absoluteString
     }

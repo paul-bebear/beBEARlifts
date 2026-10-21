@@ -9,6 +9,7 @@ import { Text } from "../../components/primitives/text";
 import { Link } from "../../components/link";
 import { IState, updateState } from "../../models/state";
 import { lb } from "lens-shmens";
+import { Support_email } from "../../utils/support";
 
 export function NavModalCorruptedState(): JSX.Element {
   const { state, dispatch } = useAppState();
@@ -73,7 +74,7 @@ export function NavModalCorruptedState(): JSX.Element {
         <View className="pb-4">
           <Text>
             Please contact the developer of this app, and he is going to look into this ASAP. You can contact us at{" "}
-            <Link href="mailto:info@liftosaur.com">info@liftosaur.com</Link>.
+            <Link href={`mailto:${Support_email}`}>{Support_email}</Link>.
           </Text>
         </View>
         <View className="pb-4">

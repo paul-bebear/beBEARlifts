@@ -1,14 +1,8 @@
 import { Platform } from "react-native";
+import { ProgramsHost_fork } from "./programsHost";
 
 function baseHost(): string {
-  return (globalThis as { __HOST__?: string }).__HOST__ ?? "https://www.liftosaur.com";
-}
-
-export function HostConfig_imageHost(): string {
-  if (Platform.OS === "web") {
-    return "";
-  }
-  return baseHost();
+  return (globalThis as { __HOST__?: string }).__HOST__ ?? ProgramsHost_fork;
 }
 
 export function HostConfig_resolveUrl(path: string): string {

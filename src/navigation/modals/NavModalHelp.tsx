@@ -8,6 +8,7 @@ import { Text } from "../../components/primitives/text";
 import { Link } from "../../components/link";
 import { HelpComponents } from "../../components/help/helpRegistry";
 import type { IRootStackParamList } from "../types";
+import { Support_email } from "../../utils/support";
 
 export function NavModalHelp(): JSX.Element {
   const navigation = useNavigation();
@@ -29,14 +30,10 @@ export function NavModalHelp(): JSX.Element {
         <Text className="text-sm text-text-secondary">
           If you still have questions, or if you encountered a bug, have a feature idea, or just want to share some
           feedback - don't hesitate to{" "}
-          <Link className="text-sm" href="mailto:info@liftosaur.com">
+          <Link className="text-sm" href={`mailto:${Support_email}`}>
             contact us
           </Link>
-          ! Or join our{" "}
-          <Link className="text-sm" href="https://discord.com/invite/AAh3cvdBRs">
-            Discord server
-          </Link>{" "}
-          and ask your question there.
+          !
         </Text>
         <View style={{ height: insets.bottom }} />
       </FormSheet>

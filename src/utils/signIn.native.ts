@@ -7,6 +7,7 @@ import {
 } from "@react-native-google-signin/google-signin";
 import appleAuth from "@invertase/react-native-apple-authentication";
 import InAppBrowser from "react-native-inappbrowser-reborn";
+import { ProgramsHost_fork } from "./programsHost";
 
 export interface IGoogleSignInResult {
   idToken?: string;
@@ -19,7 +20,7 @@ export interface IAppleSignInResult {
 }
 
 const APPLE_SERVICE_ID = "com.liftosaur.www.signinapple";
-const APPLE_REDIRECT_URI = "https://www.liftosaur.com/appleauthcallback-mobile.html";
+const APPLE_REDIRECT_URI = `${ProgramsHost_fork}/appleauthcallback-mobile.html`;
 const APPLE_DEEP_LINK_SCHEME = "com.liftosaur.www://apple-callback";
 
 export async function SignOut_google(): Promise<void> {

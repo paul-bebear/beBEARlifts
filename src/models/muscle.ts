@@ -17,7 +17,7 @@ import {
   ObjectUtils_clone,
 } from "../utils/object";
 import { ISettings, IMuscle, IDayData, IScreenMuscle, IStats, screenMuscles, IMuscleGroupsSettings } from "../types";
-import { StringUtils_dashcase, StringUtils_capitalize } from "../utils/string";
+import { StringUtils_capitalize } from "../utils/string";
 import { IPlannerProgramExerciseWithType } from "../pages/planner/models/types";
 import { SetUtils_areEqual } from "../utils/setUtils";
 import { UidFactory_generateUid } from "../utils/generator";
@@ -90,10 +90,6 @@ export function Muscle_getEmptyScreenMusclesPoints(): IScreenMusclePointsColl {
     calves: 0,
     forearms: 0,
   };
-}
-
-export function Muscle_imageUrl(muscle: IMuscle): string {
-  return `/externalimages/muscles/muscle-${StringUtils_dashcase(muscle)}.jpeg`;
 }
 
 function normalize(obj: IScreenMusclePointsColl, maxValue: number): IScreenMusclePointsColl {

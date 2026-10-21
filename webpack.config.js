@@ -31,6 +31,7 @@ const localapi = `https://${localapidomain}.liftosaur.com:${localapiport}/`;
 const local = `https://${localdomain}.liftosaur.com:${localport}/`;
 
 const isDev = process.env.NODE_ENV !== "production";
+const forkHost = "https://lifts.paulbebear.com";
 
 // Self-hosted, no-backend build (the beBEARlifts fork). See "Running this fork" in README.md.
 const isOfflineOnly = process.env.LFT_OFFLINE_ONLY === "1";
@@ -198,13 +199,7 @@ const watchConfig = {
       __COMMIT_HASH__: JSON.stringify(commitHash),
       __FULL_COMMIT_HASH__: JSON.stringify(fullCommitHash),
       __HOST__: JSON.stringify(
-        process.env.LFT_OFFLINE_ONLY !== "0"
-          ? "https://lifts.paulbebear.com"
-          : process.env.NODE_ENV === "production"
-          ? process.env.STAGE
-            ? "https://stage.liftosaur.com"
-            : "https://www.liftosaur.com"
-          : local
+        process.env.LFT_OFFLINE_ONLY !== "0" || process.env.NODE_ENV === "production" ? forkHost : local
       ),
       __ENV__: JSON.stringify(process.env.NODE_ENV === "production" ? "production" : "development"),
     }),
@@ -326,19 +321,11 @@ const mainConfig = {
       __COMMIT_HASH__: JSON.stringify(commitHash),
       __FULL_COMMIT_HASH__: JSON.stringify(fullCommitHash),
       __API_HOST__: JSON.stringify(
-        process.env.NODE_ENV === "production"
-          ? process.env.STAGE
-            ? "https://api3-dev.liftosaur.com"
-            : "https://api3.liftosaur.com"
-          : `https://${localapidomain}.liftosaur.com:${localapiport}`
+        process.env.NODE_ENV === "production" ? forkHost : `https://${localapidomain}.liftosaur.com:${localapiport}`
       ),
       __ENV__: JSON.stringify(process.env.NODE_ENV === "production" ? "production" : "development"),
       __HOST__: JSON.stringify(
-        process.env.NODE_ENV === "production"
-          ? process.env.STAGE
-            ? "https://stage.liftosaur.com"
-            : "https://www.liftosaur.com"
-          : `https://${localdomain}.liftosaur.com:${localport}`
+        process.env.NODE_ENV === "production" ? forkHost : `https://${localdomain}.liftosaur.com:${localport}`
       ),
       __OFFLINE_ONLY__: JSON.stringify(isOfflineOnly),
       __SOURCE_CODE_URL__: JSON.stringify(sourceCodeUrl),
@@ -433,9 +420,11 @@ const mainConfig = {
         from: "fonts",
         to: "fonts",
       },
+      // The feature screenshots show Liftosaur's licensed exercise art, which the fork must not serve.
       {
         from: "images",
         to: "images",
+        ignore: ["features/**"],
       },
       {
         from: "programdata",
@@ -625,11 +614,6 @@ const mainConfig = {
       "/dashboards/affiliates/*": {
         target: localapi,
         secure: false,
-      },
-      "/externalimages/*": {
-        target: "https://www.liftosaur.com/",
-        secure: true,
-        changeOrigin: true,
       },
       "/dashboards/users": {
         target: localapi,

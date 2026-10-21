@@ -7,7 +7,7 @@ const origin = "https://bebearlifts.vercel.app";
 describe("OfflineOnly_isRequestAllowed", () => {
   it("allows same-origin absolute and relative URLs", () => {
     expect(OfflineOnly_isRequestAllowed(`${origin}/programdata/index.json?v=1`, origin)).to.equal(true);
-    expect(OfflineOnly_isRequestAllowed("/externalimages/exercises/a.png", origin)).to.equal(true);
+    expect(OfflineOnly_isRequestAllowed("/images/exercises/small/a.jpg", origin)).to.equal(true);
   });
 
   it("blocks the upstream API, analytics and error reporting hosts", () => {
