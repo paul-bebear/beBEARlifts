@@ -1,7 +1,5 @@
 import { JSX, useState } from "react";
-import { Pressable, View } from "react-native";
-import { Text } from "./primitives/text";
-import { EffortRating_options } from "../models/effortRating";
+import { View } from "react-native";
 import { Button } from "./button";
 import { IDispatch } from "../ducks/types";
 import { Modal } from "./modal";
@@ -78,9 +76,6 @@ export function ModalAmrapContent(props: IModalAmrapContentProps): JSX.Element {
   const logRpe = !!props.amrapModal.logRpe;
   const askWeight = !!props.amrapModal.askWeight;
   const userVars = !!props.amrapModal.userVars;
-  const rateEffort = !!props.amrapModal.rateEffort && !logRpe;
-  const isEffortOnly = rateEffort && !isAmrap && !askWeight && !userVars;
-  const [effortRpe, setEffortRpe] = useState<number | undefined>(undefined);
 
   const [repsInputValue, setRepsInputValue] = useState<number | undefined>(initialReps);
   const [repsLeftInputValue, setRepsLeftInputValue] = useState<number | undefined>(initialRepsLeft);
@@ -105,8 +100,7 @@ export function ModalAmrapContent(props: IModalAmrapContentProps): JSX.Element {
     amrapLeftValue?: number,
     rpeValue?: number,
     weightValue?: IWeight,
-    userVarValues: Record<string, number | IWeight | IPercentage> = {},
-    isSubmit: boolean = false
+    userVarValues: Record<string, number | IWeight | IPercentage> = {}
   ): void {
     props.dispatch({
       type: "ChangeAMRAPAction",
@@ -122,7 +116,6 @@ export function ModalAmrapContent(props: IModalAmrapContentProps): JSX.Element {
       isAmrap: isAmrap,
       logRpe: logRpe,
       askWeight: askWeight,
-      rateEffort: rateEffort && isSubmit,
       userVars: userVarValues,
     });
     if (props.onDone != null) {
@@ -203,33 +196,6 @@ export function ModalAmrapContent(props: IModalAmrapContentProps): JSX.Element {
           />
         </View>
       )}
-      {rateEffort && (
-        <View className="mb-2" testID="modal-effort">
-          <Text className="mb-2 text-base font-semibold">How hard was that set?</Text>
-          <View className="flex-row" style={{ gap: 8 }}>
-            {EffortRating_options.map((option) => (
-              <Pressable
-                key={option.effort}
-                testID={`modal-effort-${option.effort}`}
-                data-testid={`modal-effort-${option.effort}`}
-                className={`flex-1 items-center py-3 rounded-lg border ${
-                  effortRpe === option.rpe ? "border-button-primarybackground" : "border-border-neutral"
-                } ${option.effort === "right" ? "bg-color-green100" : "bg-color-yellow100"}`}
-                onPress={() => {
-                  if (isEffortOnly) {
-                    onDone(undefined, undefined, option.rpe, undefined, {}, true);
-                  } else {
-                    setEffortRpe(option.rpe);
-                  }
-                }}
-              >
-                <Text className="text-base font-semibold">{option.label}</Text>
-                <Text className="text-xs text-text-secondary">{option.detail}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      )}
       {props.programExercise && userVars && (
         <UserPromptedStateVars
           userVarInputValues={userVarInputValues}
@@ -268,7 +234,7 @@ export function ModalAmrapContent(props: IModalAmrapContentProps): JSX.Element {
           onClick={() => {
             const amrapValue = isAmrap ? (repsInputValue ?? 0) : undefined;
             const amrapLeftValue = isAmrap && isUnilateral ? (repsLeftInputValue ?? 0) : undefined;
-            const rpeValue = logRpe ? rpeInputValue : rateEffort ? effortRpe : undefined;
+            const rpeValue = logRpe ? rpeInputValue : undefined;
             const weightOrPctValue = askWeight
               ? (weightInputValue ?? Weight_build(0, props.settings.units))
               : undefined;
@@ -277,10 +243,10 @@ export function ModalAmrapContent(props: IModalAmrapContentProps): JSX.Element {
                 ? Weight_build(weightOrPctValue.value, props.settings.units)
                 : weightOrPctValue;
 
-            onDone(amrapValue, amrapLeftValue, rpeValue, weightValue, userVarInputValues, true);
+            onDone(amrapValue, amrapLeftValue, rpeValue, weightValue, userVarInputValues);
           }}
         >
-          {isEffortOnly ? "Skip" : "Done"}
+          Done
         </Button>
       </View>
     </View>

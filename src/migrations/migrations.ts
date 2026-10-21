@@ -9,6 +9,7 @@ import { basicBeginnerProgram } from "../programs/basicBeginnerProgram";
 import { IVersions } from "../models/versionTracker";
 import { Settings_build } from "../models/settings";
 import { Progress_getEntryId } from "../models/progress";
+import { EffortRating_moveLegacyRatings } from "../models/effortRating";
 
 let latestMigrationVersion: number | undefined;
 export function getLatestMigrationVersion(): string {
@@ -471,6 +472,12 @@ export const migrations = {
     if (workoutSettings.showExerciseNotes == null) {
       workoutSettings.showExerciseNotes = records.some((r) => r.entries.some((e) => !!e.notes));
     }
+    return storage;
+  },
+  "20261021120000_move_effort_rating_out_of_rpe": (aStorage: IStorage): IStorage => {
+    const storage: IStorage = JSON.parse(JSON.stringify(aStorage));
+    storage.progress = (storage.progress || []).map(EffortRating_moveLegacyRatings);
+    storage.history = (storage.history || []).map(EffortRating_moveLegacyRatings);
     return storage;
   },
 };

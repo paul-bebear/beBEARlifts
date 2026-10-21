@@ -85,7 +85,7 @@ export function Reps_setToDisplaySet(set: ISet, isNext: boolean, units: IUnit): 
     unit: completedOrRequiredWeight?.unit ?? units,
     askWeight: set.askWeight,
     isCompleted: Reps_isCompletedSet(set),
-    isRpeFailed: set.completedRpe != null && set.completedRpe > (set.rpe ?? 0),
+    isRpeFailed: set.rpe != null && set.completedRpe != null && set.completedRpe > set.rpe,
     isInRange: set.minReps != null ? set.completedReps != null && set.completedReps >= set.minReps : undefined,
     setTimer: isNext ? set.setTimer : set.completedSetTimer,
     setTimerLeft: isNext ? undefined : set.completedSetTimerLeft,

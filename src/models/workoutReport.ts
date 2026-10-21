@@ -1,7 +1,7 @@
-import { IHistoryEntry, IHistoryRecord, ISettings, IUnit } from "../types";
+import { IEffort, IHistoryEntry, IHistoryRecord, ISettings, IUnit } from "../types";
 import { Exercise_get } from "./exercise";
 import { Weight_convertTo } from "./weight";
-import { EffortRating_fromRpe, IEffort } from "./effortRating";
+import { EffortRating_efforts } from "./effortRating";
 
 export type IReportItemKind = "heavier" | "lighter" | "fewerReps" | "missed" | "tooHard" | "tooEasy" | "followUp";
 export type IReportAnswer = "onPurpose" | "feltOff" | "hurt" | "mistake" | "better" | "same" | "worse";
@@ -77,7 +77,7 @@ function sessionOf(entry: IHistoryEntry, unit: IUnit): IExerciseSession | undefi
     return undefined;
   }
   const weights = done.map((s) => (s.completedWeight != null ? Weight_convertTo(s.completedWeight, unit).value : 0));
-  const efforts = done.map((s) => EffortRating_fromRpe(s.completedRpe)).filter((e): e is IEffort => e != null);
+  const efforts = EffortRating_efforts(done);
   const missedSets = done.filter((s) => {
     const target = s.minReps ?? s.reps;
     return target != null && (s.completedReps ?? 0) < target;
