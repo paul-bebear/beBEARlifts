@@ -1,8 +1,8 @@
 import { fetchJson, json } from "./_food.mjs";
 
 // Same project and publishable key as src/utils/supabaseClient.ts. The key is public by design.
-const supabaseOrigin = "https://qvqwvuuwfueccrmzwyct.supabase.co";
-const publishableKey = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
+export const Supabase_origin = "https://qvqwvuuwfueccrmzwyct.supabase.co";
+export const Supabase_publishableKey = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
 const defaultDailyCap = 60;
 
 export const AiAuth_signInMessage = "Sign in to use AI features. Open Settings → Cloud backup.";
@@ -45,10 +45,10 @@ export async function AiAuth_check(request) {
   let answer;
   try {
     answer = await fetchJson(
-      `${supabaseOrigin}/rest/v1/rpc/ai_usage_take`,
+      `${Supabase_origin}/rest/v1/rpc/ai_usage_take`,
       {
         method: "POST",
-        headers: { apikey: publishableKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { apikey: Supabase_publishableKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: "{}",
       },
       5000

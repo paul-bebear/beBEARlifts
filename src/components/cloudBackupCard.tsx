@@ -2,6 +2,7 @@ import { JSX, useEffect, useReducer } from "react";
 import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { CloudBackupForm_empty, CloudBackupForm_reduce } from "../models/cloudBackupForm";
+import { AccountDeletion_confirmWord, AccountDeletion_isConfirmed } from "../models/accountDeletion";
 import { CloudStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
 import { Button } from "./button";
@@ -59,6 +60,54 @@ export function CloudBackupCard(props: { dispatch: IDispatch }): JSX.Element {
           >
             Sign out
           </Button>
+          {form.deleteText == null ? (
+            <Button
+              name="cloud-delete-account"
+              kind="lightgrayv3"
+              disabled={busy}
+              onClick={() => emit({ type: "deleteOpen" })}
+            >
+              Delete account
+            </Button>
+          ) : (
+            <View className="p-3 border rounded-lg border-border-prominent" style={{ gap: 12 }}>
+              <Text className="text-sm font-semibold">Delete your beBEAR account?</Text>
+              <Text className="text-sm">
+                This deletes your account, your cloud backups, your profile, friends, feed posts, reports and AI usage
+                from our servers. It cannot be undone.
+              </Text>
+              <Text className="text-sm">
+                Your workouts, settings and other data on this phone stay. Export them first if you want a copy.
+              </Text>
+              <Text className="text-sm">Type {AccountDeletion_confirmWord} to confirm.</Text>
+              <TextInput
+                accessibilityLabel={`Type ${AccountDeletion_confirmWord} to confirm`}
+                testID="cloud-delete-confirm"
+                className="px-4 py-3 text-base border rounded-lg bg-background-default border-border-prominent text-text-primary"
+                value={form.deleteText}
+                onChangeText={(value) => emit({ type: "deleteText", value })}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!busy}
+              />
+              <Button
+                name="cloud-delete-account-confirm"
+                kind="red"
+                disabled={busy || !AccountDeletion_isConfirmed(form.deleteText)}
+                onClick={() => emit({ type: "request", operation: "deleteAccount" })}
+              >
+                Delete account
+              </Button>
+              <Button
+                name="cloud-delete-account-cancel"
+                kind="lightgrayv3"
+                disabled={busy}
+                onClick={() => emit({ type: "deleteCancel" })}
+              >
+                Cancel
+              </Button>
+            </View>
+          )}
         </View>
       ) : (
         <View style={{ gap: 12 }}>

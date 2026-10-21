@@ -70,6 +70,42 @@ describe("CloudBackupForm", () => {
     expect(reduce(state, { type: "signedOut" })).to.deep.equal(CloudBackupForm_empty());
   });
 
+  it("deletes the account only after DELETE is typed, and keeps the dialog open on failure", () => {
+    const signedIn = reduce(CloudBackupForm_empty(), { type: "session", email: "paul@example.com" });
+    expect(reduce(signedIn, { type: "request", operation: "deleteAccount" })).to.equal(signedIn);
+    let state = reduce(signedIn, { type: "deleteOpen" });
+    expect(state.deleteText).to.equal("");
+    state = reduce(state, { type: "deleteText", value: "delete" });
+    state = reduce(state, { type: "request", operation: "deleteAccount" });
+    expect(state.command).to.equal(undefined);
+    expect(state.error).to.equal("Type DELETE to confirm.");
+    state = reduce(state, { type: "deleteText", value: "DELETE" });
+    expect(state.error).to.equal(undefined);
+    state = reduce(state, { type: "request", operation: "deleteAccount" });
+    expect(state.command?.operation).to.equal("deleteAccount");
+    expect(reduce(state, { type: "deleteCancel" })).to.equal(state);
+    state = reduce(state, { type: "failed", error: "No connection" });
+    expect(state.deleteText).to.equal("DELETE");
+    expect(state.error).to.equal("No connection");
+    state = reduce(state, { type: "request", operation: "deleteAccount" });
+    state = reduce(state, { type: "session", email: undefined });
+    expect(state.command?.operation).to.equal("deleteAccount");
+    state = reduce(state, { type: "deleted" });
+    expect(state.step).to.equal("email");
+    expect(state.deleteText).to.equal(undefined);
+    expect(state.message).to.include("still on this phone");
+    expect(reduce(state, { type: "session", email: undefined })).to.equal(state);
+  });
+
+  it("opens the delete dialog only while signed in and closes it on cancel", () => {
+    const signedOut = CloudBackupForm_empty();
+    expect(reduce(signedOut, { type: "deleteOpen" })).to.equal(signedOut);
+    expect(reduce(signedOut, { type: "deleteText", value: "DELETE" })).to.equal(signedOut);
+    const signedIn = reduce(signedOut, { type: "session", email: "paul@example.com" });
+    const open = reduce(reduce(signedIn, { type: "deleteOpen" }), { type: "deleteText", value: "DEL" });
+    expect(reduce(open, { type: "deleteCancel" }).deleteText).to.equal(undefined);
+  });
+
   it("rejects account operations while signed out and code requests while signed in", () => {
     const signedOut = CloudBackupForm_empty();
     expect(reduce(signedOut, { type: "request", operation: "restore" })).to.equal(signedOut);

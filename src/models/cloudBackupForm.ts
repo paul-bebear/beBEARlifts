@@ -1,6 +1,11 @@
 import { CloudBackup_isCode, CloudBackup_isEmail } from "./cloudBackup";
+import {
+  AccountDeletion_confirmWord,
+  AccountDeletion_doneMessage,
+  AccountDeletion_isConfirmed,
+} from "./accountDeletion";
 
-export type ICloudBackupOperation = "sendCode" | "verify" | "backup" | "restore" | "signOut";
+export type ICloudBackupOperation = "sendCode" | "verify" | "backup" | "restore" | "signOut" | "deleteAccount";
 export type ICloudBackupCommand = { operation: ICloudBackupOperation | "findBackup"; email: string; code: string };
 
 export interface ICloudBackupForm {
@@ -11,10 +16,14 @@ export interface ICloudBackupForm {
   error?: string;
   message?: string;
   offerRestore: boolean;
+  // undefined while the delete confirmation is closed.
+  deleteText?: string;
 }
 
 export type ICloudBackupEvent =
-  | { type: "email" | "code"; value: string }
+  | { type: "email" | "code" | "deleteText"; value: string }
+  | { type: "deleteOpen" | "deleteCancel" }
+  | { type: "deleted" }
   | { type: "session"; email?: string }
   | { type: "request"; operation: ICloudBackupOperation }
   | { type: "sent" }
@@ -61,6 +70,9 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
   if (event.type === "signedOut") {
     return CloudBackupForm_empty();
   }
+  if (event.type === "deleted") {
+    return { ...CloudBackupForm_empty(), message: AccountDeletion_doneMessage };
+  }
   if (state.command != null) {
     return state;
   }
@@ -70,12 +82,24 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
   if (event.type === "email" || event.type === "code") {
     return { ...state, [event.type]: event.value, error: undefined, message: undefined };
   }
+  if (event.type === "deleteOpen") {
+    return state.step === "signedIn" ? { ...state, deleteText: "", error: undefined, message: undefined } : state;
+  }
+  if (event.type === "deleteCancel") {
+    return { ...state, deleteText: undefined, error: undefined };
+  }
+  if (event.type === "deleteText") {
+    return state.deleteText == null ? state : { ...state, deleteText: event.value, error: undefined };
+  }
   if (event.type === "request") {
     if (event.operation === "sendCode" && !CloudBackup_isEmail(state.email)) {
       return { ...state, error: "Enter a valid email address." };
     }
     if (event.operation === "verify" && !CloudBackup_isCode(state.code)) {
       return { ...state, error: "Enter the 6 to 10 digit code from your email." };
+    }
+    if (event.operation === "deleteAccount" && !AccountDeletion_isConfirmed(state.deleteText ?? "")) {
+      return state.deleteText == null ? state : { ...state, error: `Type ${AccountDeletion_confirmWord} to confirm.` };
     }
     const signedOutOperation = event.operation === "sendCode" || event.operation === "verify";
     if (signedOutOperation === (state.step === "signedIn") || (event.operation === "verify" && state.step !== "code")) {

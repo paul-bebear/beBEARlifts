@@ -2,6 +2,7 @@ import { Thunk_cloudBackup, Thunk_cloudRestore } from "../ducks/thunks";
 import { IThunk } from "../ducks/types";
 import { ICloudBackupCommand, ICloudBackupEvent } from "../models/cloudBackupForm";
 import {
+  CloudBackupClient_deleteAccount,
   CloudBackupClient_download,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
@@ -45,6 +46,11 @@ export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (even
           await CloudBackupClient_signOut();
           emit({ type: "signedOut" });
           break;
+        case "deleteAccount": {
+          const result = await CloudBackupClient_deleteAccount();
+          emit(result.ok ? { type: "deleted" } : { type: "failed", error: result.error });
+          break;
+        }
       }
     } catch (error) {
       emit({ type: "failed", error: error instanceof Error ? error.message : "Cloud backup failed" });
