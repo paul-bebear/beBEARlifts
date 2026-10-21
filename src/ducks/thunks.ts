@@ -74,6 +74,7 @@ import { BodyScanStore_update } from "../utils/bodyScanStore";
 import { WarmupStore_update } from "../utils/warmupStore";
 import { ReportStore } from "../utils/reportStore";
 import { SetClipStore } from "../utils/setClipStore";
+import { RunStore } from "../utils/runStore";
 import { FullBackupFile_build } from "../utils/fullBackupFile";
 import { CloudBackup_isAutoDue } from "../models/cloudBackup";
 import { CloudBackupClient_download, CloudBackupClient_upload } from "../utils/cloudBackupClient";
@@ -1918,6 +1919,10 @@ export function Thunk_importStorage(maybeStorage: string, onImported?: (success:
       const clips = contents.clips;
       if (clips != null) {
         await SetClipStore.update(() => clips);
+      }
+      const runs = contents.runs;
+      if (runs != null) {
+        await RunStore.update(() => runs);
       }
       Dialog_alert("Successfully imported");
     } else {

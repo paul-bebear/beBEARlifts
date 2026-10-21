@@ -27,6 +27,7 @@ import { IconGraphs } from "./icons/iconGraphs";
 import { IconChevronRight } from "./icons/iconFoodUi";
 import { IconSpeaker } from "./icons/iconSpeaker";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { RunSensors_isAvailable } from "../utils/runSensors";
 
 const pillColors = {
   neutral: "rgba(59, 130, 246, 0.22)",
@@ -220,6 +221,14 @@ export function ScreenProgressDashboard(): JSX.Element {
         onPress={() => dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
       />
       <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">More</Text>
+      {OfflineOnly_isEnabled() && RunSensors_isAvailable() && (
+        <LinkRow
+          testID="progress-runs"
+          icon={<IconGraphs color={iconColor} />}
+          title="Runs"
+          onPress={() => dispatch(Thunk_pushScreen("runs"))}
+        />
+      )}
       <LinkRow
         testID="progress-graphs"
         icon={<IconGraphs color={iconColor} />}

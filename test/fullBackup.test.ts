@@ -15,6 +15,7 @@ import { IMusicLog, MusicLog_empty } from "../src/models/musicLog";
 import { Storage_getDefault } from "../src/models/storage";
 import { BodyScans_empty } from "../src/models/bodyScans";
 import { SetClips_empty } from "../src/models/setClips";
+import { RunLog_empty } from "../src/models/runLog";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 
@@ -27,6 +28,7 @@ function parts(overrides: Partial<IFullBackupParts>): IFullBackupParts {
     warmups: WarmupPlan_empty(),
     reports: WorkoutReport_empty(),
     clips: SetClips_empty(),
+    runs: RunLog_empty(),
     ...overrides,
   };
 }
@@ -94,6 +96,29 @@ describe("FullBackup", () => {
     expect(contents.storage).to.equal(storage);
     expect(contents.food).to.equal(undefined);
     expect(contents.music).to.equal(undefined);
+  });
+
+  it("round trips runs and leaves runs untouched for older backups", () => {
+    const runs = {
+      version: 1 as const,
+      runs: [
+        {
+          id: now,
+          startedAt: now,
+          endedAt: now + 600000,
+          distanceM: 2000,
+          movingMs: 600000,
+          elevationGainM: 12,
+          splits: [{ km: 1, ms: 300000 }],
+          route: [[[40, -3] as [number, number], [40.01, -3] as [number, number]]],
+        },
+      ],
+    };
+    const backup = FullBackup_build(parts({ runs }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).runs).to.deep.equal(runs);
+    const { runs: omitted, ...older } = backup;
+    expect(omitted).to.deep.equal(runs);
+    expect(FullBackup_unwrap(older).runs).to.equal(undefined);
   });
 
   it("keeps the phone's Spotify login when restoring music", () => {

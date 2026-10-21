@@ -9,6 +9,10 @@ import { INavCommon, IState, updateState } from "../models/state";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
 import { WeekInsights } from "./weekInsights";
+import { FoodPrimaryButton } from "./foodUi";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { RunSensors_isAvailable } from "../utils/runSensors";
+import { Thunk_pushScreen } from "../ducks/thunks";
 import { lb } from "lens-shmens";
 import { WeekCalendar } from "./weekCalendar";
 import { HistoryRecordsNullState } from "./historyRecordsNullState";
@@ -199,6 +203,16 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         settings={props.settings}
         subscription={props.subscription}
       />
+      {OfflineOnly_isEnabled() && RunSensors_isAvailable() && (
+        <View className="flex-row px-4 py-2" style={{ width: 144 }}>
+          <FoodPrimaryButton
+            title="Run"
+            kind="outline"
+            testID="history-run"
+            onPress={() => dispatch(Thunk_pushScreen("runs", undefined, { tab: "graphs" }))}
+          />
+        </View>
+      )}
     </View>
   );
 

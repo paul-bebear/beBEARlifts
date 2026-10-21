@@ -5,6 +5,7 @@ import { BodyScans_parse, IBodyScanLog } from "./bodyScans";
 import { IWarmupLog, WarmupPlan_parseLog } from "./warmupPlan";
 import { IReportLog, WorkoutReport_parseLog } from "./workoutReport";
 import { ISetClipLog, SetClips_parse } from "./setClips";
+import { IRunLog, RunLog_parse } from "./runLog";
 
 export const FullBackup_format = "bebearlifts-backup";
 
@@ -19,6 +20,7 @@ const readme = [
   "reports.reports: the report after each workout: what changed per exercise against the last 4 weeks, the user's answers (onPurpose, feltOff, hurt, mistake, better, same, worse) and the coach's note.",
   "music.sessions: songs played during each workout, matched by session id to workouts.history id. startedAt is ms; heardMs is how long the song played; isKept false means skipped.",
   "clips.clips: filmed sets matched by workoutId, setId and exerciseId. timestamp is ms, size is bytes, duration is seconds. Includes small JPEG thumbnails; video files stay in Photos or downloads.",
+  "runs.runs: GPS runs, newest first. startedAt and endedAt are ms; distanceM is metres; movingMs leaves out pauses; elevationGainM is metres climbed. splits: moving ms for each full km. route: simplified [lat, lon] lines, one per stretch between pauses.",
 ].join("\n");
 
 export interface IFullBackup {
@@ -33,6 +35,7 @@ export interface IFullBackup {
   warmups: IWarmupLog;
   reports: IReportLog;
   clips: ISetClipLog;
+  runs: IRunLog;
 }
 
 export interface IFullBackupParts {
@@ -43,10 +46,11 @@ export interface IFullBackupParts {
   warmups: IWarmupLog;
   reports: IReportLog;
   clips: ISetClipLog;
+  runs: IRunLog;
 }
 
 export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBackup {
-  const { storage, food, music, body, warmups, reports, clips } = parts;
+  const { storage, food, music, body, warmups, reports, clips, runs } = parts;
   return {
     format: FullBackup_format,
     version: 1,
@@ -59,6 +63,7 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     warmups,
     reports,
     clips: SetClips_parse(clips),
+    runs,
   };
 }
 
@@ -74,6 +79,7 @@ export interface IFullBackupContents {
   warmups?: IWarmupLog;
   reports?: IReportLog;
   clips?: ISetClipLog;
+  runs?: IRunLog;
 }
 
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
@@ -90,6 +96,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     warmups: r.warmups != null ? WarmupPlan_parseLog(r.warmups) : undefined,
     reports: r.reports != null ? WorkoutReport_parseLog(r.reports) : undefined,
     clips: r.clips != null ? SetClips_parse(r.clips) : undefined,
+    runs: r.runs != null ? RunLog_parse(r.runs) : undefined,
   };
 }
 
