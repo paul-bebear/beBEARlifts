@@ -2,7 +2,7 @@ import { IState } from "./state";
 import { dequal } from "dequal";
 import { Progress_isCurrent } from "./progress";
 import { IStatsKey } from "../types";
-import type { IFoodAddScreenParams } from "../navigation/types";
+import type { IFoodAddScreenParams, IGoalWizardScreenParams } from "../navigation/types";
 import { Program_getProgram, Program_cleanPlannerProgram } from "./program";
 import { ObjectUtils_isEqual } from "../utils/object";
 
@@ -24,6 +24,9 @@ export type IScreenData =
   | { name: "reports"; params?: Record<string, never> }
   | { name: "bodyScans"; params?: Record<string, never> }
   | { name: "runs"; params?: Record<string, never> }
+  | { name: "goalWizard"; params?: IGoalWizardScreenParams }
+  | { name: "steps"; params?: Record<string, never> }
+  | { name: "progressPhotos"; params?: Record<string, never> }
   | { name: "food"; params?: Record<string, never> }
   | { name: "friends"; params?: Record<string, never> }
   | { name: "foodAdd"; params: IFoodAddScreenParams }
@@ -134,6 +137,9 @@ export function Screen_tab(screen: IScreen): ITab {
       return "graphs";
     }
     case "runs":
+    case "goalWizard":
+    case "steps":
+    case "progressPhotos":
     case "bodyScans": {
       return "graphs";
     }

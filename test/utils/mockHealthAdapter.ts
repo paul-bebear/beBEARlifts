@@ -3,6 +3,7 @@ import {
   IHealthDailyArgs,
   IHealthDailyResult,
   IHealthMeasurementsPayload,
+  IHealthStepsDay,
   IHealthSyncArgs,
   IHealthSyncResult,
   IHealthWorkoutPayload,
@@ -44,6 +45,10 @@ export class MockHealthAdapter implements IHealthAdapter {
   public async syncDailyMetrics(args: IHealthDailyArgs): Promise<IHealthDailyResult> {
     this.dailyCalls.push(args);
     return this.defaultDailyResult;
+  }
+
+  public async readDailySteps(_windowDays: number): Promise<IHealthStepsDay[]> {
+    return [];
   }
 
   public async saveWorkout(args: IHealthWorkoutPayload): Promise<void> {

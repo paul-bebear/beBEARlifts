@@ -27,6 +27,10 @@ import { SetClips_empty, SetClips_parse } from "../src/models/setClips";
 import { SetClipStore } from "../src/utils/setClipStore";
 import { RunLog_empty } from "../src/models/runLog";
 import { RunStore } from "../src/utils/runStore";
+import { ProgramGoal_empty, ProgramGoal_set } from "../src/models/programGoal";
+import { ProgramGoalStore } from "../src/utils/programGoalStore";
+import { Steps_empty, Steps_setManual } from "../src/models/steps";
+import { StepsStore } from "../src/utils/stepsStore";
 
 const now = Date.UTC(2026, 9, 20, 18);
 const session = {
@@ -67,6 +71,8 @@ describe("Cloud backup thunks", () => {
     sinon.stub(ReportStore, "load").resolves(WorkoutReport_empty());
     sinon.stub(SetClipStore, "load").resolves(SetClips_empty());
     sinon.stub(RunStore, "load").resolves(RunLog_empty());
+    sinon.stub(ProgramGoalStore, "load").resolves(ProgramGoal_empty());
+    sinon.stub(StepsStore, "load").resolves(Steps_empty());
   });
   afterEach(() => sinon.restore());
 
@@ -114,7 +120,9 @@ describe("Cloud backup thunks", () => {
       "warmups",
       "reports",
       "clips",
-      "runs"
+      "runs",
+      "goal",
+      "steps"
     );
     expect(text).to.not.include("secret-refresh");
     expect(text).to.not.include("spotify-refresh");
@@ -160,6 +168,8 @@ describe("Cloud backup thunks", () => {
       warmups: WarmupPlan_empty(),
       reports: WorkoutReport_empty(),
       runs: RunLog_empty(),
+      goal: ProgramGoal_set(ProgramGoal_empty(), { kind: "maintain", activity: "5to10k", startedAt: now }),
+      steps: Steps_setManual(Steps_empty(), "2026-10-20", 9000),
       clips: {
         version: 1 as const,
         clips: [
@@ -183,6 +193,8 @@ describe("Cloud backup thunks", () => {
     const replaceReports = sinon.stub(ReportStore, "update").resolves();
     const replaceClips = sinon.stub(SetClipStore, "update").resolves();
     const replaceRuns = sinon.stub(RunStore, "update").resolves();
+    const replaceGoal = sinon.stub(ProgramGoalStore, "update").resolves();
+    const replaceSteps = sinon.stub(StepsStore, "update").resolves();
     const updateCloud = sinon.spy(supabase.CloudStore, "update");
     const result = sinon.spy();
     await run(Thunk_cloudRestore(result));
@@ -199,6 +211,8 @@ describe("Cloud backup thunks", () => {
     expect(replaceReports.firstCall.args[0](WorkoutReport_empty())).to.deep.equal(parts.reports);
     expect(replaceClips.firstCall.args[0](SetClips_empty())).to.deep.equal(SetClips_parse(parts.clips));
     expect(replaceRuns.firstCall.args[0](RunLog_empty())).to.deep.equal(parts.runs);
+    expect(replaceGoal.firstCall.args[0](ProgramGoal_empty())).to.deep.equal(parts.goal);
+    expect(replaceSteps.firstCall.args[0](Steps_empty())).to.deep.equal(parts.steps);
     expect(updateCloud.called).to.equal(false);
   });
 

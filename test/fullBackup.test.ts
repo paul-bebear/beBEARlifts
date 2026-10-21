@@ -16,6 +16,8 @@ import { Storage_getDefault } from "../src/models/storage";
 import { BodyScans_empty } from "../src/models/bodyScans";
 import { SetClips_empty } from "../src/models/setClips";
 import { RunLog_empty } from "../src/models/runLog";
+import { ProgramGoal_empty, ProgramGoal_set } from "../src/models/programGoal";
+import { Steps_empty, Steps_setManual } from "../src/models/steps";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 
@@ -29,6 +31,8 @@ function parts(overrides: Partial<IFullBackupParts>): IFullBackupParts {
     reports: WorkoutReport_empty(),
     clips: SetClips_empty(),
     runs: RunLog_empty(),
+    goal: ProgramGoal_empty(),
+    steps: Steps_empty(),
     ...overrides,
   };
 }
@@ -119,6 +123,22 @@ describe("FullBackup", () => {
     const { runs: omitted, ...older } = backup;
     expect(omitted).to.deep.equal(runs);
     expect(FullBackup_unwrap(older).runs).to.equal(undefined);
+  });
+
+  it("round-trips the goal and steps, and reads an older file without them", () => {
+    const goal = ProgramGoal_set(ProgramGoal_empty(), {
+      kind: "loseFat",
+      pace: "slow",
+      activity: "under5k",
+      startedAt: now,
+    });
+    const steps = Steps_setManual(Steps_empty(), "2026-10-20", 8000);
+    const backup = FullBackup_build(parts({ goal, steps }), now);
+    const contents = FullBackup_unwrap(JSON.parse(JSON.stringify(backup)));
+    expect(contents.goal).to.deep.equal(goal);
+    expect(contents.steps).to.deep.equal(steps);
+    const { goal: _goal, steps: _steps, ...older } = backup;
+    expect(FullBackup_unwrap(older).goal).to.equal(undefined);
   });
 
   it("keeps the phone's Spotify login when restoring music", () => {

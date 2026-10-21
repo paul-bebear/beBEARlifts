@@ -255,8 +255,16 @@ function gramsRange(weightKg: number, perKg: { min: number; max: number }): IFoo
 export function FoodTargets_compute(body: IFoodBody, activity: IFoodActivity, goal: IFoodGoalKind): IFoodTargetsResult {
   const maintenance = FoodTargets_maintenance(body, activity);
   const factor = FoodTargets_goals.find((g) => g.key === goal)?.factor ?? 1;
+  return FoodTargets_fromCalories(body, maintenance, maintenance * factor);
+}
+
+export function FoodTargets_fromCalories(
+  body: IFoodBody,
+  maintenance: number,
+  dailyCalories: number
+): IFoodTargetsResult {
   const floor = calorieFloor[body.sex];
-  const raw = roundTo(maintenance * factor, 10);
+  const raw = roundTo(dailyCalories, 10);
   const target = Math.max(floor, raw);
   const calories = { min: Math.max(floor, target - calorieSpread), max: target + calorieSpread };
   const protein = gramsRange(body.weightKg, proteinPerKg);

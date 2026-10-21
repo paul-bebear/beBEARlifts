@@ -6,6 +6,8 @@ import { IWarmupLog, WarmupPlan_parseLog } from "./warmupPlan";
 import { IReportLog, WorkoutReport_parseLog } from "./workoutReport";
 import { ISetClipLog, SetClips_parse } from "./setClips";
 import { IRunLog, RunLog_parse } from "./runLog";
+import { IProgramGoalLog, ProgramGoal_parse } from "./programGoal";
+import { IStepsLog, Steps_parse } from "./steps";
 
 export const FullBackup_format = "bebearlifts-backup";
 
@@ -20,6 +22,8 @@ const readme = [
   "reports.reports: the report after each workout: what changed per exercise against the last 4 weeks, the user's answers (onPurpose, feltOff, hurt, mistake, better, same, worse) and the coach's note.",
   "music.sessions: songs played during each workout, matched by session id to workouts.history id. startedAt is ms; heardMs is how long the song played; isKept false means skipped.",
   "clips.clips: filmed sets matched by workoutId, setId and exerciseId. timestamp is ms, size is bytes, duration is seconds. Includes small JPEG thumbnails; video files stay in Photos or downloads.",
+  "goal.current: the training goal (buildMuscle, loseFat or maintain), its pace, daily step band, body fat % and start date (ms) and weight. goal.past: earlier goals, newest first.",
+  "steps.days: step count per local day (YYYY-MM-DD), from Apple Health or typed by hand. steps.goal: the daily step goal. Progress photos are not in this file.",
   "runs.runs: GPS runs, newest first. startedAt and endedAt are ms; distanceM is metres; movingMs leaves out pauses; elevationGainM is metres climbed. splits: moving ms for each full km. route: simplified [lat, lon] lines, one per stretch between pauses.",
 ].join("\n");
 
@@ -36,6 +40,8 @@ export interface IFullBackup {
   reports: IReportLog;
   clips: ISetClipLog;
   runs: IRunLog;
+  goal: IProgramGoalLog;
+  steps: IStepsLog;
 }
 
 export interface IFullBackupParts {
@@ -47,10 +53,12 @@ export interface IFullBackupParts {
   reports: IReportLog;
   clips: ISetClipLog;
   runs: IRunLog;
+  goal: IProgramGoalLog;
+  steps: IStepsLog;
 }
 
 export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBackup {
-  const { storage, food, music, body, warmups, reports, clips, runs } = parts;
+  const { storage, food, music, body, warmups, reports, clips, runs, goal, steps } = parts;
   return {
     format: FullBackup_format,
     version: 1,
@@ -64,6 +72,8 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     reports,
     clips: SetClips_parse(clips),
     runs,
+    goal,
+    steps,
   };
 }
 
@@ -80,6 +90,8 @@ export interface IFullBackupContents {
   reports?: IReportLog;
   clips?: ISetClipLog;
   runs?: IRunLog;
+  goal?: IProgramGoalLog;
+  steps?: IStepsLog;
 }
 
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
@@ -97,6 +109,8 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     reports: r.reports != null ? WorkoutReport_parseLog(r.reports) : undefined,
     clips: r.clips != null ? SetClips_parse(r.clips) : undefined,
     runs: r.runs != null ? RunLog_parse(r.runs) : undefined,
+    goal: r.goal != null ? ProgramGoal_parse(r.goal) : undefined,
+    steps: r.steps != null ? Steps_parse(r.steps) : undefined,
   };
 }
 

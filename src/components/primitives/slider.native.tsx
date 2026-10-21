@@ -8,6 +8,7 @@ interface ISliderProps {
   max: number;
   step?: number;
   onChange: (value: number) => void;
+  onSlide?: (value: number) => void;
 }
 
 export function Slider(props: ISliderProps): JSX.Element {
@@ -21,6 +22,7 @@ export function Slider(props: ISliderProps): JSX.Element {
       step={props.step ?? 1}
       minimumTrackTintColor={colors.text.link}
       maximumTrackTintColor={colors.border.neutral}
+      onValueChange={props.onSlide}
       onSlidingComplete={props.onChange}
     />
   );
