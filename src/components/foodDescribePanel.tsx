@@ -5,6 +5,8 @@ import { FoodAddFlow_photoChoices, IFoodPhotoChoice } from "../models/foodAddFlo
 import { FoodApi_describe } from "../utils/foodApi";
 import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
 import { FoodChoicesReview } from "./foodChoicesReview";
+import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
+import { FoodAiSignIn } from "./foodPhotoPanel";
 
 interface IProps {
   onAdd: (choices: IFoodPhotoChoice[]) => void;
@@ -12,21 +14,33 @@ interface IProps {
 }
 
 export function FoodDescribePanel(props: IProps): JSX.Element {
+  const session = CloudStore.use().session;
   const [text, setText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [note, setNote] = useState<string | undefined>(undefined);
   const [choices, setChoices] = useState<IFoodPhotoChoice[] | undefined>(undefined);
+  const [authError, setAuthError] = useState<string | undefined>(undefined);
 
   const estimate = async (): Promise<void> => {
     setIsLoading(true);
     setError(undefined);
+    const auth = await SupabaseClient_accessToken();
+    setAuthError(auth.ok ? undefined : auth.error);
+    if (!auth.ok) {
+      setIsLoading(false);
+      return;
+    }
     const result = await FoodApi_describe(text);
     setIsLoading(false);
     setChoices(result.ok ? FoodAddFlow_photoChoices(result.value.items) : undefined);
     setNote(result.ok ? result.value.note : undefined);
     setError(result.ok ? undefined : result.error);
   };
+
+  if (session == null) {
+    return <FoodAiSignIn />;
+  }
 
   return (
     <View testID="food-describe-panel" data-testid="food-describe-panel">
@@ -52,6 +66,12 @@ export function FoodDescribePanel(props: IProps): JSX.Element {
       </View>
       {isLoading && <ActivityIndicator className="py-4" />}
       {error != null && <Text className="pt-3 text-sm text-text-error">{error}</Text>}
+      {authError != null && (
+        <View>
+          <Text className="pt-3 text-sm text-text-error">{authError}</Text>
+          <FoodAiSignIn />
+        </View>
+      )}
       {note != null && <Text className="pt-3 text-sm text-text-secondary">{note}</Text>}
       {choices != null && choices.length > 0 && (
         <View className="mt-2">

@@ -1,7 +1,7 @@
 import { JSX, useRef, useState } from "react";
 import { View, Platform } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_parse, FoodLog_setGoals, FoodLog_setProfile, IFoodGoals } from "../models/foodLog";
+import { FoodLog_hasGoals, FoodLog_parse, FoodLog_setGoals, FoodLog_setProfile, IFoodGoals } from "../models/foodLog";
 import { FoodGoals_parseForm, IFoodGoalsForm, FoodGoals_toForm } from "../models/foodGoals";
 import { FoodLogStore_replace, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Exporter_toFile } from "../utils/exporter";
@@ -61,9 +61,14 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
   return (
     <View testID="food-goals-content" data-testid="food-goals-content">
       <Text className="mb-1 text-xl font-bold">Daily targets</Text>
+      {!FoodLog_hasGoals(log.goals) && (
+        <Text className="mb-3 text-sm text-text-secondary">
+          No targets yet. Calculate my targets uses your saved profile, or you can enter your own numbers.
+        </Text>
+      )}
       <Text className="mb-4 text-sm text-text-secondary">
-        Set a low and a high number for each. For a lean bulk, protein of 1.6 to 2.2 g per kg of body weight is a common
-        target.
+        Set a low and a high number for each. The calculator caps the weight used for protein and fat at your height in
+        cm minus 100.
       </Text>
       <View className="flex-row mb-4">
         <FoodPrimaryButton

@@ -59,6 +59,27 @@ describe("FoodTargets compute", () => {
     expect(result.goals.calories).to.deep.equal({ min: 1200, max: 1300 });
     expect(result.goals.carbs).to.deep.equal({ min: 115, max: 140 });
   });
+
+  it("caps protein and fat at the height-based weight for a 150 kg person losing weight", () => {
+    const body: IFoodBody = { weightKg: 150, heightCm: 170, sex: "male", age: 40 };
+    const result = FoodTargets_compute(body, "sedentary", "lose");
+    expect(result.maintenance).to.equal(2840);
+    expect(result.goals).to.deep.equal({
+      calories: { min: 2170, max: 2370 },
+      protein: { min: 110, max: 155 },
+      carbs: { min: 285, max: 335 },
+      fat: { min: 40, max: 70 },
+    });
+    const lighter = FoodTargets_compute({ ...body, weightKg: 70 }, "sedentary", "lose");
+    expect(result.goals.protein).to.deep.equal(lighter.goals.protein);
+    expect(result.goals.fat).to.deep.equal(lighter.goals.fat);
+  });
+
+  it("uses actual weight below the height-based cap", () => {
+    const result = FoodTargets_compute({ ...man, weightKg: 60 }, "moderate", "maintain");
+    expect(result.goals.protein).to.deep.equal({ min: 95, max: 130 });
+    expect(result.goals.fat).to.deep.equal({ min: 35, max: 60 });
+  });
 });
 
 describe("FoodTargets form", () => {

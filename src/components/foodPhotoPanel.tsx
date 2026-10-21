@@ -7,6 +7,9 @@ import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
 import { FoodChoicesReview } from "./foodChoicesReview";
 import { AiConsent_ensure } from "../utils/aiConsentClient";
+import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
+import { useTrackedDispatch } from "../navigation/TrackedStateContext";
+import { Thunk_pushScreen } from "../ducks/thunks";
 
 interface IProps {
   initialNote?: string;
@@ -15,15 +18,36 @@ interface IProps {
 
 type IStatus = { kind: "idle" } | { kind: "analyzing" } | { kind: "error"; message: string };
 
+export function FoodAiSignIn(): JSX.Element {
+  const dispatch = useTrackedDispatch();
+  return (
+    <View className="py-3" testID="food-ai-sign-in" data-testid="food-ai-sign-in">
+      <Text className="mb-3 text-sm text-text-secondary">Sign in to use AI food estimates.</Text>
+      <FoodPrimaryButton
+        title="Open Settings"
+        testID="food-ai-open-settings"
+        onPress={() => dispatch(Thunk_pushScreen("settings", undefined, { tab: "graphs" }))}
+      />
+    </View>
+  );
+}
+
 export function FoodPhotoPanel(props: IProps): JSX.Element {
+  const session = CloudStore.use().session;
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<IStatus>({ kind: "idle" });
   const [preview, setPreview] = useState<string | undefined>(undefined);
   const [choices, setChoices] = useState<IFoodPhotoChoice[] | undefined>(undefined);
   const [aiNote, setAiNote] = useState<string | undefined>(undefined);
   const [userNote, setUserNote] = useState(props.initialNote ?? "");
+  const [authError, setAuthError] = useState<string | undefined>(undefined);
 
   const onFile = async (file: File): Promise<void> => {
+    const auth = await SupabaseClient_accessToken();
+    if (!auth.ok) {
+      setAuthError(auth.error);
+      return;
+    }
     setChoices(undefined);
     setAiNote(undefined);
     setStatus({ kind: "analyzing" });
@@ -40,6 +64,10 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
       setAiNote(result.value.note);
     }
   };
+
+  if (session == null) {
+    return <FoodAiSignIn />;
+  }
 
   return (
     <View testID="food-photo-panel" data-testid="food-photo-panel">
@@ -81,6 +109,12 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
         </View>
       )}
       {status.kind === "error" && <Text className="py-3 text-sm text-text-error">{status.message}</Text>}
+      {authError != null && (
+        <View>
+          <Text className="pt-3 text-sm text-text-error">{authError}</Text>
+          <FoodAiSignIn />
+        </View>
+      )}
       {aiNote != null && <Text className="pt-3 text-sm text-text-secondary">{aiNote}</Text>}
       {choices != null && choices.length > 0 && (
         <View className="mt-2">
@@ -94,6 +128,11 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
             title={preview == null ? "Take or choose a photo" : "New photo"}
             kind={choices != null && choices.length > 0 ? "outline" : "primary"}
             onPress={async () => {
+              const auth = await SupabaseClient_accessToken();
+              setAuthError(auth.ok ? undefined : auth.error);
+              if (!auth.ok) {
+                return;
+              }
               if (await AiConsent_ensure()) {
                 inputRef.current?.click();
               }
