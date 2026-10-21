@@ -5,6 +5,7 @@ import {
   queryCategorySamples,
   queryQuantitySamples,
   queryQuantitySamplesWithAnchor,
+  queryStatisticsCollectionForQuantity,
   requestAuthorization,
   saveQuantitySample,
   saveWorkoutSample,
@@ -26,6 +27,7 @@ import {
   IHealthDailyValue,
   IHealthMeasurement,
   IHealthMeasurementsPayload,
+  IHealthStepsDay,
   IHealthSyncArgs,
   IHealthSyncResult,
   IHealthWorkoutPayload,
@@ -49,6 +51,7 @@ const WORKOUT = "HKWorkoutTypeIdentifier" satisfies SampleTypeIdentifierWriteabl
 const SLEEP = "HKCategoryTypeIdentifierSleepAnalysis" satisfies CategoryTypeIdentifier;
 const DIETARY_ENERGY = "HKQuantityTypeIdentifierDietaryEnergyConsumed" satisfies QuantityTypeIdentifier;
 const DIETARY_PROTEIN = "HKQuantityTypeIdentifierDietaryProtein" satisfies QuantityTypeIdentifier;
+const STEP_COUNT = "HKQuantityTypeIdentifierStepCount" satisfies QuantityTypeIdentifier;
 
 const DAILY_READ_TYPES: ObjectTypeIdentifier[] = [SLEEP, DIETARY_ENERGY, DIETARY_PROTEIN];
 const ASLEEP_VALUES = new Set<number>([
@@ -88,6 +91,7 @@ function metaFor<T extends QuantityTypeIdentifierWriteable>(): MetadataForQuanti
 export class HealthAdapter implements IHealthAdapter {
   private askedReadThisSession = false;
   private askedDailyReadThisSession = false;
+  private askedStepsReadThisSession = false;
 
   public async isAvailable(): Promise<boolean> {
     return isHealthDataAvailableAsync();
@@ -149,6 +153,33 @@ export class HealthAdapter implements IHealthAdapter {
       values.push(...HealthDaily_buildValues("protein", HealthDaily_sumByDay(daily)));
     }
     return { values };
+  }
+
+  // A statistics query removes the overlap between iPhone and Apple Watch. Summing raw samples counts both.
+  public async readDailySteps(windowDays: number): Promise<IHealthStepsDay[]> {
+    if (!this.askedStepsReadThisSession) {
+      this.askedStepsReadThisSession = true;
+      await requestAuthorization({ toRead: [STEP_COUNT], toShare: [] });
+    }
+    const now = Date.now();
+    const startDate = new Date(HealthDaily_windowStartMs(now, windowDays));
+    const results = await queryStatisticsCollectionForQuantity(
+      STEP_COUNT,
+      ["cumulativeSum"],
+      startDate,
+      { day: 1 },
+      {
+        filter: { date: { startDate, endDate: new Date(now) } },
+        unit: "count",
+      }
+    );
+    const days: IHealthStepsDay[] = [];
+    for (const r of results) {
+      if (r.startDate != null && r.sumQuantity != null) {
+        days.push({ timestamp: new Date(r.startDate).getTime(), value: r.sumQuantity.quantity });
+      }
+    }
+    return days;
   }
 
   public async saveWorkout(args: IHealthWorkoutPayload): Promise<void> {

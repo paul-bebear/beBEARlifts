@@ -6,6 +6,7 @@ interface ISliderProps {
   max: number;
   step?: number;
   onChange: (value: number) => void;
+  onSlide?: (value: number) => void;
 }
 
 export function Slider(props: ISliderProps): JSX.Element {

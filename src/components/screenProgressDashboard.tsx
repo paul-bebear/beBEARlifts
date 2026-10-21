@@ -10,11 +10,24 @@ import type { IProgramCard } from "../models/programCard";
 import { IconDoc2 } from "./icons/iconDoc2";
 import {
   ProgressDashboard_build,
-  ProgressDashboard_caloriesPill,
   ProgressDashboard_days,
-  ProgressDashboard_loggedAgo,
   ProgressDashboard_workoutsLine,
 } from "../models/progressDashboard";
+import { ProgressHub_build, ProgressHub_plannedPerWeek } from "../models/progressHub";
+import { Program_evaluate, Program_isEmpty } from "../models/program";
+import { ProgramGoalStore } from "../utils/programGoalStore";
+import { StepsStore } from "../utils/stepsStore";
+import { useStepsHealthSync } from "../utils/useStepsHealthSync";
+import { useIsFocused } from "@react-navigation/native";
+import { ProgressPhotoStore } from "../utils/progressPhotoStore";
+import {
+  ProgressDetailLine,
+  ProgressDetailLink,
+  ProgressExpandRow,
+  ProgressGoalCard,
+  ProgressPhotosCard,
+  ProgressStepsCard,
+} from "./progressHubCards";
 import { FoodLog_formatRange } from "../models/foodLog";
 import { useFoodLog } from "../utils/foodLogStore";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
@@ -28,53 +41,6 @@ import { IconChevronRight } from "./icons/iconFoodUi";
 import { IconSpeaker } from "./icons/iconSpeaker";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { RunSensors_isAvailable } from "../utils/runSensors";
-
-const pillColors = {
-  neutral: "rgba(59, 130, 246, 0.22)",
-  good: "rgba(34, 197, 94, 0.22)",
-  warn: "rgba(234, 179, 8, 0.28)",
-};
-
-function StatCard(props: {
-  testID: string;
-  icon: ReactNode;
-  label: string;
-  value: string;
-  unit?: string;
-  subtitle: string;
-  pill?: { text: string; tone: keyof typeof pillColors };
-  onPress: () => void;
-}): JSX.Element {
-  const semantic = Tailwind_semantic();
-  return (
-    <Pressable
-      testID={props.testID}
-      data-testid={props.testID}
-      onPress={props.onPress}
-      className="flex-row items-center p-4 mx-4 mb-3 rounded-2xl bg-background-subtle"
-    >
-      <View className="items-center justify-center mr-4 border w-14 h-14 rounded-2xl border-border-neutral">
-        {props.icon}
-      </View>
-      <View className="flex-1">
-        <Text className="text-xs font-semibold tracking-wide uppercase text-text-secondary">{props.label}</Text>
-        <Text className="font-bold" style={{ fontSize: 30, lineHeight: 36 }}>
-          {props.value}
-          {props.unit != null && <Text className="text-base font-semibold text-text-secondary"> {props.unit}</Text>}
-        </Text>
-        <Text className="text-sm text-text-secondary" numberOfLines={1}>
-          {props.subtitle}
-        </Text>
-      </View>
-      {props.pill != null && (
-        <View className="px-2.5 py-1 mr-2 rounded-full" style={{ backgroundColor: pillColors[props.pill.tone] }}>
-          <Text className="text-sm font-semibold">{props.pill.text}</Text>
-        </View>
-      )}
-      <IconChevronRight size={16} color={semantic.icon.neutral} />
-    </Pressable>
-  );
-}
 
 function ProgramCardView(props: { card: IProgramCard; onPress: () => void }): JSX.Element {
   return (
@@ -131,15 +97,33 @@ export function ScreenProgressDashboard(): JSX.Element {
   const stats = untrack(state.storage.stats);
   const settings = untrack(state.storage.settings);
   const foodLog = useFoodLog();
+  const isFocused = useIsFocused();
   const dashboard = useMemo(
     () => ProgressDashboard_build({ history, stats, foodLog, settings, now: Date.now() }),
-    [history, stats, foodLog, settings]
+    [history, stats, foodLog, settings, isFocused]
   );
   const currentProgramId = state.storage.currentProgramId;
   const program = untrack(
     currentProgramId != null ? state.storage.programs.find((p) => p.id === currentProgramId) : undefined
   );
   const programCard = useMemo(() => ProgramCard_build(program, settings), [program, settings]);
+  const goalLog = ProgramGoalStore.use();
+  const steps = StepsStore.use();
+  const photos = ProgressPhotoStore.use();
+  const plannedPerWeek = useMemo(
+    () =>
+      ProgressHub_plannedPerWeek(
+        program != null && !Program_isEmpty(program) ? Program_evaluate(program, settings).weeks : undefined
+      ),
+    [program, settings]
+  );
+  const hub = useMemo(
+    () =>
+      ProgressHub_build({ goalLog, history, stats, foodLog, steps, photos, plannedPerWeek, settings, now: Date.now() }),
+    [goalLog, history, stats, foodLog, steps, photos, plannedPerWeek, settings, isFocused]
+  );
+
+  useStepsHealthSync(steps.syncHealth, isFocused);
   const semantic = Tailwind_semantic();
   const iconColor = semantic.icon.neutral;
   const blue = semantic.icon.blue;
@@ -169,12 +153,16 @@ export function ScreenProgressDashboard(): JSX.Element {
   });
 
   const goals = foodLog.goals;
-  const weight = dashboard.weight;
   return (
     <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
       {OfflineOnly_isEnabled() && (
         <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />
       )}
+      <ProgressGoalCard
+        goal={hub.goal}
+        onChangeGoal={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "goal" }))}
+        onChangePace={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "pace" }))}
+      />
       <Pressable
         testID="progress-targets"
         data-testid="progress-targets"
@@ -192,34 +180,58 @@ export function ScreenProgressDashboard(): JSX.Element {
           {FoodLog_formatRange(goals.fat, "g")} fat
         </Text>
       </Pressable>
-      <StatCard
+      <ProgressExpandRow
         testID="progress-weight"
         icon={<IconStats size={24} color={blue} />}
         label="Weight"
-        value={weight != null ? `${Math.round(weight.value.value * 10) / 10}` : "–"}
-        unit={weight != null ? weight.value.unit : undefined}
-        subtitle={weight != null ? ProgressDashboard_loggedAgo(weight.daysAgo) : "Tap to log your weight"}
-        onPress={() => dispatch(Thunk_pushScreen("stats"))}
-      />
-      <StatCard
+        value={hub.weight.value ?? "–"}
+        subtitle={hub.weight.subtitle}
+      >
+        {hub.weight.change != null && <ProgressDetailLine text={hub.weight.change} />}
+        <ProgressDetailLink
+          testID="progress-weight-open"
+          title="Log or see your weight"
+          onPress={() => dispatch(Thunk_pushScreen("stats"))}
+        />
+      </ProgressExpandRow>
+      <ProgressExpandRow
         testID="progress-nutrition"
         icon={<IconFood size={24} color={blue} />}
         label="Nutrition"
-        value={`${dashboard.nutrition.daysLogged} of ${ProgressDashboard_days}`}
-        unit="days"
-        subtitle="Last 7 days"
-        pill={ProgressDashboard_caloriesPill(dashboard.nutrition.today)}
-        onPress={() => dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
-      />
-      <StatCard
+        value={`${hub.nutrition.daysLogged} of ${hub.nutrition.daysTracked} days`}
+        subtitle={`Logged ${hub.nutrition.since}`}
+        pill={hub.nutrition.calories}
+      >
+        <ProgressDetailLine
+          text={`${dashboard.nutrition.daysLogged} of ${ProgressDashboard_days} days logged in the last week`}
+        />
+        <ProgressDetailLink
+          testID="progress-nutrition-open"
+          title="Open the food log"
+          onPress={() => dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
+        />
+      </ProgressExpandRow>
+      <ProgressExpandRow
         testID="progress-workouts"
         icon={<IconBarbell2 />}
-        label="Workouts"
-        value={`${dashboard.workouts.count}`}
-        unit="in 7 days"
-        subtitle={ProgressDashboard_workoutsLine(dashboard.workouts)}
-        onPress={() => dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
-      />
+        label="Workout consistency"
+        value={`${hub.consistency.percent}%`}
+        subtitle={`${hub.consistency.done} of ${hub.consistency.planned} planned in ${hub.consistency.windowDays} days`}
+      >
+        <ProgressDetailLine
+          text={`${dashboard.workouts.count} in the last 7 days · ${ProgressDashboard_workoutsLine(dashboard.workouts)}`}
+        />
+        <ProgressDetailLink
+          testID="progress-workouts-open"
+          title="Open workout history"
+          onPress={() => dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
+        />
+      </ProgressExpandRow>
+      <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">
+        Bonus tracking
+      </Text>
+      <ProgressStepsCard steps={hub.steps} onPress={() => dispatch(Thunk_pushScreen("steps"))} />
+      <ProgressPhotosCard photos={hub.photos} onPress={() => dispatch(Thunk_pushScreen("progressPhotos"))} />
       <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">More</Text>
       {OfflineOnly_isEnabled() && RunSensors_isAvailable() && (
         <LinkRow
