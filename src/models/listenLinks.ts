@@ -10,7 +10,6 @@ export const ListenLinks_kinds: { kind: IListenKind; label: string; play: string
 
 const spotifyTypes = ["playlist", "album", "show", "episode", "track", "artist"];
 
-// A spotify: URI opens nothing in Safari, so it becomes the open.spotify.com link that hands off to the app.
 export function ListenLinks_normalize(text: string): string | undefined {
   const trimmed = text.trim();
   const uri = trimmed.match(/^spotify:([a-z]+):([A-Za-z0-9]+)$/);
@@ -24,6 +23,18 @@ export function ListenLinks_normalize(text: string): string | undefined {
     return undefined;
   }
   return url.protocol === "https:" ? url.href : undefined;
+}
+
+export function ListenLinks_spotifyUri(text: string): string | undefined {
+  const normalized = ListenLinks_normalize(text);
+  if (normalized == null) {
+    return undefined;
+  }
+  const url = new URL(normalized);
+  const path = url.pathname.match(/^\/(?:intl-[a-z]+\/)?([a-z]+)\/([A-Za-z0-9]+)\/?$/);
+  return url.hostname === "open.spotify.com" && path != null && spotifyTypes.includes(path[1])
+    ? `spotify:${path[1]}:${path[2]}`
+    : undefined;
 }
 
 export function ListenLinks_set(

@@ -5,10 +5,12 @@ import {
   RunRecording_gpsErrorText,
   RunRecording_hasFreshFix,
   RunRecording_isSaveDue,
+  RunRecording_markHidden,
   RunRecording_fixText,
   RunRecording_recentPace,
   RunRecording_parse,
   RunRecording_pause,
+  RunRecording_pauseStale,
   RunRecording_pointCount,
   RunRecording_restore,
   RunRecording_resume,
@@ -16,12 +18,71 @@ import {
   RunRecording_start,
   RunRecording_toRun,
 } from "../src/models/runRecording";
-import { IRunPoint } from "../src/models/runTrack";
+import { IRunPoint, RunTrack_stats } from "../src/models/runTrack";
 
 const a: IRunPoint = { t: 1000, lat: 40, lon: -3, acc: 5 };
 const b: IRunPoint = { ...a, t: 11000, lat: 40.0001 };
 
 describe("RunRecording", () => {
+  it("pauses on screen lock and excludes the lock gap from live and saved moving time", () => {
+    let run = RunRecording_addPoint(RunRecording_addPoint(RunRecording_start(1000), a), b);
+    run = RunRecording_markHidden(run, 12000);
+    expect(run.status).to.equal("paused");
+    expect(run.pausedByScreen).to.equal(true);
+    expect(run.segments[0].endedAt).to.equal(12000);
+    expect(RunRecording_markHidden(run, 612000)).to.equal(run);
+    expect(RunTrack_stats(run.segments, 612000).movingMs).to.equal(11000);
+    expect(RunRecording_toRun(run, 612000)?.movingMs).to.equal(11000);
+    run = RunRecording_resume(run, 612000);
+    expect(run.pausedByScreen).to.equal(false);
+    run = RunRecording_addPoint(run, { ...a, t: 612000, lat: 41 });
+    run = RunRecording_addPoint(run, { ...b, t: 622000, lat: 41.0001 });
+    const saved = RunRecording_toRun(run, 623000)!;
+    expect(saved.movingMs).to.equal(22000);
+    expect(saved.distanceM).to.be.lessThan(30);
+    expect(saved.route).to.have.length(2);
+  });
+
+  it("closes at the later of the screen event and the last fix", () => {
+    const run = RunRecording_addPoint(RunRecording_start(1000), b);
+    expect(RunRecording_markHidden(run, 10000).segments[0].endedAt).to.equal(11000);
+    const manual = RunRecording_pause(run, 12000);
+    expect(RunRecording_markHidden(manual, 13000)).to.equal(manual);
+    expect(manual.pausedByScreen).to.equal(undefined);
+  });
+
+  it("pauses stale GPS at the last fix even when the tick runs ten minutes late", () => {
+    const run = RunRecording_addPoint(RunRecording_addPoint(RunRecording_start(1000), a), b);
+    expect(RunRecording_pauseStale(run, 25999)).to.equal(run);
+    const paused = RunRecording_pauseStale(run, 26000);
+    expect(paused.status).to.equal("paused");
+    expect(paused.segments[0].endedAt).to.equal(11000);
+    expect(RunRecording_pauseStale(paused, 611000)).to.equal(paused);
+    expect(RunRecording_toRun(run, 611000)?.movingMs).to.equal(10000);
+    expect(RunTrack_stats(RunRecording_pauseStale(run, 611000).segments, 611000).movingMs).to.equal(10000);
+    const lateFix = RunRecording_addPoint(run, { ...b, t: 611000, lat: 41 });
+    expect(lateFix.status).to.equal("paused");
+    expect(RunRecording_pointCount(lateFix)).to.equal(2);
+    expect(lateFix.segments[0].endedAt).to.equal(11000);
+  });
+
+  it("waits 15 seconds for an initial fix after start or resume", () => {
+    const run = RunRecording_start(1000);
+    expect(RunRecording_pauseStale(run, 15999)).to.equal(run);
+    expect(RunRecording_pauseStale(run, 16000).segments[0].endedAt).to.equal(1000);
+    const resumed = RunRecording_resume(RunRecording_pause(run, 2000), 100000);
+    expect(RunRecording_pauseStale(resumed, 114999)).to.equal(resumed);
+    expect(RunRecording_pauseStale(resumed, 115000).status).to.equal("paused");
+  });
+
+  it("preserves the screen pause reason in a saved draft", () => {
+    const run = RunRecording_markHidden(RunRecording_addPoint(RunRecording_start(1000), a), 2000);
+    const parsed = RunRecording_parse(JSON.parse(JSON.stringify(run)))!;
+    expect(parsed.pausedByScreen).to.equal(true);
+    expect(RunRecording_restore(parsed).segments[0].endedAt).to.equal(2000);
+    expect(RunRecording_toRun(parsed, 3000)).to.equal(undefined);
+  });
+
   it("records accepted points, counts bad fixes, and ignores movement during a pause", () => {
     let run = RunRecording_addPoint(RunRecording_start(1000), a);
     run = RunRecording_addPoint(run, { ...b, acc: 50 });

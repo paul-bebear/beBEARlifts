@@ -25,6 +25,7 @@ export interface IRunRecording {
   lastFix?: IRunFix;
   savedAt?: number;
   wasRestored?: boolean;
+  pausedByScreen?: boolean;
 }
 
 export const RunRecording_saveEveryMs = 10 * 1000;
@@ -52,6 +53,20 @@ export function RunRecording_pause(recording: IRunRecording, now: number): IRunR
   return { ...recording, status: "paused", segments: closeLast(recording.segments, now) };
 }
 
+export function RunRecording_markHidden(recording: IRunRecording, now: number): IRunRecording {
+  return recording.status === "recording"
+    ? { ...RunRecording_pause(recording, Math.max(recording.lastFix?.t ?? now, now)), pausedByScreen: true }
+    : recording;
+}
+
+export function RunRecording_pauseStale(recording: IRunRecording, now: number): IRunRecording {
+  const segment = recording.segments[recording.segments.length - 1];
+  const lastFixAt = Math.max(recording.lastFix?.t ?? 0, segment?.startedAt ?? recording.startedAt);
+  return recording.status === "recording" && now - lastFixAt >= RunRecording_fixStaleMs
+    ? RunRecording_pause(recording, lastFixAt)
+    : recording;
+}
+
 export function RunRecording_resume(recording: IRunRecording, now: number): IRunRecording {
   if (recording.status !== "paused") {
     return recording;
@@ -60,6 +75,7 @@ export function RunRecording_resume(recording: IRunRecording, now: number): IRun
     ...recording,
     status: "recording",
     wasRestored: false,
+    pausedByScreen: false,
     segments: [...recording.segments, { startedAt: now, points: [] }],
   };
 }
@@ -69,8 +85,9 @@ export function RunRecording_addPoint(recording: IRunRecording, point: IRunPoint
   if (point.t < (segment?.startedAt ?? 0) || point.t < (recording.lastFix?.t ?? 0)) {
     return recording;
   }
-  const withFix = { ...recording, lastFix: { t: point.t, acc: point.acc } };
-  if (recording.status !== "recording" || segment == null) {
+  const checked = RunRecording_pauseStale(recording, point.t);
+  const withFix = { ...checked, lastFix: { t: point.t, acc: point.acc } };
+  if (checked.status !== "recording" || segment == null) {
     return withFix;
   }
   const verdict = RunTrack_judge(segment.points[segment.points.length - 1], point);
@@ -139,7 +156,7 @@ export function RunRecording_toRun(recording: IRunRecording, now: number): IRun 
   if (RunRecording_pointCount(recording) < 2) {
     return undefined;
   }
-  const segments = RunRecording_pause(recording, now).segments;
+  const segments = RunRecording_pause(RunRecording_pauseStale(recording, now), now).segments;
   const stats = RunTrack_stats(segments, now);
   const route = RunRoute_simplify(segments.map((s) => s.points.map((p): ILatLon => [p.lat, p.lon])));
   return {
@@ -209,5 +226,6 @@ export function RunRecording_parse(raw: unknown): IRunRecording | undefined {
     segments,
     dropped: finite(r.dropped) ? r.dropped : 0,
     ...(finite(r.savedAt) ? { savedAt: r.savedAt } : {}),
+    ...(r.pausedByScreen === true ? { pausedByScreen: true } : {}),
   };
 }

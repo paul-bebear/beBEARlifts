@@ -9,7 +9,9 @@ import {
   RunRecording_fixText,
   RunRecording_gpsErrorText,
   RunRecording_isSaveDue,
+  RunRecording_markHidden,
   RunRecording_pause,
+  RunRecording_pauseStale,
   RunRecording_recentPace,
   RunRecording_resume,
   RunRecording_snapshot,
@@ -87,13 +89,18 @@ export function RunRecorder(props: {
     const timer = setInterval(() => {
       const at = Date.now();
       setNow(at);
-      if (!closing.current && RunRecording_isSaveDue(current.current.savedAt, at)) {
-        persist(current.current);
+      if (!closing.current) {
+        const next = RunRecording_pauseStale(current.current, at);
+        if (next !== current.current || RunRecording_isSaveDue(next.savedAt, at)) {
+          persist(next);
+          setRecording(current.current);
+        }
       }
     }, 1000);
     const onVisibility = (): void => {
       if (document.visibilityState === "hidden" && !closing.current) {
-        persist(current.current);
+        persist(RunRecording_markHidden(current.current, Date.now()));
+        setRecording(current.current);
       }
     };
     if (typeof document !== "undefined") {
@@ -121,7 +128,7 @@ export function RunRecorder(props: {
     setBusy(true);
     if (await Dialog_confirm("Finish this run? Runs without enough GPS points will be discarded.")) {
       closing.current = true;
-      change(RunRecording_pause(current.current, Date.now()));
+      change(RunRecording_pause(RunRecording_pauseStale(current.current, Date.now()), Date.now()));
       try {
         await props.onFinish(RunRecording_toRun(current.current, Date.now()));
       } catch {
@@ -137,6 +144,11 @@ export function RunRecorder(props: {
       <Text className="text-lg font-bold">{recording.status === "paused" ? "Run paused" : "Recording run"}</Text>
       {recording.wasRestored && (
         <Text className="mt-2 text-text-secondary">Your run was recovered paused. Tap Resume when you are ready.</Text>
+      )}
+      {recording.pausedByScreen && (
+        <Text className="mt-2 text-text-secondary">
+          Paused while the screen was off. Tap Resume when you are ready.
+        </Text>
       )}
       <RecordingStats recording={recording} now={now} />
       <Text className="mb-2 text-sm text-text-secondary">{gpsError ?? RunRecording_fixText(recording, now)}</Text>

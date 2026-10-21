@@ -35,6 +35,9 @@ const errorKey = "bebear_spotify_error";
 const tokenUrl = "https://accounts.spotify.com/api/token";
 const apiBase = "https://api.spotify.com/v1";
 
+export const SpotifyClient_testerLimitMessage =
+  "This Spotify app allows 5 testers. Ask Paul to add your Spotify email.";
+
 export type ISpotifyResult<T> = { ok: true; value: T } | { ok: false; message: string };
 
 function redirectUri(): string {
@@ -187,7 +190,13 @@ async function json(response: Response | undefined): Promise<unknown> {
 }
 
 export async function SpotifyClient_profile(): Promise<ISpotifyProfile | undefined> {
-  return SpotifyPlaylist_parseProfile(await json(await SpotifyClient_api("/me")));
+  const response = await SpotifyClient_api("/me");
+  if (response?.status === 403) {
+    localStorage.setItem(errorKey, SpotifyClient_testerLimitMessage);
+    await MusicStore_update(MusicLog_disconnect);
+    return undefined;
+  }
+  return SpotifyPlaylist_parseProfile(await json(response));
 }
 
 export async function SpotifyClient_nowPlaying(): Promise<ISpotifyNowPlaying | undefined> {
