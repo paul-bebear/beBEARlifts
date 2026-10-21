@@ -1,12 +1,5 @@
 import { JSX, ReactNode, useMemo, useState } from "react";
-import {
-  DailyChecklist_build,
-  DailyChecklist_doneDays,
-  DailyChecklist_greeting,
-  DailyChecklist_streak,
-  DailyChecklist_toggleCheckIn,
-  IChecklistItemKey,
-} from "../models/dailyChecklist";
+import { DailyChecklist_doneDays, DailyChecklist_streak } from "../models/dailyChecklist";
 import {
   MonthCalendar_build,
   MonthCalendar_monthOf,
@@ -15,12 +8,10 @@ import {
 } from "../models/monthCalendar";
 import { ChecklistStore } from "../utils/checklistStore";
 import { ProgressCalendarHeader } from "./progressCalendarHeader";
-import { DailyChecklistCard } from "./dailyChecklistCard";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
 import { useNavOptions } from "../navigation/useNavOptions";
-import { navigateToModal } from "../navigation/navigationService";
 import { Thunk_pushScreen, Thunk_pushToEditProgram } from "../ducks/thunks";
 import { ProgramCard_build } from "../models/programCard";
 import type { IProgramCard } from "../models/programCard";
@@ -45,7 +36,7 @@ import {
   ProgressPhotosCard,
   ProgressStepsCard,
 } from "./progressHubCards";
-import { FoodLog_dayKey, FoodLog_formatRange } from "../models/foodLog";
+import { FoodLog_dayKey } from "../models/foodLog";
 import { useFoodLog } from "../utils/foodLogStore";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { IconMe } from "./icons/iconMe";
@@ -144,7 +135,7 @@ export function ScreenProgressDashboard(): JSX.Element {
   const today = FoodLog_dayKey(new Date());
   const [selectedDay, setSelectedDay] = useState(today);
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
-  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(false);
+  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(true);
   const streak = useMemo(
     () => DailyChecklist_streak(DailyChecklist_doneDays({ stats, foodLog, log: checklistLog }), today),
     [stats, foodLog, checklistLog, today]
@@ -153,33 +144,10 @@ export function ScreenProgressDashboard(): JSX.Element {
     () => MonthCalendar_build({ month, today, selected: selectedDay, workoutDays: MonthCalendar_workoutDays(history) }),
     [month, today, selectedDay, history]
   );
-  const checklist = useMemo(
-    () =>
-      DailyChecklist_build({
-        day: selectedDay,
-        today,
-        stats,
-        foodLog,
-        log: checklistLog,
-        units: settings.units,
-        goalStartedAt: goalLog.current?.startedAt,
-      }),
-    [selectedDay, today, stats, foodLog, checklistLog, settings.units, goalLog]
-  );
 
   const selectDay = (day: string): void => {
     setSelectedDay(day);
     setMonth(MonthCalendar_monthOf(day));
-  };
-
-  const onChecklistItem = (item: IChecklistItemKey): void => {
-    if (item === "weight") {
-      dispatch(Thunk_pushScreen("stats"));
-    } else if (item === "food") {
-      dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
-    } else {
-      ChecklistStore.update((l) => DailyChecklist_toggleCheckIn(l, selectedDay));
-    }
   };
 
   useStepsHealthSync(steps.syncHealth, isFocused);
@@ -211,7 +179,6 @@ export function ScreenProgressDashboard(): JSX.Element {
     ],
   });
 
-  const goals = foodLog.goals;
   return (
     <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
       <ProgressCalendarHeader
@@ -223,13 +190,6 @@ export function ScreenProgressDashboard(): JSX.Element {
         onSelectDay={selectDay}
         onStreakPress={() => dispatch(Thunk_pushScreen("streak"))}
       />
-      <DailyChecklistCard
-        greeting={DailyChecklist_greeting(new Date().getHours())}
-        checklist={checklist}
-        isToday={selectedDay === today}
-        onBackToToday={() => selectDay(today)}
-        onItemPress={onChecklistItem}
-      />
       {OfflineOnly_isEnabled() && (
         <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />
       )}
@@ -238,23 +198,6 @@ export function ScreenProgressDashboard(): JSX.Element {
         onChangeGoal={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "goal" }))}
         onChangePace={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "pace" }))}
       />
-      <Pressable
-        testID="progress-targets"
-        data-testid="progress-targets"
-        onPress={() => navigateToModal("foodGoalsModal")}
-        className="p-4 mx-4 mb-3 rounded-2xl"
-        style={{ backgroundColor: "rgba(59, 130, 246, 0.18)" }}
-      >
-        <View className="flex-row items-center">
-          <Text className="flex-1 text-sm font-bold tracking-wide uppercase text-text-link">Daily targets</Text>
-          <Text className="text-sm text-text-secondary">Change ›</Text>
-        </View>
-        <Text className="mt-1 text-2xl font-bold">{FoodLog_formatRange(goals.calories, " cal")}</Text>
-        <Text className="mt-1 text-sm text-text-secondary">
-          {FoodLog_formatRange(goals.protein, "g")} protein · {FoodLog_formatRange(goals.carbs, "g")} carbs ·{" "}
-          {FoodLog_formatRange(goals.fat, "g")} fat
-        </Text>
-      </Pressable>
       <ProgressExpandRow
         testID="progress-weight"
         icon={<IconStats size={24} color={blue} />}
@@ -275,7 +218,6 @@ export function ScreenProgressDashboard(): JSX.Element {
         label="Nutrition"
         value={`${hub.nutrition.daysLogged} of ${hub.nutrition.daysTracked} days`}
         subtitle={`Logged ${hub.nutrition.since}`}
-        pill={hub.nutrition.calories}
       >
         <ProgressDetailLine
           text={`${dashboard.nutrition.daysLogged} of ${ProgressDashboard_days} days logged in the last week`}

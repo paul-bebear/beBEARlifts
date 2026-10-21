@@ -1,6 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  HistoryCollapse_canCollapse,
   HistoryCollapse_expand,
   HistoryCollapse_isExpanded,
   HistoryCollapse_summary,
@@ -45,9 +46,17 @@ function record(id: number, entries: IHistoryEntry[], minutes = 45): IHistoryRec
 }
 
 describe("HistoryCollapse", () => {
-  it("starts past workouts collapsed and the current workout expanded", () => {
-    expect(HistoryCollapse_isExpanded(record(12, []), {})).to.equal(false);
-    expect(HistoryCollapse_isExpanded(record(0, []), {})).to.equal(true);
+  it("starts past workouts and the next workout collapsed", () => {
+    expect(HistoryCollapse_isExpanded(record(12, []), {}, false)).to.equal(false);
+    expect(HistoryCollapse_isExpanded(record(0, []), {}, false)).to.equal(false);
+    expect(HistoryCollapse_isExpanded(record(0, []), { 0: true }, false)).to.equal(true);
+  });
+
+  it("keeps an ongoing workout open and lets the next workout collapse", () => {
+    expect(HistoryCollapse_isExpanded(record(0, []), {}, true)).to.equal(true);
+    expect(HistoryCollapse_canCollapse(record(0, []), true)).to.equal(false);
+    expect(HistoryCollapse_canCollapse(record(0, []), false)).to.equal(true);
+    expect(HistoryCollapse_canCollapse(record(12, []), true)).to.equal(true);
   });
 
   it("toggles a workout open and closed without touching the others", () => {

@@ -106,10 +106,9 @@ describe("ProgressHub", () => {
     });
   });
 
-  it("counts food days since the goal started and the calories left today", () => {
+  it("counts food days since the goal started", () => {
     const foodLog = {
       ...FoodLog_empty(),
-      goals: { ...FoodLog_empty().goals, calories: { min: 2000, max: 2200 } },
       entries: [food("2026-10-21", 600), food("2026-10-20", 1000), food("2026-10-20", 500), food("2026-10-10", 900)],
     };
     const hub = ProgressHub_build(
@@ -122,13 +121,6 @@ describe("ProgressHub", () => {
       daysLogged: 2,
       daysTracked: 5,
       since: "since the goal started",
-      calories: { text: "1,500 Cal left today", tone: "neutral" },
-    });
-    expect(
-      ProgressHub_build(input({ foodLog: { ...foodLog, entries: [food("2026-10-21", 2600)] } })).nutrition.calories
-    ).to.deep.equal({
-      text: "500 Cal over today",
-      tone: "warn",
     });
   });
 

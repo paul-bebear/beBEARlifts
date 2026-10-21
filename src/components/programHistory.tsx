@@ -21,6 +21,7 @@ import { Program_nextHistoryRecord } from "../models/program";
 import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedState } from "../navigation/TrackedStateContext";
 import { HistoryRecordView } from "./historyRecord";
+import { HomeChecklist } from "./homeChecklist";
 import { Program_evaluate, Program_getProgramDay } from "../models/program";
 import {
   HistoryCollapse_expand,
@@ -165,7 +166,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
           settings={props.settings}
           historyRecord={item}
           dispatch={dispatch}
-          isExpanded={HistoryCollapse_isExpanded(item, expandedIds)}
+          isExpanded={HistoryCollapse_isExpanded(item, expandedIds, isOngoing)}
           onToggleExpanded={onToggleExpanded}
         />
       </View>
@@ -216,10 +217,17 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
     </View>
   );
 
+  const checklist = (
+    <View className="pt-4">
+      <HomeChecklist stats={props.navCommon.stats} units={props.settings.units} dispatch={dispatch} />
+    </View>
+  );
+
   if (sortedHistory.length === 0) {
     return (
       <View className="flex-1">
         {stickyHeader}
+        {checklist}
         <HistoryRecordsNullState />
       </View>
     );
@@ -232,6 +240,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         key={listRemountKey}
         ref={flatListRef}
         data={sortedHistory}
+        ListHeaderComponent={checklist}
         renderItem={renderItem}
         extraData={expandedIds}
         keyExtractor={keyExtractor}

@@ -25,7 +25,7 @@ import { IEvaluatedProgramDay } from "../models/program";
 import { Thunk_startProgramDay, Thunk_editHistoryRecord } from "../ducks/thunks";
 import { IconArrowDown2 } from "./icons/iconArrowDown2";
 import { IconArrowUp } from "./icons/iconArrowUp";
-import { HistoryCollapse_summary } from "../models/historyCollapse";
+import { HistoryCollapse_canCollapse, HistoryCollapse_summary } from "../models/historyCollapse";
 import { useMusicLog } from "../utils/musicStore";
 import { MusicLog_sessionForWorkout } from "../models/musicLog";
 import { SongPerSet_forEntry, SongPerSet_match } from "../models/songPerSet";
@@ -89,8 +89,34 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
     : props.isOngoing
       ? "Ongoing workout"
       : "Next workout";
-  const canCollapse = !isCurrent && !!props.onToggleExpanded;
+  const canCollapse = HistoryCollapse_canCollapse(historyRecord, props.isOngoing) && !!props.onToggleExpanded;
   const toggle = (): void => props.onToggleExpanded?.(historyRecord.id);
+
+  if (canCollapse && props.isExpanded === false && isCurrent) {
+    return (
+      <View data-testid="history-record" testID="history-record" className="pt-2">
+        <Pressable
+          data-testid="next-workout-collapsed"
+          testID="next-workout-collapsed"
+          className="flex-row items-center px-4 py-3 border rounded-2xl bg-background-cardpurple border-border-cardpurple"
+          style={getNativeCardShadow()}
+          onPress={toggle}
+        >
+          <CollapsedNextWorkout historyRecord={historyRecord} title={title} />
+          <Button
+            name="start-next-workout"
+            kind="purple"
+            buttonSize="md"
+            data-testid="start-next-workout"
+            testID="start-next-workout"
+            onClick={() => dispatch(Thunk_startProgramDay())}
+          >
+            Start
+          </Button>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (canCollapse && props.isExpanded === false) {
     return (
@@ -216,6 +242,22 @@ interface ICollapsedRecordProps {
   historyRecord: IHistoryRecord;
   title: string;
   prs?: IPersonalRecords;
+}
+
+function CollapsedNextWorkout(props: { historyRecord: IHistoryRecord; title: string }): JSX.Element {
+  const { historyRecord } = props;
+  const summary = HistoryCollapse_summary(historyRecord);
+  return (
+    <View className="flex-1 mr-3">
+      <Text className="text-xs font-semibold tracking-wide uppercase text-text-secondary">{props.title}</Text>
+      <Text className="text-xl font-bold" numberOfLines={1}>
+        {historyRecord.dayName}
+      </Text>
+      <Text className="text-sm text-text-secondary">
+        {`${summary.exercises} ${StringUtils_pluralize("exercise", summary.exercises)}  ·  ${summary.sets} ${StringUtils_pluralize("set", summary.sets)}`}
+      </Text>
+    </View>
+  );
 }
 
 function CollapsedRecord(props: ICollapsedRecordProps): JSX.Element {

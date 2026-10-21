@@ -14,8 +14,16 @@ export interface IHistoryRecordSummary {
   hasPr: boolean;
 }
 
-export function HistoryCollapse_isExpanded(record: IHistoryRecord, expanded: IExpandedHistoryIds): boolean {
-  return Progress_isCurrent(record) || !!expanded[record.id];
+export function HistoryCollapse_canCollapse(record: Pick<IHistoryRecord, "id">, isOngoing: boolean): boolean {
+  return !(Progress_isCurrent(record) && isOngoing);
+}
+
+export function HistoryCollapse_isExpanded(
+  record: IHistoryRecord,
+  expanded: IExpandedHistoryIds,
+  isOngoing: boolean
+): boolean {
+  return !HistoryCollapse_canCollapse(record, isOngoing) || !!expanded[record.id];
 }
 
 export function HistoryCollapse_toggle(expanded: IExpandedHistoryIds, recordId: number): IExpandedHistoryIds {

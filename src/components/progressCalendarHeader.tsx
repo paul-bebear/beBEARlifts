@@ -112,6 +112,7 @@ export function ProgressCalendarHeader(props: {
         className="items-center py-2"
       >
         <View className="w-10 h-1 rounded-full bg-border-neutral" />
+        <Text className="mt-1 text-xs text-text-secondary">{props.isCollapsed ? "Show month" : "Show week"}</Text>
       </Pressable>
     </View>
   );
