@@ -9,6 +9,7 @@ import { IconEdit2 } from "../icons/iconEdit2";
 import { IconUiMode } from "../icons/iconUiMode";
 import { getCurrentScreenData } from "../../navigation/navigationService";
 import { IState } from "../../models/state";
+import { Support_docsUrl } from "../../utils/support";
 
 const paraCn = "text-sm leading-relaxed text-text-secondary";
 
@@ -111,7 +112,7 @@ export const programTourConfig: ITourConfig = {
             This defines Squat for 3 sets of 8 reps at 100lb, with linear progression adding 5lb when you hit all reps.
           </Text>
           <Text className={paraCn}>
-            <Link href="https://www.liftosaur.com/doc/liftoscript">Read the full Liftoscript docs</Link> to learn more.
+            <Link href={Support_docsUrl}>Read the full Liftoscript docs</Link> to learn more.
           </Text>
         </>
       ),

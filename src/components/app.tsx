@@ -62,6 +62,7 @@ import { TrackedStateProvider } from "../navigation/TrackedStateContext";
 import { ClickTrackingContext } from "../utils/clickTracking";
 import { AppNavigator } from "../navigation/AppNavigator";
 import type { IScreen } from "../models/screen";
+import { ProgramsHost_fork } from "../utils/programsHost";
 
 declare let Rollbar: RB;
 declare let __COMMIT_HASH__: string;
@@ -210,8 +211,7 @@ export function AppView(props: IProps): JSX.Element | null {
   };
 
   useEffect(() => {
-    const url =
-      typeof window !== "undefined" ? UrlUtils_build(window.location.href, "https://liftosaur.com") : undefined;
+    const url = typeof window !== "undefined" ? UrlUtils_build(window.location.href, ProgramsHost_fork) : undefined;
     const urlUserId = url != null ? url.searchParams.get("userid") || undefined : undefined;
     if (state.adminKey != null && urlUserId != null) {
       const storageId = url != null ? url.searchParams.get("storageid") || undefined : undefined;

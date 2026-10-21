@@ -19,7 +19,7 @@ import java.util.UUID
 
 object LftUpdater {
     private const val TAG = "LftUpdater"
-    private const val FALLBACK_MANIFEST_URL = "https://www.liftosaur.com/api/updates/manifest"
+    private const val FALLBACK_MANIFEST_URL = "https://lifts.paulbebear.com/api/updates/manifest"
     private const val CHANNEL = "production"
 
     private fun manifestUrl(context: Context): String =

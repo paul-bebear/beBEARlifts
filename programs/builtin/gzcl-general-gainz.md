@@ -2,7 +2,7 @@
 id: gzcl-general-gainz
 name: "GZCL: General Gainz"
 author: Cody Lefever
-url: "https://www.liftosaur.com/programs/gzcl-general-gainz"
+url: ""
 shortDescription: Latest GZCL program combining learnings from all other GZCL programs.
 isMultiweek: true
 tags: []

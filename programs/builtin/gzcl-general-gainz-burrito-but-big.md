@@ -2,7 +2,7 @@
 id: gzcl-general-gainz-burrito-but-big
 name: "GZCL: General Gainz - Burrito But Big"
 author: /u/benjaminbk
-url: "https://www.liftosaur.com/programs/gzcl-general-gainz-burrito-but-big"
+url: ""
 shortDescription: Hypertrophy adaptation of General Gainz, as a 12-week program.
 isMultiweek: true
 tags: []

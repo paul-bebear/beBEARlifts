@@ -39,8 +39,10 @@ import { LinkButton } from "./linkButton";
 import { Features_isEnabled } from "../utils/features";
 import { EffortRating_isEnabled } from "../models/effortRating";
 import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offlineOnly";
+import { Support_docsUrl, Support_email, Support_licensesUrl } from "../utils/support";
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
+import { ProgramsHost_fork } from "../utils/programsHost";
 import { CloudBackupCard } from "./cloudBackupCard";
 import { AppStoreSettings } from "./appStoreSettings";
 
@@ -562,7 +564,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       <MenuItem name="Changelog" onClick={() => WhatsNew_showWhatsNew(props.dispatch)} />
       <Pressable
         className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("mailto:info@liftosaur.com")}
+        onPress={() => openExternal(`mailto:${Support_email}`)}
       >
         <Text className="text-base text-text-primary">Contact Us</Text>
       </Pressable>
@@ -581,29 +583,23 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       )}
       <Pressable
         className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://www.liftosaur.com/privacy.html")}
+        onPress={() => openExternal(`${ProgramsHost_fork}/privacy.html`)}
       >
         <Text className="text-base text-text-primary">Privacy Policy</Text>
       </Pressable>
       <Pressable
         className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://www.liftosaur.com/terms.html")}
+        onPress={() => openExternal(`${ProgramsHost_fork}/terms.html`)}
       >
         <Text className="text-base text-text-primary">Terms & Conditions</Text>
       </Pressable>
-      <Pressable
-        className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://www.liftosaur.com/licenses.html")}
-      >
+      <Pressable className="py-3 border-b border-border-neutral" onPress={() => openExternal(Support_licensesUrl)}>
         <Text className="text-base text-text-primary">Licenses</Text>
       </Pressable>
       <Text className="py-3 text-xs text-text-secondary">
         beBEAR is based on Liftosaur by Anton Astashov (AGPL-3.0)
       </Text>
-      <Pressable
-        className="py-3 border-b border-border-neutral"
-        onPress={() => openExternal("https://www.liftosaur.com/doc")}
-      >
+      <Pressable className="py-3 border-b border-border-neutral" onPress={() => openExternal(Support_docsUrl)}>
         <Text className="text-base text-text-primary">Documentation</Text>
       </Pressable>
       <Pressable

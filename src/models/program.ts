@@ -113,6 +113,7 @@ import { Service } from "../api/service";
 import { EditProgram_initPlannerState } from "./editProgram";
 import { ProgramSet_getEvaluatedWeight } from "./programSet";
 import { Stats_getCurrentMovingAverageBodyweight } from "./stats";
+import { ProgramsHost_fork } from "../utils/programsHost";
 
 declare let __HOST__: string;
 
@@ -1382,7 +1383,7 @@ export async function Program_toUrl(
   const exportedProgram = Program_exportProgram(program, settings);
   const baseUrl = UrlUtils_build(
     "/planner",
-    typeof window !== "undefined" && window.location?.href ? window.location.href : "https://www.liftosaur.com"
+    typeof window !== "undefined" && window.location?.href ? window.location.href : ProgramsHost_fork
   );
   const json = JSON.stringify(exportedProgram);
   const hash = StringUtils_hashString(json);

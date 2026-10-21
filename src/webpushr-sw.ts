@@ -22,7 +22,7 @@ const filesToCache = [
   `/images/svgs/muscles-combined.svg`,
   `/images/svgs/musclegroups-combined.svg`,
   /\/fonts\/.*/,
-  /\/externalimages\/exercises\//,
+  /\/images\/exercises\//,
   "/",
   "/index.html",
   "/app",

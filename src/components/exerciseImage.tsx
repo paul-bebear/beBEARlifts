@@ -3,11 +3,11 @@ import { View, Image } from "react-native";
 import { Text } from "./primitives/text";
 import { IconSpinner } from "./icons/iconSpinner";
 import { IExerciseType, ISettings } from "../types";
-import { IconDefaultExercise } from "./icons/iconDefaultExercise";
 import {
   ExerciseImageUtils_url,
   ExerciseImageUtils_exists,
   ExerciseImageUtils_existsCustom,
+  ExerciseImageUtils_initials,
 } from "../models/exerciseImage";
 import { Exercise_get, Exercise_nameWithEquipment } from "../models/exercise";
 import { HostConfig_resolveUrl } from "../utils/hostConfig";
@@ -93,15 +93,16 @@ export const ExerciseImage = memo(function ExerciseImage(props: IProps): JSX.Ele
 
   if (size === "small") {
     const w = Math.round((props.width || 32) * remScale);
-    const imgStyle = { width: w, height: Math.round(w * 1.5) };
+    const imgStyle = { width: w, height: w };
     return (
       <>
         {!isError && doesExist && (
           <Image
             data-testid="exercise-image-small"
             testID="exercise-image-small"
-            className={props.className}
+            className={`rounded-lg ${props.className ?? ""}`}
             source={{ uri: src }}
+            resizeMode="cover"
             style={imgStyle}
             onLoad={onCachedLoad}
             onError={onCachedError}
@@ -122,8 +123,16 @@ export const ExerciseImage = memo(function ExerciseImage(props: IProps): JSX.Ele
               </Text>
             </View>
           ) : (
-            <View className={`items-center justify-center ${props.className ?? ""}`} style={imgStyle}>
-              <IconDefaultExercise size={w} />
+            <View
+              className={`items-center justify-center rounded-lg bg-background-image ${props.className ?? ""}`}
+              style={imgStyle}
+            >
+              <Text
+                className="font-semibold text-text-secondary"
+                style={{ fontSize: Math.round(w * 0.36), lineHeight: Math.round(w * 0.44) }}
+              >
+                {ExerciseImageUtils_initials(exercise.name)}
+              </Text>
             </View>
           ))}
       </>

@@ -1,3 +1,5 @@
+import { ProgramsHost_fork } from "./programsHost";
+
 export function ForkServices_plan(
   offline: boolean,
   premiumUnlocked = false
@@ -31,10 +33,6 @@ export function ForkServices_hosts(
   webHost: string,
   apiHost: string
 ): { host: string; apiHost: string } {
-  if (offline) {
-    return { host: "https://lifts.paulbebear.com", apiHost: "https://lifts.paulbebear.com" };
-  }
-  return local
-    ? { host: webHost, apiHost }
-    : { host: "https://www.liftosaur.com", apiHost: "https://api3.liftosaur.com" };
+  // Liftosaur's author asked the fork to stop calling liftosaur.com, so even the opt-in online build stays on the fork.
+  return local && !offline ? { host: webHost, apiHost } : { host: ProgramsHost_fork, apiHost: ProgramsHost_fork };
 }

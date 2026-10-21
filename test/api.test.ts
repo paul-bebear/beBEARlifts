@@ -1206,7 +1206,7 @@ Deadlift / 1x5 / 200lb`;
       expect(workout.entries[0].entryId).to.equal("squat_barbell");
       expect(workout.entries[0].exerciseId).to.equal("squat_barbell");
       // A path, not an absolute URL.
-      expect(workout.entries[0].imageUrl).to.match(/^\/externalimages\//);
+      expect(workout.entries[0].imageUrl).to.equal("/images/exercises/small/Barbell_Squat.jpg");
     });
 
     it("previews the next workout without creating one", async () => {
