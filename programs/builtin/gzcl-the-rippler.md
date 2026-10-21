@@ -43,21 +43,21 @@ This is a very short description of the GZCL principle. For more information, an
 
 In The Rippler program, we use the 2 rep max (2RM) weight as a basis. This is a **12-week** program, where the weight for T1 and T2 exercises changes each week according to a specific pattern.
 
-For **T1 exercises**, we increase the weight for 2 weeks, then slightly decrease it, and increase it even more in week 4. This pattern repeats through 4-week blocks. We'll have three 4-week blocks. We use 2 rep max (2RM) as a base weight for T1 exercises. So, for first 4 weeks we do 85%, 87.5%, 90%, 92.5% of 2RM weight. Liftosaur uses 1RM as a basis for the programs though, so the weights are converted into 1RM.
+For **T1 exercises**, we increase the weight for 2 weeks, then slightly decrease it, and increase it even more in week 4. This pattern repeats through 4-week blocks. We'll have three 4-week blocks. We use 2 rep max (2RM) as a base weight for T1 exercises. So, for first 4 weeks we do 85%, 87.5%, 90%, 92.5% of 2RM weight. beBEAR uses 1RM as a basis for the programs though, so the weights are converted into 1RM.
 
 ### Example of a T1 exercise sets/reps/weight week over week
 
 :::exercise-example{exercise="benchPress" equipment="barbell" key="t1-benchpress_barbell" weeks="1-12" weekLabels="80%,85%,82.5%,87.5%,85%,90%,87.5%,92.5%,90%,95%,85%,95%"}
 
-For **T2 exercises**, we gradually increase the weights over 3 weeks (e.g., 80%, 85%, 90%), then reset to 82.5%, and increase again (82.5%, 87.5%, 92.5%). We repeat this pattern over four 3-week blocks, creating a wave-like pattern. We use 5 rep max (5RM) as a base weight for T2 exercises. We skip T2 exercises completely on weeks 11 and 12. Again, the weights in Liftosaur are converted into % of 1RM.
+For **T2 exercises**, we gradually increase the weights over 3 weeks (e.g., 80%, 85%, 90%), then reset to 82.5%, and increase again (82.5%, 87.5%, 92.5%). We repeat this pattern over four 3-week blocks, creating a wave-like pattern. We use 5 rep max (5RM) as a base weight for T2 exercises. We skip T2 exercises completely on weeks 11 and 12. Again, the weights in beBEAR are converted into % of 1RM.
 
 ### Example of a T2 exercise sets/reps/weight week over week
 
 :::exercise-example{exercise="inclineBenchPress" equipment="barbell" key="t2-inclinebenchpress_barbell" weeks="1-10" weekLabels="68%,72%,76%,70%,74%,78%,72%,76%,80%,85%"}
 
-For **T3 exercises**, we don't vary the weight, but aim to do the maximum reps each time. Start with a weight you can lift for 10 reps, then do as many reps as you can, leaving 1-2 reps in reserve. It's better to err on the side of lighter weights. If the weight you choose is too light, the Liftosaur app will automatically adjust and increase the weight as needed in weeks 3, 6, and 9.
+For **T3 exercises**, we don't vary the weight, but aim to do the maximum reps each time. Start with a weight you can lift for 10 reps, then do as many reps as you can, leaving 1-2 reps in reserve. It's better to err on the side of lighter weights. If the weight you choose is too light, the beBEAR app will automatically adjust and increase the weight as needed in weeks 3, 6, and 9.
 
-Feel free to substitute exercises if you don't have the necessary equipment or if you wish to target specific muscles, particularly for the T3 exercises. If you use the Liftosaur app, there's a handy "Substitute" exercise feature where you can select similar exercises that require different equipment.
+Feel free to substitute exercises if you don't have the necessary equipment or if you wish to target specific muscles, particularly for the T3 exercises. If you use the beBEAR app, there's a handy "Substitute" exercise feature where you can select similar exercises that require different equipment.
 
 ## 1RM test
 

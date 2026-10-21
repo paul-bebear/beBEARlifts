@@ -6,6 +6,7 @@ import { Dialog_confirm } from "../utils/dialog";
 import { Button } from "./button";
 import { Text } from "./primitives/text";
 import { TextInput } from "./primitives/textInput";
+import { ModerationCommand_block } from "../utils/moderationCommand";
 
 interface IProps {
   form: IFriendsForm;
@@ -67,6 +68,14 @@ function Row(props: { link: IFriendLink; children: JSX.Element | JSX.Element[] }
       </Text>
       <View className="flex-row" style={{ gap: 8 }}>
         {props.children}
+        <Button
+          name="friends-block"
+          kind="lightgrayv3"
+          buttonSize="sm"
+          onClick={() => ModerationCommand_block(props.link.other)}
+        >
+          Block user
+        </Button>
       </View>
     </View>
   );

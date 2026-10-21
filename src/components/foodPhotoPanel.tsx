@@ -6,6 +6,7 @@ import { FoodApi_estimatePhoto } from "../utils/foodApi";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
 import { FoodChoicesReview } from "./foodChoicesReview";
+import { AiConsent_ensure } from "../utils/aiConsentClient";
 
 interface IProps {
   initialNote?: string;
@@ -92,7 +93,11 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
             testID="food-photo-pick"
             title={preview == null ? "Take or choose a photo" : "New photo"}
             kind={choices != null && choices.length > 0 ? "outline" : "primary"}
-            onPress={() => inputRef.current?.click()}
+            onPress={async () => {
+              if (await AiConsent_ensure()) {
+                inputRef.current?.click();
+              }
+            }}
           />
         </View>
       )}

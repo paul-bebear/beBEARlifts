@@ -8,9 +8,12 @@ import { InviteClient_current, InviteClient_save, InviteStore } from "../utils/i
 import { Invite_parseHandle } from "../models/invite";
 import { CloudBackupCard } from "./cloudBackupCard";
 import { OnboardingQuestions } from "./onboardingQuestions";
+import { AiConsent_showFeatures } from "../models/aiConsent";
+import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
 
 export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode }): JSX.Element {
   const cloud = CloudStore.use();
+  const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const pending = InviteStore.use();
   const [form, emit] = useReducer(Onboarding_reduce, undefined, () => Onboarding_empty(InviteClient_current()));
   const screen = useRef<HTMLElement>(null);
@@ -40,7 +43,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
         style={{ paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}
       >
         <div className="max-w-lg mx-auto space-y-6">
-          <p className="text-sm font-semibold text-text-secondary">beBEARlifts · Your training setup</p>
+          <p className="text-sm font-semibold text-text-secondary">beBEAR · Your training setup</p>
           {form.step === "auth" ? (
             <>
               <h1 className="text-3xl font-bold">Let’s set up your training.</h1>
@@ -65,11 +68,13 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
                 disabled={form.invite !== "" && Invite_parseHandle(form.invite) == null}
                 onClick={() =>
                   InviteClient_save(form.invite)
-                    .then(() => emit({ type: "auth", signedIn: cloud.session != null }))
+                    .then(async () =>
+                      emit({ type: "auth", signedIn: cloud.session != null && showAi && (await AiConsent_ensure()) })
+                    )
                     .catch(() => emit({ type: "failed", error: "Could not save the invite. Try again." }))
                 }
               >
-                {cloud.session == null ? "Continue without AI" : "Continue with AI"}
+                {cloud.session == null || !showAi ? "Continue without AI" : "Continue with AI"}
               </button>
             </>
           ) : form.step === "working" ? (

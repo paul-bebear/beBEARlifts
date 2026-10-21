@@ -42,6 +42,7 @@ import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offli
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { CloudBackupCard } from "./cloudBackupCard";
+import { AppStoreSettings } from "./appStoreSettings";
 
 interface IProps {
   dispatch: IDispatch;
@@ -76,6 +77,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
 
   return (
     <View className="px-gutter">
+      <AppStoreSettings />
       <MenuItem
         shouldShowRightArrow={true}
         name="Program"
@@ -499,7 +501,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       )}
       {Features_isEnabled("affiliates", props.user?.id ?? props.tempUserId) && (
         <>
-          <GroupHeader name="Earn money with Liftosaur" topPadding={true} />
+          <GroupHeader name="Earn money with beBEAR" topPadding={true} />
           <MenuItem
             expandName={true}
             name="Affiliate Program"
@@ -595,6 +597,9 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       >
         <Text className="text-base text-text-primary">Licenses</Text>
       </Pressable>
+      <Text className="py-3 text-xs text-text-secondary">
+        beBEAR is based on Liftosaur by Anton Astashov (AGPL-3.0)
+      </Text>
       <Pressable
         className="py-3 border-b border-border-neutral"
         onPress={() => openExternal("https://www.liftosaur.com/doc")}

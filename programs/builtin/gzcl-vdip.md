@@ -66,7 +66,7 @@ Again, this is just a brief description, and for full information and details, p
 
 Check the interactive playground below to see how the program works, and what the weights/sets/reps look like for each day. You can finish the sets, and see how the weight would be changed for the next workout.
 
-You can run GZCL: VDIP program in the Liftosaur app.
+You can run GZCL: VDIP program in the beBEAR app.
 
 <!-- faq -->
 

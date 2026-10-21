@@ -1,6 +1,8 @@
 import { Friends_empty, Friends_fromServer, Friends_parse, IFriendStatus, IFriendsState } from "../models/friends";
 import { IFoundProfile } from "../models/friendsForm";
 import { JsonStore_create } from "./jsonStore";
+import { FeedModeration_fromServer, FeedModeration_users, IBlockedUser } from "../models/feedModeration";
+import { BlocksStore } from "./moderationStore";
 import {
   CloudStore,
   ICloudResult,
@@ -96,4 +98,48 @@ export async function FriendsClient_remove(otherId: string): Promise<ICloudResul
     }
   );
   return result.ok ? { ok: true, value: undefined } : result;
+}
+
+export async function FriendsClient_loadBlocks(): Promise<ICloudResult<undefined>> {
+  const result = await SupabaseClient_authed(
+    "/rest/v1/user_blocks?select=blocked_id,blocked:profiles!user_blocks_blocked_id_fkey(display_name)",
+    { method: "GET" }
+  );
+  if (!result.ok) {
+    return result;
+  }
+  const rows = await SupabaseClient_readJson(result.value.response);
+  await BlocksStore.update(() => FeedModeration_fromServer(result.value.userId, rows));
+  return { ok: true, value: undefined };
+}
+
+export async function FriendsClient_block(user: IBlockedUser): Promise<ICloudResult<undefined>> {
+  const result = await SupabaseClient_authed("/rest/v1/user_blocks", write({ blocked_id: user.userId }, "POST"));
+  if (!result.ok) {
+    return result;
+  }
+  const userId = result.value.userId;
+  await BlocksStore.update((s) => ({
+    version: 1,
+    userId,
+    users: [...FeedModeration_users(s, userId).filter((u) => u.userId !== user.userId), user],
+  }));
+  await FriendsStore.update((s) =>
+    s.userId === userId ? { ...s, links: s.links.filter((l) => l.other.userId !== user.userId) } : s
+  );
+  return { ok: true, value: undefined };
+}
+
+export async function FriendsClient_unblock(otherId: string): Promise<ICloudResult<undefined>> {
+  const result = await SupabaseClient_authed(`/rest/v1/user_blocks?blocked_id=eq.${encodeURIComponent(otherId)}`, {
+    method: "DELETE",
+    headers: noBody,
+  });
+  if (!result.ok) {
+    return result;
+  }
+  await BlocksStore.update((s) =>
+    s.userId === result.value.userId ? { ...s, users: s.users.filter((u) => u.userId !== otherId) } : s
+  );
+  return { ok: true, value: undefined };
 }

@@ -172,7 +172,7 @@ describe("ImportFromLiftosaur", () => {
     const csv = "a,b,c\n1,2,3";
     expect(() => ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords(csv, buildSettings())).to.throw(
       ImportFileError,
-      /doesn't look like a Liftosaur history CSV/
+      /doesn't look like a beBEAR history CSV/
     );
   });
 

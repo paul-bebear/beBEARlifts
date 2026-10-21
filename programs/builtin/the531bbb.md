@@ -67,7 +67,7 @@ These can be freely swapped for any similar exercise.
 
 ## Set & Rep Scheme
 
-**Main 5/3/1 work** follows the standard wave. In the original program, percentages are based on a Training Max (TM = 90% of 1RM). In this Liftosaur implementation, percentages are expressed as **% of 1RM directly** (pre-converted from TM), so you just need to set your 1RM:
+**Main 5/3/1 work** follows the standard wave. In the original program, percentages are based on a Training Max (TM = 90% of 1RM). In this beBEAR implementation, percentages are expressed as **% of 1RM directly** (pre-converted from TM), so you just need to set your 1RM:
 - **Week 1 (5s)**: 1x5 @ 58%, 1x5 @ 67%, 1x5+ @ 76%
 - **Week 2 (3s)**: 1x3 @ 63%, 1x3 @ 72%, 1x3+ @ 81%
 - **Week 3 (5/3/1)**: 1x5 @ 67%, 1x3 @ 76%, 1x1+ @ 85%
@@ -119,10 +119,10 @@ Barbell, squat rack, bench, weight plates, and a pull-up bar for the main lifts 
 
 ## How to Pick Starting Weights
 
-1. For each main lift, estimate or test your **1 Rep Max** (1RM). This Liftosaur program uses 1RM directly — not Training Max.
+1. For each main lift, estimate or test your **1 Rep Max** (1RM). This beBEAR program uses 1RM directly — not Training Max.
 2. All working percentages are already converted from Wendler's TM-based percentages to 1RM-based percentages (assuming TM = 90% of 1RM). Just set your 1RM and the app calculates everything.
 
-**If you don't know your 1RM**: Work up to a weight you can do for 3-5 clean reps. Use Brzycki's formula: 1RM = weight / (1.0278 - 0.0278 x reps). Or just use the Liftosaur 1RM calculator.
+**If you don't know your 1RM**: Work up to a weight you can do for 3-5 clean reps. Use Brzycki's formula: 1RM = weight / (1.0278 - 0.0278 x reps). Or just use the beBEAR 1RM calculator.
 
 **Common mistake**: Setting your 1RM too high. Wendler's core principle is "start too light." If your AMRAP set on Week 1 (5+ day) only gives you 5 reps, your 1RM is probably inflated — you should be getting 7-8+ reps on that set when properly calibrated.
 

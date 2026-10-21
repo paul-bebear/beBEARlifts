@@ -2,6 +2,7 @@ import { IFriendsState, IProfile } from "./friends";
 import { IWorkoutPostSummary, WorkoutPost_parse } from "./workoutPost";
 
 export interface IFeedPost {
+  id?: number;
   userId: string;
   workoutId: number;
   postedAt: number;
@@ -46,7 +47,7 @@ function parsePost(raw: unknown): IFeedPost | undefined {
   const postedAt = typeof r.posted_at === "string" ? Date.parse(r.posted_at) : (num(r.postedAt) ?? Number.NaN);
   const summary = WorkoutPost_parse(r.summary);
   return userId != null && workoutId != null && isFinite(postedAt) && summary != null
-    ? { userId, workoutId, postedAt, summary }
+    ? { id: num(r.id), userId, workoutId, postedAt, summary }
     : undefined;
 }
 

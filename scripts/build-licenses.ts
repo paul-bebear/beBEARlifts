@@ -475,7 +475,7 @@ function build(): void {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Liftosaur: Licenses</title>
+    <title>beBEAR: Licenses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -506,7 +506,8 @@ function build(): void {
   <body>
     <h1>Open source licenses</h1>
     <p class="summary">
-      Liftosaur is itself open source, licensed under the
+      beBEAR is based on Liftosaur by Anton Astashov (AGPL-3.0).
+      beBEAR is open source, licensed under the
       <a href="https://github.com/astashov/liftosaur/blob/master/LICENSE">GNU Affero General Public License v3</a>.
       It is built on the third-party components listed below, and this page reproduces their copyright notices and
       license texts as those licenses require.

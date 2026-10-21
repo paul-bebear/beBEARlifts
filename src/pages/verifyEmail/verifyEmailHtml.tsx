@@ -16,9 +16,9 @@ export function VerifyEmailHtml(props: IProps): JSX.Element {
       css={["verifyemail"]}
       js={["verifyemail"]}
       maxWidth={1200}
-      title="Verify Email | Liftosaur"
+      title="Verify Email | beBEAR"
       canonical="https://www.liftosaur.com/verifyemail"
-      description="Verify the email of your Liftosaur account"
+      description="Verify the email of your beBEAR account"
       ogUrl="https://www.liftosaur.com/verifyemail"
       postHead={<meta name="robots" content="noindex" />}
       data={data}

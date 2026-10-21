@@ -4,6 +4,7 @@ import sinon from "sinon";
 import {
   FeedClient_flush,
   FeedClient_refresh,
+  FeedClient_report,
   FeedClient_setShared,
   FeedClient_shareOnFinish,
   FeedStore,
@@ -63,6 +64,21 @@ describe("FeedClient", () => {
     expect(feed.posts.map((p) => [p.userId, p.workoutId])).to.deep.equal([["me", 7]]);
   });
 
+  it("reports by the server post id and trims the optional note", async () => {
+    fetchStub.resolves(new Response(null, { status: 201 }));
+    expect(await FeedClient_report(42, "abuse", "  note  ")).to.deep.equal({ ok: true, value: undefined });
+    expect(url(0)).to.equal("/rest/v1/post_reports");
+    expect(JSON.parse(fetchStub.firstCall.args[1].body)).to.deep.equal({ post_id: 42, reason: "abuse", note: "note" });
+    expect(fetchStub.firstCall.args[1].headers.Prefer).to.equal("return=minimal");
+  });
+
+  it("does not acknowledge an unsent report", async () => {
+    expect((await FeedClient_report(undefined, "spam", "")).ok).to.equal(false);
+    expect(fetchStub.called).to.equal(false);
+    fetchStub.rejects(new TypeError("offline"));
+    expect(await FeedClient_report(42, "spam", "")).to.deep.equal({ ok: false, error: "No connection" });
+  });
+
   it("keeps the post queued offline and sends it on the next flush", async () => {
     fetchStub.rejects(new TypeError("offline"));
     expect(await FeedClient_setShared(7, summary)).to.deep.equal({ ok: false, error: "No connection" });
@@ -105,7 +121,7 @@ describe("FeedClient", () => {
     );
     expect(await FeedClient_refresh()).to.deep.equal({ ok: true, value: undefined });
     expect(url(0)).to.equal(
-      "/rest/v1/workout_posts?select=user_id,workout_id,posted_at,summary&order=posted_at.desc&limit=50"
+      "/rest/v1/workout_posts?select=id,user_id,workout_id,posted_at,summary&order=posted_at.desc&limit=50"
     );
     expect(feed.posts.map((p) => p.workoutId)).to.deep.equal([2, 1]);
     expect(feed).to.include({ userId: "me", loadedAt: now });

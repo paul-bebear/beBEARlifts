@@ -171,6 +171,7 @@ import {
   Subscriptions_cleanupOutdatedAppleReceipts,
   Subscriptions_cleanupOutdatedGooglePurchaseTokens,
   Subscriptions_hasSubscription,
+  Subscriptions_isUnlockedByFork,
 } from "./utils/subscriptions";
 import { Progress_getCurrentProgress, Progress_lbProgress } from "./models/progress";
 import { DesiredHeartRateWorkout_fromProgress } from "./models/desiredHeartRateWorkout";
@@ -492,7 +493,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
 
   useEffect(() => {
     const iap = env.iap;
-    if (!iap) {
+    if (!iap || Subscriptions_isUnlockedByFork()) {
       return;
     }
     const unsubPurchase = iap.onPurchaseUpdated((purchase) => {

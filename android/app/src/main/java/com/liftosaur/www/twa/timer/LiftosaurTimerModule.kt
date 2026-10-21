@@ -80,10 +80,10 @@ class LiftosaurTimerModule(reactContext: ReactApplicationContext) :
             val vibration = params.getBoolean("vibration")
             val ignoreDoNotDisturb = params.getBoolean("ignoreDoNotDisturb")
 
-            val titleVal = if (title.isNullOrEmpty()) "Liftosaur" else title
+            val titleVal = if (title.isNullOrEmpty()) "beBEAR" else title
             val subtitleVal = if (!subtitleHeader.isNullOrEmpty() && !subtitle.isNullOrEmpty()) {
                 "$subtitleHeader: $subtitle"
-            } else "Liftosaur"
+            } else "beBEAR"
             val bodyVal = if (!bodyHeader.isNullOrEmpty() && !body.isNullOrEmpty()) {
                 "$bodyHeader: $body"
             } else "It's time for the next set!"

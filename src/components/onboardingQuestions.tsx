@@ -149,20 +149,22 @@ export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispa
               onChange={(e) => patch({ plan: e.currentTarget.value })}
             />
           </label>
-          <label className="block">
-            Screenshots
-            <input
-              className={field}
-              type="file"
-              accept="image/*"
-              multiple
-              disabled={form.resizing}
-              onChange={(e) => {
-                OnboardingCommand_images(e.currentTarget.files, emit);
-                e.currentTarget.value = "";
-              }}
-            />
-          </label>
+          {form.useAi && (
+            <label className="block">
+              Screenshots
+              <input
+                className={field}
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={form.resizing}
+                onChange={(e) => {
+                  OnboardingCommand_images(e.currentTarget.files, emit);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          )}
           <p aria-live="polite">{form.resizing ? "Resizing screenshots…" : `${form.images.length} of 6 screenshots`}</p>
           <div className="flex flex-wrap gap-3">
             {form.images.map((image, i) => (

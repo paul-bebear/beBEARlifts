@@ -154,7 +154,7 @@ Three days per week with at least one rest day between sessions — typically Mo
 
 ### What is a Training Max in Tactical Barbell?
 
-A Training Max (TM) is 90% of your true one-rep max. All weekly percentages are based on this lower number, which keeps every set submaximal. For example, "90% TM" is actually only 81% of your real 1RM. This Liftosaur implementation converts everything to 1RM percentages automatically — just enter your true 1RM.
+A Training Max (TM) is 90% of your true one-rep max. All weekly percentages are based on this lower number, which keeps every set submaximal. For example, "90% TM" is actually only 81% of your real 1RM. This beBEAR implementation converts everything to 1RM percentages automatically — just enter your true 1RM.
 
 ### How does progression work on Tactical Barbell Operator?
 

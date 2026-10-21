@@ -42,11 +42,11 @@ export function TopNavMenu(props: {
                   className="inline align-middle"
                   style={{ width: "2.5rem", height: "2.5rem" }}
                   src="/images/icon.svg"
-                  alt="Liftosaur Logo"
+                  alt="beBEAR Logo"
                 />
               </a>
             </div>
-            <div className={`text-xl font-bold ${props.isWhite ? "text-text-alwayswhite" : ""}`}>Liftosaur</div>
+            <div className={`text-xl font-bold ${props.isWhite ? "text-text-alwayswhite" : ""}`}>beBEAR</div>
           </div>
           {props.mobileRight}
           <div className="flex flex-row items-center gap-2">
@@ -72,11 +72,11 @@ export function TopNavMenu(props: {
                         className="inline align-middle"
                         style={{ width: "2.5rem", height: "2.5rem" }}
                         src="/images/icon.svg"
-                        alt="Liftosaur Logo"
+                        alt="beBEAR Logo"
                       />
                     </a>
                   </div>
-                  <div className="text-xl font-bold">Liftosaur</div>
+                  <div className="text-xl font-bold">beBEAR</div>
                 </div>
                 <div className="flex items-center">
                   <ThemeToggle />
@@ -207,10 +207,10 @@ function DesktopNav(props: IDesktopNavProps): JSX.Element {
               className="inline align-middle"
               style={{ width: "100%", height: "100%" }}
               src="/images/icon.svg"
-              alt="Liftosaur Logo"
+              alt="beBEAR Logo"
             />
           </div>
-          <span className="text-xl font-bold">Liftosaur</span>
+          <span className="text-xl font-bold">beBEAR</span>
         </a>
         <div className="flex items-center gap-4">
           <ul className="flex flex-wrap items-center justify-end leading-none list-none gap-x-4">

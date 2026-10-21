@@ -7,6 +7,8 @@ import { IHistoryRecord, ISettings } from "../types";
 import { useWarmupLog, WarmupStore_update } from "../utils/warmupStore";
 import { WarmupApi_generate } from "../utils/warmupApi";
 import { MusicLog_formatDuration } from "../models/musicLog";
+import { AiConsent_showFeatures } from "../models/aiConsent";
+import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
 import {
   IWarmupPlan,
   WarmupPlan_build,
@@ -27,6 +29,7 @@ export function WorkoutWarmupCard(props: {
   settings: ISettings;
 }): JSX.Element | null {
   const log = useWarmupLog();
+  const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const plan = WarmupPlan_find(log, props.progress.id);
   const [isOpen, setIsOpen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -38,6 +41,9 @@ export function WorkoutWarmupCard(props: {
   }
 
   const generate = async (): Promise<void> => {
+    if (!(await AiConsent_ensure())) {
+      return;
+    }
     setIsBusy(true);
     const exercises = WarmupPlan_exercises(props.progress, props.settings);
     const result = await WarmupApi_generate(exercises);
@@ -52,9 +58,11 @@ export function WorkoutWarmupCard(props: {
     return (
       <View className="flex-row items-center px-4 py-2 mx-4 mt-2 rounded-xl bg-background-subtle" testID="warmup-card">
         <Text className="flex-1 text-sm">Warm up for today's lifts</Text>
-        <Pressable onPress={generate} disabled={isBusy} testID="warmup-generate" data-testid="warmup-generate">
-          <Text className="text-sm font-semibold text-text-link">{isBusy ? "Making it…" : "Make my warmup"}</Text>
-        </Pressable>
+        {showAi && (
+          <Pressable onPress={generate} disabled={isBusy} testID="warmup-generate" data-testid="warmup-generate">
+            <Text className="text-sm font-semibold text-text-link">{isBusy ? "Making it…" : "Make my warmup"}</Text>
+          </Pressable>
+        )}
       </View>
     );
   }
@@ -90,9 +98,11 @@ export function WorkoutWarmupCard(props: {
               </View>
             </Pressable>
           ))}
-          <Pressable onPress={generate} disabled={isBusy} className="mt-1" testID="warmup-regenerate">
-            <Text className="text-xs text-text-link">{isBusy ? "Making a new one…" : "Make a new warmup"}</Text>
-          </Pressable>
+          {showAi && (
+            <Pressable onPress={generate} disabled={isBusy} className="mt-1" testID="warmup-regenerate">
+              <Text className="text-xs text-text-link">{isBusy ? "Making a new one…" : "Make a new warmup"}</Text>
+            </Pressable>
+          )}
         </View>
       )}
     </View>

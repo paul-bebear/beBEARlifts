@@ -22,6 +22,8 @@ import { IconFire } from "./icons/iconFire";
 import { IconMagnifyingGlass } from "./icons/iconMagnifyingGlass";
 import { IconTrash } from "./icons/iconTrash";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
+import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
+import { AiConsentStore } from "../utils/aiConsentClient";
 
 export type IFoodTile = "barcode" | "photo" | "describe" | "quick";
 export type IFoodBrowseTab = "food" | "meals" | "recipes";
@@ -292,6 +294,7 @@ function RecipesTab(props: IProps): JSX.Element {
 }
 
 export function FoodBrowsePanel(props: IProps): JSX.Element {
+  const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const [query, setQuery] = useState("");
   const { tab, onTab: setTab } = props;
   const semantic = Tailwind_semantic();
@@ -314,20 +317,22 @@ export function FoodBrowsePanel(props: IProps): JSX.Element {
         />
       </View>
       <View className="flex-row mt-4" style={{ gap: 8 }}>
-        {tiles.map((t) => (
-          <Pressable
-            key={t.tile}
-            testID={`food-tile-${t.tile}`}
-            data-testid={`food-tile-${t.tile}`}
-            onPress={() => props.onTile(t.tile)}
-            className="items-center flex-1 py-3 rounded-2xl bg-background-subtle"
-          >
-            {t.icon(blue)}
-            <Text className="mt-1 text-sm text-text-link" numberOfLines={1}>
-              {t.label}
-            </Text>
-          </Pressable>
-        ))}
+        {tiles
+          .filter((t) => showAi || !AiConsent_isFoodAi(t.tile))
+          .map((t) => (
+            <Pressable
+              key={t.tile}
+              testID={`food-tile-${t.tile}`}
+              data-testid={`food-tile-${t.tile}`}
+              onPress={() => props.onTile(t.tile)}
+              className="items-center flex-1 py-3 rounded-2xl bg-background-subtle"
+            >
+              {t.icon(blue)}
+              <Text className="mt-1 text-sm text-text-link" numberOfLines={1}>
+                {t.label}
+              </Text>
+            </Pressable>
+          ))}
       </View>
       <View className="flex-row mt-5 mb-3 border-b border-border-neutral">
         {(["food", "meals", "recipes"] as IBrowseTab[]).map((t) => (

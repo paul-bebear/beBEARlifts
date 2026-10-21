@@ -221,7 +221,7 @@ export function ScreenAccount(props: IProps): JSX.Element {
           <EmailAuthButton onPress={() => navigateToModal("emailAuthModal")} />
         </View>
       )}
-      <GroupHeader name="🌟 Liftosaur Premium" topPadding={true} />
+      <GroupHeader name="🌟 beBEAR Premium" topPadding={true} />
       {isLoadingSubscription ? (
         <MenuItem name="Checking your subscription…" expandName={true} value={<IconSpinner width={18} height={18} />} />
       ) : (

@@ -7,6 +7,9 @@ import { ICloudState } from "../src/models/cloudBackup";
 import { WarmupApi_generate } from "../src/utils/warmupApi";
 import { ReportApi_summary } from "../src/utils/reportStore";
 import { FoodApi_describe } from "../src/utils/foodApi";
+import { FoodApi_estimatePhoto, FoodApi_readLabel } from "../src/utils/foodApi";
+import { AiConsent_decide } from "../src/models/aiConsent";
+import { AiConsentStore, AiConsent_disabledMessage } from "../src/utils/aiConsentClient";
 
 const now = Date.UTC(2026, 9, 21, 9);
 const signedIn: ICloudState = {
@@ -19,6 +22,7 @@ describe("AiRequest", () => {
   let fetchStub: sinon.SinonStub;
 
   beforeEach(() => {
+    sinon.stub(AiConsentStore, "load").resolves(AiConsent_decide(true, now));
     state = signedIn;
     sinon.stub(Date, "now").returns(now);
     sinon.stub(CloudStore, "load").callsFake(async () => state);
@@ -32,6 +36,27 @@ describe("AiRequest", () => {
   it("asks a signed-out user to sign in and never calls the server", async () => {
     state = { version: 1 };
     expect(await AiRequest_post("/api/ai/warmup", {})).to.deep.equal({ ok: false, error: AiRequest_signInMessage });
+    expect(fetchStub.called).to.equal(false);
+  });
+
+  it("sends no AI data or auth refresh when permission is declined", async () => {
+    (AiConsentStore.load as sinon.SinonStub).resolves(AiConsent_decide(false, now));
+    const denied = { ok: false, error: AiConsent_disabledMessage };
+    expect(await FoodApi_describe("eggs")).to.deep.equal(denied);
+    expect(await FoodApi_estimatePhoto("data:image/jpeg;base64,private")).to.deep.equal(denied);
+    expect(await FoodApi_readLabel("private")).to.deep.equal(denied);
+    expect(await WarmupApi_generate([])).to.deep.equal(denied);
+    expect(
+      await ReportApi_summary({ workoutId: 1, timestamp: now, dayName: "D", items: [], answers: {} })
+    ).to.deep.equal(denied);
+    expect(await AiRequest_post("/api/ai/onboard", { images: ["private"] })).to.deep.equal(denied);
+    expect(fetchStub.called).to.equal(false);
+  });
+
+  it("rechecks consent after obtaining auth", async () => {
+    (AiConsentStore.load as sinon.SinonStub).onSecondCall().resolves(AiConsent_decide(false, now));
+    const result = await AiRequest_post("/api/ai/report", {});
+    expect(result).to.deep.equal({ ok: false, error: AiConsent_disabledMessage });
     expect(fetchStub.called).to.equal(false);
   });
 

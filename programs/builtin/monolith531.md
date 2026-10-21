@@ -75,7 +75,7 @@ All accessories can be swapped for similar movements — e.g., [{Pull Up}] for [
 
 ## Set & Rep Scheme
 
-**Main lifts** follow the 5/3/1 wave pattern, but all working sets stay at 5 reps (no 3s or 1s weeks). Percentages are based on a Training Max (TM) of 85% of 1RM. In this Liftosaur implementation, percentages are expressed as **% of 1RM directly** (pre-converted from TM):
+**Main lifts** follow the 5/3/1 wave pattern, but all working sets stay at 5 reps (no 3s or 1s weeks). Percentages are based on a Training Max (TM) of 85% of 1RM. In this beBEAR implementation, percentages are expressed as **% of 1RM directly** (pre-converted from TM):
 
 - **Weeks 1 and 4 (Medium)**: Warm-up sets at 60% and 68%, top sets at 76% of 1RM
 - **Weeks 2 and 5 (Light)**: Warm-up sets at 55% and 64%, top sets at 72% of 1RM
@@ -130,10 +130,10 @@ Barbell, squat rack, bench, weight plates, a pull-up/chin-up bar, and dumbbells 
 
 ## How to Pick Starting Weights
 
-1. For each main lift ([{Squat}], [{Bench Press}], [{Deadlift}], [{Overhead Press}]), estimate or test your **1 Rep Max** (1RM). This Liftosaur implementation uses 1RM directly — all working percentages are pre-converted from Wendler's TM-based percentages (assuming TM = 85% of 1RM).
+1. For each main lift ([{Squat}], [{Bench Press}], [{Deadlift}], [{Overhead Press}]), estimate or test your **1 Rep Max** (1RM). This beBEAR implementation uses 1RM directly — all working percentages are pre-converted from Wendler's TM-based percentages (assuming TM = 85% of 1RM).
 2. Set your 1RM in the app and all weights calculate automatically.
 
-**If you don't know your 1RM**: Work up to a weight you can do for 3-5 clean reps. Use Brzycki's formula: 1RM = weight / (1.0278 - 0.0278 × reps). Or use the Liftosaur 1RM calculator.
+**If you don't know your 1RM**: Work up to a weight you can do for 3-5 clean reps. Use Brzycki's formula: 1RM = weight / (1.0278 - 0.0278 × reps). Or use the beBEAR 1RM calculator.
 
 **Common mistake**: Setting your 1RM too high. Wendler uses a lower TM (85% vs the usual 90%) for this program specifically because the volume is so high. If your Week 3 heavy sets at 80% of 1RM feel like absolute grinders, your 1RM is inflated — lower it by 5-10%.
 

@@ -4,21 +4,22 @@ import liftoscriptExamples from "../generated/liftoscriptExamples";
 import exercises from "../generated/exercises";
 import plannerGrammar from "../generated/plannerGrammar";
 import liftoscriptGrammar from "../generated/liftoscriptGrammar";
+import { AppBrand_text } from "./appBrand";
 
 export function LiftoscriptDocs_getMainDoc(): string {
-  return liftoscriptDoc;
+  return AppBrand_text(liftoscriptDoc);
 }
 
 export function LiftoscriptDocs_getExamplesDoc(): string {
-  return liftoscriptExamples;
+  return AppBrand_text(liftoscriptExamples);
 }
 
 export function LiftoscriptDocs_getExercises(): string {
-  return exercises;
+  return AppBrand_text(exercises);
 }
 
 export function LiftoscriptDocs_getCombinedDocs(): string {
-  return `${liftoscriptDoc}\n\n${exercises}\n\n${liftoscriptExamples}`;
+  return AppBrand_text(`${liftoscriptDoc}\n\n${exercises}\n\n${liftoscriptExamples}`);
 }
 
 export function LiftoscriptDocs_getPlannerGrammar(): string {

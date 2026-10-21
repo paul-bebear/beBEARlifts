@@ -5,6 +5,9 @@ import {
   FriendsClient_accept,
   FriendsClient_find,
   FriendsClient_load,
+  FriendsClient_block,
+  FriendsClient_unblock,
+  FriendsClient_loadBlocks,
   FriendsClient_remove,
   FriendsClient_request,
   FriendsClient_saveProfile,
@@ -12,6 +15,8 @@ import {
 } from "../src/utils/friendsClient";
 import { CloudStore, Supabase_origin } from "../src/utils/supabaseClient";
 import { Friends_empty, IFriendsState } from "../src/models/friends";
+import { FeedModeration_empty, IBlocksState } from "../src/models/feedModeration";
+import { BlocksStore } from "../src/utils/moderationStore";
 
 const now = Date.UTC(2026, 9, 21, 18);
 const session = {
@@ -25,9 +30,14 @@ const session = {
 describe("FriendsClient", () => {
   let fetchStub: sinon.SinonStub;
   let saved: IFriendsState;
+  let blocks: IBlocksState;
 
   beforeEach(() => {
     saved = Friends_empty();
+    blocks = FeedModeration_empty();
+    sinon.stub(BlocksStore, "update").callsFake(async (fn) => {
+      blocks = fn(blocks);
+    });
     sinon.stub(Date, "now").returns(now);
     sinon.stub(CloudStore, "load").resolves({ version: 1, session });
     sinon.stub(FriendsStore, "update").callsFake(async (fn) => {
@@ -102,5 +112,32 @@ describe("FriendsClient", () => {
     expect(JSON.parse(String(call(0).init.body))).to.deep.equal({ status: "accepted" });
     expect(call(1).url).to.equal("/rest/v1/friendships?or=(requester.eq.a,addressee.eq.a)");
     expect(call(1).init.method).to.equal("DELETE");
+  });
+
+  it("caches a successful block, removes the friendship, and unblocks only the chosen user", async () => {
+    const other = { userId: "a", displayName: "Anna", handle: "anna" };
+    saved = { version: 1, userId: "me", links: [{ other, status: "accepted", incoming: false, createdAt: "" }] };
+    fetchStub.resolves(new Response(null, { status: 201 }));
+    expect((await FriendsClient_block(other)).ok).to.equal(true);
+    expect(blocks).to.deep.equal({ version: 1, userId: "me", users: [other] });
+    expect(saved.links).to.deep.equal([]);
+    expect(JSON.parse(String(call(0).init.body))).to.deep.equal({ blocked_id: "a" });
+    expect((await FriendsClient_unblock("a")).ok).to.equal(true);
+    expect(call(1).url).to.equal("/rest/v1/user_blocks?blocked_id=eq.a");
+    expect(call(1).init.method).to.equal("DELETE");
+    expect(blocks.users).to.deep.equal([]);
+    expect(saved.links).to.deep.equal([]);
+  });
+
+  it("keeps block state unchanged when the server rejects a change", async () => {
+    fetchStub.rejects(new TypeError("offline"));
+    expect((await FriendsClient_block({ userId: "a", displayName: "A" })).ok).to.equal(false);
+    expect(blocks).to.deep.equal(FeedModeration_empty());
+  });
+
+  it("loads names for blocked users after their friendship was removed", async () => {
+    fetchStub.resolves(new Response(JSON.stringify([{ blocked_id: "a", blocked: { display_name: "Anna" } }])));
+    expect((await FriendsClient_loadBlocks()).ok).to.equal(true);
+    expect(blocks).to.deep.equal({ version: 1, userId: "me", users: [{ userId: "a", displayName: "Anna" }] });
   });
 });

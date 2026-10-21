@@ -4,6 +4,8 @@ import { useIsFocused } from "@react-navigation/native";
 import { NavScreenScrollContext } from "../navigation/NavScreenScrollContext";
 import { FeedStore } from "../utils/feedClient";
 import { Feed_items } from "../models/feed";
+import { FeedModeration_items, FeedModeration_users } from "../models/feedModeration";
+import { BlocksStore } from "../utils/moderationStore";
 import {
   IPullState,
   PullToRefresh_end,
@@ -38,6 +40,7 @@ export function ScreenFriends(): JSX.Element {
   const userId = cloud.session?.userId;
   const friends = Friends_forUser(FriendsStore.use(), userId);
   const feed = FeedStore.use();
+  const blocked = FeedModeration_users(BlocksStore.use(), userId);
   const [form, emit] = useReducer(FriendsForm_reduce, undefined, FriendsForm_empty);
   const isFocused = useIsFocused();
   const scroll = useContext(NavScreenScrollContext);
@@ -116,7 +119,11 @@ export function ScreenFriends(): JSX.Element {
       {friends.me != null && (
         <>
           <FriendsRequests form={form} lists={lists} emit={emit} />
-          <FriendsFeed items={Feed_items(feed, friends)} loadedAt={feed.loadedAt} now={Date.now()} />
+          <FriendsFeed
+            items={FeedModeration_items(Feed_items(feed, friends), blocked)}
+            loadedAt={feed.loadedAt}
+            now={Date.now()}
+          />
           <FriendsAdd form={form} lists={lists} emit={emit} />
           <FriendsLists form={form} lists={lists} emit={emit} />
         </>

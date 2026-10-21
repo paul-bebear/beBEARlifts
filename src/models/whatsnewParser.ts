@@ -1,4 +1,5 @@
 import { content as changelogMarkdown } from "../generated/whatsnew";
+import { AppBrand_text } from "./appBrand";
 
 export interface IWhatsNewEntry {
   dateStr: string;
@@ -12,7 +13,7 @@ export function WhatsNewParser_parseAll(): IWhatsNewEntry[] {
   if (cached) {
     return cached;
   }
-  cached = parse(changelogMarkdown);
+  cached = parse(AppBrand_text(changelogMarkdown));
   return cached;
 }
 
