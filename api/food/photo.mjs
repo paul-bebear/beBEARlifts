@@ -6,7 +6,8 @@ import { AiAuth_check } from "../_auth.mjs";
 const maxImageChars = 3_000_000;
 const maxTextChars = 600;
 
-const itemsShape = `Answer with JSON only, no other text, in this shape:
+const itemsShape = `When the user had several of the same food, give one item with the total grams rather than one item per piece.
+Answer with JSON only, no other text, in this shape:
 {"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4}],"note":"optional short caveat"}`;
 
 const mealPrompt = `You estimate the nutrition of a meal from one photo, for a calorie tracker.
@@ -36,9 +37,9 @@ Answer with JSON only, no other text, in this shape:
 {"name":"Hot Chicken Flavor Ramen","brand":"Samyang","servingGrams":140,"perServing":{"calories":530,"protein":12,"carbs":84,"fat":16},"note":"optional short caveat"}`;
 
 const tasks = {
-  meal: { system: mealPrompt, user: "Estimate this meal.", needsImage: true, maxTokens: 1000 },
-  label: { system: labelPrompt, user: "Read this nutrition label.", needsImage: true, maxTokens: 600 },
-  describe: { system: describePrompt, user: "Estimate this meal.", needsImage: false, maxTokens: 1000 },
+  meal: { system: mealPrompt, user: "Estimate this meal.", needsImage: true, maxTokens: 4000 },
+  label: { system: labelPrompt, user: "Read this nutrition label.", needsImage: true, maxTokens: 1500 },
+  describe: { system: describePrompt, user: "Estimate this meal.", needsImage: false, maxTokens: 4000 },
 };
 
 function userContent(task, image, text) {
@@ -104,8 +105,9 @@ export async function POST(request) {
       const message = answer?.error?.message ?? answer?.[0]?.error?.message ?? raw.slice(0, 200);
       return json({ error: `${ai.name} returned ${status}: ${message}` }, 502);
     }
-    const content = answer?.choices?.[0]?.message?.content;
-    return json({ text: typeof content === "string" ? content : "" });
+    const choice = answer?.choices?.[0];
+    const content = choice?.message?.content;
+    return json({ text: typeof content === "string" ? content : "", finishReason: choice?.finish_reason });
   } catch {
     return json({ error: "The AI did not answer in 45 seconds" }, 504);
   }

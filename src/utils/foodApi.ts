@@ -1,4 +1,4 @@
-import { FoodPhotoEstimate_parse, IFoodPhotoEstimate } from "../models/foodPhotoEstimate";
+import { FoodPhotoEstimate_failure, FoodPhotoEstimate_parse, IFoodPhotoEstimate } from "../models/foodPhotoEstimate";
 import { INutritionLabel, NutritionLabel_note, NutritionLabel_parse } from "../models/nutritionLabel";
 import { SavedFoods_find, SavedFoods_search } from "../models/savedFoods";
 import { UsdaFoodData_parseBarcodeResponse } from "../models/usdaFoodData";
@@ -70,34 +70,54 @@ export async function FoodApi_find(query: string, saved: IFoodProduct[]): Promis
   return { ok: true, value: [...mine, ...OpenFoodFacts_parseSearchResponse(result.value)] };
 }
 
-async function askAi(body: {
+interface IAiAnswer {
+  text: string;
+  finishReason?: string;
+}
+
+async function askAiAnswer(body: {
   kind: "meal" | "label" | "describe";
   image?: string;
   text?: string;
-}): Promise<IFoodApiResult<string>> {
+}): Promise<IFoodApiResult<IAiAnswer>> {
   const result = await AiRequest_post("/api/food/photo", body);
-  return result.ok ? { ok: true, value: AiRequest_text(result.body) ?? "" } : result;
-}
-
-function toEstimate(result: IFoodApiResult<string>, retryHint: string): IFoodApiResult<IFoodPhotoEstimate> {
   if (!result.ok) {
     return result;
   }
-  const estimate = FoodPhotoEstimate_parse(result.value);
+  const finishReason = (result.body as { finishReason?: unknown } | undefined)?.finishReason;
+  return {
+    ok: true,
+    value: {
+      text: AiRequest_text(result.body) ?? "",
+      finishReason: typeof finishReason === "string" ? finishReason : undefined,
+    },
+  };
+}
+
+async function askAi(body: { kind: "label"; image: string }): Promise<IFoodApiResult<string>> {
+  const result = await askAiAnswer(body);
+  return result.ok ? { ok: true, value: result.value.text } : result;
+}
+
+function toEstimate(result: IFoodApiResult<IAiAnswer>, retryHint: string): IFoodApiResult<IFoodPhotoEstimate> {
+  if (!result.ok) {
+    return result;
+  }
+  const estimate = FoodPhotoEstimate_parse(result.value.text);
   return estimate != null
     ? { ok: true, value: estimate }
-    : { ok: false, error: `The AI answer could not be read. ${retryHint}` };
+    : { ok: false, error: FoodPhotoEstimate_failure(result.value.text, result.value.finishReason, retryHint) };
 }
 
 export async function FoodApi_estimatePhoto(
   imageDataUrl: string,
   note?: string
 ): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
-  return toEstimate(await askAi({ kind: "meal", image: imageDataUrl, text: note }), "Try another photo.");
+  return toEstimate(await askAiAnswer({ kind: "meal", image: imageDataUrl, text: note }), "Try another photo.");
 }
 
 export async function FoodApi_describe(text: string): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
-  return toEstimate(await askAi({ kind: "describe", text }), "Try different words.");
+  return toEstimate(await askAiAnswer({ kind: "describe", text }), "Try different words.");
 }
 
 export async function FoodApi_readLabel(imageDataUrl: string): Promise<IFoodApiResult<INutritionLabel>> {
