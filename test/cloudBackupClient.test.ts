@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import {
+  CloudBackupClient_deleteAccount,
   CloudBackupClient_download,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
@@ -10,6 +11,9 @@ import {
 } from "../src/utils/cloudBackupClient";
 import { CloudStore, Supabase_origin as CloudBackup_origin } from "../src/utils/supabaseClient";
 import { ICloudState } from "../src/models/cloudBackup";
+import { AccountDeletion_signInMessage } from "../src/models/accountDeletion";
+import { FriendsStore } from "../src/utils/friendsClient";
+import { BlocksStore } from "../src/utils/moderationStore";
 
 const now = Date.UTC(2026, 9, 20, 18);
 const session = {
@@ -139,5 +143,32 @@ describe("CloudBackupClient", () => {
     expect(await CloudBackupClient_upload("backup")).to.deep.equal({ ok: false, error: "Not signed in" });
     expect(fetchStub.called).to.equal(false);
     expect(state).to.deep.equal({ version: 1 });
+  });
+
+  it("deletes the account through the API and clears the cloud, friends and blocks caches only on success", async () => {
+    const friends = sinon.stub(FriendsStore, "update").resolves();
+    const blocks = sinon.stub(BlocksStore, "update").resolves();
+    fetchStub.resolves(new Response(JSON.stringify({ error: "Could not delete the account" }), { status: 502 }));
+    expect(await CloudBackupClient_deleteAccount()).to.deep.equal({
+      ok: false,
+      error: "Could not delete the account",
+    });
+    expect(fetchStub.firstCall.args[0]).to.equal("/api/account/delete");
+    expect(fetchStub.firstCall.args[1].headers.Authorization).to.equal("Bearer a");
+    expect(state.session).to.deep.equal(session);
+    expect(friends.called).to.equal(false);
+
+    fetchStub.resolves(new Response(JSON.stringify({ deleted: true })));
+    expect(await CloudBackupClient_deleteAccount()).to.deep.equal({ ok: true, value: undefined });
+    expect(state).to.deep.equal({ version: 1 });
+    expect(friends.calledOnce).to.equal(true);
+    expect(blocks.calledOnce).to.equal(true);
+
+    fetchStub.resetHistory();
+    expect(await CloudBackupClient_deleteAccount()).to.deep.equal({
+      ok: false,
+      error: AccountDeletion_signInMessage,
+    });
+    expect(fetchStub.called).to.equal(false);
   });
 });

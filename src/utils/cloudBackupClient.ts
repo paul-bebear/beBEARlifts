@@ -1,7 +1,14 @@
 import { CloudBackup_empty, CloudBackup_paths, ICloudSession } from "../models/cloudBackup";
+import { AccountDeletion_result, AccountDeletion_signInMessage } from "../models/accountDeletion";
+import { Friends_empty } from "../models/friends";
+import { FeedModeration_empty } from "../models/feedModeration";
+import { ApiUrl_for } from "./apiUrl";
+import { FriendsStore } from "./friendsClient";
+import { BlocksStore } from "./moderationStore";
 import {
   CloudStore,
   ICloudResult,
+  SupabaseClient_accessToken,
   SupabaseClient_authed,
   SupabaseClient_call,
   SupabaseClient_json,
@@ -70,4 +77,30 @@ export async function CloudBackupClient_download(): Promise<ICloudResult<string 
 
 export async function CloudBackupClient_signOut(): Promise<void> {
   await CloudStore.update(() => CloudBackup_empty());
+}
+
+export async function CloudBackupClient_deleteAccount(): Promise<ICloudResult<undefined>> {
+  const auth = await SupabaseClient_accessToken();
+  if (!auth.ok) {
+    return { ok: false, error: auth.error === Supabase_notSignedIn ? AccountDeletion_signInMessage : auth.error };
+  }
+  let response: Response;
+  try {
+    response = await fetch(ApiUrl_for("/api/account/delete"), {
+      method: "POST",
+      headers: { Authorization: `Bearer ${auth.value}` },
+    });
+  } catch {
+    return { ok: false, error: "No connection" };
+  }
+  const result = AccountDeletion_result(response.status, await response.json().catch(() => undefined));
+  if (!result.ok) {
+    return result;
+  }
+  await Promise.all([
+    CloudStore.update(() => CloudBackup_empty()),
+    FriendsStore.update(() => Friends_empty()),
+    BlocksStore.update(() => FeedModeration_empty()),
+  ]);
+  return { ok: true, value: undefined };
 }
