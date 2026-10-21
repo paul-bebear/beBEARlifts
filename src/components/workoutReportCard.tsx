@@ -7,6 +7,8 @@ import { Thunk_pushScreen } from "../ducks/thunks";
 import { ReportApi_summary, ReportStore } from "../utils/reportStore";
 import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore } from "../utils/aiConsentClient";
+import { useTrackedState } from "../navigation/TrackedStateContext";
+import { WorkoutPost_hasEarlierExercise } from "../models/workoutPost";
 import {
   IWorkoutReport,
   WorkoutReport_answer,
@@ -23,6 +25,7 @@ function save(report: IWorkoutReport): Promise<void> {
 }
 
 export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Element {
+  const history = useTrackedState().storage.history;
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const { report } = props;
   const [isBusy, setIsBusy] = useState(false);
@@ -41,7 +44,9 @@ export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Elemen
   if (report.items.length === 0) {
     return (
       <Text className="text-sm text-text-secondary">
-        Nothing unusual. Same weights and effort as your last 4 weeks.
+        {WorkoutPost_hasEarlierExercise(report.workoutId, history)
+          ? "Nothing unusual. Same weights and effort as your last 4 weeks."
+          : "First workout logged. Reports compare from the second one."}
       </Text>
     );
   }

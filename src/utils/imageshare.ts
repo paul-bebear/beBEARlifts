@@ -67,9 +67,7 @@ export class ImageShareUtils {
         title: "Workout Program Image",
       });
     } catch (error) {
-      Dialog_alert(
-        "Error sharing file. Likely because the image is too large to generate. Try to disable some weeks/days."
-      );
+      Dialog_alert("Could not share the card image. Try sharing it again.");
     }
   }
 

@@ -36,7 +36,7 @@ export function HomeChecklist(props: { stats: IStats; units: IUnit; dispatch: ID
 
   const onItemPress = (item: IChecklistItemKey): void => {
     if (item === "weight") {
-      dispatch(Thunk_pushScreen("stats"));
+      dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }));
     } else if (item === "food") {
       dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
     } else {

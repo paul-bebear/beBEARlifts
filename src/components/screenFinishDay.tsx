@@ -327,22 +327,24 @@ function MobileShare(props: IMobileShareProps): JSX.Element {
           <Text className="text-xs text-text-secondary">More</Text>
         </View>
       </View>
-      <View className="items-center mt-1">
-        <LinkButton
-          name="copy-workout-link"
-          onPress={() => {
-            if (props.userId) {
-              const link = Share_generateLink(props.userId, props.record.id);
-              ClipboardUtils_copy(link);
-              Dialog_alert("Copied!");
-            } else {
-              Dialog_alert("You should be logged in to copy link to a workout");
-            }
-          }}
-        >
-          or just copy a link
-        </LinkButton>
-      </View>
+      {!OfflineOnly_isEnabled() && (
+        <View className="items-center mt-1">
+          <LinkButton
+            name="copy-workout-link"
+            onPress={() => {
+              if (props.userId) {
+                const link = Share_generateLink(props.userId, props.record.id);
+                ClipboardUtils_copy(link);
+                Dialog_alert("Copied!");
+              } else {
+                Dialog_alert("You should be logged in to copy link to a workout");
+              }
+            }}
+          >
+            or just copy a link
+          </LinkButton>
+        </View>
+      )}
     </View>
   );
 }
@@ -385,32 +387,38 @@ function WebappShare(props: IWebappShareProps): JSX.Element {
           </Pressable>
           <Text className="text-xs text-text-secondary">Text</Text>
         </View>
-        <View className="items-center">
-          <Pressable
-            className="items-center justify-center w-scaled-10 h-scaled-10 rounded-full bg-background-subtle"
-            onPress={() => {
-              if (userId) {
-                const link = Share_generateLink(userId, props.record.id);
-                ClipboardUtils_copy(link);
-                setCopiedLink(link);
-              } else {
-                Dialog_alert("You should be logged in to copy link to a workout");
-              }
-            }}
-          >
-            <IconLink />
-          </Pressable>
-          {copiedLink ? (
-            <View className="flex-row">
-              <Text className="text-xs text-text-secondary">Copied: </Text>
-              <InternalLink name="shared-workout-link" href={copiedLink} className="font-bold underline text-text-link">
-                Link
-              </InternalLink>
-            </View>
-          ) : (
-            <Text className="text-xs text-text-secondary">Copy Link</Text>
-          )}
-        </View>
+        {!OfflineOnly_isEnabled() && (
+          <View className="items-center">
+            <Pressable
+              className="items-center justify-center w-scaled-10 h-scaled-10 rounded-full bg-background-subtle"
+              onPress={() => {
+                if (userId) {
+                  const link = Share_generateLink(userId, props.record.id);
+                  ClipboardUtils_copy(link);
+                  setCopiedLink(link);
+                } else {
+                  Dialog_alert("You should be logged in to copy link to a workout");
+                }
+              }}
+            >
+              <IconLink />
+            </Pressable>
+            {copiedLink ? (
+              <View className="flex-row">
+                <Text className="text-xs text-text-secondary">Copied: </Text>
+                <InternalLink
+                  name="shared-workout-link"
+                  href={copiedLink}
+                  className="font-bold underline text-text-link"
+                >
+                  Link
+                </InternalLink>
+              </View>
+            ) : (
+              <Text className="text-xs text-text-secondary">Copy Link</Text>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
