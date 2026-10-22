@@ -315,7 +315,7 @@ describe("WorkoutStoryCard share data", () => {
   it("puts the bear of the level after this workout and the chosen line on the card", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
     const male = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
-    expect(male.bear).to.deep.equal({ sprite: "/images/bear/male/mood-small-pumped.webp", size: "small" });
+    expect(male.bear).to.deep.equal({ sprite: "/images/bear/male/lift-small.webp", size: "small" });
     const female = WorkoutStoryCard_build({
       record,
       settings,
@@ -325,7 +325,7 @@ describe("WorkoutStoryCard share data", () => {
       line: "female",
       seed: 1,
     });
-    expect(female.bear.sprite).to.equal("/images/bear/female/mood-small-pumped.webp");
+    expect(female.bear.sprite).to.equal("/images/bear/female/lift-small.webp");
   });
 
   it("draws the bear on every card the export captures, and four times on the collage", () => {

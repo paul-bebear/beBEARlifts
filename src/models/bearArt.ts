@@ -13,7 +13,7 @@ export function BearArt_sprite(line: IBearLine, level: number, mood: IBearMood):
 }
 
 // The body sizes whose lift-<size>.webp exists for both lines. Sizes missing here show the pumped flex.
-export const BearArt_liftingSizes: readonly IBearLevel["size"][] = [];
+export const BearArt_liftingSizes: readonly IBearLevel["size"][] = ["small", "medium", "big", "space"];
 
 export function BearArt_cardSprite(
   line: IBearLine,
