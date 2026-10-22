@@ -1,24 +1,21 @@
 import { JSX, useMemo } from "react";
 import { IDispatch } from "../ducks/types";
-import { Thunk_pushScreen } from "../ducks/thunks";
-import {
-  DailyChecklist_build,
-  DailyChecklist_greeting,
-  DailyChecklist_toggleCheckIn,
-  IChecklistItemKey,
-} from "../models/dailyChecklist";
+import { Thunk_pushScreen, Thunk_startProgramDay } from "../ducks/thunks";
+import { DailyChecklist_build, IChecklistItemKey } from "../models/dailyChecklist";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { IStats, IUnit } from "../types";
 import { ChecklistStore } from "../utils/checklistStore";
 import { useFoodLog } from "../utils/foodLogStore";
-import { ProgramGoalStore } from "../utils/programGoalStore";
+import { untrack, useTrackedState } from "../navigation/TrackedStateContext";
 import { DailyChecklistCard } from "./dailyChecklistCard";
 
 export function HomeChecklist(props: { stats: IStats; units: IUnit; dispatch: IDispatch }): JSX.Element {
   const { stats, units, dispatch } = props;
   const foodLog = useFoodLog();
   const checklistLog = ChecklistStore.use();
-  const goalLog = ProgramGoalStore.use();
+  const state = useTrackedState();
+  const history = untrack(state.storage.history);
+  const startWeekFromMonday = state.storage.settings.startWeekFromMonday;
   const today = FoodLog_dayKey(new Date());
   const checklist = useMemo(
     () =>
@@ -29,9 +26,10 @@ export function HomeChecklist(props: { stats: IStats; units: IUnit; dispatch: ID
         foodLog,
         log: checklistLog,
         units,
-        goalStartedAt: goalLog.current?.startedAt,
+        history,
+        startWeekFromMonday,
       }),
-    [today, stats, foodLog, checklistLog, units, goalLog]
+    [today, stats, foodLog, checklistLog, units, history, startWeekFromMonday]
   );
 
   const onItemPress = (item: IChecklistItemKey): void => {
@@ -40,13 +38,12 @@ export function HomeChecklist(props: { stats: IStats; units: IUnit; dispatch: ID
     } else if (item === "food") {
       dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
     } else {
-      ChecklistStore.update((l) => DailyChecklist_toggleCheckIn(l, today));
+      dispatch(Thunk_startProgramDay());
     }
   };
 
   return (
     <DailyChecklistCard
-      greeting={DailyChecklist_greeting(new Date().getHours())}
       checklist={checklist}
       isToday={true}
       onBackToToday={() => undefined}

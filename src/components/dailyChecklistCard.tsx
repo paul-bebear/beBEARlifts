@@ -4,6 +4,7 @@ import { Text } from "./primitives/text";
 import { IconChevronRight } from "./icons/iconFoodUi";
 import { IconStats } from "./icons/iconStats";
 import { IconFood } from "./icons/iconFood";
+import { IconBarbell2 } from "./icons/iconBarbell2";
 import { IChecklistDay, IChecklistItemKey } from "../models/dailyChecklist";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
@@ -11,11 +12,13 @@ function ItemIcon(props: { item: IChecklistItemKey; color: string }): JSX.Elemen
   if (props.item === "weight") {
     return <IconStats size={20} color={props.color} />;
   }
+  if (props.item === "train") {
+    return <IconBarbell2 />;
+  }
   return <IconFood size={20} color={props.color} />;
 }
 
 export function DailyChecklistCard(props: {
-  greeting: string;
   checklist: IChecklistDay;
   isToday: boolean;
   onBackToToday: () => void;
@@ -26,7 +29,6 @@ export function DailyChecklistCard(props: {
   const { checklist } = props;
   return (
     <View className="px-4 pb-3" testID="daily-checklist" data-testid="daily-checklist">
-      <Text className="mb-2 text-2xl font-bold">{props.greeting}</Text>
       <Pressable
         testID="daily-checklist-toggle"
         data-testid="daily-checklist-toggle"
@@ -56,7 +58,7 @@ export function DailyChecklistCard(props: {
             </View>
             <View className="flex-1">
               <Text className={`text-base font-semibold ${item.isDone ? "line-through" : ""}`}>{item.title}</Text>
-              <Text className="text-sm text-text-secondary" numberOfLines={1}>
+              <Text className="text-sm text-text-secondary" numberOfLines={2}>
                 {item.subtitle}
               </Text>
             </View>

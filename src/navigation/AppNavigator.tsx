@@ -41,7 +41,7 @@ import {
 import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./screens/NavScreenWorkout";
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
 import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
-import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard";
+import { ScreenMyBear } from "../components/screenMyBear";
 import { NavScreenMusic } from "./screens/NavScreenMusic";
 import { NavScreenReports } from "./screens/NavScreenReports";
 import { NavScreenBodyScans } from "./screens/NavScreenBodyScans";
@@ -262,7 +262,7 @@ function GraphsStackScreen(): JSX.Element {
   const screenOptions = useStackScreenOptions();
   return (
     <GraphsStack.Navigator screenOptions={screenOptions} screenLayout={renderScreenWithErrorBoundary}>
-      <GraphsStack.Screen name="progressDashboard" component={NavScreenProgressDashboard} />
+      <GraphsStack.Screen name="progressDashboard" component={ScreenMyBear} />
       <GraphsStack.Screen name="graphsList" component={NavScreenGraphs} />
       <GraphsStack.Screen name="music" component={NavScreenMusic} />
       <GraphsStack.Screen name="reports" component={NavScreenReports} />

@@ -1,28 +1,27 @@
 import { JSX, useCallback, useEffect, useRef, useState } from "react";
 import { useTimedMemo } from "../utils/useTimedMemo";
 import { usePerfScrollMarkers } from "../utils/usePerfScrollMarkers";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "./primitives/text";
 import { LegendList, LegendListRef } from "@legendapp/list";
 import { IDispatch } from "../ducks/types";
 import { IProgram, IHistoryRecord, ISettings, ISubscription } from "../types";
 import { INavCommon, IState, updateState } from "../models/state";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
-import { WeekInsights } from "./weekInsights";
-import { FoodPrimaryButton } from "./foodUi";
-import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
-import { RunSensors_isAvailable } from "../utils/runSensors";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { lb } from "lens-shmens";
-import { WeekCalendar } from "./weekCalendar";
 import { HistoryRecordsNullState } from "./historyRecordsNullState";
 import { Progress_isCurrent } from "../models/progress";
 import { Program_nextHistoryRecord } from "../models/program";
-import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedState } from "../navigation/TrackedStateContext";
 import { HistoryRecordView } from "./historyRecord";
 import { HomeChecklist } from "./homeChecklist";
 import { Program_evaluate, Program_getProgramDay } from "../models/program";
+import { WeekDots_build } from "../models/weekDots";
+import { TodayPill_text } from "../models/todayPill";
+import { useFoodLog } from "../utils/foodLogStore";
+import { useIsFocused } from "@react-navigation/native";
 import {
   HistoryCollapse_expand,
   HistoryCollapse_isExpanded,
@@ -56,8 +55,11 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
     () => History_getHomeAggregates(props.history, !!props.settings.startWeekFromMonday),
     [props.history, props.settings.startWeekFromMonday]
   );
-  const { sortedHistoryDesc, weeksData, prs } = aggregates;
-  const { firstDayOfWeeks, historyRecordDateToFirstDayOfWeek, firstDayOfWeekToHistoryRecord } = weeksData;
+  const { sortedHistoryDesc, prs } = aggregates;
+  const foodLog = useFoodLog();
+  useIsFocused();
+  const now = Date.now();
+  const weekDots = WeekDots_build(props.history, foodLog, now, props.settings.startWeekFromMonday);
 
   const sortedHistory = useTimedMemo(
     "programHistory.sortedHistory",
@@ -76,26 +78,6 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
     [sortedHistoryDesc, props.progress, props.program, props.settings, props.navCommon.stats]
   );
 
-  const [selectedFirstDayOfWeek, setSelectedWeekFirstDay] = useState(firstDayOfWeeks[firstDayOfWeeks.length - 1]);
-  const previousWeekFirstDayDate = new Date(selectedFirstDayOfWeek);
-  previousWeekFirstDayDate.setDate(previousWeekFirstDayDate.getDate() - 7);
-  const previousWeekFirstDay = previousWeekFirstDayDate.getTime();
-  const [selectedWeekCalendarFirstDayOfWeek, setSelectedWeekCalendarFirstDayOfWeek] = useState(selectedFirstDayOfWeek);
-
-  const thisWeekHistory = useTimedMemo(
-    "programHistory.thisWeekHistory",
-    () => getWeekHistory(sortedHistory, selectedFirstDayOfWeek, props.settings.startWeekFromMonday),
-    [sortedHistory, selectedFirstDayOfWeek, props.settings.startWeekFromMonday]
-  );
-  const lastWeekHistory = useTimedMemo(
-    "programHistory.lastWeekHistory",
-    () => getWeekHistory(sortedHistory, previousWeekFirstDay, props.settings.startWeekFromMonday),
-    [sortedHistory, previousWeekFirstDay, props.settings.startWeekFromMonday]
-  );
-  const loadingItems = props.navCommon.loading.items;
-  const loadingKeys = Object.keys(loadingItems).filter((k) => loadingItems[k]?.endTime == null);
-  const isLoading = Object.keys(loadingKeys).length > 0;
-
   const programDay = useTimedMemo(
     "programHistory.programDay",
     () => {
@@ -105,22 +87,9 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
     [props.program, props.settings]
   );
   const isOngoing = !!(props.progress && Progress_isCurrent(props.progress));
+  const pill = TodayPill_text(programDay?.name, props.history, now);
 
   const flatListRef = useRef<LegendListRef>(null);
-  const historyRecordDateToFirstDayOfWeekRef = useRef(historyRecordDateToFirstDayOfWeek);
-  historyRecordDateToFirstDayOfWeekRef.current = historyRecordDateToFirstDayOfWeek;
-  const selectedFirstDayOfWeekRef = useRef(selectedFirstDayOfWeek);
-  selectedFirstDayOfWeekRef.current = selectedFirstDayOfWeek;
-
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ item: IHistoryRecord }> }) => {
-    if (viewableItems.length > 0) {
-      const firstVisibleRecord = viewableItems[0].item;
-      const firstDayOfWeek = historyRecordDateToFirstDayOfWeekRef.current[firstVisibleRecord.id];
-      if (firstDayOfWeek != null && firstDayOfWeek !== selectedFirstDayOfWeekRef.current) {
-        setSelectedWeekFirstDay(firstDayOfWeek);
-      }
-    }
-  }).current;
 
   const initialHistoryRecordId = props.initialHistoryRecordId;
 
@@ -179,41 +148,46 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
   const scrollMarkers = usePerfScrollMarkers("ProgramHistoryView");
 
   const stickyHeader = (
-    <View>
-      <View className="border-b border-border-neutral">
-        <WeekCalendar
-          startWeekFromMonday={props.settings.startWeekFromMonday}
-          selectedWeekCalendarFirstDayOfWeek={selectedWeekCalendarFirstDayOfWeek}
-          history={sortedHistory}
-          firstDayOfWeekToHistoryRecord={firstDayOfWeekToHistoryRecord}
-          firstDayOfWeeks={firstDayOfWeeks}
-          isLoading={isLoading}
-          selectedFirstDayOfWeek={selectedFirstDayOfWeek}
-          onClick={() => navigateToModal("monthCalendarModal")}
-          onSelectFirstDayOfWeek={(firstDayOfWeek) => {
-            setSelectedWeekCalendarFirstDayOfWeek(firstDayOfWeek);
-          }}
-        />
+    <View className="px-4 pt-3 pb-2">
+      <View className="flex-row items-center mb-4">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open My bear"
+          testID="home-bear"
+          data-testid="home-bear"
+          className="items-center justify-center w-14 h-14 mr-4 rounded-full bg-background-subtle"
+          onPress={() => dispatch(Thunk_pushScreen("progressDashboard", undefined, { tab: "graphs" }))}
+        >
+          <Text className="text-3xl">🐻</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open Journal. Filled dots mark days with workouts or food"
+          testID="home-week-dots"
+          data-testid="home-week-dots"
+          className="flex-row items-center justify-between flex-1 h-14"
+          onPress={() => dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
+        >
+          {weekDots.map((dot) => (
+            <View
+              key={dot.date}
+              testID={`home-week-dot-${dot.date}`}
+              data-testid={`home-week-dot-${dot.date}`}
+              className={`w-3 h-3 rounded-full ${dot.filled ? "bg-text-primary" : "border border-border-neutral"}`}
+            />
+          ))}
+        </Pressable>
       </View>
-      <WeekInsights
-        dispatch={props.dispatch}
-        prs={prs}
-        selectedFirstDayOfWeek={selectedFirstDayOfWeek}
-        thisWeekHistory={thisWeekHistory}
-        lastWeekHistory={lastWeekHistory}
-        settings={props.settings}
-        subscription={props.subscription}
-      />
-      {OfflineOnly_isEnabled() && RunSensors_isAvailable() && (
-        <View className="flex-row px-4 py-2" style={{ width: 144 }}>
-          <FoodPrimaryButton
-            title="Run"
-            kind="outline"
-            testID="history-run"
-            onPress={() => dispatch(Thunk_pushScreen("runs", undefined, { tab: "graphs" }))}
-          />
+      <View className="flex-row flex-wrap items-center gap-3">
+        <Text className="text-3xl font-bold">Today</Text>
+        <View
+          className="px-3 py-1 rounded-full bg-background-subtle"
+          testID="home-today-pill"
+          data-testid="home-today-pill"
+        >
+          <Text className="text-sm font-semibold">{pill}</Text>
         </View>
-      )}
+      </View>
     </View>
   );
 
@@ -247,7 +221,6 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         estimatedItemSize={300}
         initialScrollIndex={initialScrollIndex}
         waitForInitialLayout={true}
-        onViewableItemsChanged={onViewableItemsChanged}
         onScrollBeginDrag={scrollMarkers.onScrollBeginDrag}
         onScrollEndDrag={scrollMarkers.onScrollEndDrag}
         onMomentumScrollEnd={scrollMarkers.onMomentumScrollEnd}
