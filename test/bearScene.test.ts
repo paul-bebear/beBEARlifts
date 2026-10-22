@@ -4,6 +4,8 @@ import * as fs from "fs";
 import * as path from "path";
 import {
   BearScene_bodyCrop,
+  BearScene_breathing,
+  BearScene_breathingPivot,
   BearScene_boardInkBottom,
   BearScene_canvas,
   BearScene_dashboardRect,
@@ -74,6 +76,55 @@ function spriteKey(line: string, assetName: string): string {
 }
 
 describe("BearScene", () => {
+  it("breathes at the requested speed for each mood", () => {
+    expect(BearScene_breathing("normal")).to.deep.equal({ durationMs: 3500, scaleY: 1.015 });
+    expect(BearScene_breathing("hungry")).to.deep.equal(BearScene_breathing("normal"));
+    expect(BearScene_breathing("tired")).to.deep.equal({ durationMs: 7000, scaleY: 1.015 });
+    expect(BearScene_breathing("pumped")).to.deep.equal({ durationMs: 2500, scaleY: 1.015 });
+  });
+
+  it("keeps the visible feet fixed throughout a breath on both lines", () => {
+    for (const line of lines) {
+      for (let level = 1; level <= 12; level += 1) {
+        for (const mood of moods) {
+          const spritePath = BearArt_sprite(line, level, mood);
+          const breathing = BearScene_breathing(mood);
+          const layout = BearScene_layout(390, level, 1, spritePath, breathing.scaleY);
+          const [, , , bottom] = BearScene_visibleBox(spritePath);
+          const foot = (bottom / BearScene_canvas.height) * layout.sprite.height;
+          const center = layout.sprite.height / 2;
+          const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
+          for (const scaleY of [1, 1.0075, breathing.scaleY]) {
+            const transformedFoot = center + pivot + scaleY * (foot - center - pivot);
+            expect(transformedFoot, `${line} ${level} ${mood}`).to.be.closeTo(foot, 1e-9);
+            expect(layout.sprite.top + transformedFoot).to.be.closeTo((390 * BearScene_gymFoot.y) / 1024, 0.3);
+          }
+        }
+      }
+    }
+  });
+
+  it("leaves room above the tallest bear for a full breath", () => {
+    for (const line of lines) {
+      for (let level = 1; level <= 12; level += 1) {
+        for (const mood of moods) {
+          for (const width of [iPhoneSeWidth, 390, 480]) {
+            const spritePath = BearArt_sprite(line, level, mood);
+            const breathing = BearScene_breathing(mood);
+            const layout = BearScene_layout(width, level, 1, spritePath, breathing.scaleY);
+            const [, top, , bottom] = BearScene_visibleBox(spritePath);
+            const foot = (bottom / BearScene_canvas.height) * layout.sprite.height;
+            const visibleHeight = ((bottom - top) / BearScene_canvas.height) * layout.sprite.height;
+            const inhaledTop = layout.sprite.top + foot - visibleHeight * breathing.scaleY;
+            expect(inhaledTop, `${line} ${level} ${mood}`).to.be.at.least(
+              (BearScene_boardInkBottom * width) / BearScene_canvas.width - 0.3
+            );
+          }
+        }
+      }
+    }
+  });
+
   it("matches the anchors in the male manifest", () => {
     const m = manifest("male") as Record<string, unknown>;
     const placement = m.scene_placement as { scale: number; full_canvas_top_left: number[]; foot_anchor: number[] };
