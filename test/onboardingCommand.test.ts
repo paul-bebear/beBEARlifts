@@ -7,7 +7,8 @@ import { IDispatch } from "../src/ducks/types";
 import { IState, IEnv } from "../src/models/state";
 import { Storage_getDefault } from "../src/models/storage";
 import { OnboardingCatalog_programs } from "../src/utils/onboardingCatalog";
-import { FoodLog_empty } from "../src/models/foodLog";
+import { FoodLog_empty, FoodLog_hasGoals } from "../src/models/foodLog";
+import { FoodTargets_compute } from "../src/models/foodTargets";
 import * as food from "../src/utils/foodLogStore";
 import * as ai from "../src/utils/aiRequest";
 import ss1 from "../programdata/programs/builtin/ss1.json";
@@ -81,6 +82,66 @@ describe("Onboarding commands", () => {
     expect(equipment.dumbbell?.isDeleted).to.equal(false);
     expect(equipment.barbell?.isDeleted).to.equal(true);
     expect(goalLog.current?.kind).to.equal("maintain");
+  });
+  it("saves calculated food targets on Start alongside the chosen three-day plan", async () => {
+    const plan = cardsFor({
+      places: ["gym"],
+      experience: "years",
+      days: 3,
+      heightUnit: "cm",
+      height: "180",
+      unit: "kg",
+      weight: "80",
+      age: "30",
+      sex: "male",
+      activity: "sedentary",
+      foodGoal: "lose",
+    });
+    await run(Onboarding_reduce(plan, { type: "start" }));
+    expect(events).to.deep.equal([]);
+    expect(state.storage.programs[0].name).to.equal("beBEAR 3-Day Full Body");
+    expect(FoodLog_hasGoals(foodLog.goals)).to.equal(true);
+    expect(foodLog.goals).to.deep.equal(
+      FoodTargets_compute({ weightKg: 80, heightCm: 180, sex: "male", age: 30 }, "sedentary", "lose").goals
+    );
+    expect(foodLog.profile).to.include({
+      activity: "sedentary",
+      goal: "lose",
+      heightCm: 180,
+      sex: "male",
+      birthYear: new Date().getFullYear() - 30,
+    });
+    expect(goalLog.current).to.include({ kind: "buildMuscle", sex: "male" });
+  });
+  it("leaves food targets unset when optional food questions are skipped", async () => {
+    await run(
+      Onboarding_reduce(
+        cardsFor({
+          places: ["gym"],
+          heightUnit: "cm",
+          height: "180",
+          unit: "kg",
+          weight: "80",
+          age: "30",
+          sex: "male",
+        }),
+        { type: "start" }
+      )
+    );
+    expect(events).to.deep.equal([]);
+    expect(FoodLog_hasGoals(foodLog.goals)).to.equal(false);
+    expect(state.storage.programs).to.have.length(1);
+  });
+  it("preserves saved food targets when the food goal is skipped", async () => {
+    const goals = FoodTargets_compute(
+      { weightKg: 70, heightCm: 170, sex: "female", age: 25 },
+      "light",
+      "maintain"
+    ).goals;
+    foodLog = { ...foodLog, goals };
+    await run(Onboarding_reduce(cardsFor({ places: ["gym"], activity: "light" }), { type: "start" }));
+    expect(events).to.deep.equal([]);
+    expect(foodLog.goals).to.deep.equal(goals);
   });
   it("leaves a goal the user already set alone", async () => {
     goalLog = { version: 1, current: { kind: "loseFat", activity: "under5k", startedAt: 1 }, past: [] };
@@ -163,7 +224,7 @@ describe("Onboarding commands", () => {
     expect(done.importHistory).to.equal(true);
     expect(state.storage.history).to.have.length(0);
   });
-  it("applies program, history, units, weight and food profile on Start", async () => {
+  it("applies program, history, units, weight and food targets on Start", async () => {
     const done = await prepareWithHistory();
     const form: IOnboardingState = {
       ...done,
@@ -177,6 +238,8 @@ describe("Onboarding commands", () => {
         age: "30",
         sex: "male",
         goal: "strength",
+        activity: "active",
+        foodGoal: "gain",
       },
     };
     await run(form);
@@ -187,7 +250,10 @@ describe("Onboarding commands", () => {
     expect(state.storage.history).to.have.length(1);
     expect(state.storage.importSessions?.[0].workoutCount).to.equal(1);
     expect(state.storage.stats.weight.weight?.[0].value).to.deep.equal({ value: 80, unit: "kg" });
-    expect(foodLog.profile).to.include({ heightCm: 180, sex: "male", goal: "maintain" });
+    expect(foodLog.profile).to.include({ heightCm: 180, sex: "male", goal: "gain", activity: "active" });
+    expect(foodLog.goals).to.deep.equal(
+      FoodTargets_compute({ weightKg: 80, heightCm: 180, sex: "male", age: 30 }, "active", "gain").goals
+    );
     expect(goalLog.current).to.include({ kind: "maintain", sex: "male" });
   });
   it("skips workouts already in history and all workouts when the box is unticked", async () => {

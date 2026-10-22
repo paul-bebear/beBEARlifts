@@ -53,6 +53,30 @@ describe("Onboarding steps", () => {
     const failed = Onboarding_reduce(form, { type: "failed", error: "Bad plan" });
     expect(failed).to.include({ step: "import", error: "Bad plan", command: undefined });
   });
+  it("recommends the available days and keeps food answers through back and Start", () => {
+    const patch = {
+      days: 3 as const,
+      experience: "years" as const,
+      activity: "light" as const,
+      foodGoal: "lose" as const,
+    };
+    const want = Onboarding_reduce(toWant(false), { type: "answers", patch });
+    const plan = Onboarding_reduce(want, { type: "recommend" });
+    expect(plan.cards.map((card) => card.days)).to.deep.equal([3, 4, 5]);
+    expect(Onboarding_reduce(plan, { type: "start" }).answers).to.include(patch);
+    const back = Onboarding_reduce(plan, { type: "back" });
+    const changed = Onboarding_reduce(back, { type: "answers", patch: { days: 5 } });
+    expect(Onboarding_reduce(changed, { type: "recommend" }).cards[0].days).to.equal(5);
+  });
+  it("allows skipped food questions and clears choices without blocking the next step", () => {
+    let about: IOnboardingState = { ...toWant(false), step: "about" };
+    expect(Onboarding_mainAction(about)?.enabled).to.equal(true);
+    about = Onboarding_reduce(about, { type: "answers", patch: { activity: "light", foodGoal: "gain" } });
+    about = Onboarding_reduce(about, { type: "answers", patch: { activity: undefined, foodGoal: undefined } });
+    expect(about.answers.activity).to.equal(undefined);
+    expect(about.answers.foodGoal).to.equal(undefined);
+    expect(Onboarding_reduce(about, { type: "next" }).step).to.equal("want");
+  });
   it("shows the beBEAR cards when the user stops a slow import, and ignores its late answer", () => {
     let form = Onboarding_reduce(Onboarding_reduce(toWant(true), { type: "import" }), { type: "next" });
     const aiRun = form.run;

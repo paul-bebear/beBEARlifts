@@ -1,4 +1,13 @@
-import { IFoodHeightUnit, IFoodProfile } from "./foodTargets";
+import {
+  FoodTargets_result,
+  FoodTargets_toProfile,
+  IFoodActivity,
+  IFoodGoalKind,
+  IFoodHeightUnit,
+  IFoodProfile,
+  IFoodTargetsForm,
+} from "./foodTargets";
+import { IFoodGoals } from "./foodLog";
 import { IEquipment, IEquipmentData, IWeight } from "../types";
 import { IProgramGoal, IProgramGoalKind } from "./programGoal";
 import { Equipment_isBuiltIn, Equipment_mergeEquipment } from "./equipment";
@@ -12,6 +21,9 @@ export interface IOnboardingAnswers {
   goal: IBearGoal;
   agile: boolean;
   experience: "new" | "months" | "years";
+  days?: IBearPlanInput["days"];
+  activity?: IFoodActivity;
+  foodGoal?: IFoodGoalKind;
   heightUnit: IFoodHeightUnit;
   height: string;
   heightFt: string;
@@ -74,6 +86,7 @@ export function OnboardingAnswers_planInput(answers: IOnboardingAnswers): IBearP
     goal: answers.goal,
     agile: answers.agile,
     experience: answers.experience,
+    days: answers.days,
     age: OnboardingAnswers_age(answers),
   };
 }
@@ -105,8 +118,8 @@ export function OnboardingAnswers_body(
   const weight = inRange(answers.weight, answers.unit === "kg" ? 30 : 66, answers.unit === "kg" ? 300 : 660);
   return {
     profile: {
-      activity: days <= 3 ? "light" : days <= 5 ? "moderate" : "active",
-      goal: answers.goal === "strength" ? "maintain" : "gain",
+      activity: answers.activity ?? (days <= 3 ? "light" : days <= 5 ? "moderate" : "active"),
+      goal: answers.foodGoal ?? (answers.goal === "strength" ? "maintain" : "gain"),
       heightUnit: answers.heightUnit,
       heightCm: cm,
       sex: answers.sex,
@@ -114,6 +127,29 @@ export function OnboardingAnswers_body(
     },
     weight: weight == null ? undefined : { value: weight, unit: answers.unit },
   };
+}
+
+export function OnboardingAnswers_foodTargets(
+  answers: IOnboardingAnswers,
+  year: number
+): { goals: IFoodGoals; profile: IFoodProfile } | undefined {
+  if (answers.activity == null || answers.foodGoal == null) {
+    return undefined;
+  }
+  const form: IFoodTargetsForm = {
+    weight: answers.weight,
+    weightUnit: answers.unit,
+    heightUnit: answers.heightUnit,
+    heightCm: answers.height,
+    heightFt: answers.heightFt,
+    heightIn: answers.heightIn,
+    sex: answers.sex,
+    age: answers.age,
+    activity: answers.activity,
+    goal: answers.foodGoal,
+  };
+  const result = FoodTargets_result(form);
+  return result == null ? undefined : { goals: result.goals, profile: FoodTargets_toProfile(form, year) };
 }
 
 export function OnboardingAnswers_programGoal(
