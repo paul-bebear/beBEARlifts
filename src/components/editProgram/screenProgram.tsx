@@ -24,6 +24,7 @@ import { TimeUtils_formatHOrMin } from "../../utils/time";
 import { IconTimerSmall } from "../icons/iconTimerSmall";
 import { EditProgram_setName, EditProgram_tabLabels, EditProgram_mode } from "../../models/editProgram";
 import { EditProgramNavbar, EditProgramView } from "./editProgram";
+import { ProgramPlanView } from "./programPlanView";
 import { ProgramPreviewPlayground } from "../preview/programPreviewPlayground";
 import { Thunk_pushScreen, Thunk_log } from "../../ducks/thunks";
 import { PlannerDispatch_logEditAction } from "../../utils/plannerDispatch";
@@ -220,7 +221,7 @@ export const ScreenProgram = memo(function ScreenProgram(props: IProps): JSX.Ele
   // Edit, the only tab that surfaces the syntax errors.
   const hasEvalErrors = evaluatedProgram.errors.length > 0;
   const tabIndex = hasEvalErrors ? EDIT_TAB_INDEX : (plannerState.ui.tabIndex ?? 0);
-  const activeTabLabel = TAB_LABELS[tabIndex] ?? "Preview";
+  const activeTabLabel = TAB_LABELS[tabIndex] ?? "Plan";
 
   // Also write the redirect through, so fixing the program leaves the user in the editor
   // instead of yanking them back to Preview - the text they're typing passes through valid
@@ -313,8 +314,22 @@ export const ScreenProgram = memo(function ScreenProgram(props: IProps): JSX.Ele
     [dispatch, plannerDispatch, props.originalProgram]
   );
 
+  const onOpenEditor = useCallback(() => onChangeTab(EDIT_TAB_INDEX), [onChangeTab]);
+
   let tabContent: JSX.Element;
-  if (activeTabLabel === "Preview") {
+  if (activeTabLabel === "Plan") {
+    tabContent = (
+      <ProgramPlanView
+        evaluatedProgram={evaluatedProgram}
+        savedProgram={props.originalProgram}
+        draftProgram={program}
+        settings={props.settings}
+        dispatch={dispatch}
+        plannerDispatch={plannerDispatch}
+        onOpenEditor={onOpenEditor}
+      />
+    );
+  } else if (activeTabLabel === "Preview") {
     tabContent = previewWeek ? (
       <PerfProfiler id="tab.Preview" onRender={onProfile}>
         <ProgramPreviewWeekContent
