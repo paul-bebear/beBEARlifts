@@ -2,7 +2,7 @@ import { IHistoryRecord } from "../types";
 import { IPersonalRecords } from "./history";
 import { FoodLog_dayKey, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import { IBearCountedWorkout } from "./bearGrowth";
-import { BearTier_all } from "./bearTier";
+import { BearTier_all, IBearTierSet } from "./bearTier";
 
 export type IBearBadgeId =
   | "firstPr"
@@ -35,6 +35,7 @@ export interface IBearBadgeSources {
   doneDays: Set<string>;
   foodLog: IFoodLog;
   workouts?: readonly IBearCountedWorkout[];
+  tierSet: IBearTierSet;
 }
 
 export interface IBearBadgeEntry {
@@ -77,9 +78,11 @@ const levelEmoji: Record<string, string> = {
   mars: "🔴",
 };
 
-const levelBadges: { id: IBearBadgeId; minKg: number }[] = BearTier_all()
-  .filter((tier) => tier.level > 1)
-  .map((tier) => ({ id: levelId(tier.level), minKg: tier.minKg }));
+function levelBadges(set: IBearTierSet): { id: IBearBadgeId; minKg: number }[] {
+  return BearTier_all(set)
+    .filter((tier) => tier.level > 1)
+    .map((tier) => ({ id: levelId(tier.level), minKg: tier.minKg }));
+}
 
 function levelId(level: number): IBearBadgeId {
   return `level${level}`;
@@ -101,7 +104,7 @@ const infos: IBearBadgeInfo[] = [
       emoji: b.emoji,
     })
   ),
-  ...BearTier_all()
+  ...BearTier_all("male")
     .filter((tier) => tier.level > 1)
     .map(
       (tier): IBearBadgeInfo => ({
@@ -201,11 +204,16 @@ export function BearBadges_compute(sources: IBearBadgeSources): IBearBadge[] {
       earned.set(streak.id, { id: streak.id, day });
     }
   }
-  addLevelBadges(earned, sources.workouts ?? []);
+  addLevelBadges(earned, sources.workouts ?? [], sources.tierSet);
   return Array.from(earned.values()).sort((a, b) => sortKey(a) - sortKey(b));
 }
 
-function addLevelBadges(earned: Map<IBearBadgeId, IBearBadge>, workouts: readonly IBearCountedWorkout[]): void {
+function addLevelBadges(
+  earned: Map<IBearBadgeId, IBearBadge>,
+  workouts: readonly IBearCountedWorkout[],
+  set: IBearTierSet
+): void {
+  const thresholds = levelBadges(set);
   let totalKg = 0;
   let next = 0;
   const ordered = [...workouts].sort(
@@ -213,8 +221,8 @@ function addLevelBadges(earned: Map<IBearBadgeId, IBearBadge>, workouts: readonl
   );
   for (const { record, countedKg } of ordered) {
     totalKg += countedKg;
-    while (next < levelBadges.length && totalKg >= levelBadges[next].minKg) {
-      const id = levelBadges[next].id;
+    while (next < thresholds.length && totalKg >= thresholds[next].minKg) {
+      const id = thresholds[next].id;
       earned.set(id, { id, recordId: record.id, at: recordTime(record) });
       next += 1;
     }

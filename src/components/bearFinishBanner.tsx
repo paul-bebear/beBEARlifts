@@ -5,6 +5,7 @@ import { IHistoryRecord } from "../types";
 import { BearArt_sprite } from "../models/bearArt";
 import { BearCelebration_step, IBearLevelUp } from "../models/bearCelebration";
 import { BearText_finishLine, BearText_levelUp } from "../models/bearText";
+import { IBearTierSet } from "../models/bearTier";
 import { BearHoney_forWorkout } from "../models/bearHoney";
 import { BearStore } from "../utils/bearStore";
 import { useBear } from "../utils/useBear";
@@ -12,8 +13,8 @@ import { useBearHoney } from "../utils/useBearHoney";
 import { BearBody } from "./bearBody";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 
-function LevelUpCard(props: { levelUp: IBearLevelUp; sprite: string }): JSX.Element {
-  const text = BearText_levelUp(props.levelUp.to);
+function LevelUpCard(props: { levelUp: IBearLevelUp; tierSet: IBearTierSet; sprite: string }): JSX.Element {
+  const text = BearText_levelUp(props.levelUp.to, props.tierSet);
   return (
     <View
       testID="bear-level-up"
@@ -45,7 +46,7 @@ export function BearFinishBanner(props: { record: IHistoryRecord }): JSX.Element
   useEffect(() => {
     let shown: IBearLevelUp | undefined;
     BearStore.update((saved) => {
-      const step = BearCelebration_step(saved, state.countedKg);
+      const step = BearCelebration_step(saved, state.countedKg, state.tierSet);
       shown = step.levelUp;
       return step.store;
     })
@@ -56,7 +57,11 @@ export function BearFinishBanner(props: { record: IHistoryRecord }): JSX.Element
   return (
     <View className="pb-2" testID="bear-finish" data-testid="bear-finish">
       {levelUp != null ? (
-        <LevelUpCard levelUp={levelUp} sprite={BearArt_sprite(state.line, levelUp.to, "normal")} />
+        <LevelUpCard
+          levelUp={levelUp}
+          tierSet={state.tierSet}
+          sprite={BearArt_sprite(state.line, levelUp.to, "normal")}
+        />
       ) : (
         <View className="items-center pb-2">
           <BearBody sprite={sprite} height={150} testID="bear-finish-sprite" />

@@ -54,8 +54,9 @@ const workout = record(t0, [set(100, 5), set(100, 5), set(100, 5)]);
 function bear(countedKg: number): IBearState {
   return {
     line: "female",
-    level: BearTier_progress(0, 30000),
-    countedKg: 30000,
+    tierSet: "female",
+    level: BearTier_progress(0, 70000, "female"),
+    countedKg: 70000,
     fullness: 60,
     energy: 90,
     mood: "pumped",

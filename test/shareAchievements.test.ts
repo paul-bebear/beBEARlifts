@@ -48,6 +48,7 @@ describe("ShareAchievements", () => {
       doneDays: new Set(),
       foodLog: FoodLog_empty(),
       settings: { ...Settings_build(), units: "kg" },
+      tierSet: "male",
     });
     expect(result.lifetimeKg.get(1)).to.deep.equal({ beforeKg: 0, afterKg: 10 });
     expect(result.lifetimeKg.get(2)).to.deep.equal({ beforeKg: 10, afterKg: 30 });

@@ -1,10 +1,9 @@
 import { IBearMood } from "./bear";
 import { IBearLine } from "./bearStoreData";
-import { BearTier_all, IBearTier } from "./bearTier";
+import { BearTier_all, BearTier_byLevel, IBearLevel } from "./bearTier";
 
-function tierForLevel(level: number): IBearTier {
-  const tiers = BearTier_all();
-  return tiers.find((tier) => tier.level === level) ?? tiers[0];
+function tierForLevel(level: number): IBearLevel {
+  return BearTier_byLevel(level) ?? BearTier_all("male")[0];
 }
 
 export function BearArt_sprite(line: IBearLine, level: number, mood: IBearMood): string {

@@ -136,7 +136,14 @@ describe("WorkoutStoryCard", () => {
       entries: [{ ...record.entries[0], exercise: { id: "pushUp" }, sets: [set(10, 0), set(8, 0)] }],
     } as IHistoryRecord;
     const achievements = { lifetimeKg: new Map(), badges: [] };
-    const data = WorkoutStoryCard_build({ record: bodyweight, settings, prs: {}, achievements, seed: 1 });
+    const data = WorkoutStoryCard_build({
+      record: bodyweight,
+      settings,
+      prs: {},
+      achievements,
+      tierSet: "male",
+      seed: 1,
+    });
     for (const page of ["photo", "count", "rank", "receipt"] as const) {
       const html = renderToStaticMarkup(createElement(WorkoutSharePage, { page, data }));
       expect(html, page)
@@ -272,10 +279,10 @@ describe("WorkoutStoryCard share data", () => {
   });
 
   it("says how far the next tier is, in the user's units", () => {
-    const tier = BearTier_progress(0, 24420);
-    expect(WorkoutStoryCard_toNext(tier, settings)).to.equal("580 kg to Level 4 · Rookie");
-    expect(WorkoutStoryCard_toNext(tier, { ...settings, units: "lb" })).to.equal("1,279 lb to Level 4 · Rookie");
-    expect(WorkoutStoryCard_toNext(BearTier_progress(0, 9e6), settings, 9e6)).to.equal("9,000,000 kg lifetime");
+    const tier = BearTier_progress(0, 24420, "male");
+    expect(WorkoutStoryCard_toNext(tier, settings)).to.equal("580 kg to Level 3 · Amateur");
+    expect(WorkoutStoryCard_toNext(tier, { ...settings, units: "lb" })).to.equal("1,279 lb to Level 3 · Amateur");
+    expect(WorkoutStoryCard_toNext(BearTier_progress(0, 9e6, "male"), settings, 9e6)).to.equal("9,000,000 kg lifetime");
   });
 
   it("draws between 1 and 24 icons", () => {
@@ -284,22 +291,29 @@ describe("WorkoutStoryCard share data", () => {
 
   it("builds the rank from the lifetime totals around this workout", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, seed: 1 });
-    expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 4 · Rookie", true]);
+    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
+    expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 3 · Amateur", true]);
     expect(data.equivalent).to.not.equal(undefined);
   });
 
+  it("ranks the same lifetime total by the women's numbers", () => {
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 35000, afterKg: 36980 }]]), badges: [] };
+    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "female", seed: 1 });
+    expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 4 · Rookie", true]);
+    expect(data.toNext).to.equal("35,020 kg to Level 5 · Regular");
+  });
+
   it("renders a numbered level name on the shared rank card", () => {
-    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 10000, afterKg: 11980 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, seed: 1 });
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
+    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
     const html = renderToStaticMarkup(createElement(WorkoutSharePage, { page: "rank", data }));
     expect(html).to.contain("LEVEL 3 · AMATEUR");
   });
 
   it("shows the lifetime total when the final level has no countdown", () => {
-    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 5998020, afterKg: 6000000 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, seed: 1 });
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 6998020, afterKg: 7000000 }]]), badges: [] };
+    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
     expect(data.tier.next).to.equal(undefined);
-    expect(data.toNext).to.equal("6,000,000 kg lifetime");
+    expect(data.toNext).to.equal("7,000,000 kg lifetime");
   });
 });

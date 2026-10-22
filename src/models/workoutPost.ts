@@ -1,7 +1,7 @@
 import { IHistoryRecord, ISettings, ISet, IUnit, IWeight } from "../types";
 import { IBearMood, IBearState } from "./bear";
 import { IBearLine } from "./bearStoreData";
-import { BearTier_all } from "./bearTier";
+import { BearTier_byLevel } from "./bearTier";
 import { Exercise_get, Exercise_toKey } from "./exercise";
 import {
   History_getMaxWeightSetFromEntry,
@@ -128,7 +128,7 @@ export function WorkoutPost_statsLine(summary: IWorkoutPostSummary): string {
 }
 
 export function WorkoutPost_levelText(bear: Pick<IPostBear, "level">): string {
-  const tier = BearTier_all().find((t) => t.level === bear.level);
+  const tier = BearTier_byLevel(bear.level);
   return tier != null ? `Level ${tier.level} ${tier.name}` : `Level ${bear.level}`;
 }
 
@@ -203,7 +203,7 @@ function parseBear(raw: unknown): IPostBear | undefined {
   const level = num(r.level);
   const countedKg = num(r.countedKg);
   const mood = moods.find((m) => m === r.mood);
-  if (level == null || countedKg == null || mood == null || !BearTier_all().some((t) => t.level === level)) {
+  if (level == null || countedKg == null || mood == null || BearTier_byLevel(level) == null) {
     return undefined;
   }
   const line = r.line === "male" || r.line === "female" ? r.line : undefined;

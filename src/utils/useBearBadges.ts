@@ -10,6 +10,7 @@ import {
   IBearBadgeInfo,
 } from "../models/bearBadges";
 import { BadgeCelebration_step } from "../models/badgeCelebration";
+import { IBearTierSet } from "../models/bearTier";
 import { DailyChecklist_doneDays, DailyChecklist_streak } from "../models/dailyChecklist";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { History_getPersonalRecords } from "../models/history";
@@ -24,6 +25,7 @@ export interface IBearBadgesView {
   streak: number;
   today: string;
   countedKg: number;
+  tierSet: IBearTierSet;
 }
 
 export function useBearBadges(): IBearBadgesView {
@@ -38,12 +40,12 @@ export function useBearBadges(): IBearBadgesView {
     [foodLog, state.workouts]
   );
   const badges = useMemo(
-    () => BearBadges_compute({ history, prs, doneDays, foodLog, workouts: state.workouts }),
-    [history, prs, doneDays, foodLog, state.workouts]
+    () => BearBadges_compute({ history, prs, doneDays, foodLog, workouts: state.workouts, tierSet: state.tierSet }),
+    [history, prs, doneDays, foodLog, state.workouts, state.tierSet]
   );
   const grid = useMemo(() => BearBadges_grid(badges), [badges]);
   const streak = useMemo(() => DailyChecklist_streak(doneDays, today), [doneDays, today]);
-  return { badges, grid, doneDays, streak, today, countedKg: state.countedKg };
+  return { badges, grid, doneDays, streak, today, countedKg: state.countedKg, tierSet: state.tierSet };
 }
 
 export interface IBadgeCelebration {
@@ -52,7 +54,7 @@ export interface IBadgeCelebration {
 }
 
 export function useBadgeCelebration(): IBadgeCelebration {
-  const { badges, countedKg } = useBearBadges();
+  const { badges, countedKg, tierSet } = useBearBadges();
   const isFocused = useIsFocused();
   const [isLoaded, setIsLoaded] = useState(false);
   const [shown, setShown] = useState<IBearBadgeInfo | undefined>(undefined);
@@ -71,13 +73,13 @@ export function useBadgeCelebration(): IBadgeCelebration {
     }
     let next: IBearBadge | undefined;
     BearStore.update((saved) => {
-      const step = BadgeCelebration_step(badges, saved, countedKg);
+      const step = BadgeCelebration_step(badges, saved, countedKg, tierSet);
       next = step.badge;
       return step.store;
     })
       .then(() => setShown(next == null ? undefined : BearBadges_info(next.id)))
       .catch(() => undefined);
-  }, [isLoaded, isFocused, badgeKey, countedKg, round, shown == null]);
+  }, [isLoaded, isFocused, badgeKey, countedKg, tierSet, round, shown == null]);
 
   const dismiss = useCallback((showNext: boolean) => {
     setShown(undefined);
