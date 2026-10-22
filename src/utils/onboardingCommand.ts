@@ -27,6 +27,7 @@ import { FoodLogStore_update } from "./foodLogStore";
 import { FoodLog_setGoals, FoodLog_setProfile } from "../models/foodLog";
 import { Stats_insertByTimestamp } from "../models/stats";
 import { ImageResize_toJpegDataUrl } from "./imageResize";
+import { IFoodCapturePhoto } from "../models/foodCapture";
 import {
   OnboardingCatalog_build,
   OnboardingCatalog_days,
@@ -36,6 +37,23 @@ import {
 
 // api/ai/onboard.mjs gives the model 90 s, so the phone waits a little longer before it gives up.
 const onboardTimeoutMs = 100_000;
+
+export async function OnboardingCommand_pickImage(
+  pick: () => Promise<IFoodCapturePhoto>,
+  emit: (event: IOnboardingEvent) => void
+): Promise<void> {
+  emit({ type: "resizing" });
+  try {
+    const photo = await pick();
+    if (photo.kind === "error") {
+      emit({ type: "failed", error: photo.error });
+    } else {
+      emit({ type: "images", images: photo.kind === "photo" ? [photo.dataUrl] : [] });
+    }
+  } catch (error) {
+    emit({ type: "failed", error: error instanceof Error ? error.message : "The screenshot could not be read." });
+  }
+}
 
 export async function OnboardingCommand_images(
   files: FileList | null,

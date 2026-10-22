@@ -1,7 +1,10 @@
 import { JSX, useMemo } from "react";
+import { View } from "react-native";
 import { BearPlan_text } from "../models/bearPlan";
 import { IBearPlanCard } from "../models/bearPlanRecommend";
 import { OnboardingProgram_dayNames } from "../models/onboardingProgram";
+import { Text } from "./primitives/text";
+import { OnboardingChoice } from "./onboardingControls";
 
 export function OnboardingPlanCards(props: {
   cards: IBearPlanCard[];
@@ -13,43 +16,41 @@ export function OnboardingPlanCards(props: {
   const dayNames = useMemo(() => (card == null ? [] : OnboardingProgram_dayNames(BearPlan_text(card.params))), [card]);
   return (
     <>
-      <h1 className="text-3xl font-bold">Your plan</h1>
-      <div className="space-y-3" role="radiogroup" aria-label="Plans">
-        {props.cards.map((c, i) => {
-          const active = i === props.selected;
-          return (
-            <button
-              key={c.days}
-              role="radio"
-              aria-checked={active}
-              disabled={props.busy}
-              className={`w-full p-4 text-left border-2 rounded-2xl ${
-                active ? "border-yellow-500 bg-background-cardyellow" : "border-border-prominent"
-              }`}
-              onClick={() => props.onPick(i)}
-            >
-              {c.recommended && (
-                <span className="inline-block px-2 py-1 mb-2 text-xs font-bold text-black rounded-full bg-yellow-400">
-                  Best for you
-                </span>
-              )}
-              <span className="block text-xl font-bold">{c.name}</span>
-              <span className="block text-text-secondary">
-                {c.days} days a week · about {c.minutes} minutes
-              </span>
-              <span className="block mt-1">{c.summary}</span>
-              {active && dayNames.length > 0 && (
-                <ol className="pl-5 mt-3 space-y-1 list-decimal">
-                  {dayNames.map((name, d) => (
-                    <li key={d}>{name}</li>
-                  ))}
-                </ol>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <p className="text-text-secondary">Start light. The app adds weight when you hit the reps.</p>
+      <Text accessibilityRole="header" className="text-3xl font-bold">
+        Your plan
+      </Text>
+      <View className="gap-3" accessibilityRole="radiogroup" accessibilityLabel="Plans">
+        {props.cards.map((c, i) => (
+          <OnboardingChoice
+            key={c.days}
+            radio
+            selected={i === props.selected}
+            disabled={props.busy}
+            onPress={() => props.onPick(i)}
+          >
+            {c.recommended && (
+              <Text className="self-start px-2 py-1 mb-2 text-xs font-bold text-black rounded-full bg-yellow-400">
+                Best for you
+              </Text>
+            )}
+            <Text className="text-xl font-bold">{c.name}</Text>
+            <Text className="text-text-secondary">
+              {c.days} days a week · about {c.minutes} minutes
+            </Text>
+            <Text className="mt-1">{c.summary}</Text>
+            {i === props.selected && dayNames.length > 0 && (
+              <View className="gap-1 pl-5 mt-3">
+                {dayNames.map((name, d) => (
+                  <Text key={d}>
+                    {d + 1}. {name}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </OnboardingChoice>
+        ))}
+      </View>
+      <Text className="text-text-secondary">Start light. The app adds weight when you hit the reps.</Text>
     </>
   );
 }
