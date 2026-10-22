@@ -4,16 +4,54 @@ import * as fs from "fs";
 import * as path from "path";
 import {
   BearScene_bodyCrop,
+  BearScene_boardInkBottom,
   BearScene_canvas,
   BearScene_dashboardRect,
   BearScene_gymFoot,
   BearScene_headCrop,
+  BearScene_heightShare,
   BearScene_layout,
+  BearScene_maxHeightShare,
+  BearScene_minHeightShare,
   BearScene_spriteFoot,
-  BearScene_spriteScale,
   BearScene_visibleBox,
+  IBearSceneLayout,
 } from "../src/models/bearScene";
 import { BearArt_sprite } from "../src/models/bearArt";
+import { BearTv_rect } from "../src/models/bearTv";
+import { IBearMood } from "../src/models/bear";
+import { IBearLine } from "../src/models/bearStoreData";
+
+const lines: IBearLine[] = ["male", "female"];
+const moods: IBearMood[] = ["normal", "hungry", "tired", "pumped"];
+const iPhoneSeWidth = 343;
+
+function placed(
+  width: number,
+  level: number,
+  fraction: number,
+  line: IBearLine,
+  mood: IBearMood
+): {
+  layout: IBearSceneLayout;
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+} {
+  const sprite = BearArt_sprite(line, level, mood);
+  const layout = BearScene_layout(width, level, fraction, sprite);
+  const [x1, y1, x2, y2] = BearScene_visibleBox(sprite);
+  const scaleX = layout.sprite.width / BearScene_canvas.width;
+  const scaleY = layout.sprite.height / BearScene_canvas.height;
+  return {
+    layout,
+    top: layout.sprite.top + y1 * scaleY,
+    bottom: layout.sprite.top + y2 * scaleY,
+    left: layout.sprite.left + x1 * scaleX,
+    right: layout.sprite.left + x2 * scaleX,
+  };
+}
 
 interface IManifestAsset {
   name?: string;
@@ -41,7 +79,6 @@ describe("BearScene", () => {
     const placement = m.scene_placement as { scale: number; full_canvas_top_left: number[]; foot_anchor: number[] };
     expect(m.canvas).to.deep.equal([BearScene_canvas.width, BearScene_canvas.height]);
     expect(m.bear_foot_anchor).to.deep.equal([BearScene_spriteFoot.x, BearScene_spriteFoot.y]);
-    expect(placement.scale).to.equal(BearScene_spriteScale);
     expect(placement.foot_anchor).to.deep.equal([BearScene_gymFoot.x, BearScene_gymFoot.y]);
     expect(m.dashboard_safe_rect).to.deep.equal(BearScene_dashboardRect);
   });
@@ -70,23 +107,109 @@ describe("BearScene", () => {
     }
   });
 
-  it("places the full sprite canvas at the manifest's top left at full size", () => {
-    const layout = BearScene_layout(1024, 1);
+  it("sizes the bear from its visible height, not from the full canvas", () => {
+    const layout = BearScene_layout(1024, 1, 0, "/images/bear/male/level-01.webp");
     expect([layout.width, layout.height]).to.deep.equal([1024, 1536]);
-    expect([layout.sprite.left, layout.sprite.top]).to.deep.equal([266.2, 784.4]);
-    expect([layout.sprite.width, layout.sprite.height]).to.deep.equal([491.5, 737.3]);
+    expect(layout.sprite.width / layout.sprite.height).to.be.closeTo(1024 / 1536, 0.001);
     expect(layout.board).to.deep.equal({ left: 125, top: 195, width: 700, height: 480 });
+    const bear = placed(1024, 1, 0, "male", "normal");
+    expect(bear.bottom - bear.top).to.be.closeTo(0.38 * 1536, 0.5);
   });
 
-  it("keeps the feet on the floor anchor when the bear is smaller early in a level", () => {
-    for (const fraction of [0, 0.5, 1]) {
-      const layout = BearScene_layout(390, fraction);
-      const footX = layout.sprite.left + (layout.sprite.width * BearScene_spriteFoot.x) / BearScene_canvas.width;
-      const footY = layout.sprite.top + (layout.sprite.height * BearScene_spriteFoot.y) / BearScene_canvas.height;
-      expect(footX).to.be.closeTo((390 * 512) / 1024, 0.2);
-      expect(footY).to.be.closeTo((390 * 1490) / 1024, 0.2);
+  it("starts the cub at 38 percent of the scene and ends level 12 at the maximum", () => {
+    expect(BearScene_minHeightShare).to.equal(0.38);
+    expect(BearScene_heightShare(1, 0)).to.equal(0.38);
+    expect(BearScene_heightShare(12, 1)).to.be.closeTo(BearScene_maxHeightShare(), 1e-9);
+    expect(BearScene_maxHeightShare()).to.be.within(0.58, 0.6);
+  });
+
+  it("gives the bear's height as a share of the scene at levels 1, 3, 6, 9 and 12 on both lines", () => {
+    const expected: Record<number, number> = { 1: 0.38, 3: 0.416, 6: 0.47, 9: 0.525, 12: 0.579 };
+    for (const line of lines) {
+      for (const level of [1, 3, 6, 9, 12]) {
+        for (const width of [iPhoneSeWidth, 390, 480]) {
+          const bear = placed(width, level, 0, line, "normal");
+          const share = (bear.bottom - bear.top) / bear.layout.height;
+          expect(share, `${line} level ${level} width ${width}`).to.be.closeTo(expected[level], 0.003);
+          expect(share).to.be.at.least(0.38 - 0.0005);
+        }
+      }
     }
-    expect(BearScene_layout(390, 0).sprite.width).to.be.lessThan(BearScene_layout(390, 1).sprite.width);
+  });
+
+  it("grows level by level, and a level-up is bigger than the growth inside a level", () => {
+    for (let level = 1; level < 12; level += 1) {
+      const endOfLevel = BearScene_heightShare(level, 1);
+      const startOfNext = BearScene_heightShare(level + 1, 0);
+      expect(startOfNext - endOfLevel, `level ${level} to ${level + 1}`).to.be.greaterThan(0.01);
+      expect(BearScene_heightShare(level, 1)).to.be.greaterThan(BearScene_heightShare(level, 0));
+    }
+  });
+
+  it("keeps the feet on the gym foot line at every level, mood and fraction", () => {
+    for (const line of lines) {
+      for (let level = 1; level <= 12; level += 1) {
+        for (const mood of moods) {
+          for (const fraction of [0, 0.5, 1]) {
+            const bear = placed(390, level, fraction, line, mood);
+            expect(bear.bottom, `${line} ${level} ${mood}`).to.be.closeTo((390 * BearScene_gymFoot.y) / 1024, 0.3);
+            expect((bear.left + bear.right) / 2).to.be.closeTo((390 * BearScene_gymFoot.x) / 1024, 25);
+          }
+        }
+      }
+    }
+  });
+
+  it("never covers the whiteboard numbers or the TV, at any level, mood or width", () => {
+    const inkBottom = (width: number): number => (BearScene_boardInkBottom * width) / BearScene_canvas.width;
+    const tvBottom = (width: number): number => (BearTv_rect[3] * width) / BearScene_canvas.width;
+    expect(BearScene_boardInkBottom).to.be.greaterThan(BearTv_rect[3]);
+    for (const line of lines) {
+      for (let level = 1; level <= 12; level += 1) {
+        for (const mood of moods) {
+          for (const width of [iPhoneSeWidth, 390, 430, 480]) {
+            const bear = placed(width, level, 1, line, mood);
+            const label = `${line} level ${level} ${mood} width ${width}`;
+            expect(bear.top, label).to.be.at.least(inkBottom(width) - 0.2);
+            expect(bear.top, label).to.be.at.least(tvBottom(width));
+            expect(bear.left, label).to.be.at.least(0);
+            expect(bear.right, label).to.be.at.most(width);
+          }
+        }
+      }
+    }
+  });
+
+  it("keeps the same visible height when the mood changes", () => {
+    for (const line of lines) {
+      for (const level of [1, 3, 6, 9, 12]) {
+        const normal = placed(390, level, 0.4, line, "normal");
+        for (const mood of ["hungry", "tired", "pumped"] as const) {
+          const other = placed(390, level, 0.4, line, mood);
+          expect(other.bottom - other.top, `${line} level ${level} ${mood}`).to.be.closeTo(
+            normal.bottom - normal.top,
+            0.3
+          );
+        }
+      }
+    }
+  });
+
+  it("uses the tired sprite's own bounds, so its lower head still lands on the same foot line", () => {
+    const tired = placed(390, 3, 0, "male", "tired");
+    const normal = placed(390, 3, 0, "male", "normal");
+    expect(BearScene_visibleBox(BearArt_sprite("male", 3, "tired"))).to.not.deep.equal(
+      BearScene_visibleBox(BearArt_sprite("male", 3, "normal"))
+    );
+    expect(tired.bottom).to.be.closeTo(normal.bottom, 0.2);
+    expect(tired.layout.sprite.width).to.not.equal(normal.layout.sprite.width);
+  });
+
+  it("keeps the bear below the board on an iPhone SE", () => {
+    const bear = placed(iPhoneSeWidth, 12, 1, "male", "pumped");
+    expect(bear.layout.height).to.be.closeTo(514.5, 0.1);
+    expect(bear.top).to.be.at.least(198);
+    expect((bear.bottom - bear.top) / bear.layout.height).to.be.closeTo(BearScene_maxHeightShare(), 0.003);
   });
 
   it("fits the visible body to a height", () => {

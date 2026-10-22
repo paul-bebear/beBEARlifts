@@ -44,7 +44,8 @@ function BoardTile(props: { tile: IBearBoardTile; valueSize: number; onPress: ()
 export function BearScene(props: IProps): JSX.Element {
   const [width, setWidth] = useState(0);
   const { state } = props;
-  const layout = BearScene_layout(width, state.level.fraction);
+  const spritePath = BearArt_sprite(state.line, state.level.tier.level, state.mood);
+  const layout = BearScene_layout(width, state.level.tier.level, state.level.fraction, spritePath);
   const onLayout = (e: LayoutChangeEvent): void => setWidth(Math.min(maxWidth, e.nativeEvent.layout.width));
   const pad = layout.board.width * 0.04;
   const tvBox = BearTv_box(layout.width);
@@ -84,7 +85,7 @@ export function BearScene(props: IProps): JSX.Element {
           {props.tv != null && <View style={{ position: "absolute", ...tvBox }}>{props.tv(tvBox)}</View>}
           <Image
             testID="bear-scene-sprite"
-            source={{ uri: BearImage_uri(BearArt_sprite(state.line, state.level.tier.level, state.mood)) }}
+            source={{ uri: BearImage_uri(spritePath) }}
             style={{ position: "absolute", ...layout.sprite }}
             resizeMode="contain"
           />
