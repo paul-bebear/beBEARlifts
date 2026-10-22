@@ -9,6 +9,7 @@ import { IconCog2 } from "./icons/iconCog2";
 import { BearMark } from "./shareCards/bearMark";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { ProgressSections } from "./screenProgressDashboard";
+import { CheckInChart } from "./checkInChart";
 
 interface IMyBearLayoutProps {
   head: ReactNode;
@@ -57,7 +58,7 @@ export function ScreenMyBear(): JSX.Element {
   });
   return (
     <NavScreenContent>
-      <MyBearLayout head={<BearHeadPlaceholder />}>
+      <MyBearLayout head={<BearHeadPlaceholder />} checkIns={<CheckInChart />}>
         <ProgressSections />
       </MyBearLayout>
     </NavScreenContent>

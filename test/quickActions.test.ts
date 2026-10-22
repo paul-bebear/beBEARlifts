@@ -8,9 +8,9 @@ describe("QuickActions", () => {
     expect(list.squares.map((s) => s.label)).to.eql(["Food", "Measurement", "Friend", "Note"]);
   });
 
-  it("marks only Note as coming soon", () => {
+  it("marks no square as coming soon now that the note editor exists", () => {
     const list = QuickActions_list({ isOngoingProgress: false, canRun: false });
-    expect(list.squares.filter((s) => s.isSoon).map((s) => s.id)).to.eql(["note"]);
+    expect(list.squares.filter((s) => s.isSoon)).to.eql([]);
   });
 
   it("starts a workout through the picker when none is ongoing", () => {

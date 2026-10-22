@@ -24,6 +24,7 @@ import {
   DailyChecklist_empty,
   DailyChecklist_toggleCheckIn,
 } from "../src/models/dailyChecklist";
+import { Notes_empty, Notes_new, Notes_save } from "../src/models/notes";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 
@@ -152,6 +153,22 @@ describe("FullBackup", () => {
     const checklist = DailyChecklist_commit(DailyChecklist_toggleCheckIn(DailyChecklist_empty(), "2026-10-19"), now);
     const backup = FullBackup_build(parts({ checklist }), now);
     expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).checklist).to.deep.equal(checklist);
+  });
+
+  it("round-trips the notes and reads an older file without them", () => {
+    const notes = Notes_save(Notes_empty(), { ...Notes_new("a", "2026-10-20", now), title: "Legs" }, now);
+    const backup = FullBackup_build(parts({ notes }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).notes).to.deep.equal(notes);
+    const { notes: _notes, ...older } = backup;
+    expect(FullBackup_unwrap(older).notes).to.equal(undefined);
+  });
+
+  it("carries one Markdown file per Journal day", () => {
+    const notes = Notes_save(Notes_empty(), { ...Notes_new("a", "2026-10-19", now), title: "Rest" }, now);
+    const backup = FullBackup_build(parts({ notes }), now);
+    expect(Object.keys(backup.journal)).to.eql(["journal/2026-10-19.md"]);
+    expect(backup.journal["journal/2026-10-19.md"]).to.contain("### Rest");
+    expect(FullBackup_build(parts({}), now).journal).to.eql({});
   });
 
   it("keeps the phone's Spotify login when restoring music", () => {

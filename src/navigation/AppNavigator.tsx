@@ -50,7 +50,7 @@ import { NavScreenGoalWizard } from "./screens/NavScreenGoalWizard";
 import { NavScreenSteps } from "./screens/NavScreenSteps";
 import { NavScreenProgressPhotos } from "./screens/NavScreenProgressPhotos";
 import { NavScreenStreak } from "./screens/NavScreenStreak";
-import { NavScreenFood } from "./screens/NavScreenFood";
+import { ScreenJournal } from "../components/screenJournal";
 import { NavScreenFriends } from "./screens/NavScreenFriends";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
@@ -99,6 +99,7 @@ import { NavModalDayFromAdhoc } from "./modals/NavModalDayFromAdhoc";
 import { NavModalNextWorkout } from "./modals/NavModalNextWorkout";
 import { PlusSheetModal } from "../components/plusSheet";
 import { AddFriendModal } from "../components/addFriendSheet";
+import { NoteEditorModal } from "../components/noteEditor";
 import { NavModalWhatsnew } from "./modals/NavModalWhatsnew";
 import { NavModalSignupRequest } from "./modals/NavModalSignupRequest";
 import { NavModalHearAboutUs } from "./modals/NavModalHearAboutUs";
@@ -293,7 +294,7 @@ function FoodStackScreen(): JSX.Element {
   const screenOptions = useStackScreenOptions();
   return (
     <FoodStack.Navigator screenOptions={screenOptions} screenLayout={renderScreenWithErrorBoundary}>
-      <FoodStack.Screen name="food" component={NavScreenFood} />
+      <FoodStack.Screen name="food" component={ScreenJournal} />
       <FoodStack.Screen name="foodAdd" component={NavScreenFoodAdd} />
     </FoodStack.Navigator>
   );
@@ -432,6 +433,7 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="nextWorkoutModal" component={NavModalNextWorkout} />
           <RootStack.Screen name="plusSheetModal" component={PlusSheetModal} />
           <RootStack.Screen name="addFriendModal" component={AddFriendModal} />
+          <RootStack.Screen name="noteEditorModal" component={NoteEditorModal} />
           <RootStack.Screen name="whatsnewModal" component={NavModalWhatsnew} />
           <RootStack.Screen name="signupRequestModal" component={NavModalSignupRequest} />
           <RootStack.Screen name="hearAboutUsModal" component={NavModalHearAboutUs} />
