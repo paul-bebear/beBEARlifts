@@ -2,7 +2,9 @@ import "mocha";
 import { expect } from "chai";
 import {
   CloudBackupForm_empty,
+  CloudBackupForm_parsePlan,
   CloudBackupForm_parseSentCode,
+  CloudBackupForm_redeemedMessage,
   CloudBackupForm_reduce as reduce,
 } from "../src/models/cloudBackupForm";
 
@@ -131,5 +133,36 @@ describe("CloudBackupForm", () => {
     const typing = reduce(CloudBackupForm_empty(), { type: "email", value: "other@example.com" });
     expect(reduce(typing, { type: "resume", sent, now: sentAt })).to.equal(typing);
     expect(CloudBackupForm_parseSentCode({ email: "x", sentAt: "soon" })).to.deep.equal({});
+  });
+
+  it("redeems a trimmed beBEAR+ code only when signed in", () => {
+    expect(reduce(CloudBackupForm_empty(), { type: "request", operation: "redeem" }).command).to.equal(undefined);
+    let state = reduce(CloudBackupForm_empty(), { type: "session", email: "paul@example.com" });
+    state = reduce(state, { type: "request", operation: "redeem" });
+    expect(state.error).to.equal("Enter the beBEAR+ code.");
+    state = reduce(state, { type: "proCode", value: " BEAR-1 " });
+    state = reduce(state, { type: "request", operation: "redeem" });
+    expect(state.command).to.deep.include({ operation: "redeem", proCode: "BEAR-1" });
+    const refused = reduce(state, { type: "failed", error: "That code is not valid or was already used." });
+    expect(refused.error).to.equal("That code is not valid or was already used.");
+    expect(refused.proCode).to.equal(" BEAR-1 ");
+    state = reduce(state, { type: "redeemed" });
+    expect(state).to.deep.include({
+      plan: "plus",
+      proCode: "",
+      command: undefined,
+      message: CloudBackupForm_redeemedMessage,
+    });
+  });
+
+  it("keeps the plan only while signed in and reads it from the account_plans rows", () => {
+    expect(reduce(CloudBackupForm_empty(), { type: "plan", plan: "plus" }).plan).to.equal(undefined);
+    let state = reduce(CloudBackupForm_empty(), { type: "session", email: "paul@example.com" });
+    state = reduce(state, { type: "plan", plan: "plus" });
+    expect(state.plan).to.equal("plus");
+    expect(reduce(state, { type: "signedOut" }).plan).to.equal(undefined);
+    expect(CloudBackupForm_parsePlan([{ plan: "plus" }])).to.equal("plus");
+    expect(CloudBackupForm_parsePlan([])).to.equal("free");
+    expect(CloudBackupForm_parsePlan({ message: "relation does not exist" })).to.equal("free");
   });
 });

@@ -12,13 +12,23 @@ export type ICloudBackupOperation =
   | "restore"
   | "keepPhone"
   | "signOut"
-  | "deleteAccount";
-export type ICloudBackupCommand = { operation: ICloudBackupOperation; email: string; code: string; copy?: ICloudCopy };
+  | "deleteAccount"
+  | "redeem";
+export type ICloudBackupCommand = {
+  operation: ICloudBackupOperation;
+  email: string;
+  code: string;
+  copy?: ICloudCopy;
+  proCode?: string;
+};
+export type IAccountPlan = "free" | "plus";
 
 export interface ICloudBackupForm {
   step: "email" | "code" | "signedIn";
   email: string;
   code: string;
+  proCode: string;
+  plan?: IAccountPlan;
   command?: ICloudBackupCommand;
   error?: string;
   message?: string;
@@ -28,7 +38,9 @@ export interface ICloudBackupForm {
 }
 
 export type ICloudBackupEvent =
-  | { type: "email" | "code" | "deleteText"; value: string }
+  | { type: "email" | "code" | "proCode" | "deleteText"; value: string }
+  | { type: "plan"; plan: IAccountPlan }
+  | { type: "redeemed" }
   | { type: "deleteOpen" | "deleteCancel" | "toggleOlderCopies" }
   | { type: "deleted" }
   | { type: "session"; email?: string }
@@ -49,7 +61,16 @@ export interface ISentCode {
 export const CloudBackupForm_codeLifetimeMs = 10 * 60 * 1000;
 
 export function CloudBackupForm_empty(): ICloudBackupForm {
-  return { step: "email", email: "", code: "", showOlderCopies: false };
+  return { step: "email", email: "", code: "", proCode: "", showOlderCopies: false };
+}
+
+export const CloudBackupForm_redeemedMessage = "Code redeemed. You have beBEAR+.";
+
+// PostgREST answers a select on account_plans with an array, empty for an account that never redeemed a code.
+export function CloudBackupForm_parsePlan(body: unknown): IAccountPlan {
+  return Array.isArray(body) && body.some((row) => (row as { plan?: unknown } | null)?.plan === "plus")
+    ? "plus"
+    : "free";
 }
 
 export function CloudBackupForm_parseSentCode(raw: unknown): ISentCode {
@@ -93,6 +114,12 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
       message: "Signed in. Backups upload after each workout.",
     };
   }
+  if (event.type === "plan") {
+    return state.step === "signedIn" ? { ...state, plan: event.plan } : state;
+  }
+  if (event.type === "redeemed") {
+    return { ...state, command: undefined, proCode: "", plan: "plus", message: CloudBackupForm_redeemedMessage };
+  }
   if (event.type === "done") {
     return { ...state, command: undefined, message: event.message, showOlderCopies: false };
   }
@@ -108,7 +135,7 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
   if (event.type === "changeEmail") {
     return { ...CloudBackupForm_empty(), email: state.email };
   }
-  if (event.type === "email" || event.type === "code") {
+  if (event.type === "email" || event.type === "code" || event.type === "proCode") {
     return { ...state, [event.type]: event.value, error: undefined, message: undefined };
   }
   if (event.type === "deleteOpen") {
@@ -130,6 +157,9 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
     if (event.operation === "verify" && !CloudBackup_isCode(state.code)) {
       return { ...state, error: "Enter the 6 to 10 digit code from your email." };
     }
+    if (event.operation === "redeem" && state.proCode.trim() === "") {
+      return { ...state, error: "Enter the beBEAR+ code." };
+    }
     if (event.operation === "deleteAccount" && !AccountDeletion_isConfirmed(state.deleteText ?? "")) {
       return state.deleteText == null ? state : { ...state, error: `Type ${AccountDeletion_confirmWord} to confirm.` };
     }
@@ -141,7 +171,13 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
       ...state,
       error: undefined,
       message: undefined,
-      command: { operation: event.operation, email: state.email.trim(), code: state.code.trim(), copy: event.copy },
+      command: {
+        operation: event.operation,
+        email: state.email.trim(),
+        code: state.code.trim(),
+        copy: event.copy,
+        ...(event.operation === "redeem" ? { proCode: state.proCode.trim() } : {}),
+      },
     };
   }
   return state;

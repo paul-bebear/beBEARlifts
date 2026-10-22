@@ -44,7 +44,7 @@ export async function POST(request) {
     return json({ error: "The workout has no exercises" }, 400);
   }
   const ai = await aiProvider();
-  const denied = await AiAuth_check(request, ai);
+  const denied = await AiAuth_check(request, ai, "capped");
   if (denied != null) {
     return denied;
   }

@@ -4,7 +4,8 @@ import { IDispatch } from "../ducks/types";
 import { CloudBackupForm_empty, CloudBackupForm_reduce } from "../models/cloudBackupForm";
 import { AccountDeletion_confirmWord, AccountDeletion_isConfirmed } from "../models/accountDeletion";
 import { CloudStore, SentCodeStore } from "../utils/supabaseClient";
-import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
+import { CloudBackupCommand_loadPlan, CloudBackupCommand_run } from "../utils/cloudBackupCommand";
+import { AiCaps_plusLine } from "../models/aiCaps";
 import { CloudBackup_olderCopies } from "../models/cloudBackup";
 import { CloudRestoreChoice } from "./cloudRestoreBanner";
 import { Button } from "./button";
@@ -24,6 +25,11 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
 
   useEffect(() => {
     emit({ type: "session", email: cloud.session?.email });
+    if (cloud.session != null && !props.compact) {
+      CloudBackupCommand_loadPlan()
+        .then((plan) => plan != null && emit({ type: "plan", plan }))
+        .catch(() => undefined);
+    }
   }, [cloud.session?.email]);
 
   useEffect(() => {
@@ -102,6 +108,33 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
                   {choice.label}
                 </Button>
               ))}
+            </View>
+          )}
+          {form.plan === "plus" ? (
+            <Text className="text-sm font-semibold" testID="cloud-plan-plus">
+              {AiCaps_plusLine()}
+            </Text>
+          ) : (
+            <View style={{ gap: 8 }}>
+              <Text className="text-sm">Enter a code</Text>
+              <TextInput
+                accessibilityLabel="beBEAR+ code"
+                testID="cloud-pro-code"
+                className="px-4 py-3 text-base border rounded-lg bg-background-default border-border-prominent text-text-primary"
+                value={form.proCode}
+                onChangeText={(value) => emit({ type: "proCode", value })}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!busy}
+              />
+              <Button
+                name="cloud-redeem-code"
+                kind="lightpurple"
+                disabled={busy}
+                onClick={() => emit({ type: "request", operation: "redeem" })}
+              >
+                Redeem
+              </Button>
             </View>
           )}
           <Button

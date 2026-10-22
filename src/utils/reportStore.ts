@@ -13,6 +13,7 @@ export type IReportSummaryResult = { ok: true; text: string } | { ok: false; err
 
 export async function ReportApi_summary(report: IWorkoutReport): Promise<IReportSummaryResult> {
   const result = await AiRequest_post("/api/ai/report", {
+    workoutId: report.workoutId,
     dayName: report.dayName,
     facts: WorkoutReport_facts(report),
   });

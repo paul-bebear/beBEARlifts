@@ -37,8 +37,10 @@ export async function POST(request) {
     return json({ error: "The report has no facts" }, 400);
   }
   const dayName = clean(body?.dayName, 80) || "Workout";
+  const workoutId = Number.isSafeInteger(body?.workoutId) ? String(body.workoutId) : clean(body?.workoutId, 64);
   const ai = await aiProvider();
-  const denied = await AiAuth_check(request, ai);
+  // App builds from before the cap send no workoutId, so their reports count against the daily cap instead.
+  const denied = await AiAuth_check(request, ai, workoutId ? "report" : "capped", workoutId || undefined);
   if (denied != null) {
     return denied;
   }

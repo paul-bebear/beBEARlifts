@@ -5,14 +5,24 @@ import {
   Thunk_cloudRestore,
 } from "../ducks/cloudBackupThunks";
 import { IThunk } from "../ducks/types";
-import { ICloudBackupCommand, ICloudBackupEvent } from "../models/cloudBackupForm";
+import {
+  CloudBackupForm_parsePlan,
+  IAccountPlan,
+  ICloudBackupCommand,
+  ICloudBackupEvent,
+} from "../models/cloudBackupForm";
 import {
   CloudBackupClient_deleteAccount,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
   CloudBackupClient_verify,
 } from "./cloudBackupClient";
-import { SentCodeStore } from "./supabaseClient";
+import { SentCodeStore, SupabaseClient_authed, SupabaseClient_json, SupabaseClient_readJson } from "./supabaseClient";
+
+export async function CloudBackupCommand_loadPlan(): Promise<IAccountPlan | undefined> {
+  const result = await SupabaseClient_authed("/rest/v1/account_plans?select=plan", { method: "GET" });
+  return result.ok ? CloudBackupForm_parsePlan(await SupabaseClient_readJson(result.value.response)) : undefined;
+}
 
 export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (event: ICloudBackupEvent) => void): IThunk {
   return async (dispatch, getState, env) => {
@@ -61,6 +71,14 @@ export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (even
         case "deleteAccount": {
           const result = await CloudBackupClient_deleteAccount();
           emit(result.ok ? { type: "deleted" } : { type: "failed", error: result.error });
+          break;
+        }
+        case "redeem": {
+          const result = await SupabaseClient_authed(
+            "/rest/v1/rpc/redeem_pro_code",
+            SupabaseClient_json({ p_code: command.proCode ?? "" })
+          );
+          emit(result.ok ? { type: "redeemed" } : { type: "failed", error: result.error });
           break;
         }
       }
