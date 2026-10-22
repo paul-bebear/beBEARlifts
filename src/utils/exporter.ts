@@ -1,4 +1,20 @@
+import { strToU8, zipSync } from "fflate";
+
+type IFileContents = string | Uint8Array;
+
 export function Exporter_toFile(filename: string, contents: string): void {
+  exportContents(filename, contents);
+}
+
+export function Exporter_toZip(filename: string, files: Record<string, string>): void {
+  const entries: Record<string, Uint8Array> = {};
+  for (const path of Object.keys(files)) {
+    entries[path] = strToU8(files[path]);
+  }
+  exportContents(filename, zipSync(entries));
+}
+
+function exportContents(filename: string, contents: IFileContents): void {
   if (isStandaloneApp() && canShareFile(filename)) {
     shareFile(filename, contents);
     return;
@@ -13,6 +29,9 @@ function mimeTypeFromFilename(filename: string): string {
   }
   if (lower.endsWith(".csv")) {
     return "text/csv";
+  }
+  if (lower.endsWith(".zip")) {
+    return "application/zip";
   }
   return "text/plain";
 }
@@ -34,7 +53,7 @@ function canShareFile(filename: string): boolean {
   return navigator.canShare({ files: [new File([""], filename, { type: mimeTypeFromFilename(filename) })] });
 }
 
-function shareFile(filename: string, contents: string): void {
+function shareFile(filename: string, contents: IFileContents): void {
   const file = new File([contents], filename, { type: mimeTypeFromFilename(filename) });
   navigator.share({ files: [file], title: filename }).catch((e: DOMException) => {
     if (e.name !== "AbortError") {
@@ -43,8 +62,10 @@ function shareFile(filename: string, contents: string): void {
   });
 }
 
-function downloadViaLink(filename: string, contents: string): void {
-  const blob = new Blob([contents], { type: "text/plain" });
+function downloadViaLink(filename: string, contents: IFileContents): void {
+  const blob = new Blob([contents], {
+    type: typeof contents === "string" ? "text/plain" : mimeTypeFromFilename(filename),
+  });
   const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = objectUrl;

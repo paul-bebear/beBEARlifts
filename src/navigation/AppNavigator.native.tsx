@@ -40,7 +40,7 @@ import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
 import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
 import { ScreenMyBear } from "../components/screenMyBear";
-import { NavScreenFood } from "./screens/NavScreenFood";
+import { ScreenJournal } from "../components/screenJournal";
 import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
 import { NavScreenMusic } from "./screens/NavScreenMusic";
@@ -106,6 +106,7 @@ import { NavModalAmrap } from "./modals/NavModalAmrap";
 import { NavModalNextWorkout } from "./modals/NavModalNextWorkout";
 import { PlusSheetModal } from "../components/plusSheet";
 import { AddFriendModal } from "../components/addFriendSheet";
+import { NoteEditorModal } from "../components/noteEditor";
 import { NavModalEditTarget } from "./modals/NavModalEditTarget";
 import { NavModalSetTimer } from "./modals/NavModalSetTimer";
 import { NavModalSetTimerEdit } from "./modals/NavModalSetTimerEdit";
@@ -363,7 +364,7 @@ function FriendsStackScreen(): JSX.Element {
 function FoodStackScreen(): JSX.Element {
   return (
     <FoodStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
-      <FoodStack.Screen name="food" component={NavScreenFood} />
+      <FoodStack.Screen name="food" component={ScreenJournal} />
       <FoodStack.Screen name="foodAdd" component={NavScreenFoodAdd} />
     </FoodStack.Navigator>
   );
@@ -525,6 +526,7 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="nextWorkoutModal" component={NavModalNextWorkout} />
           <RootStack.Screen name="plusSheetModal" component={PlusSheetModal} />
           <RootStack.Screen name="addFriendModal" component={AddFriendModal} />
+          <RootStack.Screen name="noteEditorModal" component={NoteEditorModal} />
           <RootStack.Screen name="graphsModal" component={NavModalGraphs} options={{ sheetAllowedDetents: [0.9] }} />
           <RootStack.Screen name="statsSettingsModal" component={NavModalStatsSettings} />
           <RootStack.Screen name="rm1Modal" component={NavModal1RM} />

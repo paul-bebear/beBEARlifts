@@ -22,9 +22,6 @@ export interface IQuickActionsInput {
   canRun: boolean;
 }
 
-// Batch R6 builds the note editor and flips this to true.
-const isNoteBuilt = false;
-
 export const quickActionsSoon = "Soon";
 export const quickActionsRun = "Run";
 export const quickActionsResume = "Resume";
@@ -35,7 +32,7 @@ export function QuickActions_list(input: IQuickActionsInput): IQuickActions {
       { id: "food", label: "Food", isSoon: false },
       { id: "measurement", label: "Measurement", isSoon: false },
       { id: "friend", label: "Friend", isSoon: false },
-      { id: "note", label: "Note", isSoon: !isNoteBuilt },
+      { id: "note", label: "Note", isSoon: false },
     ],
     workout: {
       label: input.isOngoingProgress ? "Resume workout" : "Start workout",

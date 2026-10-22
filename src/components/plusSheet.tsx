@@ -84,7 +84,10 @@ export function PlusSheetModal(): JSX.Element {
     }),
     measurement: closeThen(() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))),
     friend: closeThen(() => navigateToModal("addFriendModal")),
-    note: () => undefined,
+    note: closeThen(async () => {
+      await dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
+      navigateToModal("noteEditorModal", { day: FoodLog_dayKey(new Date()) });
+    }),
   };
   const onWorkout = closeThen(() => {
     if (actions.workout.action === "resume") {

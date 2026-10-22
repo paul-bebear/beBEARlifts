@@ -60,11 +60,11 @@ export function ProgressCalendarHeader(props: {
 }): JSX.Element {
   const semantic = Tailwind_semantic();
   return (
-    <View className="px-4 pb-2" testID="progress-calendar" data-testid="progress-calendar">
+    <View className="px-4 pt-2 pb-2" testID="journal-calendar" data-testid="journal-calendar">
       <View className="flex-row items-center mb-3">
         <Pressable
-          testID="progress-streak"
-          data-testid="progress-streak"
+          testID="journal-streak"
+          data-testid="journal-streak"
           onPress={props.onStreakPress}
           className="flex-row items-center px-3 py-1.5 rounded-full bg-background-subtle"
         >

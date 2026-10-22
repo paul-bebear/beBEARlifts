@@ -10,6 +10,10 @@ import { IProgramGoalLog, ProgramGoal_parse } from "./programGoal";
 import { IStepsLog, Steps_parse } from "./steps";
 import { DailyChecklist_parse, IChecklistLog } from "./dailyChecklist";
 import { BearStoreData_empty, BearStoreData_parse, IBearStoreData } from "./bearStoreData";
+import { INotesLog, Notes_empty, Notes_parse } from "./notes";
+import { JournalExport_files } from "./journalExport";
+import { FoodLog_dayKey } from "./foodLog";
+import { History_getPersonalRecords } from "./history";
 
 export const FullBackup_format = "bebearlifts-backup";
 
@@ -27,6 +31,8 @@ const readme = [
   "goal.current: the training goal (buildMuscle, loseFat or maintain), its pace, daily step band, body fat % and start date (ms) and weight. goal.past: earlier goals, newest first.",
   "steps.days: step count per local day (YYYY-MM-DD), from Apple Health or typed by hand. steps.goal: the daily step goal. Progress photos are not in this file.",
   "checklist.checkIns: days (YYYY-MM-DD) with a nutrition check-in. checklist.committedAt: ms when the user tapped I'm Committed on the streak screen.",
+  "notes.notes: the user's Journal notes, one per entry, with day (YYYY-MM-DD), title and a Markdown body. kind checkIn is the day's check-in: energy, soreness and mood from 1 (sad face) to 5 (happy face), and the reflection as the body.",
+  "journal: one Markdown file per day, keyed by path journal/YYYY-MM-DD.md, written from the workouts, food, music, weigh-ins and notes above. It is a readable copy; restore reads the parts above.",
   "runs.runs: GPS runs, newest first. startedAt and endedAt are ms; distanceM is metres; movingMs leaves out pauses; elevationGainM is metres climbed. splits: moving ms for each full km. route: simplified [lat, lon] lines, one per stretch between pauses.",
   "bear: the bebear_bear store. line is male or female. celebratedLevel is the highest level-up shown. seenBadges lists badge ids already shown.",
 ].join("\n");
@@ -48,6 +54,8 @@ export interface IFullBackup {
   steps: IStepsLog;
   checklist: IChecklistLog;
   bear: IBearStoreData;
+  notes?: INotesLog;
+  journal: Record<string, string>;
 }
 
 export interface IFullBackupParts {
@@ -63,10 +71,22 @@ export interface IFullBackupParts {
   steps: IStepsLog;
   checklist: IChecklistLog;
   bear?: IBearStoreData;
+  notes?: INotesLog;
 }
 
 export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBackup {
-  const { storage, food, music, body, warmups, reports, clips, runs, goal, steps, checklist } = parts;
+  const { storage, food, music, body, warmups, reports, clips, runs, goal, steps, checklist, notes } = parts;
+  const journal = JournalExport_files({
+    today: FoodLog_dayKey(new Date(now)),
+    history: storage.history,
+    settings: storage.settings,
+    prs: History_getPersonalRecords(storage.history),
+    food,
+    music,
+    weights: storage.stats.weight.weight ?? [],
+    notes: notes ?? Notes_empty(),
+    isOngoingProgress: false,
+  });
   return {
     format: FullBackup_format,
     version: 1,
@@ -84,6 +104,8 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     steps,
     checklist,
     bear: BearStoreData_parse(parts.bear ?? BearStoreData_empty()),
+    notes,
+    journal,
   };
 }
 
@@ -104,6 +126,7 @@ export interface IFullBackupContents {
   steps?: IStepsLog;
   checklist?: IChecklistLog;
   bear?: IBearStoreData;
+  notes?: INotesLog;
 }
 
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
@@ -125,6 +148,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     steps: r.steps != null ? Steps_parse(r.steps) : undefined,
     checklist: r.checklist != null ? DailyChecklist_parse(r.checklist) : undefined,
     bear: r.bear != null ? BearStoreData_parse(r.bear) : undefined,
+    notes: r.notes != null ? Notes_parse(r.notes) : undefined,
   };
 }
 
