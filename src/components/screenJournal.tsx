@@ -5,13 +5,13 @@ import { Button } from "./button";
 import { JournalMeals } from "./journalMeals";
 import { JournalCheckIn, JournalMindfulness } from "./journalMindfulness";
 import { ProgressCalendarHeader } from "./progressCalendarHeader";
-import { BearMark } from "./shareCards/bearMark";
+import { BearAvatar } from "./bearAvatar";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { IconPlus2 } from "./icons/iconPlus2";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import { navigateToModal } from "../navigation/navigationService";
-import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
+import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { buildNavCommon } from "../navigation/utils";
 import { Thunk_pushScreen, Thunk_startProgramDay } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
@@ -19,6 +19,7 @@ import { History_getPersonalRecords } from "../models/history";
 import { IJournalDay, IJournalSection, JournalDay_build, JournalDay_sectionFold } from "../models/journalDay";
 import { IJournalExportSources } from "../models/journalExport";
 import { JournalExportSheet } from "./journalExportSheet";
+import { JournalBear_state } from "../models/journalBear";
 import { Notes_canEditCheckIn, Notes_firstLine, Notes_preview } from "../models/notes";
 import { DailyChecklist_doneDays, DailyChecklist_streak } from "../models/dailyChecklist";
 import {
@@ -174,8 +175,28 @@ export function ScreenJournal(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const sources = useJournalSources();
   const { today, history, food } = sources;
-  const { state: bear } = useBear();
+  const { state: bear, store: bearStore, plannedPerWeek } = useBear();
   const [day, setDay] = useState(today);
+  const { settings } = sources;
+  const stats = untrack(useTrackedState().storage.stats);
+  const dayBear = useMemo(
+    () =>
+      JournalBear_state({
+        day,
+        today,
+        now: Date.now(),
+        sources: {
+          history,
+          foodLog: food,
+          stats,
+          settings,
+          plannedDaysPerWeek: plannedPerWeek,
+          bear: bearStore,
+          defaultLine: food.profile.sex,
+        },
+      }),
+    [day, today, history, food, stats, settings, plannedPerWeek, bearStore]
+  );
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showsExport, setShowsExport] = useState(false);
@@ -216,11 +237,8 @@ export function ScreenJournal(): JSX.Element {
           onStreakPress={() => dispatch(Thunk_pushScreen("streak", undefined, { tab: "graphs" }))}
         />
         <View className="flex-row items-center px-4 pt-2" style={{ gap: 10 }} testID="journal-day-header">
-          <View
-            className="items-center justify-center rounded-full"
-            style={{ width: 44, height: 44, backgroundColor: T.honey }}
-          >
-            <BearMark size={30} color={T.greenDark} faceColor={T.honey} />
+          <View testID="journal-day-bear" data-testid="journal-day-bear">
+            <BearAvatar state={dayBear} size={44} />
           </View>
           <Text className="flex-1 text-2xl font-bold" testID="journal-day-title" data-testid="journal-day-title">
             {journal.title}
