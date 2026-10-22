@@ -11,6 +11,8 @@ import {
   JournalDay_build,
   JournalDay_mindfulness,
   JournalDay_mindfulnessLines,
+  JournalDay_sectionFold,
+  JournalDay_sectionSummary,
 } from "../src/models/journalDay";
 import { IExerciseType, IHistoryEntry, IHistoryRecord, ISet, IStatsWeightValue } from "../src/types";
 
@@ -95,6 +97,57 @@ function input(extra: Partial<IJournalDayInput> = {}): IJournalDayInput {
 }
 
 describe("JournalDay", () => {
+  it("keeps every empty section open", () => {
+    const day = JournalDay_build(input());
+    for (const section of ["checkIn", "workouts", "meals", "songs", "weight", "notes"] as const) {
+      expect(JournalDay_sectionFold(day, section, false)).to.eql({ summary: undefined, isCollapsed: false });
+    }
+  });
+
+  it("folds check-in scores and lets the user reopen them", () => {
+    let notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 2, field: "soreness", value: 4 });
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 3, field: "mood", value: 4 });
+    const day = JournalDay_build(input({ notes }));
+    expect(JournalDay_sectionFold(day, "checkIn", false)).to.eql({
+      summary: "Check-in · Energy 4 · Soreness 4 · Mood 4",
+      isCollapsed: true,
+    });
+    expect(JournalDay_sectionFold(day, "checkIn", true).isCollapsed).to.equal(false);
+    expect(JournalDay_sectionSummary(JournalDay_build(input({ day: "2026-10-21", notes })), "checkIn")).to.equal(
+      undefined
+    );
+  });
+
+  it("summarizes reflection-only check-ins and ignores blank ones", () => {
+    const checkIn = { ...Notes_new("c", today, 1), kind: "checkIn" as const };
+    expect(
+      JournalDay_sectionSummary(JournalDay_build(input({ notes: { version: 1, notes: [checkIn] } })), "checkIn")
+    ).to.equal(undefined);
+    checkIn.body = "Rested well";
+    expect(
+      JournalDay_sectionSummary(JournalDay_build(input({ notes: { version: 1, notes: [checkIn] } })), "checkIn")
+    ).to.equal("Check-in · Reflection logged");
+  });
+
+  it("summarizes logged meals, weight, workouts, songs and notes", () => {
+    const day = JournalDay_build(
+      input({
+        food: { ...FoodLog_empty(), entries: [food("a", today, 1850, 40)] },
+        weights: [{ vtype: "stat", value: { value: 74, unit: "kg" }, timestamp: at(today, 7) }],
+        history: [workout(at(today, 18), "Legs", [set(100, 5)])],
+        notes: Notes_save(Notes_empty(), { ...Notes_new("n", today, 1), body: "Hello" }, 1),
+      })
+    );
+    expect(JournalDay_sectionSummary(day, "meals")).to.equal("Meals · 1 logged · 1,850 kcal");
+    expect(JournalDay_sectionSummary(day, "weight")).to.equal("Weigh-in · 74 kg");
+    expect(JournalDay_sectionSummary(day, "workouts")).to.equal("Workout · Legs · 48 min");
+    expect(JournalDay_sectionSummary(day, "notes")).to.equal("Notes · 1 logged");
+    expect(
+      JournalDay_sectionSummary({ ...day, songs: [{ id: "s", name: "Song", artists: "Artist" }] }, "songs")
+    ).to.equal("Songs · 1 logged");
+  });
+
   it("shows today's empty day with a Start button and the day's mindfulness line", () => {
     const day = JournalDay_build(input());
     expect(day.title).to.equal("Today, Oct 22");

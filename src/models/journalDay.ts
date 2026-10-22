@@ -10,7 +10,7 @@ import {
 } from "./foodLog";
 import { IMusicLog, MusicLog_sessionForWorkout } from "./musicLog";
 import { MusicSession_keptTracks } from "./musicSession";
-import { INote, INotesLog, Notes_checkIn, Notes_forDay } from "./notes";
+import { INote, INotesLog, Notes_checkIn, Notes_checkInScales, Notes_forDay, Notes_isBlank } from "./notes";
 import { WorkoutPost_build, WorkoutPost_statsLine } from "./workoutPost";
 
 export interface IJournalDayInput {
@@ -59,6 +59,47 @@ export interface IJournalDay {
 }
 
 export const journalDayRest = "Rest day";
+
+export type IJournalSection = "checkIn" | "workouts" | "meals" | "songs" | "weight" | "notes";
+
+export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSection): string | undefined {
+  switch (section) {
+    case "checkIn": {
+      const checkIn = day.checkIn;
+      if (checkIn == null || Notes_isBlank(checkIn)) {
+        return undefined;
+      }
+      const scores = Notes_checkInScales.filter(({ field }) => checkIn[field] != null).map(
+        ({ field, label }) => `${label} ${checkIn[field]}`
+      );
+      return ["Check-in", ...scores, ...(scores.length === 0 ? ["Reflection logged"] : [])].join(" · ");
+    }
+    case "workouts":
+      return day.workouts.length > 0 ? ["Workout", ...day.workouts.map((w) => w.chip)].join(" · ") : undefined;
+    case "meals":
+      return day.mealCount > 0
+        ? `Meals · ${day.mealCount} logged · ${Math.round(day.totals.calories).toLocaleString("en-US")} kcal`
+        : undefined;
+    case "songs":
+      return day.songs.length > 0 ? `Songs · ${day.songs.length} logged` : undefined;
+    case "weight":
+      return day.weight != null ? `Weigh-in · ${day.weight.value} ${day.weight.unit}` : undefined;
+    case "notes":
+      return day.notes.length > 0 ? `Notes · ${day.notes.length} logged` : undefined;
+  }
+}
+
+export function JournalDay_sectionFold(
+  day: IJournalDay,
+  section: IJournalSection,
+  isExpanded: boolean
+): {
+  summary?: string;
+  isCollapsed: boolean;
+} {
+  const summary = JournalDay_sectionSummary(day, section);
+  return { summary, isCollapsed: summary != null && !isExpanded };
+}
 
 // One line a day, in the bear's voice. Each is a thing to do in under five minutes, never a quote.
 export const JournalDay_mindfulnessLines = [

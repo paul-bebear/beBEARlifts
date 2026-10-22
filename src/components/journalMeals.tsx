@@ -1,9 +1,9 @@
 import { JSX, useState } from "react";
 import { View } from "react-native";
-import { Text } from "./primitives/text";
 import {
   FoodLog_addAll,
   FoodLog_dayTotals,
+  FoodLog_dayKey,
   FoodLog_entriesFor,
   FoodLog_meals,
   IFoodMeal,
@@ -13,7 +13,7 @@ import { IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodDescribeEstimate_entries } from "../models/foodDescribeEstimate";
 import { FoodMealForTime_pick } from "../models/foodMealForTime";
 import { AiConsent_showFeatures } from "../models/aiConsent";
-import { AiConsentStore, AiConsent_disabledMessage } from "../utils/aiConsentClient";
+import { AiConsentStore } from "../utils/aiConsentClient";
 import { FoodLogStore_newId, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch } from "../navigation/TrackedStateContext";
@@ -21,6 +21,7 @@ import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodSummaryCard } from "./foodSummaryCard";
 import { FoodMealCard } from "./foodMealCard";
 import { FoodDescribePanel } from "./foodDescribePanel";
+import { Button } from "./button";
 
 interface IProps {
   day: string;
@@ -50,20 +51,27 @@ export function JournalMeals(props: IProps): JSX.Element {
   return (
     <View testID="journal-meals" data-testid="journal-meals">
       <View className="px-4 pt-3">
-        {showAi ? (
+        {showAi && (
           <FoodDescribePanel
             onAdd={addDescribed}
             onCamera={() => openAdd(clockMeal)}
             onPhoto={() => openAdd(clockMeal, "photo")}
           />
-        ) : (
-          <Text className="text-sm text-text-secondary">{AiConsent_disabledMessage}</Text>
         )}
       </View>
       {entries.length === 0 && (
-        <Text className="px-4 pt-6 pb-2 text-base text-text-secondary" testID="journal-meals-empty">
-          Start logging your meals…
-        </Text>
+        <View className="px-4 pt-6 pb-2" testID="journal-meals-empty">
+          <Button
+            name="journal-log-meals"
+            kind="pill"
+            onPress={() => {
+              const now = new Date();
+              dispatch(Thunk_pushScreen("foodAdd", { day: FoodLog_dayKey(now), meal: FoodMealForTime_pick(now) }));
+            }}
+          >
+            Log meals
+          </Button>
+        </View>
       )}
       <View className="pt-4">
         {FoodLog_meals.map((meal) => {

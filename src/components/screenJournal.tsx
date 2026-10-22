@@ -1,5 +1,5 @@
 import { JSX, ReactNode, useMemo, useState } from "react";
-import { Platform, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { Button } from "./button";
 import { JournalMeals } from "./journalMeals";
@@ -16,8 +16,9 @@ import { buildNavCommon } from "../navigation/utils";
 import { Thunk_pushScreen, Thunk_startProgramDay } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { History_getPersonalRecords } from "../models/history";
-import { IJournalDay, JournalDay_build } from "../models/journalDay";
-import { IJournalExportSources, JournalExport_day, JournalExport_files } from "../models/journalExport";
+import { IJournalDay, IJournalSection, JournalDay_build, JournalDay_sectionFold } from "../models/journalDay";
+import { IJournalExportSources } from "../models/journalExport";
+import { JournalExportSheet } from "./journalExportSheet";
 import { Notes_canEditCheckIn, Notes_firstLine, Notes_preview } from "../models/notes";
 import { DailyChecklist_doneDays, DailyChecklist_streak } from "../models/dailyChecklist";
 import {
@@ -30,10 +31,6 @@ import { useFoodLog } from "../utils/foodLogStore";
 import { useMusicLog } from "../utils/musicStore";
 import { NotesStore } from "../utils/notesStore";
 import { ChecklistStore } from "../utils/checklistStore";
-import { Exporter_toFile, Exporter_toZip } from "../utils/exporter";
-
-// exporter.native.ts has no zip writer yet, so the native build offers one day at a time.
-const canZip = Platform.OS === "web";
 
 export function useJournalSources(): IJournalExportSources {
   const state = useTrackedState();
@@ -69,6 +66,24 @@ function Section(props: { title: string; testID: string; action?: ReactNode; chi
       </View>
       {props.children}
     </View>
+  );
+}
+
+function FoldableSection(props: { journal: IJournalDay; section: IJournalSection; children: ReactNode }): JSX.Element {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const fold = JournalDay_sectionFold(props.journal, props.section, isExpanded);
+  return fold.isCollapsed ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded: false }}
+      onPress={() => setIsExpanded(true)}
+      className="px-4 pt-6"
+      testID={`journal-${props.section}-summary`}
+    >
+      <Text className="text-base font-semibold">{fold.summary}</Text>
+    </Pressable>
+  ) : (
+    <>{props.children}</>
   );
 }
 
@@ -164,6 +179,7 @@ export function ScreenJournal(): JSX.Element {
   const [day, setDay] = useState(today);
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [showsExport, setShowsExport] = useState(false);
   const journal = JournalDay_build({ ...sources, day });
   const streak = useMemo(
     () => DailyChecklist_streak(DailyChecklist_doneDays({ stats, foodLog: food, log: checklist }), today),
@@ -179,12 +195,6 @@ export function ScreenJournal(): JSX.Element {
   };
 
   useNavOptions({ navTitle: "Journal" });
-
-  const exportDay = (): void => {
-    const file = JournalExport_day(sources, day);
-    Exporter_toFile(`${day}.md`, file.text);
-  };
-  const exportAll = (): void => Exporter_toZip(`bebear-journal-${today}.zip`, JournalExport_files(sources));
 
   return (
     <NavScreenContent>
@@ -210,53 +220,58 @@ export function ScreenJournal(): JSX.Element {
           </Text>
         </View>
         <JournalMindfulness line={journal.mindfulness} />
-        <JournalCheckIn key={day} day={day} checkIn={journal.checkIn} isEditable={Notes_canEditCheckIn(day, today)} />
-        <WorkoutSection journal={journal} />
-        <Section title="Meals" testID="journal-meals-section">
-          <View className="-mx-4">
-            <JournalMeals day={day} />
-          </View>
-        </Section>
-        {journal.songs.length > 0 && (
-          <Section title="Songs" testID="journal-songs">
-            {journal.songs.map((s) => (
-              <Text key={s.id} className="py-1 text-base">
-                🎵 {s.name}
-                {s.artists !== "" && <Text className="text-text-secondary"> · {s.artists}</Text>}
-              </Text>
-            ))}
+        <FoldableSection key={`${day}-checkIn`} journal={journal} section="checkIn">
+          <JournalCheckIn key={day} day={day} checkIn={journal.checkIn} isEditable={Notes_canEditCheckIn(day, today)} />
+        </FoldableSection>
+        <FoldableSection key={`${day}-workouts`} journal={journal} section="workouts">
+          <WorkoutSection journal={journal} />
+        </FoldableSection>
+        <FoldableSection key={`${day}-meals`} journal={journal} section="meals">
+          <Section title="Meals" testID="journal-meals-section">
+            <View className="-mx-4">
+              <JournalMeals day={day} />
+            </View>
           </Section>
+        </FoldableSection>
+        {journal.songs.length > 0 && (
+          <FoldableSection key={`${day}-songs`} journal={journal} section="songs">
+            <Section title="Songs" testID="journal-songs">
+              {journal.songs.map((s) => (
+                <Text key={s.id} className="py-1 text-base">
+                  🎵 {s.name}
+                  {s.artists !== "" && <Text className="text-text-secondary"> · {s.artists}</Text>}
+                </Text>
+              ))}
+            </Section>
+          </FoldableSection>
         )}
-        <Section title="Weigh-in" testID="journal-weight">
-          {journal.weight != null ? (
-            <Text className="text-2xl font-bold">
-              {journal.weight.value} {journal.weight.unit}
-            </Text>
-          ) : (
-            <Button
-              name="journal-log-weight"
-              kind="pill-outline"
-              className="flex-1"
-              onPress={() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))}
-            >
-              Log weight
-            </Button>
-          )}
-        </Section>
-        <NotesSection journal={journal} />
+        <FoldableSection key={`${day}-weight`} journal={journal} section="weight">
+          <Section title="Weigh-in" testID="journal-weight">
+            {journal.weight != null ? (
+              <Text className="text-2xl font-bold">
+                {journal.weight.value} {journal.weight.unit}
+              </Text>
+            ) : (
+              <Button
+                name="journal-log-weight"
+                kind="pill-outline"
+                className="flex-1"
+                onPress={() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))}
+              >
+                Log weight
+              </Button>
+            )}
+          </Section>
+        </FoldableSection>
+        <FoldableSection key={`${day}-notes`} journal={journal} section="notes">
+          <NotesSection journal={journal} />
+        </FoldableSection>
         <View className="px-4 pt-8 pb-10" style={{ gap: 8 }} testID="journal-export">
-          <Button name="journal-export-day" kind="pill-outline" className="flex-1" onPress={exportDay}>
-            Export this day
+          <Button name="journal-export" kind="pill-outline" className="flex-1" onPress={() => setShowsExport(true)}>
+            Export
           </Button>
-          {canZip && (
-            <Button name="journal-export-all" kind="pill-outline" className="flex-1" onPress={exportAll}>
-              Export all days
-            </Button>
-          )}
-          <Text className="text-xs text-center text-text-secondary">
-            Markdown files, one per day. Your notes stay private.
-          </Text>
         </View>
+        {showsExport && <JournalExportSheet sources={sources} onClose={() => setShowsExport(false)} />}
       </View>
     </NavScreenContent>
   );

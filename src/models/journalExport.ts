@@ -8,8 +8,150 @@ import {
 } from "./foodLog";
 import { IJournalDay, IJournalDayInput, JournalDay_build } from "./journalDay";
 import { Notes_days, Notes_scoresLine, Notes_toMarkdown } from "./notes";
+import { WorkoutPost_build } from "./workoutPost";
 
 export type IJournalExportSources = Omit<IJournalDayInput, "day">;
+export type IJournalExportRange = "today" | "week" | "all";
+export type IJournalExportFormat = "markdown" | "csv";
+
+export const JournalExport_ranges: { value: IJournalExportRange; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "week", label: "Last 7 days" },
+  { value: "all", label: "All days" },
+];
+export const JournalExport_formats: { value: IJournalExportFormat; label: string }[] = [
+  { value: "markdown", label: "Markdown" },
+  { value: "csv", label: "CSV" },
+];
+
+export function JournalExport_rangeDays(sources: IJournalExportSources, range: IJournalExportRange): string[] {
+  if (range === "today") {
+    return [sources.today];
+  }
+  const [year, month, date] = sources.today.split("-").map(Number);
+  const start = FoodLog_dayKey(new Date(year, month - 1, date - 6, 12));
+  return JournalExport_days(sources).filter((day) => range === "all" || day >= start);
+}
+
+const csvColumns = [
+  "date",
+  "kind",
+  "title",
+  "text",
+  "calories",
+  "protein_g",
+  "carbs_g",
+  "fat_g",
+  "weight",
+  "unit",
+  "energy",
+  "soreness",
+  "mood",
+  "duration_minutes",
+  "volume",
+  "sets",
+  "artists",
+  "duration_seconds",
+] as const;
+type ICsvRow = Partial<Record<(typeof csvColumns)[number], string | number>>;
+
+function csvCell(value: string | number | undefined): string {
+  const text = String(value ?? "");
+  const safe = /^[=+@\-\t\r]/.test(text) && typeof value === "string" ? `'${text}` : text;
+  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+}
+
+function csvRows(sources: IJournalExportSources, day: string): ICsvRow[] {
+  const journal = JournalDay_build({ ...sources, day });
+  const rows: ICsvRow[] = [];
+  for (const record of sources.history) {
+    if (record.endTime == null || FoodLog_dayKey(new Date(record.startTime)) !== day) {
+      continue;
+    }
+    const workout = WorkoutPost_build(record, sources.settings, sources.prs, undefined);
+    rows.push({
+      date: day,
+      kind: "workout",
+      title: workout.dayName.trim() || "Workout",
+      duration_minutes: workout.durationMs / 60000,
+      volume: workout.volume.value,
+      unit: workout.volume.unit,
+      sets: workout.sets,
+    });
+  }
+  for (const entry of FoodLog_entriesFor(sources.food, day)) {
+    const n = entry.nutrients;
+    rows.push({
+      date: day,
+      kind: "meal",
+      title: entry.name,
+      calories: n.calories,
+      protein_g: n.protein,
+      carbs_g: n.carbs,
+      fat_g: n.fat,
+    });
+  }
+  for (const weight of sources.weights.filter((w) => FoodLog_dayKey(new Date(w.timestamp)) === day)) {
+    rows.push({ date: day, kind: "weigh-in", title: "Weigh-in", weight: weight.value.value, unit: weight.value.unit });
+  }
+  for (const note of sources.notes.notes.filter((n) => n.day === day)) {
+    rows.push({
+      date: day,
+      kind: note.kind === "checkIn" ? "check-in" : "note",
+      title: note.title,
+      text: note.body,
+      energy: note.energy,
+      soreness: note.soreness,
+      mood: note.mood,
+    });
+  }
+  for (const song of journal.songs) {
+    const play = sources.music.sessions.flatMap((session) => session.plays).find((p) => p.track.id === song.id);
+    rows.push({
+      date: day,
+      kind: "song",
+      title: song.name,
+      artists: song.artists,
+      duration_seconds: play != null ? play.track.durationMs / 1000 : undefined,
+    });
+  }
+  return rows;
+}
+
+export function JournalExport_csv(sources: IJournalExportSources, range: IJournalExportRange): string {
+  const rows = JournalExport_rangeDays(sources, range).flatMap((day) => csvRows(sources, day));
+  return `\uFEFF${[csvColumns.join(","), ...rows.map((row) => csvColumns.map((c) => csvCell(row[c])).join(","))].join("\r\n")}\r\n`;
+}
+
+export type IJournalExportOutput =
+  | { kind: "file"; filename: string; text: string }
+  | { kind: "zip"; filename: string; files: Record<string, string> };
+
+export function JournalExport_canWrite(output: IJournalExportOutput, canZip: boolean): boolean {
+  return output.kind === "file" || canZip;
+}
+
+export function JournalExport_output(
+  sources: IJournalExportSources,
+  range: IJournalExportRange,
+  format: IJournalExportFormat
+): IJournalExportOutput {
+  const filename = `bebear-journal-${sources.today}`;
+  if (format === "csv") {
+    return { kind: "file", filename: `${filename}.csv`, text: JournalExport_csv(sources, range) };
+  }
+  const days = JournalExport_rangeDays(sources, range);
+  if (days.length <= 1) {
+    const day = days[0] ?? sources.today;
+    return { kind: "file", filename: `${day}.md`, text: JournalExport_day(sources, day).text };
+  }
+  const files: Record<string, string> = {};
+  for (const day of days) {
+    const file = JournalExport_day(sources, day);
+    files[file.path] = file.text;
+  }
+  return { kind: "zip", filename: `${filename}.zip`, files };
+}
 
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const months = [

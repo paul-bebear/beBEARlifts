@@ -64,7 +64,7 @@ function shareFile(filename: string, contents: IFileContents): void {
 
 function downloadViaLink(filename: string, contents: IFileContents): void {
   const blob = new Blob([contents], {
-    type: typeof contents === "string" ? "text/plain" : mimeTypeFromFilename(filename),
+    type: mimeTypeFromFilename(filename),
   });
   const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
