@@ -127,10 +127,6 @@ export type IJournalExportOutput =
   | { kind: "file"; filename: string; text: string }
   | { kind: "zip"; filename: string; files: Record<string, string> };
 
-export function JournalExport_canWrite(output: IJournalExportOutput, canZip: boolean): boolean {
-  return output.kind === "file" || canZip;
-}
-
 export function JournalExport_output(
   sources: IJournalExportSources,
   range: IJournalExportRange,

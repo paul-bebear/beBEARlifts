@@ -1,4 +1,4 @@
-import { JSX, useMemo, useState } from "react";
+import { JSX, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { Text } from "./primitives/text";
 import { Button } from "./button";
@@ -7,22 +7,20 @@ import {
   IJournalExportRange,
   IJournalExportSources,
   JournalExport_formats,
-  JournalExport_canWrite,
   JournalExport_output,
   JournalExport_ranges,
 } from "../models/journalExport";
-import * as Exporter from "../utils/exporter";
+import { Exporter_toFile, Exporter_toZip } from "../utils/exporter";
 
 export function JournalExportSheet(props: { sources: IJournalExportSources; onClose: () => void }): JSX.Element {
   const [range, setRange] = useState<IJournalExportRange>("today");
   const [format, setFormat] = useState<IJournalExportFormat>("markdown");
-  const output = useMemo(() => JournalExport_output(props.sources, range, format), [props.sources, range, format]);
-  const canWrite = JournalExport_canWrite(output, typeof Exporter.Exporter_toZip === "function");
   const exportFile = (): void => {
+    const output = JournalExport_output(props.sources, range, format);
     if (output.kind === "zip") {
-      Exporter.Exporter_toZip?.(output.filename, output.files);
+      Exporter_toZip(output.filename, output.files);
     } else {
-      Exporter.Exporter_toFile(output.filename, output.text);
+      Exporter_toFile(output.filename, output.text);
     }
   };
   return (
@@ -72,10 +70,7 @@ export function JournalExportSheet(props: { sources: IJournalExportSources; onCl
                 </Text>
               </Pressable>
             ))}
-            {!canWrite && (
-              <Text className="text-base text-text-secondary">Choose CSV to export multiple days on this device.</Text>
-            )}
-            <Button name="journal-export-save" kind="pill" onPress={exportFile} disabled={!canWrite}>
+            <Button name="journal-export-save" kind="pill" onPress={exportFile}>
               Export
             </Button>
             <Button name="journal-export-close" kind="pill-outline" onPress={props.onClose}>

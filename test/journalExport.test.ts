@@ -14,7 +14,6 @@ import {
   JournalExport_csv,
   JournalExport_rangeDays,
   JournalExport_output,
-  JournalExport_canWrite,
 } from "../src/models/journalExport";
 import { IHistoryRecord, ISet } from "../src/types";
 import { parse } from "papaparse";
@@ -191,14 +190,6 @@ describe("JournalExport", () => {
       filename: `bebear-journal-${today}.csv`,
     });
     expect(JournalExport_csv(sources(), "all").split("\r\n")).to.have.length(2);
-  });
-
-  it("requires ZIP support only when the output contains multiple Markdown files", () => {
-    const data = sources({ food: { ...FoodLog_empty(), entries: [oats(today), oats("2026-10-21")] } });
-    expect(JournalExport_canWrite(JournalExport_output(data, "week", "markdown"), false)).to.equal(false);
-    expect(JournalExport_canWrite(JournalExport_output(data, "week", "markdown"), true)).to.equal(true);
-    expect(JournalExport_canWrite(JournalExport_output(data, "today", "markdown"), false)).to.equal(true);
-    expect(JournalExport_canWrite(JournalExport_output(data, "week", "csv"), false)).to.equal(true);
   });
 
   it("titles a day with the full date", () => {
