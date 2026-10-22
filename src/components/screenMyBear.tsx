@@ -10,6 +10,7 @@ import { IconCog2 } from "./icons/iconCog2";
 import { ProgressSections } from "./screenProgressDashboard";
 import { CheckInChart } from "./checkInChart";
 import { BearScene } from "./bearScene";
+import { BearTv } from "./bearTv";
 import { BearPanel } from "./bearPanel";
 import { useBear } from "../utils/useBear";
 import { useBadgeCelebration } from "../utils/useBearBadges";
@@ -74,7 +75,12 @@ function MyBearHead(): JSX.Element {
   );
   return (
     <View testID="my-bear-head" data-testid="my-bear-head" className="pt-2">
-      <BearScene state={state} tiles={tiles} onTile={(tile) => openBoardTarget(dispatch, tile.target)} />
+      <BearScene
+        state={state}
+        tiles={tiles}
+        onTile={(tile) => openBoardTarget(dispatch, tile.target)}
+        tv={(box) => <BearTv box={box} />}
+      />
       <BearPanel state={state} now={now} onLine={setLine} />
     </View>
   );

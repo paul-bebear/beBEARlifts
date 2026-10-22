@@ -14,7 +14,7 @@ import { Thunk_pushScreen } from "../ducks/thunks";
 
 interface IProps {
   initialNote?: string;
-  onAdd: (choices: IFoodPhotoChoice[]) => void;
+  onAdd: (choices: IFoodPhotoChoice[], photo?: string) => void;
 }
 
 type IStatus = { kind: "idle" } | { kind: "analyzing" } | { kind: "error"; message: string };
@@ -122,7 +122,7 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
       {aiNote != null && <Text className="pt-3 text-sm text-text-secondary">{aiNote}</Text>}
       {choices != null && choices.length > 0 && (
         <View className="mt-2">
-          <FoodChoicesReview choices={choices} onChange={setChoices} onAdd={props.onAdd} />
+          <FoodChoicesReview choices={choices} onChange={setChoices} onAdd={(picked) => props.onAdd(picked, preview)} />
         </View>
       )}
       {status.kind !== "analyzing" && (

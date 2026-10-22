@@ -5,11 +5,12 @@ import { History_getPersonalRecords } from "../models/history";
 import { Feed_shareStatus } from "../models/feed";
 import { Friends_forUser } from "../models/friends";
 import { MusicLog_sessionForWorkout } from "../models/musicLog";
-import { MusicSession_counts } from "../models/musicSession";
+import { MusicSession_counts, MusicSession_keptTracks } from "../models/musicSession";
 import { IWorkoutPostSummary, WorkoutPost_build } from "../models/workoutPost";
-import { FeedClient_setShared, FeedClient_shareOnFinish, FeedStore } from "../utils/feedClient";
+import { FeedClient_flush, FeedClient_setShared, FeedStore } from "../utils/feedClient";
 import { FriendsStore } from "../utils/friendsClient";
 import { MusicStore_load } from "../utils/musicStore";
+import { useBear } from "../utils/useBear";
 import { CloudStore, ICloudResult } from "../utils/supabaseClient";
 import { Switch } from "./primitives/switch";
 import { Text } from "./primitives/text";
@@ -30,18 +31,23 @@ export function FeedShareToggle(props: IProps): JSX.Element | null {
   const userId = CloudStore.use().session?.userId;
   const me = Friends_forUser(FriendsStore.use(), userId).me;
   const feed = FeedStore.use();
+  const bear = useBear().state;
   const [error, setError] = useState<string | undefined>(undefined);
 
   const build = async (): Promise<IWorkoutPostSummary> => {
     const session = MusicLog_sessionForWorkout(await MusicStore_load(), props.record);
-    const kept = session != null ? MusicSession_counts(session).kept : undefined;
-    return WorkoutPost_build(props.record, props.settings, History_getPersonalRecords(props.history), kept);
+    return WorkoutPost_build(props.record, props.settings, History_getPersonalRecords(props.history), {
+      keptSongs: session != null ? MusicSession_counts(session).kept : undefined,
+      songs: session != null ? MusicSession_keptTracks(session).map((track) => track.name) : [],
+      bear,
+    });
   };
   const report = (result: ICloudResult<undefined>): void => setError(result.ok ? undefined : result.error);
 
+  // Sharing is off every time (owner decision 2026-10-22). Finishing only sends what is already queued.
   useEffect(() => {
     if (userId != null && me != null) {
-      FeedClient_shareOnFinish(props.record.id, build).then(report);
+      FeedClient_flush().catch(() => undefined);
     }
   }, [userId, me != null, props.record.id]);
 

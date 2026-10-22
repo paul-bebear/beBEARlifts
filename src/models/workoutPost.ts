@@ -1,4 +1,7 @@
 import { IHistoryRecord, ISettings, ISet, IUnit, IWeight } from "../types";
+import { IBearMood, IBearState } from "./bear";
+import { IBearLine } from "./bearStoreData";
+import { BearTier_all } from "./bearTier";
 import { Exercise_get, Exercise_toKey } from "./exercise";
 import {
   History_getMaxWeightSetFromEntry,
@@ -15,8 +18,17 @@ export interface IPostSet {
   reps: number;
 }
 
+// countedKg is what this workout added to the bear, after the anti-cheat rules in bearGrowth.ts.
+// B4 adds `equipped` here. The parser drops fields it does not know, so old apps read new posts.
+export interface IPostBear {
+  level: number;
+  mood: IBearMood;
+  countedKg: number;
+  line?: IBearLine;
+}
+
 export interface IWorkoutPostSummary {
-  version: 1;
+  version: 1 | 2;
   programName?: string;
   dayName: string;
   startedAt: number;
@@ -26,10 +38,20 @@ export interface IWorkoutPostSummary {
   topSets: IPostSet[];
   prs: IPostSet[];
   keptSongs?: number;
+  bear?: IPostBear;
+  songs: string[];
+}
+
+export interface IWorkoutPostExtras {
+  keptSongs?: number;
+  songs?: string[];
+  bear?: IBearState;
 }
 
 const maxExercises = 20;
 const maxText = 80;
+const maxSongs = 3;
+const moods: IBearMood[] = ["pumped", "tired", "hungry", "normal"];
 
 function setOf(name: string, set: ISet, unit: IUnit): IPostSet {
   return { name, weight: set.completedWeight ?? set.weight ?? { value: 0, unit }, reps: set.completedReps ?? 0 };
@@ -54,12 +76,18 @@ function prsOf(record: IHistoryRecord, prs: IPersonalRecords, settings: ISetting
   return result;
 }
 
+function postBear(record: IHistoryRecord, bear: IBearState): IPostBear {
+  const counted = bear.workouts.find((w) => w.record.id === record.id)?.countedKg ?? 0;
+  return { level: bear.level.tier.level, mood: bear.mood, countedKg: Math.round(counted), line: bear.line };
+}
+
 export function WorkoutPost_build(
   record: IHistoryRecord,
   settings: ISettings,
   prs: IPersonalRecords,
-  keptSongs: number | undefined
+  extras: IWorkoutPostExtras | undefined
 ): IWorkoutPostSummary {
+  const keptSongs = extras?.keptSongs;
   const topSets: IPostSet[] = [];
   for (const entry of History_getStartedEntries(record).slice(0, maxExercises)) {
     const set = History_getMaxWeightSetFromEntry(entry);
@@ -68,7 +96,7 @@ export function WorkoutPost_build(
     }
   }
   return {
-    version: 1,
+    version: 2,
     programName: record.programName || undefined,
     dayName: record.dayName,
     startedAt: record.startTime,
@@ -78,17 +106,48 @@ export function WorkoutPost_build(
     topSets,
     prs: prsOf(record, prs, settings),
     keptSongs: keptSongs != null && keptSongs > 0 ? keptSongs : undefined,
+    bear: extras?.bear != null ? postBear(record, extras.bear) : undefined,
+    songs: songTitles(extras?.songs),
   };
 }
 
+function durationText(durationMs: number): string {
+  const minutes = Math.round(durationMs / 60000);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
+}
+
+function setsText(sets: number): string {
+  return `${sets} ${sets === 1 ? "set" : "sets"}`;
+}
+
 export function WorkoutPost_statsLine(summary: IWorkoutPostSummary): string {
-  const minutes = Math.round(summary.durationMs / 60000);
-  const duration = minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
   const volume = `${Math.round(summary.volume.value).toLocaleString("en-US")} ${summary.volume.unit}`;
+  return [durationText(summary.durationMs), ...(summary.volume.value > 0 ? [volume] : []), setsText(summary.sets)].join(
+    " · "
+  );
+}
+
+export function WorkoutPost_levelText(bear: Pick<IPostBear, "level">): string {
+  const tier = BearTier_all().find((t) => t.level === bear.level);
+  return tier != null ? `Level ${tier.level} ${tier.name}` : `Level ${bear.level}`;
+}
+
+// Duration and counted kg sit side by side, so a 3-minute "workout" with a big number reads as one.
+// A version 1 post has no counted kg and shows its volume without the plus.
+export function WorkoutPost_feedLine(summary: IWorkoutPostSummary): string {
+  const kg =
+    summary.bear != null
+      ? `+${summary.bear.countedKg.toLocaleString("en-US")} kg`
+      : summary.volume.value > 0
+        ? `${Math.round(summary.volume.value).toLocaleString("en-US")} ${summary.volume.unit}`
+        : undefined;
+  const songCount = summary.songs.length > 0 ? summary.songs.length : (summary.keptSongs ?? 0);
   return [
-    duration,
-    ...(summary.volume.value > 0 ? [volume] : []),
-    `${summary.sets} ${summary.sets === 1 ? "set" : "sets"}`,
+    summary.dayName,
+    durationText(summary.durationMs),
+    setsText(summary.sets),
+    ...(kg != null ? [kg] : []),
+    ...(songCount > 0 ? [`\u{1F3B5} ${songCount} ${songCount === 1 ? "song" : "songs"}`] : []),
   ].join(" · ");
 }
 
@@ -128,6 +187,29 @@ function text(value: unknown): string | undefined {
   return typeof value === "string" && value !== "" ? value.slice(0, maxText) : undefined;
 }
 
+function songTitles(raw: unknown): string[] {
+  const result: string[] = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    const title = text(item);
+    if (title != null && result.length < maxSongs) {
+      result.push(title);
+    }
+  }
+  return result;
+}
+
+function parseBear(raw: unknown): IPostBear | undefined {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const level = num(r.level);
+  const countedKg = num(r.countedKg);
+  const mood = moods.find((m) => m === r.mood);
+  if (level == null || countedKg == null || mood == null || !BearTier_all().some((t) => t.level === level)) {
+    return undefined;
+  }
+  const line = r.line === "male" || r.line === "female" ? r.line : undefined;
+  return { level, mood, countedKg: Math.max(0, Math.round(countedKg)), ...(line != null ? { line } : {}) };
+}
+
 function parseWeight(raw: unknown): IWeight | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const value = num(r.value);
@@ -157,8 +239,9 @@ export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined
   if (dayName == null || startedAt == null || volume == null) {
     return undefined;
   }
+  const isVersion2 = r.version === 2;
   return {
-    version: 1,
+    version: isVersion2 ? 2 : 1,
     programName: text(r.programName),
     dayName,
     startedAt,
@@ -168,5 +251,7 @@ export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined
     topSets: postSets(r.topSets),
     prs: postSets(r.prs),
     keptSongs: num(r.keptSongs),
+    bear: isVersion2 ? parseBear(r.bear) : undefined,
+    songs: isVersion2 ? songTitles(r.songs) : [],
   };
 }
