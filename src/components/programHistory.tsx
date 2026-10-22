@@ -1,4 +1,4 @@
-import { JSX, useCallback, useEffect, useRef, useState } from "react";
+import { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTimedMemo } from "../utils/useTimedMemo";
 import { usePerfScrollMarkers } from "../utils/usePerfScrollMarkers";
 import { Pressable, View } from "react-native";
@@ -17,7 +17,9 @@ import { BearAvatar } from "./bearAvatar";
 import { useBear } from "../utils/useBear";
 import { useFoodLog } from "../utils/foodLogStore";
 import { WeekDots_build } from "../models/weekDots";
-import { TodayPill_text } from "../models/todayPill";
+import { TodayPill_dayName, TodayPill_text } from "../models/todayPill";
+import { WeekSchedule_todayFor } from "../models/weekSchedule";
+import { WeekScheduleStore } from "../utils/weekScheduleStore";
 import { HistoryRecordsNullState } from "./historyRecordsNullState";
 import { Progress_isCurrent } from "../models/progress";
 import { Program_nextHistoryRecord } from "../models/program";
@@ -25,7 +27,7 @@ import { useTrackedState } from "../navigation/TrackedStateContext";
 import { HistoryRecordView } from "./historyRecord";
 import { HomeChecklist } from "./homeChecklist";
 import { navigateToModal } from "../navigation/navigationService";
-import { Program_evaluate, Program_getProgramDay } from "../models/program";
+import { IEvaluatedProgram, Program_evaluate, Program_getProgramDay } from "../models/program";
 import {
   HistoryCollapse_expand,
   HistoryCollapse_isExpanded,
@@ -55,19 +57,22 @@ export function getWeekHistory(
 function HomeHeader(props: {
   history: IHistoryRecord[];
   settings: ISettings;
-  dayName?: string;
+  program: IEvaluatedProgram;
+  nextDayName?: string;
   dispatch: IDispatch;
 }): JSX.Element {
   const foodLog = useFoodLog();
   const bear = useBear();
+  const schedule = WeekScheduleStore.use();
   const now = Date.now();
+  const dayName = TodayPill_dayName(WeekSchedule_todayFor(schedule, props.program, now), props.nextDayName);
   const dots = WeekDots_build({
     history: props.history,
     foodLog,
     now,
     startWeekFromMonday: props.settings.startWeekFromMonday,
   });
-  const pill = TodayPill_text({ dayName: props.dayName, history: props.history, now });
+  const pill = TodayPill_text({ dayName, history: props.history, now });
   return (
     <View className="px-4 pt-2 pb-1" testID="home-header" data-testid="home-header">
       <View className="flex-row items-center">
@@ -136,13 +141,14 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
     [sortedHistoryDesc, props.progress, props.program, props.settings, props.navCommon.stats]
   );
 
-  const programDay = useTimedMemo(
-    "programHistory.programDay",
-    () => {
-      const program = Program_evaluate(props.program, props.settings);
-      return Program_getProgramDay(program, program.nextDay);
-    },
+  const evaluatedProgram = useTimedMemo(
+    "programHistory.evaluatedProgram",
+    () => Program_evaluate(props.program, props.settings),
     [props.program, props.settings]
+  );
+  const programDay = useMemo(
+    () => Program_getProgramDay(evaluatedProgram, evaluatedProgram.nextDay),
+    [evaluatedProgram]
   );
   const isOngoing = !!(props.progress && Progress_isCurrent(props.progress));
 
@@ -206,7 +212,13 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
   const scrollMarkers = usePerfScrollMarkers("ProgramHistoryView");
 
   const stickyHeader = (
-    <HomeHeader history={props.history} settings={props.settings} dayName={programDay?.name} dispatch={dispatch} />
+    <HomeHeader
+      history={props.history}
+      settings={props.settings}
+      program={evaluatedProgram}
+      nextDayName={programDay?.name}
+      dispatch={dispatch}
+    />
   );
 
   const checklist = (

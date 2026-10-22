@@ -4,7 +4,17 @@ import * as fs from "fs";
 import * as path from "path";
 import { PlannerProgram_evaluateText } from "../src/pages/planner/models/plannerProgram";
 import { Program_create, Program_evaluate } from "../src/models/program";
-import { ProgramPlanCards_build, ProgramPlanCards_currentWeekIndex } from "../src/models/programPlanCards";
+import {
+  ProgramPlanCards_build,
+  ProgramPlanCards_currentWeekIndex,
+  ProgramPlanCards_weekRows,
+} from "../src/models/programPlanCards";
+import {
+  WeekSchedule_dayCount,
+  WeekSchedule_default,
+  WeekSchedule_today,
+  WeekSchedule_upNextDay,
+} from "../src/models/weekSchedule";
 import { Settings_build } from "../src/models/settings";
 import { IProgram } from "../src/types";
 
@@ -51,5 +61,36 @@ describe("ProgramPlanCards", () => {
     expect(ProgramPlanCards_currentWeekIndex(program)).to.equal(1);
     expect(ProgramPlanCards_build(program, 1).map((c) => c.isNext)).to.deep.equal([true, false]);
     expect(ProgramPlanCards_build(program, 1)[0].lines).to.deep.equal(["Squat 3×6"]);
+  });
+
+  it("lays bebear-ulppl out by weekday and tags today's Push as Next on Thursday", () => {
+    const content = fs.readFileSync(path.resolve(__dirname, "../programs/builtin/bebear-ulppl.md"), "utf8");
+    const fence = content.match(/```liftoscript\n([\s\S]*?)```/)?.[1] ?? "";
+    const program = evaluate(fence, 1);
+    const slots = WeekSchedule_default(WeekSchedule_dayCount(program));
+    const thursday = new Date(2026, 9, 22, 12).getTime();
+    const today = WeekSchedule_today(program, slots, thursday);
+    const cards = ProgramPlanCards_build(program, 0, WeekSchedule_upNextDay(program, today, false));
+    const week = ProgramPlanCards_weekRows(cards, slots, today.weekday);
+    expect(week.rows.map((r) => `${r.weekdayName} ${r.card?.name ?? "Rest"}`)).to.deep.equal([
+      "Monday Upper",
+      "Tuesday Lower 1",
+      "Wednesday Rest",
+      "Thursday Push",
+      "Friday Pull",
+      "Saturday Lower 2",
+      "Sunday Rest",
+    ]);
+    expect(week.rows.filter((r) => r.isToday).map((r) => r.weekdayName)).to.deep.equal(["Thursday"]);
+    expect(week.rows.filter((r) => r.card?.isNext).map((r) => r.card?.name)).to.deep.equal(["Push"]);
+    expect(week.unplaced).to.deep.equal([]);
+  });
+
+  it("lists days no weekday holds after Sunday", () => {
+    const text = Array.from({ length: 8 }, (_, i) => `## D${i + 1}\nSquat / 3x5\n`).join("");
+    const cards = ProgramPlanCards_build(evaluate(`# Week 1\n${text}`), 0);
+    const week = ProgramPlanCards_weekRows(cards, WeekSchedule_default(8), 0);
+    expect(week.rows.map((r) => r.card?.name)).to.deep.equal(["D1", "D2", "D3", "D4", "D5", "D6", "D7"]);
+    expect(week.unplaced.map((c) => c.name)).to.deep.equal(["D8"]);
   });
 });
