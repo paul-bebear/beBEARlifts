@@ -4,6 +4,7 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build:pwa",
   "outputDirectory": "dist",
+  "ignoreCommand": "bash scripts/vercel-ignore-build.sh",
   "functions": {
     "api/ai/onboard.mjs": {
       "includeFiles": "llms/{program_builder_prompt,programs_guide,liftoscript_llm,exercises}.md"
