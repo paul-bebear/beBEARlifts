@@ -24,6 +24,38 @@ function run(
 }
 
 describe("ShareCardExport", () => {
+  it("waits for the celebration picture before capturing and sharing the level-up card first", () => {
+    const picture = "/images/bear/female/levelup-12.webp";
+    const waiting = run([
+      {
+        type: "start",
+        pages: ["levelUp", "rank"],
+        frozen: 1,
+        images: [picture, "bear"],
+        share: ["levelUp"],
+      },
+      { type: "layout", page: "levelUp" },
+      { type: "layout", page: "rank" },
+      { type: "imageLoaded", uri: "bear" },
+    ]);
+    expect([waiting.job.phase, waiting.effects]).to.deep.equal(["preparing", []]);
+    const loaded = ShareCardExport_next(waiting.job, { type: "imageLoaded", uri: picture });
+    expect(loaded.effects).to.deep.equal([{ kind: "capture", page: "levelUp", jobId: 1 }]);
+    const celebration = ShareCardExport_next(loaded.job, { type: "captured", jobId: 1, file: "celebration.png" });
+    const rank = ShareCardExport_next(celebration.job, { type: "captured", jobId: 1, file: "rank.png" });
+    expect(rank.effects).to.deep.equal([{ kind: "share", files: ["celebration.png"], jobId: 1 }]);
+  });
+
+  it("captures a level-up-only export after its picture loads without waiting for a bear sprite", () => {
+    const { job, effects } = run([
+      { type: "start", pages: ["levelUp"], frozen: 1, images: ["celebration"] },
+      { type: "imageLoaded", uri: "celebration" },
+      { type: "layout", page: "levelUp" },
+      { type: "captured", jobId: 1, file: "celebration.png" },
+    ]);
+    expect([job.phase, job.files, effects]).to.deep.equal(["prepared", ["celebration.png"], ["capture:levelUp"]]);
+  });
+
   it("waits for every layout, the bear and the photo, then captures in order and shares once", () => {
     const { job, effects } = run([
       { type: "start", pages: ["rank", "photo"], frozen: 1, images: ["bear", "p1"], share: ["rank", "photo"] },
