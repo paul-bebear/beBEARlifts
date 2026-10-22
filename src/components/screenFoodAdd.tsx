@@ -1,4 +1,4 @@
-import { JSX, useState } from "react";
+import { JSX, useReducer, useState } from "react";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./primitives/text";
@@ -12,16 +12,9 @@ import {
   FoodLog_saveRecipe,
   IFoodMeal,
 } from "../models/foodLog";
-import {
-  FoodAddFlow_initialGrams,
-  FoodAddFlow_manualPick,
-  FoodAddFlow_pickFromProduct,
-  IFoodPhotoChoice,
-  IFoodPick,
-} from "../models/foodAddFlow";
+import { FoodAddFlow_initialGrams, FoodAddFlow_manualPick, FoodAddFlow_pickFromProduct } from "../models/foodAddFlow";
 import {
   FoodBasket_entries,
-  FoodBasket_fromChoices,
   FoodBasket_keyOf,
   FoodBasket_put,
   FoodBasket_putAll,
@@ -31,6 +24,14 @@ import {
   FoodBasket_totals,
   IFoodBasketItem,
 } from "../models/foodBasket";
+import {
+  FoodScanSteps_canLeave,
+  FoodScanSteps_entries,
+  FoodScanSteps_initial,
+  FoodScanSteps_reduce,
+  FoodScanSteps_title,
+  IScanServing,
+} from "../models/foodScanSteps";
 import { FoodSuggestions_forMeal } from "../models/foodSuggestions";
 import { Recipes_fromBasket, Recipes_servingPick, SavedMeals_fromBasket, SavedMeals_items } from "../models/savedMeals";
 import { FoodApi_lookupBarcode } from "../utils/foodApi";
@@ -42,44 +43,14 @@ import type { IFoodAddScreenParams } from "../navigation/types";
 import { FoodBrowsePanel, IFoodBrowseTab, IFoodTile } from "./foodBrowsePanel";
 import { FoodBasketPanel } from "./foodBasketPanel";
 import { FoodAmountPanel } from "./foodAmountPanel";
-import { FoodBarcodeScanner } from "./foodBarcodeScanner";
-import { FoodPhotoPanel } from "./foodPhotoPanel";
-import { FoodDescribePanel } from "./foodDescribePanel";
+import { FoodScanCamera } from "./foodScanCamera";
+import { FoodServingPanel } from "./foodServingPanel";
 import { FoodQuickAddPanel } from "./foodQuickAddPanel";
 import { FoodLabelPanel } from "./foodLabelPanel";
 import { FoodSaveGroupPanel } from "./foodSaveGroupPanel";
 import { FoodMealPicker, FoodPrimaryButton } from "./foodUi";
-import { AiConsentGate } from "./aiConsentGate";
-import { AiConsent_isFoodAi } from "../models/aiConsent";
-import { AiConsent_ensure } from "../utils/aiConsentClient";
-
-type IStep =
-  | { kind: "browse" }
-  | { kind: "basket" }
-  | { kind: "barcode" }
-  | { kind: "lookup"; code: string }
-  | { kind: "notFound"; code: string; error?: string }
-  | { kind: "label"; code?: string }
-  | { kind: "amount"; pick: IFoodPick }
-  | { kind: "quick" }
-  | { kind: "photo"; note?: string }
-  | { kind: "describe" }
-  | { kind: "save"; group: "meal" | "recipe" };
-
-const stepTitles: Partial<Record<IStep["kind"], string>> = {
-  basket: "Item Log",
-  barcode: "Scan barcode",
-  lookup: "Scan barcode",
-  notFound: "Scan barcode",
-  label: "Nutrition label",
-  quick: "Quick Log",
-  photo: "AI Scan",
-  describe: "Describe",
-};
-
-function initialStep(mode: IFoodAddScreenParams["mode"]): IStep {
-  return mode == null ? { kind: "browse" } : mode === "describe" ? { kind: "describe" } : { kind: mode };
-}
+import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
+import { AiConsentStore, AiConsent_ensure } from "../utils/aiConsentClient";
 
 function NotFound(props: {
   code: string;
@@ -120,13 +91,16 @@ function ReviewBar(props: { basket: IFoodBasketItem[]; onPress: () => void }): J
 export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Element {
   const navigation = useNavigation();
   const log = useFoodLog();
-  const [step, setStep] = useState<IStep>(initialStep(props.params.mode));
+  const hasAi = AiConsent_showFeatures(AiConsentStore.use());
+  const [step, send] = useReducer(FoodScanSteps_reduce, undefined, () =>
+    FoodScanSteps_initial(props.params.mode, hasAi)
+  );
   const [meal, setMeal] = useState<IFoodMeal>(props.params.meal);
   const [basket, setBasket] = useState<IFoodBasketItem[]>([]);
   const [isPickingMeal, setIsPickingMeal] = useState(false);
   const [browseTab, setBrowseTab] = useState<IFoodBrowseTab>("food");
-  const browse = (): void => setStep({ kind: "browse" });
-  const stepTitle = stepTitles[step.kind];
+  const browse = (): void => send({ type: "browseOpened" });
+  const stepTitle = FoodScanSteps_title(step);
 
   useNavOptions({
     navTitle:
@@ -138,26 +112,21 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
         </Pressable>
       ),
     navOnBack: () => {
-      if (step.kind === "browse") {
+      if (FoodScanSteps_canLeave(step)) {
         return true;
       }
-      browse();
+      send({ type: "back" });
       return false;
     },
   });
 
-  const addChoices = (choices: IFoodPhotoChoice[], source: "photo" | "manual"): void => {
-    setBasket(FoodBasket_putAll(basket, FoodBasket_fromChoices(choices, source, Date.now())));
-    setStep({ kind: "basket" });
-  };
-
   const onBarcode = async (code: string): Promise<void> => {
-    setStep({ kind: "lookup", code });
+    send({ type: "barcodeRead", code });
     const result = await FoodApi_lookupBarcode(code, log.savedFoods);
     if (result.ok && result.value != null) {
-      setStep({ kind: "amount", pick: FoodAddFlow_pickFromProduct(result.value, "barcode") });
+      send({ type: "barcodeFound", pick: FoodAddFlow_pickFromProduct(result.value, "barcode") });
     } else {
-      setStep({ kind: "notFound", code, error: result.ok ? undefined : result.error });
+      send({ type: "barcodeMissed", code, error: result.ok ? undefined : result.error });
     }
   };
 
@@ -171,7 +140,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
     const recipe = Recipes_fromBasket(name, servings, basket, FoodLogStore_newId());
     await FoodLogStore_update((l) => FoodLog_saveRecipe(l, recipe));
     setBasket(FoodBasket_put([], Recipes_servingPick(recipe)));
-    setStep({ kind: "basket" });
+    send({ type: "basketOpened" });
   };
 
   const logBasket = async (): Promise<void> => {
@@ -180,9 +149,15 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
     navigation.goBack();
   };
 
+  const logServing = async (serving: IScanServing): Promise<void> => {
+    const entries = FoodScanSteps_entries(serving, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
+    await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
+    navigation.goBack();
+  };
+
   const onTile = async (tile: IFoodTile): Promise<void> => {
     if (!AiConsent_isFoodAi(tile) || (await AiConsent_ensure())) {
-      setStep({ kind: tile });
+      send({ type: "tileOpened", tile, hasAi });
     }
   };
 
@@ -190,7 +165,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
     <NavScreenContent
       footer={
         step.kind === "browse" && basket.length > 0 ? (
-          <ReviewBar basket={basket} onPress={() => setStep({ kind: "basket" })} />
+          <ReviewBar basket={basket} onPress={() => send({ type: "basketOpened" })} />
         ) : undefined
       }
     >
@@ -206,6 +181,30 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             />
           </View>
         )}
+        {step.kind === "camera" && (
+          <FoodScanCamera
+            day={props.params.day}
+            mode={step.mode}
+            hasAi={hasAi}
+            onMode={(mode) => send({ type: "modePicked", mode })}
+            onBarcode={onBarcode}
+            onPhotoReviewed={(choices) => send({ type: "photoReviewed", choices, nonce: Date.now() })}
+            onQuick={(name, nutrients) => send({ type: "quickEntered", name, nutrients })}
+            onSearch={browse}
+            onCopied={() => navigation.goBack()}
+          />
+        )}
+        {step.kind === "serving" && (
+          <FoodServingPanel
+            serving={step.serving}
+            meal={meal}
+            onMeal={setMeal}
+            onGrams={(key, grams) => send({ type: "gramsChanged", key, grams })}
+            onRemove={(key) => send({ type: "itemRemoved", key })}
+            onDescription={(text) => send({ type: "descriptionChanged", text })}
+            onAdd={() => logServing(step.serving)}
+          />
+        )}
         {step.kind === "browse" && (
           <FoodBrowsePanel
             meal={meal}
@@ -217,10 +216,10 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             recipePick={Recipes_servingPick}
             onTile={onTile}
             onToggle={(pick) => setBasket(FoodBasket_toggle(basket, pick))}
-            onOpen={(pick) => setStep({ kind: "amount", pick })}
+            onOpen={(pick) => send({ type: "amountOpened", pick })}
             onAddMeal={(m) => {
               setBasket(FoodBasket_putAll(basket, SavedMeals_items(m)));
-              setStep({ kind: "basket" });
+              send({ type: "basketOpened" });
             }}
             onDeleteMeal={async (m) => {
               if (await Dialog_confirm(`Delete the meal ${m.name}?`)) {
@@ -232,8 +231,8 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
                 await FoodLogStore_update((l) => FoodLog_removeRecipe(l, r.id));
               }
             }}
-            onSaveMeal={() => setStep({ kind: "save", group: "meal" })}
-            onSaveRecipe={() => setStep({ kind: "save", group: "recipe" })}
+            onSaveMeal={() => send({ type: "saveOpened", group: "meal" })}
+            onSaveRecipe={() => send({ type: "saveOpened", group: "recipe" })}
             tab={browseTab}
             onTab={setBrowseTab}
           />
@@ -263,8 +262,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             }}
           />
         )}
-        {step.kind === "barcode" && <FoodBarcodeScanner onDetected={onBarcode} />}
-        {step.kind === "lookup" && (
+        {step.kind === "reading" && (
           <View className="items-center py-8">
             <ActivityIndicator />
             <Text className="mt-2 text-sm text-text-secondary">Looking up {step.code}…</Text>
@@ -274,9 +272,9 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
           <NotFound
             code={step.code}
             error={step.error}
-            onLabel={() => setStep({ kind: "label", code: step.code })}
-            onScan={() => setStep({ kind: "barcode" })}
-            onQuick={() => setStep({ kind: "quick" })}
+            onLabel={() => send({ type: "labelOpened", code: step.code })}
+            onScan={() => send({ type: "modePicked", mode: "barcode" })}
+            onQuick={() => send({ type: "quickOpened" })}
           />
         )}
         {step.kind === "label" && (
@@ -285,8 +283,8 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             onBack={browse}
             onSave={async (product) => {
               await FoodLogStore_update((l) => FoodLog_saveFood(l, product));
-              setStep({
-                kind: "amount",
+              send({
+                type: "amountOpened",
                 pick: FoodAddFlow_pickFromProduct(product, step.code != null ? "barcode" : "search"),
               });
             }}
@@ -297,22 +295,9 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             onBack={browse}
             onSubmit={(name, nutrients) => {
               setBasket(FoodBasket_put(basket, FoodAddFlow_manualPick(name, nutrients), 0, `quick|${Date.now()}`));
-              setStep({ kind: "basket" });
+              send({ type: "basketOpened" });
             }}
           />
-        )}
-        {step.kind === "photo" && (
-          <AiConsentGate>
-            <FoodPhotoPanel initialNote={step.note} onAdd={(c) => addChoices(c, "photo")} />
-          </AiConsentGate>
-        )}
-        {step.kind === "describe" && (
-          <AiConsentGate>
-            <FoodDescribePanel
-              onAdd={(c) => addChoices(c, "manual")}
-              onPhoto={(note) => setStep({ kind: "photo", note })}
-            />
-          </AiConsentGate>
         )}
         {step.kind === "save" && (
           <FoodSaveGroupPanel
@@ -323,7 +308,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
           />
         )}
         {step.kind === "browse" && (
-          <Pressable className="py-4" onPress={() => setStep({ kind: "label" })} testID="food-add-label">
+          <Pressable className="py-4" onPress={() => send({ type: "labelOpened" })} testID="food-add-label">
             <Text className="text-base text-text-link">+ Add a food from its nutrition label</Text>
           </Pressable>
         )}
