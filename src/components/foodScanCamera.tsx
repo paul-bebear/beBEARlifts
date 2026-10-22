@@ -1,23 +1,15 @@
-import { JSX } from "react";
+import { JSX, useState } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
-import {
-  FoodLog_copyDay,
-  FoodLog_dayKey,
-  FoodLog_dayLabel,
-  FoodLog_entriesFor,
-  FoodLog_shiftDay,
-  INutrients,
-} from "../models/foodLog";
+import { INutrients } from "../models/foodLog";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodScanSteps_modes, IScanMode } from "../models/foodScanSteps";
-import { FoodLogStore_newId, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { AiConsent_ensure } from "../utils/aiConsentClient";
-import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 import { AiConsentGate } from "./aiConsentGate";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
 import { FoodPhotoPanel } from "./foodPhotoPanel";
 import { FoodQuickAddPanel } from "./foodQuickAddPanel";
+import { FoodRepeatList } from "./foodRepeatList";
 
 interface IProps {
   day: string;
@@ -57,7 +49,7 @@ function ModeToggle(props: { modes: IScanMode[]; mode: IScanMode; onPick: (mode:
 }
 
 export function FoodScanCamera(props: IProps): JSX.Element {
-  const log = useFoodLog();
+  const [isRepeating, setIsRepeating] = useState(false);
 
   const pickMode = async (mode: IScanMode): Promise<void> => {
     if (mode !== "ai" || (await AiConsent_ensure())) {
@@ -65,18 +57,9 @@ export function FoodScanCamera(props: IProps): JSX.Element {
     }
   };
 
-  const copyPreviousDay = async (): Promise<void> => {
-    const today = FoodLog_dayKey(new Date());
-    const previous = FoodLog_shiftDay(props.day, -1);
-    const count = FoodLog_entriesFor(log, previous).length;
-    const label = FoodLog_dayLabel(previous, today);
-    if (count === 0) {
-      Dialog_alert(`Nothing is logged on ${label}.`);
-    } else if (await Dialog_confirm(`Copy ${count} food${count === 1 ? "" : "s"} from ${label}?`)) {
-      await FoodLogStore_update((l) => FoodLog_copyDay(l, previous, props.day, FoodLogStore_newId, Date.now()));
-      props.onCopied();
-    }
-  };
+  if (isRepeating) {
+    return <FoodRepeatList onBack={() => setIsRepeating(false)} onCopied={props.onCopied} />;
+  }
 
   return (
     <View testID="food-scan-camera" data-testid="food-scan-camera">
@@ -96,7 +79,12 @@ export function FoodScanCamera(props: IProps): JSX.Element {
         <Pressable className="py-2" testID="food-scan-search" data-testid="food-scan-search" onPress={props.onSearch}>
           <Text className="text-base text-text-link">Search</Text>
         </Pressable>
-        <Pressable className="py-2" testID="food-copy-day" data-testid="food-copy-day" onPress={copyPreviousDay}>
+        <Pressable
+          className="py-2"
+          testID="food-copy-day"
+          data-testid="food-copy-day"
+          onPress={() => setIsRepeating(true)}
+        >
           <Text className="text-base text-text-link">Same as yesterday</Text>
         </Pressable>
       </View>
