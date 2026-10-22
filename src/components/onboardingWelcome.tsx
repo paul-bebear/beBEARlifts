@@ -1,4 +1,4 @@
-import { Dispatch, JSX, ReactNode, useState } from "react";
+import { Dispatch, JSX } from "react";
 import { IDispatch } from "../ducks/types";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
 import { Invite_parseHandle } from "../models/invite";
@@ -13,12 +13,10 @@ export function OnboardingWelcome(props: {
   dispatch: IDispatch;
   signedIn: boolean;
   showInvite: boolean;
-  signInButtons?: ReactNode;
   busy: boolean;
   onContinue: () => void;
 }): JSX.Element {
   const { form, emit } = props;
-  const [showEmail, setShowEmail] = useState(false);
   const badInvite = form.invite !== "" && Invite_parseHandle(form.invite) == null;
   return (
     <>
@@ -29,14 +27,7 @@ export function OnboardingWelcome(props: {
         <h1 className="text-3xl font-bold">Meet your bear</h1>
         <p className="text-lg">This is your bear. Train it, feed it, watch it grow.</p>
       </div>
-      {!props.signedIn && props.signInButtons}
-      {props.signedIn || showEmail ? (
-        <CloudBackupCard dispatch={props.dispatch} compact />
-      ) : (
-        <button className="self-center p-3 text-text-link" onClick={() => setShowEmail(true)}>
-          Use an email code
-        </button>
-      )}
+      <CloudBackupCard dispatch={props.dispatch} compact />
       {props.showInvite && (
         <label className="block">
           Who invited you?

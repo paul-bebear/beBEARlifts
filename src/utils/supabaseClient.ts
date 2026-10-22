@@ -7,6 +7,7 @@ import {
 } from "../models/cloudBackup";
 import { JsonStore_create } from "./jsonStore";
 import { CloudBackupForm_parseSentCode, ISentCode } from "../models/cloudBackupForm";
+import { OAuthFlow_tokenBody } from "../models/oauthFlow";
 
 // The publishable key is meant to ship in client code. Row-level policies on each table and bucket limit what it can read.
 export const Supabase_origin = "https://qvqwvuuwfueccrmzwyct.supabase.co";
@@ -85,6 +86,17 @@ export async function SupabaseClient_session(): Promise<ICloudResult<ICloudSessi
   const result = await SupabaseClient_call(
     "/auth/v1/token?grant_type=refresh_token",
     SupabaseClient_json({ refresh_token: current.refreshToken })
+  );
+  return result.ok ? SupabaseClient_saveSession(result.value) : result;
+}
+
+export async function SupabaseClient_exchangeCode(
+  code: string,
+  verifier: string
+): Promise<ICloudResult<ICloudSession>> {
+  const result = await SupabaseClient_call(
+    "/auth/v1/token?grant_type=pkce",
+    SupabaseClient_json(OAuthFlow_tokenBody(code, verifier))
   );
   return result.ok ? SupabaseClient_saveSession(result.value) : result;
 }

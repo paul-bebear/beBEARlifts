@@ -1,4 +1,4 @@
-import { JSX, useEffect, useReducer } from "react";
+import { JSX, useEffect, useReducer, useState } from "react";
 import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { CloudBackupForm_empty, CloudBackupForm_reduce } from "../models/cloudBackupForm";
@@ -8,7 +8,10 @@ import { CloudBackupCommand_loadPlan, CloudBackupCommand_run } from "../utils/cl
 import { AiCaps_plusLine } from "../models/aiCaps";
 import { CloudBackup_olderCopies } from "../models/cloudBackup";
 import { CloudRestoreChoice } from "./cloudRestoreBanner";
+import { IOAuthProvider } from "../models/oauthFlow";
+import { SupabaseOAuth_start } from "../utils/supabaseOAuth";
 import { Button } from "./button";
+import { LinkButton } from "./linkButton";
 import { Text } from "./primitives/text";
 import { TextInput } from "./primitives/textInput";
 
@@ -16,6 +19,15 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
   const cloud = CloudStore.use();
   const [form, emit] = useReducer(CloudBackupForm_reduce, undefined, CloudBackupForm_empty);
   const busy = form.command != null;
+  const [oauth, setOAuth] = useState<{ busy: boolean; error?: string }>({ busy: false });
+  const [showEmail, setShowEmail] = useState(false);
+
+  const startOAuth = (provider: IOAuthProvider): void => {
+    setOAuth({ busy: true });
+    SupabaseOAuth_start(provider)
+      .then((result) => setOAuth({ busy: false, error: result.ok ? undefined : result.error }))
+      .catch(() => setOAuth({ busy: false, error: "Sign-in did not start. Try again." }));
+  };
 
   useEffect(() => {
     SentCodeStore.load()
@@ -197,11 +209,36 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
       ) : (
         <View style={{ gap: 12 }}>
           {!props.compact && (
-            <Text className="text-sm text-text-secondary">
-              Sign in with an email code to save a backup after each workout.
+            <Text className="text-sm text-text-secondary">Sign in to save a backup after each workout.</Text>
+          )}
+          <Button
+            name="cloud-sign-in-apple"
+            kind="purple"
+            disabled={busy || oauth.busy}
+            onClick={() => startOAuth("apple")}
+          >
+            Continue with Apple
+          </Button>
+          <Button
+            name="cloud-sign-in-google"
+            kind="purple"
+            disabled={busy || oauth.busy}
+            onClick={() => startOAuth("google")}
+          >
+            Continue with Google
+          </Button>
+          {(oauth.error ?? cloud.signInError) != null && (
+            <Text className="text-sm text-text-error" accessibilityRole="alert">
+              {oauth.error ?? cloud.signInError}
             </Text>
           )}
-          {form.step === "code" ? (
+          {!showEmail && form.step !== "code" ? (
+            <View className="items-center">
+              <LinkButton name="cloud-use-email-code" className="font-normal" onClick={() => setShowEmail(true)}>
+                Use an email code
+              </LinkButton>
+            </View>
+          ) : form.step === "code" ? (
             <>
               <Text className="text-sm">Code sent to {form.email}</Text>
               <Text className="text-sm">Email code</Text>

@@ -1,3 +1,5 @@
+import { IOAuthPending, OAuthFlow_parsePending } from "./oauthFlow";
+
 export interface ICloudSession {
   email: string;
   userId: string;
@@ -25,6 +27,8 @@ export interface ICloudState {
   syncedExportedAt?: string;
   backedUpWorkouts?: string;
   restoreOffer?: ICloudRestoreOffer;
+  pending?: IOAuthPending;
+  signInError?: string;
 }
 
 export type ICloudCopy = "latest" | "replaced" | `day-${number}`;
@@ -90,6 +94,13 @@ export function CloudBackup_parse(raw: unknown): ICloudState {
   const phone = summary(offer?.phone);
   if (cloud != null && phone != null) {
     state.restoreOffer = { cloud, phone };
+  }
+  const pending = OAuthFlow_parsePending(r.pending);
+  if (pending != null) {
+    state.pending = pending;
+  }
+  if (str(r.signInError) != null) {
+    state.signInError = r.signInError as string;
   }
   return state;
 }
