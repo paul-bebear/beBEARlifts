@@ -16,11 +16,11 @@ Start with this, in two lines: open https://lifts.paulbebear.com/app/ in Safari 
 
 Ask one question per message and wait for my answer. Tell me once, in the first question, that I can answer "skip" to any of them.
 
-1. What is your goal (build muscle, get stronger, lose fat, or just get fit), and how many days a week can you train?
+1. What do you want: size, strength or both, and do you also want to be more agile? Where do you train: full gym, only dumbbells, street workout bars, or no equipment (pick all that apply)? How many days a week can you train?
 2. What are your height, weight and age, and how long have you been lifting?
 3. Do you already follow a plan? If yes, send screenshots of the whole plan. Add screenshots of your recent workouts too, if you have them, and I will bring those into the app as your history.
 
-If I skip a question or part of one, use the default: muscle with some strength, 3 days a week, 60-minute sessions, full gym, beginner, no injuries. Use kg or lb the way I wrote my weight; use lb if I gave none. If I mention an injury, a piece of equipment, or a lift I hate in any answer, follow it. Do not ask more questions unless a screenshot is unreadable.
+If I skip a question or part of one, use the default: size, 3 days a week, 45-minute sessions, full gym, beginner, no injuries. Size means hypertrophy. Both means strength on the first lift of each day and hypertrophy on the rest. More agile adds jumps and agility work to each day. Use only equipment from the places I train. Use kg or lb the way I wrote my weight; use lb if I gave none. If I mention an injury, a piece of equipment, or a lift I hate in any answer, follow it. Do not ask more questions unless a screenshot is unreadable.
 
 Height, weight and age only tune the starting weights. Do not comment on my body.
 
@@ -51,6 +51,7 @@ For 3 to 12 months of lifting:
 - 5/3/1 For Beginners (3 days, 90+ min, strength): Beginner-friendly 3-day full-body program based on Jim Wendler's 5/3/1 system with FSL supplemental work.
 - Arnold Split (6 days, 60-90 min, muscle): Classic 6-day bodybuilding split pairing chest/back, shoulders/arms, and legs — each trained twice per week with high volume
 - Arnold's Golden Six (3 days, 60-90 min, muscle): Arnold Schwarzenegger’s 3 day beginner hypertrophy program
+- beBEAR 5-Day Upper/Lower/Push/Pull/Lower (5 days, 45-60 min, muscle): Five days a week. Upper, quad-focused lower, push, pull, glute-focused lower, all in rep ranges with double progression.
 - Barbell Medicine: The Bridge (4 days, 60-90 min, strength): An 8-week post-novice program introducing RPE-based autoregulation across Squat, Bench, Deadlift, and OHP, designed to bridge the gap between linear progression and intermediate training.
 - Bro Split (5 days, 60-90 min, muscle): Classic 5-day bodybuilding split — one muscle group per day for maximum volume and focus
 - Coolcicada PPL (6 days, 60-90 min, muscle): 6-day Push/Pull/Legs with heavy compounds and higher-rep isolation accessories for hypertrophy

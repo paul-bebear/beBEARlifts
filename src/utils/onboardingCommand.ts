@@ -2,14 +2,22 @@ import { lb } from "lens-shmens";
 import { IThunk } from "../ducks/types";
 import { Thunk_applyImport } from "../ducks/thunks";
 import { IState, updateState } from "../models/state";
-import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
+import { IOnboardingEvent, IOnboardingState, Onboarding_selectedCard } from "../models/onboarding";
 import { IOnboardingHistory, OnboardingHistory_build } from "../models/onboardingHistory";
 import { ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords } from "./importFromLiftosaur";
-import { IHistoryRecord, ISettings } from "../types";
+import { IHistoryRecord, IProgram, ISettings } from "../types";
 import { OnboardingAnswer_parse } from "../models/onboardingAnswer";
-import { OnboardingPicker_pick } from "../models/onboardingPicker";
 import { OnboardingProgram_prepare } from "../models/onboardingProgram";
-import { OnboardingAnswers_body } from "../models/onboardingAnswers";
+import {
+  OnboardingAnswers_body,
+  OnboardingAnswers_gymEquipment,
+  OnboardingAnswers_planInput,
+  OnboardingAnswers_programGoal,
+} from "../models/onboardingAnswers";
+import { BearPlace_equipmentKeys, BearPlace_resolve, BearPlan_text } from "../models/onboardingPlanStub";
+import { Equipment_getCurrentGym } from "../models/equipment";
+import { ProgramGoal_set } from "../models/programGoal";
+import { ProgramGoalStore } from "./programGoalStore";
 import { AiRequest_post, AiRequest_text } from "./aiRequest";
 import { AiConsent_ensure } from "./aiConsentClient";
 import { UidFactory_generateUid } from "./generator";
@@ -68,39 +76,43 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
       const settings = { ...state.storage.settings, units: form.answers.unit };
       const programs = [...(state.programs ?? []), ...OnboardingCatalog_programs()];
       const prepare = (
-        answer: Parameters<typeof OnboardingProgram_prepare>[0]
+        answer: Parameters<typeof OnboardingProgram_prepare>[0],
+        name?: string
       ): ReturnType<typeof OnboardingProgram_prepare> =>
-        OnboardingProgram_prepare(answer, programs, settings, UidFactory_generateUid(8), Date.now());
-      const fallback = (reason?: string): void => {
-        const picked = OnboardingPicker_pick(form.answers);
-        if (form.images.length > 0 || form.answers.plan.trim() !== "") {
-          picked.note += " Screenshots and custom plan details need AI. This built-in plan does not import them.";
+        OnboardingProgram_prepare(answer, programs, settings, UidFactory_generateUid(8), Date.now(), name);
+      if (form.command === "apply") {
+        const card = Onboarding_selectedCard(form);
+        let program: IProgram;
+        let days: number;
+        if (card != null) {
+          const answer = { liftoscript: BearPlan_text(card.params), note: "", renamed: [] };
+          program = prepare(answer, card.name).program;
+          days = card.days;
+        } else if (form.result != null) {
+          program = form.result.program ?? prepare(form.result.answer).program;
+          days = form.result.days;
+        } else {
+          return;
         }
-        const answer = OnboardingAnswer_parse(picked, OnboardingCatalog_ids());
-        const prepared = prepare(answer);
-        emit({
-          type: "ready",
-          run,
-          result: {
-            answer,
-            program: prepared.program,
-            name: prepared.program.name,
-            days: OnboardingCatalog_days(answer.builtin!) ?? prepared.days,
-            fallbackReason: reason,
-          },
-        });
-      };
-      if (form.command === "apply" && form.result != null) {
-        const program = form.result.program ?? prepare(form.result.answer).program;
-        const body = OnboardingAnswers_body(form.answers, new Date().getFullYear());
+        const now = Date.now();
+        const body = OnboardingAnswers_body(form.answers, days, new Date(now).getFullYear());
         await FoodLogStore_update((log) => FoodLog_setProfile(log, { ...log.profile, ...body.profile }));
-        const imported = form.result.history;
-        if (form.importHistory && imported != null) {
+        await ProgramGoalStore.update((log) =>
+          log.current != null
+            ? log
+            : ProgramGoal_set(log, OnboardingAnswers_programGoal(form.answers, now, body.weight))
+        );
+        const imported = form.result?.history;
+        if (card == null && form.importHistory && imported != null) {
           const fresh = OnboardingHistory_build(imported.records, imported.customExercises, getState().storage.history);
           if (fresh.records.length > 0) {
             await Thunk_applyImport(fresh.records, fresh.customExercises, "liftosaurCsv")(dispatch, getState, env);
           }
         }
+        const gymId = Equipment_getCurrentGym(getState().storage.settings).id;
+        const equipmentKeys = BearPlace_equipmentKeys(
+          BearPlace_resolve(OnboardingAnswers_planInput(form.answers).picks)
+        );
         updateState(
           dispatch,
           [
@@ -110,6 +122,15 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
               .recordModify((p) => [...p, program]),
             lb<IState>().p("storage").p("currentProgramId").record(program.id),
             lb<IState>().p("storage").p("settings").p("units").record(form.answers.unit),
+            lb<IState>()
+              .p("storage")
+              .p("settings")
+              .p("gyms")
+              .recordModify((gyms) =>
+                gyms.map((g) =>
+                  g.id === gymId ? { ...g, equipment: OnboardingAnswers_gymEquipment(g.equipment, equipmentKeys) } : g
+                )
+              ),
             ...(body.weight == null
               ? []
               : [
@@ -119,7 +140,7 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
                     .p("weight")
                     .p("weight")
                     .recordModify((weights) =>
-                      Stats_insertByTimestamp(weights, { vtype: "stat", value: body.weight!, timestamp: Date.now() })
+                      Stats_insertByTimestamp(weights, { vtype: "stat", value: body.weight!, timestamp: now })
                     ),
                 ]),
           ],
@@ -127,8 +148,8 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         );
         return;
       }
-      if (form.command === "fallback" || !(await AiConsent_ensure())) {
-        fallback();
+      if (!(await AiConsent_ensure())) {
+        emit({ type: "fallback", run, reason: "AI is turned off in this app." });
         return;
       }
       let previousAnswer: string | undefined;
@@ -140,7 +161,7 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
           onboardTimeoutMs
         );
         if (!result.ok) {
-          fallback(result.error);
+          emit({ type: "fallback", run, reason: result.error });
           return;
         }
         previousAnswer = AiRequest_text(result.body);
@@ -167,7 +188,7 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
           validationError = error instanceof Error ? error.message : "The answer could not be read.";
         }
       }
-      throw new Error(`${validationError} Use a built-in plan or edit your answers and try again.`);
+      throw new Error(`${validationError} Pick a beBEAR plan, or change the details and try again.`);
     } catch (error) {
       emit({ type: "failed", run, error: error instanceof Error ? error.message : "Setup failed. Try again." });
     }

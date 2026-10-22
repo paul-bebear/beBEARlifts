@@ -1,30 +1,35 @@
-import { IOnboardingAnswers, OnboardingAnswers_empty } from "./onboardingAnswers";
+import { IOnboardingAnswers, OnboardingAnswers_empty, OnboardingAnswers_planInput } from "./onboardingAnswers";
 import { IOnboardingAnswer } from "./onboardingAnswer";
 import { IOnboardingHistory } from "./onboardingHistory";
 import { Friends_normalizeHandle } from "./friends";
 import { IProgram } from "../types";
+import { BearPlan_recommend, IBearPlanCard } from "./onboardingPlanStub";
 
 export interface IOnboardingResult {
   answer: IOnboardingAnswer;
   name: string;
   days: number;
   program?: IProgram;
-  fallbackReason?: string;
   history?: IOnboardingHistory;
 }
 
+export type IOnboardingStep = "welcome" | "place" | "about" | "want" | "import" | "working" | "done" | "plan";
+
 export interface IOnboardingState {
-  step: "auth" | "goal" | "body" | "plan" | "working" | "done" | "manual";
+  step: IOnboardingStep;
   answers: IOnboardingAnswers;
   images: string[];
   invite: string;
   useAi: boolean;
-  command?: "prepare" | "fallback" | "apply";
+  command?: "prepare" | "apply";
   // Each command gets a new run number. A late answer from a run the user abandoned carries the old number.
   run: number;
+  cards: IBearPlanCard[];
+  selected: number;
   result?: IOnboardingResult;
   importHistory: boolean;
   error?: string;
+  notice?: string;
   resizing: boolean;
 }
 
@@ -32,7 +37,9 @@ export type IOnboardingEvent =
   | { type: "answers"; patch: Partial<IOnboardingAnswers> }
   | { type: "invite"; value: string }
   | { type: "auth"; signedIn: boolean }
-  | { type: "next" | "skip" | "back" | "manual" | "start" | "fallback" | "resizing" | "toggleHistory" }
+  | { type: "next" | "back" | "recommend" | "import" | "start" | "resizing" | "toggleHistory" }
+  | { type: "pick"; index: number }
+  | { type: "fallback"; reason?: string; run?: number }
   | { type: "images"; images: string[] }
   | { type: "removeImage"; index: number }
   | { type: "ready"; result: IOnboardingResult; run?: number }
@@ -40,28 +47,90 @@ export type IOnboardingEvent =
 
 export const Onboarding_maxImageChars = 3_500_000;
 
+const backSteps: Partial<Record<IOnboardingStep, IOnboardingStep>> = {
+  place: "welcome",
+  about: "place",
+  want: "about",
+  import: "want",
+  plan: "want",
+  done: "import",
+};
+
 export function Onboarding_empty(
   invite: string = "",
   answers: IOnboardingAnswers = OnboardingAnswers_empty()
 ): IOnboardingState {
   return {
-    step: "auth",
+    step: "welcome",
     answers,
     images: [],
     invite,
     useAi: false,
     run: 0,
+    cards: [],
+    selected: 0,
     importHistory: true,
     resizing: false,
   };
+}
+
+export function Onboarding_canContinue(state: IOnboardingState): boolean {
+  return state.step !== "place" || state.answers.places.length > 0;
+}
+
+const mainActions: Partial<Record<IOnboardingStep, { label: string; event: IOnboardingEvent }>> = {
+  place: { label: "Next", event: { type: "next" } },
+  about: { label: "Next", event: { type: "next" } },
+  want: { label: "Recommend a plan", event: { type: "recommend" } },
+  import: { label: "Build my plan", event: { type: "next" } },
+  plan: { label: "Start", event: { type: "start" } },
+  done: { label: "Start", event: { type: "start" } },
+};
+
+export function Onboarding_mainAction(
+  state: IOnboardingState
+): { label: string; event: IOnboardingEvent; enabled: boolean } | undefined {
+  const action = mainActions[state.step];
+  if (action == null) {
+    return undefined;
+  }
+  if (!Onboarding_canContinue(state)) {
+    return { ...action, label: "Pick at least one", enabled: false };
+  }
+  return { ...action, enabled: state.command == null && !state.resizing };
+}
+
+export function Onboarding_canGoBack(state: IOnboardingState): boolean {
+  return state.command == null && backSteps[state.step] != null;
+}
+
+export function Onboarding_selectedCard(state: IOnboardingState): IBearPlanCard | undefined {
+  return state.step === "plan" ? state.cards[state.selected] : undefined;
 }
 
 function command(state: IOnboardingState, next: NonNullable<IOnboardingState["command"]>): IOnboardingState {
   return { ...state, command: next, run: state.run + 1, error: undefined };
 }
 
+function recommend(state: IOnboardingState, notice?: string): IOnboardingState {
+  return {
+    ...state,
+    step: "plan",
+    command: undefined,
+    cards: BearPlan_recommend(OnboardingAnswers_planInput(state.answers)),
+    selected: 0,
+    result: undefined,
+    error: undefined,
+    notice,
+  };
+}
+
 export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEvent): IOnboardingState {
-  if ((event.type === "ready" || event.type === "failed") && event.run != null && event.run !== state.run) {
+  if (
+    (event.type === "ready" || event.type === "failed" || event.type === "fallback") &&
+    event.run != null &&
+    event.run !== state.run
+  ) {
     return state;
   }
   if (event.type === "ready") {
@@ -77,14 +146,15 @@ export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEve
   if (event.type === "failed") {
     return {
       ...state,
-      step: state.step === "working" ? "plan" : state.step,
+      step: state.step === "working" ? "import" : state.step,
       command: undefined,
       resizing: false,
       error: event.error,
     };
   }
-  if (event.type === "fallback" && state.command === "prepare") {
-    return command({ ...state, step: "working" }, "fallback");
+  if (event.type === "fallback" && state.command !== "apply") {
+    const notice = event.reason == null ? undefined : `Import did not finish: ${event.reason}`;
+    return recommend({ ...state, run: state.run + 1 }, notice);
   }
   if (state.command != null) {
     return state;
@@ -110,54 +180,32 @@ export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEve
   if (event.type === "invite") {
     return { ...state, invite: Friends_normalizeHandle(event.value) };
   }
-  if (event.type === "manual") {
-    return { ...state, step: "manual" };
-  }
-  if (event.type === "auth") {
-    return { ...state, step: "goal", useAi: event.signedIn };
-  }
-  if (event.type === "start" && state.result != null) {
-    return command(state, "apply");
-  }
-  if (event.type === "fallback") {
-    return command({ ...state, step: "working" }, "fallback");
+  if (event.type === "auth" && state.step === "welcome") {
+    return { ...state, step: "place", useAi: event.signedIn, error: undefined };
   }
   if (event.type === "back") {
-    const step = state.step === "body" ? "goal" : state.step === "plan" ? "body" : "auth";
-    return { ...state, step, error: undefined };
+    const step = backSteps[state.step];
+    return step == null ? state : { ...state, step, error: undefined, notice: undefined };
   }
-  if ((event.type === "next" || event.type === "skip") && !state.resizing) {
-    const defaults = OnboardingAnswers_empty();
-    const answers =
-      event.type !== "skip"
-        ? state.answers
-        : state.step === "goal"
-          ? {
-              ...state.answers,
-              goal: defaults.goal,
-              days: defaults.days,
-              minutes: defaults.minutes,
-              equipment: defaults.equipment,
-            }
-          : state.step === "body"
-            ? {
-                ...state.answers,
-                height: "",
-                heightFt: "",
-                heightIn: "",
-                weight: "",
-                age: "",
-                sex: undefined,
-                experience: "new" as const,
-              }
-            : { ...state.answers, plan: "" };
-    if (state.step === "plan") {
-      return command(
-        { ...state, answers, images: event.type === "skip" ? [] : state.images, step: "working" },
-        state.useAi ? "prepare" : "fallback"
-      );
+  if (event.type === "recommend" && state.step === "want") {
+    return recommend(state);
+  }
+  if (event.type === "import" && state.step === "want" && state.useAi) {
+    return { ...state, step: "import", error: undefined };
+  }
+  if (event.type === "pick" && state.step === "plan" && event.index >= 0 && event.index < state.cards.length) {
+    return { ...state, selected: event.index };
+  }
+  if (event.type === "start" && (state.step === "plan" ? state.cards.length > 0 : state.step === "done")) {
+    return command(state, "apply");
+  }
+  if (event.type === "next" && !state.resizing && Onboarding_canContinue(state)) {
+    if (state.step === "import") {
+      return command({ ...state, step: "working" }, "prepare");
     }
-    return { ...state, answers, step: state.step === "goal" ? "body" : "plan", error: undefined };
+    const next: Partial<Record<IOnboardingStep, IOnboardingStep>> = { place: "about", about: "want" };
+    const step = next[state.step];
+    return step == null ? state : { ...state, step, error: undefined };
   }
   return state;
 }

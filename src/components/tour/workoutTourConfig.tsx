@@ -18,12 +18,16 @@ import { IconCog2 } from "../icons/iconCog2";
 import { Reps_isFinished } from "../../models/set";
 import { PlannerProgramExercise_getState } from "../../pages/planner/models/plannerProgramExercise";
 import { ObjectUtils_isNotEmpty } from "../../utils/object";
+import { OfflineOnly_isEnabled } from "../../utils/offlineOnly";
 
 const paraCn = "text-sm leading-relaxed text-text-secondary";
 
 export const workoutTourConfig: ITourConfig = {
   id: "workout",
   shouldStart: (state) => {
+    if (OfflineOnly_isEnabled()) {
+      return false;
+    }
     const screen = getCurrentScreenData()?.name;
     if (screen !== "progress") {
       return false;
