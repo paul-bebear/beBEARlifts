@@ -46,10 +46,12 @@ export function FoodCapture_photo(response: ImagePickerResponse): IFoodCapturePh
     };
   }
   const asset = response.assets?.[0];
-  if (asset?.base64 == null || asset.base64 === "" || !/^image\/(jpeg|png|webp|gif)$/.test(asset.type ?? "")) {
+  // react-native-image-picker 8.2.1 on iOS names JPEG data "image/jpg", including HEIC photos it re-encodes.
+  const type = asset?.type === "image/jpg" ? "image/jpeg" : asset?.type;
+  if (asset?.base64 == null || asset.base64 === "" || !/^image\/(jpeg|png|webp|gif)$/.test(type ?? "")) {
     return { kind: "error", error: "Choose a JPEG or PNG photo, or take a new photo." };
   }
-  return { kind: "photo", dataUrl: `data:${asset.type};base64,${asset.base64}` };
+  return { kind: "photo", dataUrl: `data:${type};base64,${asset.base64}` };
 }
 
 export interface IFoodPhotoState {
