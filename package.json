@@ -43,6 +43,8 @@
     "start:foodapi": "node scripts/food-api-dev.mjs",
     "ensure:localdomain": "test -f localdomain.js || cp localdomain.default.js localdomain.js",
     "build:markdown": "node scripts/build-markdown.js",
+    "build:bear-plans": "TS_NODE_TRANSPILE_ONLY=1 ts-node scripts/build-bear-plans.ts",
+    "prebuild:programs": "npm run build:bear-plans",
     "build:programs": "TS_NODE_TRANSPILE_ONLY=1 ts-node scripts/build-programs.ts",
     "build:exercises": "TS_NODE_TRANSPILE_ONLY=1 ts-node scripts/build-exercises.ts",
     "build:licenses": "TS_NODE_TRANSPILE_ONLY=1 ts-node scripts/build-licenses.ts",

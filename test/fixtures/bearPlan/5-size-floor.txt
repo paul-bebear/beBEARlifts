@@ -1,0 +1,59 @@
+# Week 1
+## Upper
+bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
+  if (completedReps >= reps && reps[1] < 12) {
+    reps += 1
+  }
+~}
+
+Push Up / ...bw
+// Use a low bar, or lie under a sturdy table and pull your chest to the edge.
+Inverted Row / ...bw
+Pike Push Up / ...bw
+// Hold a door frame, or a towel looped round a post, lean back and pull.
+Vertical Row / ...bw
+Dead Bug / ...bw
+Reverse Crunch / ...bw
+
+## Lower 1
+Squat, Bodyweight / ...bw
+Romanian Deadlift, Bodyweight / ...bw
+Reverse Lunge, Bodyweight / ...bw
+// Use a stair or a sturdy chair.
+Step up, Bodyweight / ...bw
+// Stand on a step and let the heels drop.
+Standing Calf Raise, Bodyweight / ...bw
+Dead Bug / ...bw
+
+## Push
+// Hands on a table or a bench.
+Incline Push Up / ...bw
+Push Up / ...bw
+Diamond Push Up / ...bw
+// Hands on a chair behind you.
+Bench Dip / ...bw
+Pike Push Up / ...bw
+Dead Bug / ...bw
+
+## Pull
+// Hold a door frame, or a towel looped round a post, lean back and pull.
+Vertical Row / ...bw
+// Use a low bar, or lie under a sturdy table and pull your chest to the edge.
+Wide Row / ...bw
+Superman / ...bw
+// Use a low bar, or lie under a sturdy table and pull your chest to the edge.
+Inverted Row / ...bw
+Dead Bug / ...bw
+// Lie face down, lift chest and legs.
+Back Extension, Bodyweight / ...bw
+
+## Lower 2
+Single Leg Deadlift, Bodyweight / ...bw
+// Back foot on a chair or a bench.
+Bulgarian Split Squat, Bodyweight / ...bw
+// Shoulders on a couch or a bed.
+Hip Thrust, Bodyweight / ...bw
+Single Leg Glute Bridge Straight Leg / ...bw
+Side Lying Clam / ...bw
+// Stand on a step and let the heels drop.
+Standing Calf Raise, Bodyweight / ...bw

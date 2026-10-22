@@ -1,0 +1,49 @@
+# Week 1
+## Upper A
+bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
+  if (completedReps >= reps && reps[1] < 12) {
+    reps += 1
+  }
+~}
+
+Push Up / ...bw
+// Use a low bar, or lie under a sturdy table and pull your chest to the edge.
+Inverted Row / ...bw
+Pike Push Up / ...bw
+// Hit 3x12? Add a backpack with books and log its weight.
+Pull Up / ...bw
+Chin Up / ...bw
+Triceps Dip / ...bw
+
+## Lower A
+Squat, Bodyweight / ...bw
+Romanian Deadlift, Bodyweight / ...bw
+Reverse Lunge, Bodyweight / ...bw
+Single Leg Glute Bridge Straight Leg / ...bw
+// Stand on a step and let the heels drop.
+Standing Calf Raise, Bodyweight / ...bw
+Hanging Knee Raise / ...bw
+
+## Upper B
+// Hands on a table or a bench.
+Incline Push Up / ...bw
+// Hit 3x12? Add a backpack with books and log its weight.
+Pull Up / ...bw
+// Use a low bar, or lie under a sturdy table and pull your chest to the edge.
+Wide Row / ...bw
+Chest Dip / ...bw
+Superman / ...bw
+// Hands on a chair behind you.
+Bench Dip / ...bw
+
+## Lower B
+Single Leg Deadlift, Bodyweight / ...bw
+// Back foot on a chair or a bench.
+Bulgarian Split Squat, Bodyweight / ...bw
+// Shoulders on a couch or a bed.
+Hip Thrust, Bodyweight / ...bw
+// Use a stair or a sturdy chair.
+Step up, Bodyweight / ...bw
+Side Lying Clam / ...bw
+// Stand on a step and let the heels drop.
+Standing Calf Raise, Bodyweight / ...bw

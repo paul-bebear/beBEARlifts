@@ -7,7 +7,7 @@ shortDescription: Five days a week. Upper, quad-focused lower, push, pull, glute
 isMultiweek: false
 tags: []
 frequency: 5
-age: "3_to_12_months"
+age: "more_than_year"
 duration: "45-60"
 goal: "hypertrophy"
 ---
@@ -16,57 +16,88 @@ A five-day hypertrophy split: Upper, Lower 1 (quad focus), Push, Pull, Lower 2 (
 
 <!-- more -->
 
+## Origin & Philosophy
+
+beBEAR wrote this plan for lifters with a year or more of training. The beBEAR app builds it from the same generator as the [3-day](/programs/bebear-3day) and [4-day](/programs/bebear-4day) plans. Five shorter sessions let each muscle get two hard sessions a week while no single day runs long.
+
+## Who It's For
+
+- Lifters with a year or more of training.
+- Lifters who can train 5 days a week, for about 45 minutes.
+- Goal: build muscle.
+- Works on a bulk or on maintenance. On a cut, drop one set from each isolation lift if you lose reps for several weeks.
+
+## Pros & Cons
+
+**Pros**
+
+- Each muscle gets 2 sessions a week. Legs get two separate days with a different focus each.
+- Sessions take 38 to 44 minutes, because each day has only 6 lifts.
+- Direct arm work on Push and Pull: two triceps lifts and two curls.
+
+**Cons**
+
+- Five days a week is a real time commitment. Missing a day shifts the whole week.
+- [{Bench Press}], [{Chest Fly, Cable}] and [{Lateral Raise, Cable}] appear on both Upper and Push, so chest and side delts get more work than back.
+
 ## Program Structure
 
-The week runs Upper, Lower 1, rest, Push, Pull, Lower 2, rest. A common layout is Monday, Tuesday, Thursday, Friday and Saturday. The app runs the days in order, so any 5 training days work.
+- Split: upper, lower, push, pull, lower.
+- Periodization: double progression, one week that repeats.
+- The week runs Upper, Lower 1, rest, Push, Pull, Lower 2, rest. A common layout is Monday, Tuesday, Thursday, Friday and Saturday. The app runs the days in order, so any 5 training days work.
 
-- Upper: chest, back and shoulders, with one press and one row of each type.
-- Lower 1: quad focus. [{Squat}] leads, then [{Romanian Deadlift}], lunges and [{Leg Extension}]. It ends with a calf and core superset.
-- Push: incline and flat pressing, cable flyes, lateral raises and two triceps extensions.
-- Pull: [{Pull Up}], a lat-focused cable row, rear delts, then biceps.
-- Lower 2: glute focus. [{Deadlift}] leads, then [{Bulgarian Split Squat}], [{Hip Thrust}] and [{Seated Leg Curl}]. It ends with an abductor and calf superset.
+## Exercise Selection & Rationale
 
-Each muscle gets trained 2 times a week. Chest and back get hit on Upper plus Push or Pull. Legs get two separate days with a different focus each.
+- Upper: [{Bench Press}], [{Bent Over Row}], [{Overhead Press}] and [{Lat Pulldown}] give one push and one pull in each direction. [{Chest Fly, Cable}] and [{Lateral Raise, Cable}] finish the day.
+- Lower 1: quad focus. [{Squat}] leads, then [{Romanian Deadlift, Barbell}], [{Lunge, Dumbbell}] and [{Leg Extension}]. Calves and [{Cable Crunch}] finish the day.
+- Push: [{Incline Bench Press, Dumbbell}] and [{Bench Press}], then flyes, lateral raises, [{Triceps Pushdown}] and [{Triceps Extension}].
+- Pull: [{Pull Up}], [{Seated Row}], [{Reverse Fly, Leverage Machine}], [{Preacher Curl}], [{Hammer Curl}] and [{Standing Row Rear Delt With Rope}] for the rear delts.
+- Lower 2: glute focus. [{Deadlift}] leads, then [{Bulgarian Split Squat}], [{Hip Thrust}], [{Seated Leg Curl}], [{Hip Abductor}] and calves.
 
 ## Set & Rep Scheme
 
-- Heavy compounds ([{Squat}], [{Deadlift}], [{Pull Up}]): 3 sets of 6-10.
-- Other compounds and most accessories: 8-12.
-- Isolation and cable work: 10-15.
-- Lateral raises: 10-20, because the side delts respond well to high reps and light weight.
-
-Leave 1-2 reps in the tank on most sets. Go closer to failure on the last set of isolation work.
+- Compound lifts: 3 sets of 8 to 12.
+- Isolation lifts: 2 sets of 12 to 15.
+- [{Pull Up}]: 3 sets, starting at 6 reps and adding 1 rep a session up to 12.
+- Leave 1 or 2 reps in the tank on most sets. Go closer to failure on the last set of isolation work.
 
 ## Progressive Overload
 
-Every exercise uses double progression. Start at the bottom of the range. Add reps each session. When every set reaches the top of the range, the app adds weight and you drop back to the bottom.
+Every lift uses double progression. Start at the bottom of the range. Add reps each session. When every set reaches the top, the app adds weight and you drop back to the bottom.
 
-- Barbell [{Squat}], [{Deadlift}], [{Romanian Deadlift}] and [{Hip Thrust}]: +10lb.
-- Everything else: +5lb.
-- [{Pull Up}] starts at bodyweight. Once you get 3x10, add 5lb on a belt, or keep adding reps if weighted pull-ups are not an option.
+- Barbell [{Squat}], [{Deadlift}], [{Romanian Deadlift, Barbell}] and [{Hip Thrust}]: +10lb.
+- Other compound lifts: +5lb.
+- Isolation lifts: +2.5lb.
+- [{Pull Up}] starts at bodyweight. Once you get 3x12, add weight on a belt or a backpack and log it.
 
 Missed the bottom of the range? That's okay. Keep the weight and try again next session. If you miss it 3 sessions in a row, drop the weight by 10% and build back up.
 
+## How Long to Run It / What Next
+
+Run it as long as you keep adding reps or weight. When most lifts stall for a month, take an easy week at 60% of your weights, then start again.
+
+## Equipment Needed
+
+A gym with a barbell, dumbbells, a cable station, a leg extension, a leg curl, a hip abductor, a rear delt machine and a pull-up bar. The beBEAR app builds the same plan for dumbbells only, street workout bars, or no equipment.
+
 ## Rest Times
 
-- Heavy compounds: 3 minutes.
-- Other compounds: 2 minutes.
-- Isolation work: 90 seconds.
-- Supersets: go straight from the first exercise to the second, then rest 90 seconds.
+- Compound lifts: 90 seconds.
+- Isolation lifts and [{Pull Up}]: 60 seconds.
 
 ## How to Pick Starting Weights
 
-The starting weights are placeholders. Change them in the first week. Pick a weight you can lift for the bottom of the range with 2-3 reps left. Starting light costs one or two sessions. Starting too heavy stalls you from day one.
+The starting weights are placeholders. Change them in the first week. Pick a weight you can lift for the bottom of the range with 2 or 3 reps left. Starting light costs one or two sessions. Starting too heavy stalls you from day one.
 
 ## Common Modifications
 
-- No cable station: swap [{Cable Crossover}] and [{Chest Fly, Cable}] for [{Chest Fly}] with dumbbells, and [{Lateral Raise, Cable}] for [{Lateral Raise}].
-- No hip abductor machine: use [{Hip Abductor, Band}].
-- Short on time: drop the last isolation exercise of each day. That cuts about 8 minutes.
+- No cable station: swap [{Chest Fly, Cable}] for [{Chest Fly}] with dumbbells, and [{Lateral Raise, Cable}] for [{Lateral Raise}].
+- No hip abductor machine: use [{Side Lying Clam}].
+- Short on time: drop the last isolation lift of each day. That cuts about 5 minutes.
 
 <!-- faq -->
 
-### How many days a week is this split?
+### How many days a week is the beBEAR 5-day split?
 
 Five. Upper, Lower 1, Push, Pull and Lower 2, with two rest days. Put the rest days where they fit your week.
 
@@ -74,57 +105,62 @@ Five. Upper, Lower 1, Push, Pull and Lower 2, with two rest days. Put the rest d
 
 You work inside a rep range. Add reps until every set hits the top, then add weight and start again at the bottom.
 
-### Can I do this split while cutting?
+### Can I do the beBEAR 5-day split while cutting?
 
-Yes. Keep the rep ranges and accept that progress slows down. If you lose reps for several weeks, drop one set from each isolation exercise.
+Yes. Keep the rep ranges and accept that progress slows down. If you lose reps for several weeks, drop one set from each isolation lift.
 
-### What are LU Raises?
+### I can't do a pull-up yet. What now?
 
-A dumbbell raise that starts as a lateral raise and finishes overhead. The app logs it as a Lateral Raise. Use a light weight, about half of your normal lateral raise.
+Swap Pull Up for Lat Pulldown in the program editor. Switch back once you can do 3 sets of 6.
 
 ```liftoscript
 # Week 1
 ## Upper
-heavy / used: none / 3x6 / 180s / progress: dp(10lb, 6, 10)
-mid / used: none / 3x8 / 120s / progress: dp(5lb, 8, 12)
-iso / used: none / 3x10 / 90s / progress: dp(5lb, 10, 15)
+build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
+iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
+  if (completedReps >= reps && reps[1] < 12) {
+    reps += 1
+  }
+~}
 
-Bench Press, Dumbbell / ...mid / 35lb
-Incline Row / ...mid / 30lb
-Shoulder Press / ...mid / 2x8 / 25lb
-Lat Pulldown / ...mid / 90lb
-Cable Crossover / ...iso / 2x10 / 20lb
-Lateral Raise, Cable / ...iso / 10lb / progress: dp(5lb, 10, 20)
+Bench Press / ...build / 95lb
+Bent Over Row / ...build / 75lb
+Overhead Press / ...build / 65lb
+Lat Pulldown / ...build / 70lb
+Chest Fly, Cable / ...iso / 15lb
+Lateral Raise, Cable / ...iso / 10lb
 
 ## Lower 1
-Squat / ...heavy / 115lb
-Romanian Deadlift, Barbell / ...mid / 95lb / progress: dp(10lb, 8, 12)
-Lunge, Dumbbell / ...mid / 25lb
-Leg Extension / ...iso / 70lb
-Calf Press on Leg Press / ...iso / 90lb / 0s / superset: A
-Dead Bug / 3x5-10 / 90s / superset: A
+Squat / ...build / 95lb / progress: dp(10lb, 8, 12)
+Romanian Deadlift, Barbell / ...build / 95lb / progress: dp(10lb, 8, 12)
+Lunge, Dumbbell / ...build / 20lb
+Leg Extension / ...iso / 60lb
+Calf Press on Leg Press / ...iso / 90lb
+Cable Crunch / ...iso / 40lb
 
 ## Push
-Incline Bench Press, Dumbbell / ...mid / 35lb
-Chest Fly, Cable / ...iso / 2x10 / 20lb
-Bench Press / ...mid / 95lb
-Lateral Raise / ...iso / 10lb / progress: dp(5lb, 10, 20)
-Triceps Extension / ...iso / 2x10 / 25lb
-Triceps Extension, Cable / ...iso / 2x10 / 20lb
+Incline Bench Press, Dumbbell / ...build / 30lb
+Bench Press / ...build / 95lb
+Chest Fly, Cable / ...iso / 15lb
+Lateral Raise, Cable / ...iso / 10lb
+Triceps Pushdown / ...iso / 40lb
+Triceps Extension / ...iso / 20lb
 
 ## Pull
-Pull Up / ...heavy / 0lb / progress: dp(5lb, 6, 10)
-Seated Row / ...iso / 90lb
+// Hit 3x12? Add a backpack with books and log its weight.
+Pull Up / ...bw
+Seated Row / ...build / 70lb
 Reverse Fly, Leverage Machine / ...iso / 50lb
-Preacher Curl / ...mid / 2x8 / 20lb
-Hammer Curl / ...mid / 2x8 / 25lb
-Face Pull / ...iso / 2x10 / 40lb
+Preacher Curl / ...iso / 20lb
+Hammer Curl / ...iso / 20lb
+Standing Row Rear Delt With Rope / ...iso / 30lb
 
 ## Lower 2
-Deadlift / ...heavy / 135lb
-Bulgarian Split Squat / ...mid / 25lb
-Hip Thrust / ...iso / 135lb / progress: dp(10lb, 10, 15)
-Seated Leg Curl / ...iso / 70lb
-Hip Abductor / ...iso / 70lb / 0s / superset: A
-Seated Calf Raise, Leverage Machine / ...mid / 70lb / 90s / superset: A
+Deadlift / ...build / 135lb / progress: dp(10lb, 8, 12)
+Bulgarian Split Squat / ...build / 20lb
+Hip Thrust / ...build / 95lb / progress: dp(10lb, 8, 12)
+Seated Leg Curl / ...iso / 60lb
+Hip Abductor / ...iso / 60lb
+Calf Press on Leg Press / ...iso / 90lb
 ```

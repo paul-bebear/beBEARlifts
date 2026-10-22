@@ -1,0 +1,50 @@
+# Week 1
+## Upper
+main / used: none / 2x5, 1x5+ / 150s / progress: lp(5lb)
+build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
+iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
+  if (completedReps >= reps && reps[1] < 12) {
+    reps += 1
+  }
+~}
+
+Bench Press / ...main / 95lb
+Bent Over Row / ...build / 75lb
+Overhead Press / ...build / 65lb
+Lat Pulldown / ...build / 70lb
+Chest Fly, Cable / ...iso / 15lb
+Lateral Raise, Cable / ...iso / 10lb
+
+## Lower 1
+Squat / ...main / 95lb / progress: lp(10lb)
+Romanian Deadlift, Barbell / ...build / 95lb / progress: dp(10lb, 8, 12)
+Lunge, Dumbbell / ...build / 20lb
+Leg Extension / ...iso / 60lb
+Calf Press on Leg Press / ...iso / 90lb
+Cable Crunch / ...iso / 40lb
+
+## Push
+Incline Bench Press, Dumbbell / ...main / 30lb
+volume: Bench Press / ...build / 95lb
+Chest Fly, Cable / ...iso / 15lb
+Lateral Raise, Cable / ...iso / 10lb
+Triceps Pushdown / ...iso / 40lb
+Triceps Extension / ...iso / 20lb
+
+## Pull
+// Hit 3x12? Add a backpack with books and log its weight.
+Pull Up / ...bw
+Seated Row / ...main / 70lb
+Reverse Fly, Leverage Machine / ...iso / 50lb
+Preacher Curl / ...iso / 20lb
+Hammer Curl / ...iso / 20lb
+Standing Row Rear Delt With Rope / ...iso / 30lb
+
+## Lower 2
+Deadlift / ...main / 135lb / progress: lp(10lb)
+Bulgarian Split Squat / ...build / 20lb
+Hip Thrust / ...build / 95lb / progress: dp(10lb, 8, 12)
+Seated Leg Curl / ...iso / 60lb
+Hip Abductor / ...iso / 60lb
+Calf Press on Leg Press / ...iso / 90lb

@@ -1,0 +1,42 @@
+# Week 1
+## Full Body A
+build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
+iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
+  if (completedReps >= reps && reps[1] < 12) {
+    reps += 1
+  }
+~}
+run / used: none / 1x1 0lb 600s|0s / warmup: none
+mobility / used: none / 2x1 0lb 45s|15s / warmup: none
+
+Goblet Squat / ...build / 30lb
+// No bench? Press from the floor.
+Bench Press, Dumbbell / ...build / 30lb
+Bent Over One Arm Row / ...build / 30lb
+Single Leg Deadlift / ...build / 25lb
+Lateral Raise / ...iso / 10lb
+// 10 easy minutes. A jog outside counts too.
+High Knee Skips / ...run
+
+## Full Body B
+Romanian Deadlift / ...build / 40lb
+Shoulder Press / ...build / 20lb
+Pullover / ...build / 25lb
+Lunge, Dumbbell / ...build / 20lb
+Skullcrusher, Dumbbell / ...iso / 15lb
+Standing Calf Raise / ...iso / 30lb
+
+## Full Body C
+Squat, Dumbbell / ...build / 25lb
+// Hands on a table or a bench.
+Incline Push Up / ...bw
+Bent Over Row, Dumbbell / ...build / 25lb
+Glute Bridge / ...build / 40lb
+Hammer Curl / ...iso / 15lb
+// Sit in a deep squat. Hold a door frame for balance.
+Assisted Squat / ...mobility
+// Slow, no weight. Sit tall and turn your chest side to side.
+Russian Twist / ...mobility
+// Slow reach to the floor. Feel the back of the leg.
+Single Leg Deadlift, Bodyweight / ...mobility
