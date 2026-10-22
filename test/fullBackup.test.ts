@@ -18,6 +18,7 @@ import { SetClips_empty } from "../src/models/setClips";
 import { RunLog_empty } from "../src/models/runLog";
 import { ProgramGoal_empty, ProgramGoal_set } from "../src/models/programGoal";
 import { Steps_empty, Steps_setManual } from "../src/models/steps";
+import { BearStoreData_empty } from "../src/models/bearStoreData";
 import {
   DailyChecklist_commit,
   DailyChecklist_empty,
@@ -158,5 +159,23 @@ describe("FullBackup", () => {
     const restored = FullBackup_keepSpotifyLogin(MusicLog_empty(), current);
     expect(restored.tokens).to.equal(tokens);
     expect(restored.displayName).to.equal("Paul");
+  });
+
+  it("round-trips the bebear_bear line, celebrated level and seen badges", () => {
+    const bear = { line: "female" as const, celebratedLevel: 9, seenBadges: ["streak-7", "level-9"] };
+    const backup = FullBackup_build(parts({ bear }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).bear).to.deep.equal(bear);
+    expect(backup.readme).to.include("bebear_bear");
+  });
+
+  it("keeps an existing bear when an older backup has no bear", () => {
+    const { bear, ...older } = FullBackup_build(parts({}), now);
+    expect(bear).to.deep.equal(BearStoreData_empty());
+    expect(FullBackup_unwrap(older).bear).to.equal(undefined);
+  });
+
+  it("parses a broken bear in a backup to the empty value", () => {
+    const backup = { ...FullBackup_build(parts({}), now), bear: { line: "bad" } };
+    expect(FullBackup_unwrap(backup).bear).to.deep.equal(BearStoreData_empty());
   });
 });

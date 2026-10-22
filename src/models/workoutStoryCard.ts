@@ -199,12 +199,17 @@ export function WorkoutStoryCard_receipt(
   };
 }
 
-export function WorkoutStoryCard_toNext(tier: IBearTierProgress, settings: ISettings): string {
+export function WorkoutStoryCard_toNext(
+  tier: IBearTierProgress,
+  settings: ISettings,
+  lifetimeKg: number = tier.tier.minKg
+): string {
   if (tier.next == null) {
-    return "Top of the food chain";
+    const total = settings.units === "lb" ? lifetimeKg / kgPerLb : lifetimeKg;
+    return `${Math.round(total).toLocaleString("en-US")} ${settings.units} lifetime`;
   }
   const amount = settings.units === "lb" ? tier.kgToNext / kgPerLb : tier.kgToNext;
-  return `${Math.ceil(amount).toLocaleString("en-US")} ${settings.units} to ${tier.next.name}`;
+  return `${Math.ceil(amount).toLocaleString("en-US")} ${settings.units} to Level ${tier.next.level} · ${tier.next.name}`;
 }
 
 export function WorkoutStoryCard_iconCount(count: number): number {
@@ -219,8 +224,8 @@ export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShare
   const equivalent = LiftEquivalents_pick(stats.weightKg, input.seed);
   return {
     stats,
-    tier,
-    toNext: WorkoutStoryCard_toNext(tier, settings),
+    tier: { ...tier, tier: { ...tier.tier, name: `Level ${tier.tier.level} · ${tier.tier.name}` } },
+    toNext: WorkoutStoryCard_toNext(tier, settings, lifetime.afterKg),
     badge: BearBadges_forRecord(achievements.badges, record),
     receipt: WorkoutStoryCard_receipt(record, settings, prs),
     equivalent,
