@@ -192,6 +192,13 @@ describe("Bear_state", () => {
     expect([state.line, state.level.tier.level, state.level.isTierUp]).to.deep.equal(["female", 7, false]);
   });
 
+  it("takes the onboarding line until the user picks one", () => {
+    expect(Bear_state(sources({ defaultLine: "female" }), now).line).to.equal("female");
+    expect(
+      Bear_state(sources({ defaultLine: "female", bear: { ...BearStoreData_empty(), line: "male" } }), now).line
+    ).to.equal("male");
+  });
+
   it("keeps a reached level pending until its celebration is saved", () => {
     const history = [0, 24, 48, 72, 96].map((hours) => workout(now - hours * hourMs));
     const data = sources({ history });
@@ -230,6 +237,12 @@ describe("BearStoreData", () => {
       expect(BearStoreData_parse(data)).to.deep.equal(data);
       expect(BearStoreData_parse(data).seenBadges).not.to.equal(data.seenBadges);
     }
+  });
+
+  it("keeps the seeded flag and allows a missing line", () => {
+    const data = { celebratedLevel: 4, seenBadges: [], seeded: true };
+    expect(BearStoreData_parse(data)).to.deep.equal(data);
+    expect(BearStoreData_parse({ ...data, seeded: "yes" })).to.deep.equal({ celebratedLevel: 4, seenBadges: [] });
   });
 
   it("returns a fresh empty value for unknown or broken input", () => {

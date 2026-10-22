@@ -47,6 +47,20 @@ function workout(at: number = start, minutes: number = 30, sets: ISet[] = [set(1
 }
 
 describe("BearGrowth", () => {
+  it("matches the per-workout count across a long history, including overlapping workouts", () => {
+    const history = Array.from({ length: 40 }, (_, i) => workout(start + i * dayMs, 30, [set(60 + i * 3)]));
+    const before = workout(start + 41 * dayMs, 30, [set(150)]);
+    const after = workout(start + 42 * dayMs, 30, [set(190)]);
+    const overlapping = workout(start + 41 * dayMs + 10 * minuteMs, 40 * 60, [set(300)]);
+    const growth = BearGrowth_history([...history, before, after, overlapping], settings);
+    const earlier: IHistoryRecord[] = [];
+    for (const counted of growth.workouts) {
+      expect(counted.countedKg).to.equal(BearGrowth_countedKg(counted.record, earlier, settings));
+      earlier.push(counted.record);
+    }
+    expect(growth.workouts.length).to.equal(43);
+  });
+
   it("counts at ten minutes and rejects one millisecond less", () => {
     const record = workout(start, 10);
     expect(BearGrowth_countedKg(record, [], settings)).to.equal(1000);

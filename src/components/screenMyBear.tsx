@@ -1,33 +1,28 @@
-import { JSX, ReactNode } from "react";
+import { JSX, ReactNode, useMemo } from "react";
 import { Pressable, View } from "react-native";
-import { useTrackedDispatch } from "../navigation/TrackedStateContext";
+import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { Thunk_pushScreen } from "../ducks/thunks";
+import { IDispatch } from "../ducks/types";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { IconCog2 } from "./icons/iconCog2";
-import { BearMark } from "./shareCards/bearMark";
-import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { ProgressSections } from "./screenProgressDashboard";
 import { CheckInChart } from "./checkInChart";
+import { BearScene } from "./bearScene";
+import { BearPanel } from "./bearPanel";
+import { useBear } from "../utils/useBear";
+import { BearStore } from "../utils/bearStore";
+import { NotesStore } from "../utils/notesStore";
+import { BearBoard_tiles, IBearBoardTarget } from "../models/bearBoard";
+import { BearCelebration_setLine } from "../models/bearCelebration";
+import { IBearLine } from "../models/bearStoreData";
+import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 
 interface IMyBearLayoutProps {
   head: ReactNode;
   checkIns?: ReactNode;
   children: ReactNode;
-}
-
-function BearHeadPlaceholder(): JSX.Element {
-  return (
-    <View className="items-center py-4" testID="my-bear-head" data-testid="my-bear-head">
-      <View
-        className="items-center justify-center rounded-full"
-        style={{ width: 120, height: 120, backgroundColor: T.honey }}
-      >
-        <BearMark size={84} color={T.greenDark} faceColor={T.honey} />
-      </View>
-    </View>
-  );
 }
 
 export function MyBearLayout(props: IMyBearLayoutProps): JSX.Element {
@@ -36,6 +31,49 @@ export function MyBearLayout(props: IMyBearLayoutProps): JSX.Element {
       {props.head}
       {props.checkIns}
       {props.children}
+    </View>
+  );
+}
+
+function openBoardTarget(dispatch: IDispatch, target: IBearBoardTarget): void {
+  if (target === "journal") {
+    dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
+  } else {
+    dispatch(Thunk_pushScreen(target));
+  }
+}
+
+function setLine(line: IBearLine): void {
+  BearStore.update((store) => BearCelebration_setLine(store, line)).catch(() => undefined);
+}
+
+function MyBearHead(): JSX.Element {
+  const dispatch = useTrackedDispatch();
+  const tracked = useTrackedState();
+  const history = untrack(tracked.storage.history);
+  const stats = untrack(tracked.storage.stats);
+  const settings = untrack(tracked.storage.settings);
+  const notes = NotesStore.use();
+  const { state, plannedPerWeek } = useBear();
+  const now = Date.now();
+  const tiles = useMemo(
+    () =>
+      BearBoard_tiles({
+        history,
+        workouts: state.workouts,
+        stats,
+        notes,
+        units: settings.units,
+        plannedPerWeek,
+        weekStart: DateUtils_firstDayOfWeekTimestamp(now, settings.startWeekFromMonday),
+        now,
+      }),
+    [history, state, stats, notes, settings, plannedPerWeek]
+  );
+  return (
+    <View testID="my-bear-head" data-testid="my-bear-head" className="pt-2">
+      <BearScene state={state} tiles={tiles} onTile={(tile) => openBoardTarget(dispatch, tile.target)} />
+      <BearPanel state={state} now={now} onLine={setLine} />
     </View>
   );
 }
@@ -58,7 +96,7 @@ export function ScreenMyBear(): JSX.Element {
   });
   return (
     <NavScreenContent>
-      <MyBearLayout head={<BearHeadPlaceholder />} checkIns={<CheckInChart />}>
+      <MyBearLayout head={<MyBearHead />} checkIns={<CheckInChart />}>
         <ProgressSections />
       </MyBearLayout>
     </NavScreenContent>

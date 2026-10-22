@@ -1440,6 +1440,7 @@ export function Thunk_pushScreen<T extends IScreen>(
       "measurements",
       "music",
       "reports",
+      "reportsHub",
       "bodyScans",
       "runs",
       "goalWizard",

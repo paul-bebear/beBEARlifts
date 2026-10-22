@@ -31,7 +31,6 @@ import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 import { WeekInsights } from "./weekInsights";
 import { useFoodLog } from "../utils/foodLogStore";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
-import { IconCog2 } from "./icons/iconCog2";
 import { IconStats } from "./icons/iconStats";
 import { IconFood } from "./icons/iconFood";
 import { IconBarbell2 } from "./icons/iconBarbell2";
@@ -39,7 +38,6 @@ import { IconGraphs } from "./icons/iconGraphs";
 import { IconChevronRight } from "./icons/iconFoodUi";
 import { IconSpeaker } from "./icons/iconSpeaker";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
-import { RunSensors_isAvailable } from "../utils/runSensors";
 import { CloudRestoreBanner } from "./cloudRestoreBanner";
 
 function ProgramCardView(props: { card: IProgramCard; onPress: () => void }): JSX.Element {
@@ -221,19 +219,11 @@ export function ProgressSections(): JSX.Element {
       <ProgressStepsCard steps={hub.steps} onPress={() => dispatch(Thunk_pushScreen("steps"))} />
       <ProgressPhotosCard photos={hub.photos} onPress={() => dispatch(Thunk_pushScreen("progressPhotos"))} />
       <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">More</Text>
-      {OfflineOnly_isEnabled() && RunSensors_isAvailable() && (
-        <LinkRow
-          testID="progress-runs"
-          icon={<IconGraphs color={iconColor} />}
-          title="Runs"
-          onPress={() => dispatch(Thunk_pushScreen("runs"))}
-        />
-      )}
       <LinkRow
-        testID="progress-graphs"
+        testID="progress-reports-hub"
         icon={<IconGraphs color={iconColor} />}
-        title="Graphs"
-        onPress={() => dispatch(Thunk_pushScreen("graphsList"))}
+        title="Reports"
+        onPress={() => dispatch(Thunk_pushScreen("reportsHub"))}
       />
       <LinkRow
         testID="progress-measurements"
@@ -255,26 +245,6 @@ export function ProgressSections(): JSX.Element {
           onPress={() => dispatch(Thunk_pushScreen("music"))}
         />
       )}
-      {OfflineOnly_isEnabled() && (
-        <LinkRow
-          testID="progress-reports"
-          icon={<IconGraphs color={iconColor} />}
-          title="Workout reports"
-          onPress={() => dispatch(Thunk_pushScreen("reports"))}
-        />
-      )}
-      <LinkRow
-        testID="progress-exercise-stats"
-        icon={<IconBarbell2 />}
-        title="Exercise stats"
-        onPress={() => dispatch(Thunk_pushScreen("exercises"))}
-      />
-      <LinkRow
-        testID="progress-settings-row"
-        icon={<IconCog2 color={iconColor} size={20} />}
-        title="Settings, backup and account"
-        onPress={() => dispatch(Thunk_pushScreen("settings"))}
-      />
     </View>
   );
 }
