@@ -5,6 +5,7 @@ import { useTrackedState, useTrackedDispatch, untrack } from "../TrackedStateCon
 import { NavScreenContent } from "../NavScreenContent";
 import { buildNavCommon } from "../utils";
 import { OnboardingChat } from "../../components/onboardingChat";
+import { OnboardingColors } from "../../components/onboardingStepFrame";
 import { navigateTo } from "../navigationService";
 import { useNavOptions } from "../useNavOptions";
 import { ScreenUnitSelector } from "../../components/screenUnitSelector";
@@ -31,7 +32,7 @@ export function NavScreenFirst(): React.JSX.Element {
     }
   }, [state.storage.currentProgramId]);
   return (
-    <View className="flex-1 bg-background-default" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: OnboardingColors.bg }}>
       <OnboardingChat dispatch={dispatch}>{null}</OnboardingChat>
     </View>
   );

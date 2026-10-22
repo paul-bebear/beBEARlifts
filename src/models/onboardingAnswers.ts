@@ -15,8 +15,11 @@ import { Settings_defaultEquipment } from "./settings";
 import { IBearPlacePick } from "./bearPlace";
 import { IBearGoal } from "./bearPlan";
 import { IBearPlanInput } from "./bearPlanRecommend";
+import { IBearLine } from "./bearStoreData";
 
 export interface IOnboardingAnswers {
+  name: string;
+  bearLine?: IBearLine;
   places: IBearPlacePick[];
   goal: IBearGoal;
   agile: boolean;
@@ -45,6 +48,7 @@ export function OnboardingAnswers_empty(locale: string = "en-US"): IOnboardingAn
   const region = locale.split(/[-_]/)[1]?.toUpperCase();
   const imperial = region == null || imperialRegions.includes(region);
   return {
+    name: "",
     places: [],
     goal: "size",
     agile: false,

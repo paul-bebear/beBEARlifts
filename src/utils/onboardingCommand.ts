@@ -2,7 +2,13 @@ import { lb } from "lens-shmens";
 import { IThunk } from "../ducks/types";
 import { Thunk_applyImport } from "../ducks/thunks";
 import { IState, updateState } from "../models/state";
-import { IOnboardingEvent, IOnboardingState, Onboarding_selectedCard } from "../models/onboarding";
+import {
+  IOnboardingEvent,
+  IOnboardingState,
+  Onboarding_inviteToSave,
+  Onboarding_selectedCard,
+} from "../models/onboarding";
+import { InviteClient_save } from "./inviteClient";
 import { IOnboardingHistory, OnboardingHistory_build } from "../models/onboardingHistory";
 import { ImportFromLiftosaur_convertLiftosaurCsvToHistoryRecords } from "./importFromLiftosaur";
 import { IHistoryRecord, IProgram, ISettings } from "../types";
@@ -20,6 +26,7 @@ import { BearPlan_text } from "../models/bearPlan";
 import { Equipment_getCurrentGym } from "../models/equipment";
 import { ProgramGoal_set } from "../models/programGoal";
 import { ProgramGoalStore } from "./programGoalStore";
+import { BearStore } from "./bearStore";
 import { AiRequest_post, AiRequest_text } from "./aiRequest";
 import { AiConsent_ensure } from "./aiConsentClient";
 import { UidFactory_generateUid } from "./generator";
@@ -128,6 +135,14 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
             ? log
             : ProgramGoal_set(log, OnboardingAnswers_programGoal(form.answers, now, body.weight))
         );
+        const line = form.answers.bearLine;
+        if (line != null) {
+          await BearStore.update((bear) => ({ ...bear, line }));
+        }
+        const invite = Onboarding_inviteToSave(form);
+        if (invite != null) {
+          await InviteClient_save(invite);
+        }
         const imported = form.result?.history;
         if (card == null && form.importHistory && imported != null) {
           const fresh = OnboardingHistory_build(imported.records, imported.customExercises, getState().storage.history);

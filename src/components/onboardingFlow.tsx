@@ -1,33 +1,62 @@
-import { JSX, useEffect, useReducer, useRef, useState } from "react";
+import { JSX, ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import { ActivityIndicator, Platform, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IDispatch } from "../ducks/types";
 import { OnboardingAnswers_empty } from "../models/onboardingAnswers";
-import { Onboarding_canGoBack, Onboarding_empty, Onboarding_mainAction, Onboarding_reduce } from "../models/onboarding";
+import {
+  IOnboardingState,
+  Onboarding_canGoBack,
+  Onboarding_canSkip,
+  Onboarding_current,
+  Onboarding_empty,
+  Onboarding_mainAction,
+  Onboarding_progress,
+  Onboarding_reduce,
+} from "../models/onboarding";
+import { IOnboardingPlatform, IOnboardingStepDef } from "../models/onboardingSteps";
 import { OnboardingCommand_run } from "../utils/onboardingCommand";
 import { CloudStore } from "../utils/supabaseClient";
 import { InviteClient_save, InviteStore } from "../utils/inviteClient";
-import { OnboardingImportedPlan, OnboardingQuestions, OnboardingWantQuestions } from "./onboardingQuestions";
-import { OnboardingWelcome } from "./onboardingWelcome";
-import { OnboardingPlanCards } from "./onboardingPlanCards";
-import { OnboardingAboutQuestions, OnboardingPlaceQuestions } from "./onboardingProfileQuestions";
-import { OnboardingAction } from "./onboardingControls";
+import { OnboardingImportedPlan, OnboardingQuestions } from "./onboardingQuestions";
 import { Text } from "./primitives/text";
 import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
 import { useTabBarContentPadding } from "../navigation/useTabBarContentPadding";
 import { SystemKeyboardSpacer } from "./systemKeyboardSpacer";
+import { OnboardingButton, OnboardingColors as C, OnboardingStepFrame } from "./onboardingStepFrame";
+import { OnboardingChoiceView, OnboardingHold, OnboardingLoading, OnboardingPermission } from "./onboardingStepKinds";
+import { OnboardingLift, OnboardingMeasure, OnboardingTextStep } from "./onboardingStepInputs";
+import { OnboardingResult, OnboardingSay } from "./onboardingStepSay";
+import { OnboardingPlans, OnboardingSignInStep } from "./onboardingStepPlans";
 
-export function OnboardingFlow(props: { dispatch: IDispatch; language: string; invite?: string }): JSX.Element {
+function platformOf(): IOnboardingPlatform {
+  return Platform.OS === "ios" || Platform.OS === "android" ? Platform.OS : "web";
+}
+
+function LightCard(props: { children: ReactNode }): JSX.Element {
+  return <View className="gap-4 p-4 rounded-2xl bg-background-default">{props.children}</View>;
+}
+
+export function OnboardingFlow(props: {
+  dispatch: IDispatch;
+  language: string;
+  invite?: string;
+  steps?: readonly IOnboardingStepDef[];
+}): JSX.Element {
   const cloud = CloudStore.use();
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const pending = InviteStore.use();
   const insets = useSafeAreaInsets();
   const tabBarPadding = useTabBarContentPadding();
   const [form, emit] = useReducer(Onboarding_reduce, undefined, () =>
-    Onboarding_empty(props.invite, OnboardingAnswers_empty(props.language))
+    Onboarding_empty({
+      invite: props.invite,
+      answers: OnboardingAnswers_empty(props.language),
+      platform: platformOf(),
+      steps: props.steps,
+    })
   );
-  const [hadInvite] = useState(() => form.invite !== "");
+  const [saving, setSaving] = useState(false);
   const screen = useRef<ScrollView>(null);
   const content = useRef<View>(null);
   useEffect(() => {
@@ -35,7 +64,7 @@ export function OnboardingFlow(props: { dispatch: IDispatch; language: string; i
     if (Platform.OS === "web") {
       content.current?.focus();
     }
-  }, [form.step]);
+  }, [form.visit, form.at.phase]);
   useEffect(() => {
     if (form.command != null) {
       props.dispatch(OnboardingCommand_run(form, emit));
@@ -46,94 +75,144 @@ export function OnboardingFlow(props: { dispatch: IDispatch; language: string; i
       emit({ type: "invite", value: pending.handle });
     }
   }, [pending.handle]);
-  const busy = form.command != null || form.resizing;
+  const canImport = cloud.session != null && showAi;
+  useEffect(() => {
+    emit({ type: "capability", canImport });
+  }, [canImport]);
+  const busy = form.command != null || form.resizing || saving;
+  const step = Onboarding_current(form);
   const main = Onboarding_mainAction(form);
+
+  const onStart = (): void => {
+    setSaving(true);
+    InviteClient_save(form.invite)
+      .then(() => emit({ type: "auth", signedIn: canImport }))
+      .catch(() => emit({ type: "failed", error: "Could not save the invite. Try again." }))
+      .finally(() => setSaving(false));
+  };
+  const onMain = (): void => {
+    if (main == null) {
+      return;
+    }
+    if (step?.kind === "choice" && step.field === "source" && form.source === "import" && form.useAi) {
+      AiConsent_ensure().then((ok) =>
+        emit(ok ? { type: "next", visit: form.visit } : { type: "failed", error: "Import needs AI turned on." })
+      );
+    } else {
+      emit(main.event);
+    }
+  };
+
   return (
     <ScrollView
       ref={screen}
-      className="flex-1 bg-background-default"
+      className="flex-1"
+      style={{ backgroundColor: C.bg }}
       contentContainerStyle={{ flexGrow: 1, padding: 20, paddingBottom: Math.max(32, insets.bottom, tabBarPadding) }}
       automaticallyAdjustKeyboardInsets
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
-      testID={`onboarding-${form.step}`}
+      testID={`onboarding-${form.at.phase === "flow" ? form.at.id : form.at.phase}`}
     >
-      <View ref={content} tabIndex={-1} className="flex-1 w-full max-w-lg gap-5 mx-auto">
-        {Onboarding_canGoBack(form) && (
-          <OnboardingAction onPress={() => emit({ type: "back" })}>‹ Back</OnboardingAction>
-        )}
-        {form.step === "welcome" ? (
-          <OnboardingWelcome
-            form={form}
-            emit={emit}
-            dispatch={props.dispatch}
-            signedIn={cloud.session != null}
-            showInvite={hadInvite || pending.handle != null}
-            busy={busy}
-            onContinue={() =>
-              InviteClient_save(form.invite)
-                .then(() => emit({ type: "auth", signedIn: cloud.session != null && showAi }))
-                .catch(() => emit({ type: "failed", error: "Could not save the invite. Try again." }))
-            }
-          />
-        ) : form.step === "place" ? (
-          <OnboardingPlaceQuestions a={form.answers} emit={emit} />
-        ) : form.step === "about" ? (
-          <OnboardingAboutQuestions a={form.answers} emit={emit} />
-        ) : form.step === "want" ? (
-          <OnboardingWantQuestions a={form.answers} emit={emit} />
-        ) : form.step === "import" ? (
-          <OnboardingQuestions form={form} emit={emit} />
-        ) : form.step === "working" ? (
-          <View className="gap-4" accessibilityLiveRegion="polite">
-            <ActivityIndicator />
-            <Text>Building your plan… This can take up to a minute.</Text>
-            <OnboardingAction onPress={() => emit({ type: "fallback" })}>Stop and show beBEAR plans</OnboardingAction>
-          </View>
-        ) : form.step === "plan" ? (
-          <OnboardingPlanCards
-            cards={form.cards}
-            selected={form.selected}
-            busy={busy}
-            onPick={(index) => emit({ type: "pick", index })}
-          />
-        ) : (
-          <OnboardingImportedPlan form={form} emit={emit} busy={busy} />
-        )}
-        {form.notice != null && <Text className="text-text-secondary">{form.notice}</Text>}
-        {form.error != null && (
-          <View className="gap-3">
-            <Text accessibilityRole="alert">{form.error}</Text>
-            {form.step === "import" && (
-              <OnboardingAction onPress={() => emit({ type: "fallback" })}>Show beBEAR plans</OnboardingAction>
-            )}
-          </View>
-        )}
-        {main != null && (
-          <>
-            <View className="flex-1" />
-            <OnboardingAction primary disabled={!main.enabled} onPress={() => emit(main.event)}>
-              {main.label}
-            </OnboardingAction>
-          </>
-        )}
-        {form.step === "want" &&
-          (form.useAi ? (
-            <OnboardingAction
-              disabled={busy}
-              onPress={() =>
-                AiConsent_ensure().then((ok) =>
-                  emit(ok ? { type: "import" } : { type: "failed", error: "Import needs AI turned on." })
-                )
-              }
-            >
-              Import my own
-            </OnboardingAction>
-          ) : (
-            <Text className="self-center text-text-secondary">Import needs sign-in</Text>
-          ))}
+      <View ref={content} tabIndex={-1} className="flex-1">
+        <OnboardingStepFrame
+          progress={step?.kind === "signIn" && step.variant === "start" ? undefined : Onboarding_progress(form)}
+          onBack={Onboarding_canGoBack(form) ? () => emit({ type: "back", visit: form.visit }) : undefined}
+          footer={
+            <>
+              {form.notice != null && <Text style={{ color: C.muted }}>{form.notice}</Text>}
+              {form.error != null && (
+                <Text accessibilityRole="alert" style={{ color: "#FF8A80" }}>
+                  {form.error}
+                </Text>
+              )}
+              {form.at.phase === "import" && form.error != null && (
+                <OnboardingButton label="Show beBEAR plans" look="link" onPress={() => emit({ type: "fallback" })} />
+              )}
+              {Onboarding_canSkip(form) && (
+                <OnboardingButton label="Skip" look="link" onPress={() => emit({ type: "skip", visit: form.visit })} />
+              )}
+              {main != null && (
+                <OnboardingButton label={main.label} disabled={!main.enabled || busy} onPress={onMain} />
+              )}
+            </>
+          }
+        >
+          <StepBody form={form} step={step} emit={emit} dispatch={props.dispatch} busy={busy} onStart={onStart} />
+        </OnboardingStepFrame>
       </View>
       {Platform.OS === "android" && <SystemKeyboardSpacer scrollRef={screen} />}
     </ScrollView>
   );
+}
+
+function StepBody(props: {
+  form: IOnboardingState;
+  step: IOnboardingStepDef | undefined;
+  emit: (event: Parameters<typeof Onboarding_reduce>[1]) => void;
+  dispatch: IDispatch;
+  busy: boolean;
+  onStart: () => void;
+}): JSX.Element | null {
+  const { form, step, emit } = props;
+  if (form.at.phase === "import") {
+    return (
+      <LightCard>
+        <OnboardingQuestions form={form} emit={emit} />
+      </LightCard>
+    );
+  }
+  if (form.at.phase === "working") {
+    return (
+      <View className="items-center justify-center flex-1 gap-4" accessibilityLiveRegion="polite">
+        <ActivityIndicator color={C.accent} />
+        <Text style={{ color: C.text }}>Building your plan… This can take up to a minute.</Text>
+        <OnboardingButton label="Stop and show beBEAR plans" look="link" onPress={() => emit({ type: "fallback" })} />
+      </View>
+    );
+  }
+  if (form.at.phase === "done") {
+    return (
+      <LightCard>
+        <OnboardingImportedPlan form={form} emit={emit} busy={props.busy} />
+      </LightCard>
+    );
+  }
+  if (step == null) {
+    return null;
+  }
+  const key = `${step.id}-${form.visit}`;
+  switch (step.kind) {
+    case "say":
+      return <OnboardingSay key={key} state={form} step={step} emit={emit} />;
+    case "choice":
+      return <OnboardingChoiceView key={key} state={form} step={step} emit={emit} />;
+    case "measure":
+      return <OnboardingMeasure key={key} state={form} step={step} emit={emit} />;
+    case "text":
+      return <OnboardingTextStep key={key} state={form} step={step} emit={emit} />;
+    case "hold":
+      return <OnboardingHold key={key} state={form} step={step} emit={emit} />;
+    case "loading":
+      return <OnboardingLoading key={key} state={form} step={step} emit={emit} />;
+    case "plans":
+      return <OnboardingPlans key={key} state={form} step={step} emit={emit} />;
+    case "lift":
+      return <OnboardingLift key={key} state={form} step={step} emit={emit} />;
+    case "result":
+      return <OnboardingResult key={key} state={form} step={step} emit={emit} />;
+    case "permission":
+      return <OnboardingPermission key={key} state={form} step={step} emit={emit} />;
+    case "signIn":
+      return (
+        <OnboardingSignInStep
+          key={key}
+          state={form}
+          step={step}
+          dispatch={props.dispatch}
+          busy={props.busy}
+          onStart={props.onStart}
+        />
+      );
+  }
 }

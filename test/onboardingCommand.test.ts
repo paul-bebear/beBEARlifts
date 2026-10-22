@@ -2,7 +2,15 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import { OnboardingCommand_pickImage, OnboardingCommand_run } from "../src/utils/onboardingCommand";
-import { Onboarding_empty, IOnboardingEvent, IOnboardingState, Onboarding_reduce } from "../src/models/onboarding";
+import {
+  Onboarding_empty,
+  IOnboardingEvent,
+  IOnboardingState,
+  Onboarding_reduce,
+  Onboarding_selectedCard,
+} from "../src/models/onboarding";
+import { BearStore } from "../src/utils/bearStore";
+import { BearStoreData_empty } from "../src/models/bearStoreData";
 import { IDispatch } from "../src/ducks/types";
 import { IState, IEnv } from "../src/models/state";
 import { Storage_getDefault } from "../src/models/storage";
@@ -27,7 +35,7 @@ describe("Native onboarding screenshots", () => {
     form = Onboarding_reduce(form, event);
   };
   beforeEach(() => {
-    form = { ...Onboarding_empty(), step: "import" };
+    form = { ...Onboarding_empty(), at: { phase: "import" } };
   });
   it("adds the picked screenshot and releases the busy state", async () => {
     await OnboardingCommand_pickImage(async () => ({ kind: "photo", dataUrl: "data:image/jpeg;base64,abc" }), emit);
@@ -46,7 +54,7 @@ describe("Native onboarding screenshots", () => {
     await OnboardingCommand_pickImage(async () => ({ kind: "error", error: "Photo permission denied" }), emit);
     expect(form.error).to.equal("Photo permission denied");
     expect(form.resizing).to.equal(false);
-    expect(form.step).to.equal("import");
+    expect(form.at.phase).to.equal("import");
   });
   it("handles a rejected native picker", async () => {
     await OnboardingCommand_pickImage(async () => {
@@ -103,28 +111,29 @@ describe("Onboarding commands", () => {
   }
 
   function cardsFor(answers: Partial<IOnboardingState["answers"]>): IOnboardingState {
-    let form = Onboarding_reduce(Onboarding_empty(), { type: "auth", signedIn: false });
-    form = Onboarding_reduce(form, { type: "answers", patch: answers });
-    form = { ...form, step: "want" };
-    return Onboarding_reduce(form, { type: "recommend" });
+    return Onboarding_reduce(Onboarding_empty(), { type: "answers", patch: answers });
+  }
+
+  function start(form: IOnboardingState): IOnboardingState {
+    return { ...form, at: { phase: "flow", id: "welcome" }, command: "apply", run: form.run + 1 };
   }
 
   it("builds the picked card's plan on Start, offline, with the card's name", async () => {
     state.programs = [];
     const request = sinon.stub(ai, "AiRequest_post");
-    const plan = Onboarding_reduce(cardsFor({ places: ["gym"], goal: "size" }), { type: "start" });
+    const plan = start(cardsFor({ places: ["gym"], goal: "size" }));
     await run(plan);
     expect(events).to.deep.equal([]);
     expect(request.called).to.equal(false);
     const program = state.storage.programs[0];
-    expect(program.name).to.equal(plan.cards[0].name);
+    expect(program.name).to.equal(Onboarding_selectedCard(plan)?.name);
     expect(state.storage.currentProgramId).to.equal(program.id);
     expect(program.planner?.weeks[0].days.length).to.be.greaterThan(0);
     expect(goalLog.current?.kind).to.equal("buildMuscle");
     expect(foodLog.profile).to.include({ goal: "gain", activity: "light" });
   });
   it("keeps only the equipment of the picked places in the current gym", async () => {
-    await run(Onboarding_reduce(cardsFor({ places: ["dumbbells"], goal: "strength" }), { type: "start" }));
+    await run(start(cardsFor({ places: ["dumbbells"], goal: "strength" })));
     const equipment = Equipment_getCurrentGym(state.storage.settings).equipment;
     expect(equipment.dumbbell?.isDeleted).to.equal(false);
     expect(equipment.barbell?.isDeleted).to.equal(true);
@@ -144,7 +153,7 @@ describe("Onboarding commands", () => {
       activity: "sedentary",
       foodGoal: "lose",
     });
-    await run(Onboarding_reduce(plan, { type: "start" }));
+    await run(start(plan));
     expect(events).to.deep.equal([]);
     expect(state.storage.programs[0].name).to.equal("beBEAR 3-Day Full Body");
     expect(FoodLog_hasGoals(foodLog.goals)).to.equal(true);
@@ -162,7 +171,7 @@ describe("Onboarding commands", () => {
   });
   it("leaves food targets unset when optional food questions are skipped", async () => {
     await run(
-      Onboarding_reduce(
+      start(
         cardsFor({
           places: ["gym"],
           heightUnit: "cm",
@@ -171,8 +180,7 @@ describe("Onboarding commands", () => {
           weight: "80",
           age: "30",
           sex: "male",
-        }),
-        { type: "start" }
+        })
       )
     );
     expect(events).to.deep.equal([]);
@@ -186,14 +194,32 @@ describe("Onboarding commands", () => {
       "maintain"
     ).goals;
     foodLog = { ...foodLog, goals };
-    await run(Onboarding_reduce(cardsFor({ places: ["gym"], activity: "light" }), { type: "start" }));
+    await run(start(cardsFor({ places: ["gym"], activity: "light" })));
     expect(events).to.deep.equal([]);
     expect(foodLog.goals).to.deep.equal(goals);
   });
   it("leaves a goal the user already set alone", async () => {
     goalLog = { version: 1, current: { kind: "loseFat", activity: "under5k", startedAt: 1 }, past: [] };
-    await run(Onboarding_reduce(cardsFor({ places: ["gym"] }), { type: "start" }));
+    await run(start(cardsFor({ places: ["gym"] })));
     expect(goalLog.current?.kind).to.equal("loseFat");
+  });
+  it("saves the picked bear to the bear store, and leaves it unset when no bear was picked", async () => {
+    let bear = BearStoreData_empty();
+    sinon.stub(BearStore, "update").callsFake(async (fn) => {
+      bear = fn(bear);
+    });
+    await run(start(cardsFor({ places: ["gym"] })));
+    expect(bear.line).to.equal(undefined);
+    await run(start(cardsFor({ places: ["gym"], bearLine: "female" })));
+    expect(bear.line).to.equal("female");
+  });
+  it("applies the card picked on the plans step after the flow has moved past it", async () => {
+    const form = start({ ...cardsFor({ places: ["gym"], experience: "new" }), pickedDays: 5 });
+    await run(form);
+    expect(state.storage.programs.find((p) => p.id === state.storage.currentProgramId)?.name).to.equal(
+      Onboarding_selectedCard(form)?.name
+    );
+    expect(Onboarding_selectedCard(form)?.days).to.equal(5);
   });
 
   it("shows the beBEAR cards when AI permission was revoked", async () => {
@@ -229,7 +255,7 @@ describe("Onboarding commands", () => {
     expect(ready.type).to.equal("ready");
     if (ready.type === "ready") {
       events = [];
-      await run({ ...Onboarding_empty(), command: "apply", result: ready.result });
+      await run({ ...Onboarding_empty(), source: "import", command: "apply", result: ready.result });
       expect(events).to.deep.equal([]);
       expect(state.storage.programs[0].name).to.equal(ready.result.name);
     }
@@ -262,7 +288,7 @@ describe("Onboarding commands", () => {
     if (ready.type !== "ready") {
       throw new Error("expected a ready event");
     }
-    return Onboarding_reduce({ ...Onboarding_empty(), command: "prepare" }, ready);
+    return Onboarding_reduce({ ...Onboarding_empty(), source: "import", command: "prepare" }, ready);
   }
 
   it("reads AI history before Start and shows its count without saving it", async () => {
