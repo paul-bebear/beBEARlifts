@@ -7,7 +7,7 @@ describe("BearCelebration", () => {
   it("seeds an existing user at the level reached, with no celebration", () => {
     const step = BearCelebration_step(BearStoreData_empty(), 60000);
     expect(step.levelUp).to.equal(undefined);
-    expect(step.store).to.deep.equal({ celebratedLevel: 5, seenBadges: [], seeded: true });
+    expect(step.store).to.deep.equal({ celebratedLevel: 5, seenBadges: [], spent: 0, seeded: true });
   });
 
   it("seeds a new user at level 1, so the first level-up still shows", () => {

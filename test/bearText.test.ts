@@ -2,6 +2,8 @@ import "mocha";
 import { expect } from "chai";
 import {
   BearText_finishLine,
+  BearText_honeyBreakdown,
+  BearText_honeyLine,
   BearText_levelLine,
   BearText_levelTitle,
   BearText_levelUp,
@@ -80,6 +82,45 @@ describe("BearText", () => {
     expect(BearText_finishLine(today, [{ record: today, countedKg: 1840 }], progress)).to.equal(
       "+1,840 kg · Amateur in 6,200 kg"
     );
+  });
+
+  it("puts the honey between the kg and the next level", () => {
+    const today = record(2, now);
+    const progress = BearTier_progress(0, 3800);
+    const workouts = [{ record: today, countedKg: 1840 }];
+    expect(BearText_finishLine(today, workouts, progress, 5)).to.equal("+1,840 kg · +5 honey · Amateur in 6,200 kg");
+    expect(BearText_finishLine(today, workouts, BearTier_progress(0, 6000000), 10)).to.equal(
+      "+1,840 kg · +10 honey · Top level"
+    );
+  });
+
+  it("says nothing about honey when the workout earned none", () => {
+    const first = record(1, now - hourMs);
+    const second = record(2, now);
+    const progress = BearTier_progress(0, 0);
+    expect(BearText_finishLine(second, [{ record: first, countedKg: 900 }], progress, 0)).to.not.contain("honey");
+    expect(BearText_finishLine(second, [], progress, 0)).to.not.contain("honey");
+  });
+
+  it("writes the honey line with a thousands separator", () => {
+    expect(BearText_honeyLine(42)).to.equal("🍯 42 honey");
+    expect(BearText_honeyLine(1240)).to.equal("🍯 1,240 honey");
+    expect(BearText_honeyLine(-3)).to.equal("🍯 0 honey");
+  });
+
+  it("lists today's honey in one line", () => {
+    const items = [
+      { reason: "workout" as const, label: "Workout", amount: 5 },
+      { reason: "weighIn" as const, label: "Weigh-in", amount: 1 },
+      { reason: "protein" as const, label: "Protein", amount: 1 },
+    ];
+    expect(BearText_honeyBreakdown({ day: "2026-10-22", items, isCapped: false, total: 7 })).to.equal(
+      "Workout +5 · Weigh-in +1 · Protein +1"
+    );
+    expect(BearText_honeyBreakdown({ day: "2026-10-22", items, isCapped: true, total: 10 })).to.equal(
+      "Workout +5 · Weigh-in +1 · Protein +1 · Daily max 10"
+    );
+    expect(BearText_honeyBreakdown(undefined)).to.equal("Nothing earned yet today");
   });
 
   it("explains a workout that added nothing", () => {

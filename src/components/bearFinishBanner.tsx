@@ -5,8 +5,10 @@ import { IHistoryRecord } from "../types";
 import { BearArt_sprite } from "../models/bearArt";
 import { BearCelebration_step, IBearLevelUp } from "../models/bearCelebration";
 import { BearText_finishLine, BearText_levelUp } from "../models/bearText";
+import { BearHoney_forWorkout } from "../models/bearHoney";
 import { BearStore } from "../utils/bearStore";
 import { useBear } from "../utils/useBear";
+import { useBearHoney } from "../utils/useBearHoney";
 import { BearBody } from "./bearBody";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 
@@ -37,6 +39,8 @@ function LevelUpCard(props: { levelUp: IBearLevelUp; sprite: string }): JSX.Elem
 
 export function BearFinishBanner(props: { record: IHistoryRecord }): JSX.Element {
   const { state } = useBear();
+  const { sources } = useBearHoney();
+  const honey = BearHoney_forWorkout(props.record, sources);
   const [levelUp, setLevelUp] = useState<IBearLevelUp | undefined>(undefined);
   useEffect(() => {
     let shown: IBearLevelUp | undefined;
@@ -59,7 +63,7 @@ export function BearFinishBanner(props: { record: IHistoryRecord }): JSX.Element
         </View>
       )}
       <Text className="text-lg font-bold text-center" testID="bear-finish-line" data-testid="bear-finish-line">
-        {BearText_finishLine(props.record, state.workouts, state.level)}
+        {BearText_finishLine(props.record, state.workouts, state.level, honey)}
       </Text>
     </View>
   );

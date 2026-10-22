@@ -179,7 +179,7 @@ describe("FullBackup", () => {
   });
 
   it("round-trips the bebear_bear line, celebrated level and seen badges", () => {
-    const bear = { line: "female" as const, celebratedLevel: 9, seenBadges: ["streak-7", "level-9"] };
+    const bear = { line: "female" as const, celebratedLevel: 9, seenBadges: ["streak-7", "level-9"], spent: 0 };
     const backup = FullBackup_build(parts({ bear }), now);
     expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).bear).to.deep.equal(bear);
     expect(backup.readme).to.include("bebear_bear");
