@@ -317,7 +317,7 @@ async function handleToolCall(
     di.log.log(`[MCP] ${toolName} -> 403: no subscription`);
     return textResult(
       req.id,
-      `Active subscription required to use MCP tools (signed in as ${user.email}). If you subscribed on a different beBEAR account, disconnect beBEAR in your AI client and reconnect with that account.`,
+      `Active subscription required to use MCP tools (signed in as ${user.email}). If you subscribed on a different Liftosaur account, disconnect Liftosaur in your AI client and reconnect with that account.`,
       { isError: true }
     );
   }

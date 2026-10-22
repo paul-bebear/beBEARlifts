@@ -11,7 +11,7 @@ export function ProgramPreviewHtml(props: IProps): JSX.Element {
     <Page
       css={["programpreview"]}
       js={["programpreview"]}
-      title="Program Previewer | beBEAR"
+      title="Program Previewer | Liftosaur"
       canonical="https://www.liftosaur.com/program-preview"
       maxWidth={10000}
       maxBodyWidth={10000}

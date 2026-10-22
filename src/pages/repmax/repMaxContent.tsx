@@ -33,7 +33,7 @@ export function RepMaxContent(props: IRepMaxContentProps): JSX.Element {
       const word = reps ? MathUtils_toWord(reps) : undefined;
       window.history.replaceState(
         { reps },
-        `${word != null ? `${StringUtils_capitalize(word)} ` : ""}Rep Max Calculator (${reps != null ? reps : ""}RM) - Free & Accurate | beBEAR`,
+        `${word != null ? `${StringUtils_capitalize(word)} ` : ""}Rep Max Calculator (${reps != null ? reps : ""}RM) - Free & Accurate | Liftosaur`,
         `/${word != null ? `${word}-` : ""}rep-max-calculator`
       );
     }, 0);

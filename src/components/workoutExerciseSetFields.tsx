@@ -1,4 +1,4 @@
-import { createContext, JSX, useContext, useEffect } from "react";
+import { JSX, useContext, useEffect } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { ISettings, ISet, IExerciseType } from "../types";
@@ -19,11 +19,8 @@ import {
   Weight_getOneRepMax,
 } from "../models/weight";
 import { Exercise_onerm } from "../models/exercise";
-import { FirstUseTips_hasCrossedWeight, IFirstUseEvent, IFirstUseTip } from "../models/firstUseTips";
-
-export const FirstUseTipContext = createContext<
-  { reportTip: (event: IFirstUseEvent) => void; tip?: IFirstUseTip } | undefined
->(undefined);
+import { FirstUseTips_hasCrossedWeight } from "../models/firstUseTips";
+import { FirstUseTipContext } from "./firstUseTipContext";
 
 export type IWorkoutSetType = "program" | "warmup" | "adhoc";
 
