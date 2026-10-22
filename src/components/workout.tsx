@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -34,7 +35,17 @@ import {
   IStats,
   ISubscription,
 } from "../types";
-import { updateProgress, updateState } from "../models/state";
+import { IState, updateProgress, updateState } from "../models/state";
+import { useIsFocused } from "@react-navigation/native";
+import {
+  FirstUseTips_recordSeen,
+  FirstUseTips_transition,
+  FirstUseTips_workoutEvent,
+  IFirstUseEvent,
+  IFirstUseTipsState,
+} from "../models/firstUseTips";
+import { FirstUseTipContext } from "./workoutExerciseSetFields";
+import { TipBar } from "./tipBar";
 import { IEvaluatedProgram, IEvaluatedProgramDay, Program_isEmpty } from "../models/program";
 import { lb } from "lens-shmens";
 import { Tailwind_colors, Tailwind_semantic } from "../utils/tailwindConfig";
@@ -103,7 +114,56 @@ interface IWorkoutViewProps {
   renderHeaderMenu?: (onOpenChange: (isOpen: boolean) => void) => ReactNode;
 }
 
+export function useFirstUseTip(
+  helps: string[],
+  dispatch: IDispatch
+): {
+  tip: IFirstUseTipsState["tip"];
+  reportTip: (event: IFirstUseEvent | "close") => void;
+} {
+  const stateRef = useRef<IFirstUseTipsState>({ helps });
+  const helpsRef = useRef(helps);
+  helpsRef.current = helps;
+  const [tip, setTip] = useState<IFirstUseTipsState["tip"]>();
+  const reportTip = useCallback(
+    (event: IFirstUseEvent | "close") => {
+      const next = FirstUseTips_transition(stateRef.current, event, helpsRef.current);
+      stateRef.current = next.state;
+      setTip(next.state.tip);
+      if (next.shownId != null) {
+        const id = next.shownId;
+        updateState(
+          dispatch,
+          [
+            lb<IState>()
+              .p("storage")
+              .p("helps")
+              .recordModify((hs) => FirstUseTips_recordSeen(hs, id)),
+          ],
+          "Show first-use tip"
+        );
+      }
+    },
+    [dispatch]
+  );
+  return { tip, reportTip };
+}
+
 function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
+  const { tip, reportTip } = useFirstUseTip(props.helps, props.dispatch);
+  const tipContext = useMemo(() => ({ tip, reportTip }), [tip, reportTip]);
+  const isFocused = useIsFocused();
+  const tipEvent = FirstUseTips_workoutEvent(props.progress.id, props.progress.entries);
+  useLayoutEffect(() => {
+    if (isFocused && tipEvent != null) {
+      reportTip(tipEvent);
+    }
+  }, [isFocused, tipEvent, reportTip]);
+  useEffect(() => {
+    if (!isFocused) {
+      reportTip("close");
+    }
+  }, [isFocused, reportTip]);
   usePerfRenderCount("Workout");
   const selectedEntry = props.progress.entries[props.progress.currentEntryIndex ?? 0];
   const description = props.programDay?.description;
@@ -266,6 +326,7 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
             renderMenu={props.renderHeaderMenu}
           />
           <View>
+            {tip && <TipBar tip={tip} onClose={() => reportTip("close")} />}
             {OfflineOnly_isEnabled() && <WorkoutWarmupCard progress={props.progress} settings={props.settings} />}
             {showReorderHint && (
               <Text className="px-4 pt-1 text-xs text-text-secondary" testID="workout-reorder-hint">
@@ -304,33 +365,39 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
                     onSettledIndex={onPagerSettled}
                   >
                     {progressEntries.map((entry, entryIndex) => (
-                      <WorkoutExercisePage
+                      <FirstUseTipContext.Provider
                         key={entry.id}
-                        entry={entry}
-                        entryIndex={entryIndex}
-                        isCurrentPage={entryIndex === currentEntryIndex}
-                        tabStopIndex={entryIndex < currentEntryIndex ? -1 : 0}
-                        impressionsSeenRef={impressionsSeenRef}
-                        shouldRender={renderedIndices.has(entryIndex)}
-                        windowWidth={windowWidth}
-                        day={progressDay}
-                        stats={props.stats}
-                        history={props.history}
-                        otherStates={otherStates}
-                        program={props.program}
-                        programDay={props.programDay}
-                        progressId={progressId}
-                        progressStartTime={progressStartTime}
-                        userPromptedStateVars={progressUserPromptedStateVars}
-                        supersetEntry={supersetByEntryId.get(entry.id)}
-                        prevData={prevExerciseData[Exercise_toKey(entry.exercise)]}
-                        isCurrentProgress={isCurrentProgress}
-                        helps={props.helps}
-                        subscription={props.subscription}
-                        settings={props.settings}
-                        dispatch={dispatch}
-                        onTitleLayout={onTitleLayout}
-                      />
+                        value={
+                          isFocused && entryIndex === currentEntryIndex && isCurrentProgress ? tipContext : undefined
+                        }
+                      >
+                        <WorkoutExercisePage
+                          entry={entry}
+                          entryIndex={entryIndex}
+                          isCurrentPage={entryIndex === currentEntryIndex}
+                          tabStopIndex={entryIndex < currentEntryIndex ? -1 : 0}
+                          impressionsSeenRef={impressionsSeenRef}
+                          shouldRender={renderedIndices.has(entryIndex)}
+                          windowWidth={windowWidth}
+                          day={progressDay}
+                          stats={props.stats}
+                          history={props.history}
+                          otherStates={otherStates}
+                          program={props.program}
+                          programDay={props.programDay}
+                          progressId={progressId}
+                          progressStartTime={progressStartTime}
+                          userPromptedStateVars={progressUserPromptedStateVars}
+                          supersetEntry={supersetByEntryId.get(entry.id)}
+                          prevData={prevExerciseData[Exercise_toKey(entry.exercise)]}
+                          isCurrentProgress={isCurrentProgress}
+                          helps={props.helps}
+                          subscription={props.subscription}
+                          settings={props.settings}
+                          dispatch={dispatch}
+                          onTitleLayout={onTitleLayout}
+                        />
+                      </FirstUseTipContext.Provider>
                     ))}
                   </WorkoutExercisePager>
                 </PerfProbeSubtree>

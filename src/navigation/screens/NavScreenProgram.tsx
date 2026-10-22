@@ -1,6 +1,8 @@
-import { JSX } from "react";
+import { JSX, useEffect } from "react";
 import { View } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useIsFocused, useRoute } from "@react-navigation/native";
+import { useFirstUseTip } from "../../components/workout";
+import { TipBar } from "../../components/tipBar";
 import { useAppState } from "../StateContext";
 import { buildNavCommon } from "../utils";
 import { NavScreenContent } from "../NavScreenContent";
@@ -41,6 +43,8 @@ export function NavScreenPrograms(): JSX.Element {
 
 export function NavScreenEditProgram(): JSX.Element {
   const { state, dispatch } = useAppState();
+  const { tip, reportTip } = useFirstUseTip(state.storage.helps, dispatch);
+  const isFocused = useIsFocused();
   const { service } = useAppContext();
   usePlaygroundModalBridges(state);
   const navCommon = buildNavCommon(state);
@@ -52,23 +56,34 @@ export function NavScreenEditProgram(): JSX.Element {
     state,
     plannerState ? plannerState.current.program.id : Progress_getCurrentProgress(state)?.programId
   );
+  useEffect(() => {
+    if (isFocused && plannerState != null && editProgram != null) {
+      reportTip("programEditorOpen");
+    }
+    if (!isFocused) {
+      reportTip("close");
+    }
+  }, [isFocused, plannerState, editProgram, reportTip]);
   return (
-    <FallbackScreen state={{ plannerState, editProgram }} dispatch={dispatch}>
-      {({ plannerState: plannerState2, editProgram: editProgram2 }) => (
-        <ScreenEditProgramComponent
-          client={service.client}
-          helps={state.storage.helps}
-          navCommon={navCommon}
-          subscription={state.storage.subscription}
-          settings={state.storage.settings}
-          dispatch={dispatch}
-          originalProgram={editProgram2}
-          plannerState={plannerState2}
-          revisions={(state.revisions || {})[editProgram2.id] || []}
-          isLoggedIn={state.user != null}
-        />
-      )}
-    </FallbackScreen>
+    <View className="flex-1">
+      {tip && <TipBar tip={tip} onClose={() => reportTip("close")} />}
+      <FallbackScreen state={{ plannerState, editProgram }} dispatch={dispatch}>
+        {({ plannerState: plannerState2, editProgram: editProgram2 }) => (
+          <ScreenEditProgramComponent
+            client={service.client}
+            helps={state.storage.helps}
+            navCommon={navCommon}
+            subscription={state.storage.subscription}
+            settings={state.storage.settings}
+            dispatch={dispatch}
+            originalProgram={editProgram2}
+            plannerState={plannerState2}
+            revisions={(state.revisions || {})[editProgram2.id] || []}
+            isLoggedIn={state.user != null}
+          />
+        )}
+      </FallbackScreen>
+    </View>
   );
 }
 
