@@ -40,6 +40,7 @@ import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
 import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
 import { ScreenMyBear } from "../components/screenMyBear";
+import { ScreenReportsHub } from "../components/screenReportsHub";
 import { ScreenJournal } from "../components/screenJournal";
 import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
@@ -340,6 +341,7 @@ function GraphsStackScreen(): JSX.Element {
       <GraphsStack.Group screenOptions={navHeaderScreenOptions}>
         <GraphsStack.Screen name="music" component={NavScreenMusic} />
         <GraphsStack.Screen name="reports" component={NavScreenReports} />
+        <GraphsStack.Screen name="reportsHub" component={ScreenReportsHub} />
         <GraphsStack.Screen name="bodyScans" component={NavScreenBodyScans} />
         <GraphsStack.Screen name="runs" component={NavScreenRuns} />
         <GraphsStack.Screen name="goalWizard" component={NavScreenGoalWizard} />

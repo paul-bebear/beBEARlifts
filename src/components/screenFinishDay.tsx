@@ -30,8 +30,7 @@ import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { WorkoutStoryCardSection } from "./workoutStoryCard";
 import { CloudBackupAfterWorkout } from "./cloudBackupAfterWorkout";
 import { FeedShareToggle } from "./feedShareToggle";
-import { BearMark } from "./shareCards/bearMark";
-import { ShareCardTheme } from "./shareCards/shareCardTheme";
+import { BearFinishBanner } from "./bearFinishBanner";
 
 interface IProps {
   history: IHistoryRecord[];
@@ -89,9 +88,7 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
     <>
       {OfflineOnly_isEnabled() && <CloudBackupAfterWorkout dispatch={props.dispatch} />}
       <View className="px-gutter pb-6">
-        <View className="flex-row items-center justify-center pb-2">
-          <BearMark size={120} color={ShareCardTheme.green} faceColor={ShareCardTheme.cream} />
-        </View>
+        <BearFinishBanner record={record} />
         <View className="items-center px-gutter pb-2">
           <Text className="text-sm text-text-secondary">{record.programName}</Text>
           <Text className="text-base">{record.dayName}</Text>

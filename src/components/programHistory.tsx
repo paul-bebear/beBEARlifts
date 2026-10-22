@@ -11,8 +11,9 @@ import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { lb } from "lens-shmens";
 import { Text } from "./primitives/text";
-import { BearMark } from "./shareCards/bearMark";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
+import { BearAvatar } from "./bearAvatar";
+import { useBear } from "../utils/useBear";
 import { useFoodLog } from "../utils/foodLogStore";
 import { WeekDots_build } from "../models/weekDots";
 import { TodayPill_text } from "../models/todayPill";
@@ -57,6 +58,7 @@ function HomeHeader(props: {
   dispatch: IDispatch;
 }): JSX.Element {
   const foodLog = useFoodLog();
+  const bear = useBear();
   const now = Date.now();
   const dots = WeekDots_build({
     history: props.history,
@@ -72,10 +74,8 @@ function HomeHeader(props: {
           testID="home-bear-head"
           data-testid="home-bear-head"
           onPress={() => props.dispatch(Thunk_pushScreen("progressDashboard", undefined, { tab: "graphs" }))}
-          className="items-center justify-center rounded-full"
-          style={{ width: 56, height: 56, backgroundColor: T.honey }}
         >
-          <BearMark size={40} color={T.greenDark} faceColor={T.honey} />
+          <BearAvatar state={bear.state} size={56} />
         </Pressable>
         <Pressable
           testID="home-week-dots"

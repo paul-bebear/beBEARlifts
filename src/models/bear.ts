@@ -14,6 +14,7 @@ export interface IBearSources {
   settings: ISettings;
   plannedDaysPerWeek?: number;
   bear?: IBearStoreData;
+  defaultLine?: IBearLine;
 }
 
 export interface IBearState {
@@ -24,6 +25,7 @@ export interface IBearState {
   energy: number;
   mood: IBearMood;
   lastCountedWorkoutAt?: number;
+  workouts: IBearCountedWorkout[];
 }
 
 const hourMs = 3600000;
@@ -84,5 +86,15 @@ export function Bear_state(sources: IBearSources, now: number): IBearState {
         : fullness < 20
           ? "hungry"
           : "normal";
-  return { line: store.line, level, countedKg: growth.countedKg, fullness, energy, mood, lastCountedWorkoutAt };
+  const line = store.line ?? sources.defaultLine ?? "male";
+  return {
+    line,
+    level,
+    countedKg: growth.countedKg,
+    fullness,
+    energy,
+    mood,
+    lastCountedWorkoutAt,
+    workouts: growth.workouts,
+  };
 }

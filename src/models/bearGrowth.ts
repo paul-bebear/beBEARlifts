@@ -58,17 +58,21 @@ function day(record: IHistoryRecord): string {
   return FoodLog_dayKey(new Date(record.endTime!));
 }
 
+function addBestWeights(best: Map<string, number>, record: IHistoryRecord): void {
+  for (const entry of record.entries) {
+    const key = Exercise_toKey(entry.exercise);
+    for (const set of entry.sets) {
+      if (set.isCompleted && completedReps(set) > 0) {
+        best.set(key, Math.max(best.get(key) ?? 0, setKg(set)));
+      }
+    }
+  }
+}
+
 function bestWeights(records: readonly IHistoryRecord[]): Map<string, number> {
   const best = new Map<string, number>();
   for (const record of records) {
-    for (const entry of record.entries) {
-      const key = Exercise_toKey(entry.exercise);
-      for (const set of entry.sets) {
-        if (set.isCompleted && completedReps(set) > 0) {
-          best.set(key, Math.max(best.get(key) ?? 0, setKg(set)));
-        }
-      }
-    }
+    addBestWeights(best, record);
   }
   return best;
 }
@@ -83,7 +87,15 @@ export function BearGrowth_countedKg(
   if (!eligible(record) || earlier.some((previous) => day(previous) === day(record))) {
     return 0;
   }
-  const best = bestWeights(earlier);
+  return volumeKg(record, bestWeights(earlier), settings, bodyweight);
+}
+
+function volumeKg(
+  record: IHistoryRecord,
+  best: Map<string, number>,
+  settings: ISettings,
+  bodyweight?: IWeight
+): number {
   const bodyKg = bodyweight == null ? 0 : positive(Weight_convertTo(bodyweight, "kg").value);
   let volume = 0;
   for (const entry of record.entries) {
@@ -107,19 +119,39 @@ export function BearGrowth_history(
   stats?: IStats
 ): IBearGrowth {
   const ordered = [...history].filter(eligible).sort((a, b) => a.endTime! - b.endTime! || a.id - b.id);
+  const weights = (stats?.weight.weight ?? [])
+    .filter((stat) => stat.value.value > 0 && Number.isFinite(stat.value.value))
+    .sort((a, b) => a.timestamp - b.timestamp);
   const workouts: IBearCountedWorkout[] = [];
   const earlier: IHistoryRecord[] = [];
   const days = new Set<string>();
+  const best = new Map<string, number>();
+  let merged = 0;
   let countedKg = 0;
   for (const record of ordered) {
     const key = day(record);
     if (days.has(key)) {
       continue;
     }
-    const bodyweight = [...(stats?.weight.weight ?? [])]
-      .filter((stat) => stat.timestamp <= record.startTime && stat.value.value > 0 && Number.isFinite(stat.value.value))
-      .sort((a, b) => b.timestamp - a.timestamp)[0]?.value;
-    const kg = BearGrowth_countedKg(record, earlier, settings, bodyweight);
+    let low = 0;
+    let high = weights.length;
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      if (weights[mid].timestamp <= record.startTime) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+    const bodyweight = weights[low - 1]?.value;
+    while (merged < earlier.length && earlier[merged].endTime! <= record.startTime) {
+      addBestWeights(best, earlier[merged]);
+      merged += 1;
+    }
+    const overlapsMerged = merged > 0 && earlier[merged - 1].endTime! > record.startTime;
+    const kg = overlapsMerged
+      ? BearGrowth_countedKg(record, earlier, settings, bodyweight)
+      : volumeKg(record, best, settings, bodyweight);
     workouts.push({ record, countedKg: kg });
     earlier.push(record);
     days.add(key);

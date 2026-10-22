@@ -53,6 +53,7 @@ export type IGraphsStackParamList = IMeStackParamList & {
   programselect: undefined;
   music: undefined;
   reports: undefined;
+  reportsHub: undefined;
   bodyScans: undefined;
   runs: undefined;
   goalWizard: IGoalWizardScreenParams | undefined;
