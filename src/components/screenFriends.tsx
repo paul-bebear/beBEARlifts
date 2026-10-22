@@ -1,9 +1,9 @@
 import { JSX, useContext, useEffect, useReducer, useRef, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { NavScreenScrollContext } from "../navigation/NavScreenScrollContext";
 import { FeedStore } from "../utils/feedClient";
-import { Feed_items } from "../models/feed";
+import { Feed_items, Feed_screenView, IFeedScreenView } from "../models/feed";
 import { FeedModeration_items, FeedModeration_users } from "../models/feedModeration";
 import { BlocksStore } from "../utils/moderationStore";
 import {
@@ -35,8 +35,35 @@ import { FriendsAdd, FriendsLists, FriendsRequests } from "./friendsPeople";
 const inputClass =
   "px-4 py-3 text-base border rounded-lg bg-background-default border-border-prominent text-text-primary";
 
+function ViewTabs(props: {
+  view: IFeedScreenView;
+  friendCount: number;
+  onView: (view: IFeedScreenView) => void;
+}): JSX.Element {
+  const tabs: [IFeedScreenView, string][] = [
+    ["feed", "Feed"],
+    ["people", props.friendCount > 0 ? `Friends · ${props.friendCount}` : "Friends"],
+  ];
+  return (
+    <View className="flex-row p-1 mt-3 rounded-full bg-background-subtle" accessibilityRole="tablist">
+      {tabs.map(([view, label]) => (
+        <Pressable
+          key={view}
+          testID={`friends-view-${view}`}
+          data-testid={`friends-view-${view}`}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: props.view === view }}
+          className={`flex-1 items-center py-2 rounded-full ${props.view === view ? "bg-background-default" : ""}`}
+          onPress={() => props.onView(view)}
+        >
+          <Text className={`text-sm ${props.view === view ? "font-bold" : "text-text-secondary"}`}>{label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export function ScreenFriends(): JSX.Element {
-  useNavOptions({ navTitle: "Friends" });
   const dispatch = useTrackedDispatch();
   const cloud = CloudStore.use();
   const userId = cloud.session?.userId;
@@ -44,6 +71,10 @@ export function ScreenFriends(): JSX.Element {
   const feed = FeedStore.use();
   const blocked = FeedModeration_users(BlocksStore.use(), userId);
   const [form, emit] = useReducer(FriendsForm_reduce, undefined, FriendsForm_empty);
+  const [chosenView, setChosenView] = useState<IFeedScreenView>();
+  const lists = Friends_lists(friends);
+  const view = Feed_screenView(chosenView, lists.friends.length);
+  useNavOptions({ navTitle: view === "feed" ? "Feed" : "Friends" });
   const isFocused = useIsFocused();
   const scroll = useContext(NavScreenScrollContext);
   const pull = useRef<IPullState>(PullToRefresh_idle());
@@ -78,7 +109,6 @@ export function ScreenFriends(): JSX.Element {
 
   const hasLoaded = friends.userId != null;
   const needsProfile = hasLoaded && friends.me == null;
-  const lists = Friends_lists(friends);
   const loading = form.command?.type === "load";
   return (
     <View
@@ -106,7 +136,10 @@ export function ScreenFriends(): JSX.Element {
         </Text>
       )}
       {(needsProfile || form.editingProfile) && <ProfileForm form={form} emit={emit} isNew={needsProfile} />}
-      {friends.me != null && !form.editingProfile && <ProfileLine me={friends.me} form={form} emit={emit} />}
+      {friends.me != null && <ViewTabs view={view} friendCount={lists.friends.length} onView={setChosenView} />}
+      {friends.me != null && !form.editingProfile && view === "people" && (
+        <ProfileLine me={friends.me} form={form} emit={emit} />
+      )}
       {form.error != null && (
         <Text className="mt-3 text-sm text-text-error" accessibilityRole="alert">
           {form.error}
@@ -117,16 +150,17 @@ export function ScreenFriends(): JSX.Element {
           {form.message}
         </Text>
       )}
-      {friends.me != null && (
+      {friends.me != null && <FriendsRequests form={form} lists={lists} emit={emit} />}
+      {friends.me != null && view === "feed" && (
+        <FriendsFeed
+          items={FeedModeration_items(Feed_items(feed, friends), blocked)}
+          loadedAt={feed.loadedAt}
+          now={Date.now()}
+        />
+      )}
+      {friends.me != null && view === "people" && (
         <>
-          <FriendsRequests form={form} lists={lists} emit={emit} />
-          {lists.friends.length === 0 && <FriendsAdd form={form} lists={lists} emit={emit} />}
-          <FriendsFeed
-            items={FeedModeration_items(Feed_items(feed, friends), blocked)}
-            loadedAt={feed.loadedAt}
-            now={Date.now()}
-          />
-          {lists.friends.length > 0 && <FriendsAdd form={form} lists={lists} emit={emit} />}
+          <FriendsAdd form={form} lists={lists} emit={emit} />
           <FriendsLists form={form} lists={lists} emit={emit} />
         </>
       )}

@@ -1,15 +1,16 @@
 import { FeedModeration_reportOutcome, IBlockedUser, IReportReason } from "../models/feedModeration";
+import { IFeedReportTarget } from "../models/feed";
 import { FeedClient_report } from "./feedClient";
 import { FriendsClient_block, FriendsClient_unblock } from "./friendsClient";
 import { Dialog_alert, Dialog_confirm } from "./dialog";
 
 export async function ModerationCommand_report(
-  postId: number | undefined,
+  target: IFeedReportTarget | undefined,
   reason: IReportReason,
   note: string
 ): Promise<ReturnType<typeof FeedModeration_reportOutcome>> {
   try {
-    return FeedModeration_reportOutcome(await FeedClient_report(postId, reason, note));
+    return FeedModeration_reportOutcome(await FeedClient_report(target, reason, note));
   } catch {
     return FeedModeration_reportOutcome({ ok: false, error: "Could not send the report. Try again." });
   }

@@ -1,10 +1,11 @@
-import { JSX, useState } from "react";
+import { JSX, ReactNode, useState } from "react";
 import { Image, LayoutChangeEvent, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { IBearState } from "../models/bear";
 import { BearArt_gym, BearArt_sprite } from "../models/bearArt";
 import { IBearBoardTile } from "../models/bearBoard";
-import { BearScene_layout } from "../models/bearScene";
+import { BearScene_layout, IBearBox } from "../models/bearScene";
+import { BearTv_box } from "../models/bearTv";
 import { BearImage_uri } from "../utils/bearImage";
 
 const maxWidth = 480;
@@ -14,6 +15,7 @@ interface IProps {
   state: IBearState;
   tiles: IBearBoardTile[];
   onTile: (tile: IBearBoardTile) => void;
+  tv?: (box: IBearBox) => ReactNode;
 }
 
 function BoardTile(props: { tile: IBearBoardTile; valueSize: number; onPress: () => void }): JSX.Element {
@@ -45,6 +47,7 @@ export function BearScene(props: IProps): JSX.Element {
   const layout = BearScene_layout(width, state.level.fraction);
   const onLayout = (e: LayoutChangeEvent): void => setWidth(Math.min(maxWidth, e.nativeEvent.layout.width));
   const pad = layout.board.width * 0.04;
+  const tvBox = BearTv_box(layout.width);
   return (
     <View className="px-4" onLayout={onLayout}>
       {width > 0 && (
@@ -78,6 +81,7 @@ export function BearScene(props: IProps): JSX.Element {
               />
             ))}
           </View>
+          {props.tv != null && <View style={{ position: "absolute", ...tvBox }}>{props.tv(tvBox)}</View>}
           <Image
             testID="bear-scene-sprite"
             source={{ uri: BearImage_uri(BearArt_sprite(state.line, state.level.tier.level, state.mood)) }}

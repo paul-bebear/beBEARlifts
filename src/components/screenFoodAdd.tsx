@@ -52,6 +52,11 @@ import { FoodMealPicker } from "./foodUi";
 import { Button } from "./button";
 import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore, AiConsent_ensure } from "../utils/aiConsentClient";
+import { MealPost_fromServing, MealPost_newId, MealPost_shareSwitch } from "../models/mealPost";
+import { Friends_forUser } from "../models/friends";
+import { FeedClient_shareMeal } from "../utils/feedClient";
+import { FriendsStore } from "../utils/friendsClient";
+import { CloudStore } from "../utils/supabaseClient";
 
 function NotFound(props: {
   code: string;
@@ -109,6 +114,13 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   const [browseTab, setBrowseTab] = useState<IFoodBrowseTab>("food");
   const browse = (): void => send({ type: "browseOpened" });
   const stepTitle = FoodScanSteps_title(step);
+  const userId = CloudStore.use().session?.userId;
+  const me = Friends_forUser(FriendsStore.use(), userId).me;
+  const share = MealPost_shareSwitch(
+    userId != null,
+    me != null,
+    step.kind === "serving" && step.serving.isShared === true
+  );
 
   useNavOptions({
     navTitle:
@@ -160,6 +172,10 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   const logServing = async (serving: IScanServing): Promise<void> => {
     const entries = FoodScanSteps_entries(serving, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
     await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
+    const post = MealPost_fromServing(serving, share, MealPost_newId(crypto.getRandomValues(new Uint8Array(16))));
+    if (post != null) {
+      await FeedClient_shareMeal(post, serving.photo);
+    }
     navigation.goBack();
   };
 
@@ -196,7 +212,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             hasAi={hasAi}
             onMode={(mode) => send({ type: "modePicked", mode })}
             onBarcode={onBarcode}
-            onPhotoReviewed={(choices) => send({ type: "photoReviewed", choices, nonce: Date.now() })}
+            onPhotoReviewed={(choices, photo) => send({ type: "photoReviewed", choices, nonce: Date.now(), photo })}
             onQuick={(name, nutrients) => send({ type: "quickEntered", name, nutrients })}
             onSearch={browse}
             onCopied={() => navigation.goBack()}
@@ -210,6 +226,8 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             onGrams={(key, grams) => send({ type: "gramsChanged", key, grams })}
             onRemove={(key) => send({ type: "itemRemoved", key })}
             onDescription={(text) => send({ type: "descriptionChanged", text })}
+            share={share}
+            onShare={(isShared) => send({ type: "shareToggled", isShared })}
             onAdd={() => logServing(step.serving)}
           />
         )}

@@ -17,7 +17,7 @@ interface IProps {
   hasAi: boolean;
   onMode: (mode: IScanMode) => void;
   onBarcode: (code: string) => void;
-  onPhotoReviewed: (choices: IFoodPhotoChoice[]) => void;
+  onPhotoReviewed: (choices: IFoodPhotoChoice[], photo?: string) => void;
   onQuick: (name: string, nutrients: INutrients) => void;
   onSearch: () => void;
   onCopied: () => void;

@@ -35,18 +35,26 @@ import {
 import {
   Feed_ago,
   Feed_empty,
+  Feed_itemKey,
   Feed_items,
-  Feed_nextOp,
+  Feed_needsRefresh,
   Feed_parse,
+  Feed_parseMeals,
+  Feed_pendingOps,
   Feed_queue,
+  Feed_reportTarget,
+  Feed_screenView,
   Feed_sent,
-  Feed_setShareByDefault,
   Feed_shareStatus,
-  Feed_shouldShareOnFinish,
+  Feed_withServerMeals,
   Feed_withServerPosts,
   IFeedOp,
 } from "../src/models/feed";
+import { BearTv_box, BearTv_rect, BearTv_screen, BearTv_sprite } from "../src/models/bearTv";
+import { IMealPostDraft } from "../src/models/mealPost";
 import { Friends_fromServer } from "../src/models/friends";
+import * as fs from "fs";
+import * as path from "path";
 import {
   PullToRefresh_end,
   PullToRefresh_move,
@@ -198,13 +206,13 @@ describe("WorkoutPost", () => {
   const history = [second, first];
 
   it("summarizes totals, top sets and only the records that beat an earlier set", () => {
-    const summary = WorkoutPost_build(second, settings, History_getPersonalRecords(history), 4);
+    const summary = WorkoutPost_build(second, settings, History_getPersonalRecords(history), { keptSongs: 4 });
     expect(summary).to.deep.include({ dayName: "Push", programName: "Strong", startedAt: t1, sets: 3, keptSongs: 4 });
     expect(summary.durationMs).to.equal(45 * 60000);
     expect(summary.volume).to.deep.equal({ value: 85 * 5 + 80 * 8 + 90 * 5, unit: "kg" });
     expect(summary.topSets.map(WorkoutPost_setText)).to.deep.equal(["Bench Press 85 kg × 5", "Squat 90 kg × 5"]);
     expect(summary.prs.map(WorkoutPost_setText)).to.deep.equal(["Bench Press 85 kg × 5"]);
-    const firstPost = WorkoutPost_build(first, settings, History_getPersonalRecords(history), 0);
+    const firstPost = WorkoutPost_build(first, settings, History_getPersonalRecords(history), { keptSongs: 0 });
     expect(firstPost.prs).to.deep.equal([]);
     expect(firstPost.keptSongs).to.equal(undefined);
   });
@@ -221,7 +229,7 @@ describe("WorkoutPost", () => {
   });
 
   it("checks a friend's summary field by field", () => {
-    const summary = WorkoutPost_build(second, settings, {}, 2);
+    const summary = WorkoutPost_build(second, settings, {}, { keptSongs: 2 });
     expect(WorkoutPost_parse(JSON.parse(JSON.stringify(summary)))).to.deep.equal(summary);
     expect(WorkoutPost_parse({ dayName: "Push", startedAt: 1 })).to.equal(undefined);
     const odd = WorkoutPost_parse({
@@ -281,7 +289,12 @@ describe("WorkoutPost", () => {
 
 describe("Feed", () => {
   const settings = Settings_build();
-  const summary: IWorkoutPostSummary = WorkoutPost_build(record(t1, [entry(bench, [set(85, 5)])]), settings, {}, 0);
+  const summary: IWorkoutPostSummary = WorkoutPost_build(
+    record(t1, [entry(bench, [set(85, 5)])]),
+    settings,
+    {},
+    undefined
+  );
   const friends = Friends_fromServer(
     "me",
     [
@@ -331,8 +344,8 @@ describe("Feed", () => {
     expect(Feed_shareStatus(state, "me", 7)).to.equal("notShared");
     state = Feed_queue(state, { ...post, queuedAt: 3 });
     expect(Feed_shareStatus(state, "me", 7)).to.equal("sending");
-    expect(Feed_nextOp(state, "other")).to.equal(undefined);
-    const op = Feed_nextOp(state, "me")!;
+    expect(Feed_pendingOps(state, "other")).to.deep.equal([]);
+    const op = Feed_pendingOps(state, "me")[0];
     state = Feed_sent(state, op, t1);
     expect(state.outbox).to.deep.equal([]);
     expect(Feed_shareStatus(state, "me", 7)).to.equal("shared");
@@ -348,13 +361,93 @@ describe("Feed", () => {
     expect(state.outbox).to.deep.equal([newer]);
   });
 
-  it("shares on finish only after the user chose sharing once, and never twice", () => {
-    expect(Feed_shouldShareOnFinish(Feed_empty(), "me", 7)).to.equal(false);
-    const on = Feed_setShareByDefault(Feed_empty(), true);
-    expect(Feed_shouldShareOnFinish(on, "me", 7)).to.equal(true);
-    const sent = Feed_sent(on, { type: "post", userId: "me", workoutId: 7, queuedAt: 1, summary }, t1);
-    expect(Feed_shouldShareOnFinish(sent, "me", 7)).to.equal(false);
-    expect(Feed_parse(JSON.parse(JSON.stringify(sent))).shareByDefault).to.equal(true);
+  const mealId = "0f8fad5b-d9cb-469f-a165-70867728950e";
+  const meal: IMealPostDraft = {
+    id: mealId,
+    description: "Oats",
+    macros: { kcal: 400, protein: 20, carbs: 60, fat: 8 },
+  };
+  const mealRow = (userId: string, id: string, postedAt: string): object => ({
+    id,
+    user_id: userId,
+    posted_at: postedAt,
+    description: "Oats",
+    macros: meal.macros,
+  });
+
+  it("merges lifts and meals newest first, and gives a meal the author's newest bear", () => {
+    const bearSummary = { ...summary, bear: { level: 5, mood: "normal" as const, countedKg: 900 } };
+    let state = Feed_withServerPosts(
+      Feed_empty(),
+      "me",
+      [{ ...row("a", 1, "2026-10-08T10:00:00Z"), summary: bearSummary }, row("me", 2, "2026-10-10T10:00:00Z")],
+      t1
+    );
+    state = Feed_withServerMeals(
+      state,
+      "me",
+      Feed_parseMeals([
+        mealRow("a", mealId, "2026-10-09T10:00:00Z"),
+        mealRow("c", "1f8fad5b-d9cb-469f-a165-70867728950e", "2026-10-11T10:00:00Z"),
+      ])
+    );
+    const items = Feed_items(state, friends);
+    expect(items.map((i) => [i.kind, i.author.handle])).to.deep.equal([
+      ["workout", "paul"],
+      ["meal", "anna"],
+      ["workout", "anna"],
+    ]);
+    expect(items[1].bear).to.deep.equal(bearSummary.bear);
+    expect(items.map(Feed_itemKey)).to.deep.equal(["me-2", `meal-${mealId}`, "a-1"]);
+    expect(Feed_parse(JSON.parse(JSON.stringify(state)))).to.deep.equal(state);
+    expect(Feed_withServerMeals(state, "other", []).meals).to.have.length(2);
+    expect(Feed_withServerPosts(state, "other", [], t1).meals).to.deep.equal([]);
+  });
+
+  it("queues a meal with its photo, keeps it apart from workout ops, and caches it once sent", () => {
+    const photo = "data:image/jpeg;base64,/9j/";
+    const op: IFeedOp = { type: "meal", userId: "me", queuedAt: 5, meal, photo };
+    const post: IFeedOp = { type: "post", userId: "me", workoutId: 7, queuedAt: 1, summary };
+    let state = Feed_queue(Feed_queue(Feed_empty(), post), op);
+    expect(Feed_pendingOps(state, "me")).to.deep.equal([post, op]);
+    expect(Feed_shareStatus(state, "me", 7)).to.equal("sending");
+    expect(Feed_parse(JSON.parse(JSON.stringify(state))).outbox).to.deep.equal([post, op]);
+    expect(Feed_parse({ outbox: [{ ...op, photo: "javascript:alert(1)" }] }).outbox).to.deep.equal([
+      { type: "meal", userId: "me", queuedAt: 5, meal },
+    ]);
+    state = Feed_sent(state, op, t1);
+    expect(Feed_pendingOps(state, "me")).to.deep.equal([post]);
+    expect(state.meals).to.deep.equal([{ ...meal, userId: "me", postedAt: t1, photoPath: `me/${mealId}.jpg` }]);
+  });
+
+  it("names the right table when reporting each kind of post", () => {
+    const state = Feed_withServerMeals(
+      Feed_withServerPosts(Feed_empty(), "me", [{ ...row("a", 1, "2026-10-08T10:00:00Z"), id: 12 }], t1),
+      "me",
+      Feed_parseMeals([mealRow("a", mealId, "2026-10-09T10:00:00Z")])
+    );
+    expect(Feed_items(state, friends).map(Feed_reportTarget)).to.deep.equal([
+      { kind: "meal", id: mealId },
+      { kind: "workout", id: 12 },
+    ]);
+    const cached = Feed_sent(Feed_empty(), { type: "post", userId: "me", workoutId: 3, queuedAt: 1, summary }, t1);
+    expect(Feed_items(cached, friends).map(Feed_reportTarget)).to.deep.equal([undefined]);
+  });
+
+  it("refreshes for the TV only when signed in and the cache is old or another account's", () => {
+    const loaded = Feed_withServerPosts(Feed_empty(), "me", [], t1);
+    expect(Feed_needsRefresh(loaded, undefined, t1)).to.equal(false);
+    expect(Feed_needsRefresh(loaded, "me", t1 + 60000)).to.equal(false);
+    expect(Feed_needsRefresh(loaded, "me", t1 + 11 * 60000)).to.equal(true);
+    expect(Feed_needsRefresh(loaded, "other", t1)).to.equal(true);
+    expect(Feed_needsRefresh(Feed_empty(), "me", t1)).to.equal(true);
+  });
+
+  it("opens on the friends list until there is a friend, then on the feed", () => {
+    expect(Feed_screenView(undefined, 0)).to.equal("people");
+    expect(Feed_screenView(undefined, 2)).to.equal("feed");
+    expect(Feed_screenView("people", 2)).to.equal("people");
+    expect(Feed_screenView("feed", 0)).to.equal("feed");
   });
 
   it("says how long ago in plain words", () => {
@@ -363,6 +456,56 @@ describe("Feed", () => {
     expect(Feed_ago(t1, t1 + 3 * 3600000)).to.equal("3 h ago");
     expect(Feed_ago(t1, t1 + 30 * 3600000)).to.equal("yesterday");
     expect(Feed_ago(t1, t1 + 72 * 3600000)).to.equal("3 days ago");
+  });
+});
+
+describe("BearTv", () => {
+  const settings = Settings_build();
+  const summary = {
+    ...WorkoutPost_build(record(t1, [entry(bench, [set(85, 5)])]), settings, {}, undefined),
+    bear: { level: 4, mood: "hungry" as const, countedKg: 425, line: "female" as const },
+  };
+  const friends = Friends_fromServer(
+    "me",
+    [
+      { user_id: "me", handle: "paul", display_name: "Paul" },
+      { user_id: "a", handle: "victor", display_name: "victor" },
+    ],
+    [{ requester: "me", addressee: "a", status: "accepted" }]
+  );
+  const state = Feed_withServerPosts(
+    Feed_empty(),
+    "me",
+    [
+      { user_id: "a", workout_id: 1, posted_at: "2026-10-08T10:00:00Z", summary },
+      { user_id: "me", workout_id: 2, posted_at: "2026-10-09T10:00:00Z", summary },
+    ],
+    t1
+  );
+
+  it("sits on the TV screen from the gym manifest", () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(__dirname, "../images/bear/male/manifest.json"), "utf8")
+    ) as Record<string, unknown>;
+    expect(manifest.tv_safe_rect).to.deep.equal(BearTv_rect);
+    expect(BearTv_box(512)).to.deep.equal({ left: 437.5, top: 172.5, width: 62.5, height: 92.5 });
+  });
+
+  it("says no friends yet when signed out or alone, and shows the newest friend post otherwise", () => {
+    const items = Feed_items(state, friends);
+    expect(BearTv_screen({ signedIn: false, friendCount: 1, items, now: t1 }).text).to.equal("No friends yet");
+    expect(BearTv_screen({ signedIn: true, friendCount: 0, items: [], now: t1 }).text).to.equal("No friends yet");
+    expect(BearTv_screen({ signedIn: true, friendCount: 1, items: items.slice(0, 1), now: t1 }).text).to.equal(
+      "No posts yet"
+    );
+    const screen = BearTv_screen({ signedIn: true, friendCount: 1, items, now: Date.parse("2026-10-08T12:00:00Z") });
+    expect(screen).to.deep.equal({
+      kind: "post",
+      sprite: "/images/bear/female/mood-medium-hungry.webp",
+      text: "\u{1F3CB} victor",
+      label: "victor lifted: Push · 45 min · 1 set · +425 kg, 2 h ago. Open the feed.",
+    });
+    expect(BearTv_sprite(undefined)).to.equal("/images/bear/male/level-01.webp");
   });
 });
 

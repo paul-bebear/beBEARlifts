@@ -1,9 +1,12 @@
 import { JSX } from "react";
-import { Linking, Pressable, View } from "react-native";
-import { Feed_ago, IFeedItem } from "../models/feed";
-import { WorkoutPost_setText, WorkoutPost_statsLine } from "../models/workoutPost";
+import { Image, Linking, Pressable, View } from "react-native";
+import { Feed_ago, Feed_itemKey, IFeedItem, IFeedPost } from "../models/feed";
+import { BearTv_sprite } from "../models/bearTv";
+import { IMealPost, MealPost_macrosCard } from "../models/mealPost";
+import { WorkoutPost_feedLine, WorkoutPost_levelText, WorkoutPost_setText } from "../models/workoutPost";
 import { Text } from "./primitives/text";
 import { FeedPostMenu } from "./feedPostMenu";
+import { BearHead } from "./bearTv";
 import { Support_email } from "../utils/support";
 import { Dialog_alert } from "../utils/dialog";
 
@@ -13,22 +16,39 @@ interface IProps {
   now: number;
 }
 
-function Post(props: { item: IFeedItem; now: number }): JSX.Element {
-  const { post, author, isMine } = props.item;
-  const summary = post.summary;
+function PostHeader(props: { item: IFeedItem; now: number }): JSX.Element {
+  const { author, isMine, bear, post } = props.item;
   return (
-    <View className="p-4 my-2 rounded-2xl bg-background-subtle" testID="feed-post">
-      <View className="flex-row items-baseline justify-between">
-        <Text className="flex-1 text-sm">
+    <View className="flex-row items-center" style={{ gap: 10 }}>
+      <BearHead sprite={BearTv_sprite(bear)} size={40} />
+      <View className="flex-1">
+        <Text className="text-sm" numberOfLines={1}>
           <Text className="font-bold">{isMine ? "You" : author.displayName}</Text>
-          {!isMine && <Text className="text-text-secondary"> @{author.handle}</Text>}
+          {bear != null && <Text className="text-text-secondary"> · {WorkoutPost_levelText(bear)}</Text>}
         </Text>
-        <Text className="text-xs text-text-secondary">{Feed_ago(post.postedAt, props.now)}</Text>
+        <Text className="text-xs text-text-secondary">
+          {isMine ? "" : `@${author.handle} · `}
+          {Feed_ago(post.postedAt, props.now)}
+        </Text>
       </View>
-      <Text className="mt-1 text-base font-semibold">
-        {summary.programName != null ? `${summary.programName} · ${summary.dayName}` : summary.dayName}
-      </Text>
-      <Text className="text-sm text-text-secondary">{WorkoutPost_statsLine(summary)}</Text>
+    </View>
+  );
+}
+
+function WorkoutBody(props: { post: IFeedPost }): JSX.Element {
+  const summary = props.post.summary;
+  return (
+    <>
+      <Text className="mt-2 text-base font-semibold">{WorkoutPost_feedLine(summary)}</Text>
+      {summary.songs.length > 0 && (
+        <View className="mt-1">
+          {summary.songs.map((song, i) => (
+            <Text key={`song-${i}`} className="text-sm text-text-secondary" numberOfLines={1}>
+              {"\u{1F3B5}"} {song}
+            </Text>
+          ))}
+        </View>
+      )}
       {summary.prs.length > 0 && (
         <View className="mt-2">
           {summary.prs.map((set, i) => (
@@ -38,21 +58,47 @@ function Post(props: { item: IFeedItem; now: number }): JSX.Element {
           ))}
         </View>
       )}
-      {summary.topSets.length > 0 && (
-        <View className="mt-2">
-          {summary.topSets.map((set, i) => (
-            <Text key={`top-${i}`} className="text-sm">
-              {WorkoutPost_setText(set)}
-            </Text>
-          ))}
-        </View>
+    </>
+  );
+}
+
+function MealBody(props: { post: IMealPost }): JSX.Element {
+  const { post } = props;
+  return (
+    <>
+      {post.photoUrl != null && (
+        <Image
+          testID="feed-meal-photo"
+          source={{ uri: post.photoUrl }}
+          accessibilityLabel={post.description}
+          className="mt-3 rounded-xl"
+          style={{ width: "100%", aspectRatio: 4 / 3 }}
+          resizeMode="cover"
+        />
       )}
-      {summary.keptSongs != null && (
-        <Text className="mt-2 text-sm text-text-secondary">
-          {"\u{1F3B5}"} {summary.keptSongs} {summary.keptSongs === 1 ? "song" : "songs"} kept
-        </Text>
-      )}
-      <FeedPostMenu item={props.item} />
+      <Text className="mt-2 text-base">{post.description}</Text>
+      <View className="flex-row mt-2" style={{ gap: 6 }} testID="feed-meal-macros">
+        {MealPost_macrosCard(post.macros).map((cell) => (
+          <View key={cell.label} className="items-center flex-1 py-2 rounded-lg bg-background-default">
+            <Text className="text-sm font-bold">{cell.value}</Text>
+            <Text className="text-xs text-text-secondary">{cell.label}</Text>
+          </View>
+        ))}
+      </View>
+    </>
+  );
+}
+
+function Post(props: { item: IFeedItem; now: number }): JSX.Element {
+  const { item } = props;
+  return (
+    <View
+      className="p-4 my-2 rounded-2xl bg-background-subtle"
+      testID={item.kind === "meal" ? "feed-meal" : "feed-post"}
+    >
+      <PostHeader item={item} now={props.now} />
+      {item.kind === "workout" ? <WorkoutBody post={item.post} /> : <MealBody post={item.post} />}
+      <FeedPostMenu item={item} />
     </View>
   );
 }
@@ -60,20 +106,15 @@ function Post(props: { item: IFeedItem; now: number }): JSX.Element {
 export function FriendsFeed(props: IProps): JSX.Element {
   return (
     <View className="my-3" testID="friends-feed">
-      <View className="flex-row items-baseline justify-between">
-        <Text className="text-base font-semibold">Feed</Text>
-        {props.loadedAt != null && (
-          <Text className="text-xs text-text-secondary">Updated {Feed_ago(props.loadedAt, props.now)}</Text>
-        )}
-      </View>
+      {props.loadedAt != null && (
+        <Text className="text-xs text-right text-text-secondary">Updated {Feed_ago(props.loadedAt, props.now)}</Text>
+      )}
       {props.items.length === 0 ? (
         <Text className="mt-2 text-sm text-text-secondary">
-          No workouts yet. Turn on "Share with friends" when you finish a workout.
+          No posts yet. Turn on "Share with friends" when you finish a workout or log a meal.
         </Text>
       ) : (
-        props.items.map((item) => (
-          <Post key={`${item.post.userId}-${item.post.workoutId}`} item={item} now={props.now} />
-        ))
+        props.items.map((item) => <Post key={Feed_itemKey(item)} item={item} now={props.now} />)
       )}
       <Pressable
         className="py-4"

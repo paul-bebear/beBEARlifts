@@ -18,6 +18,8 @@ export interface IScanServing {
   mode: IScanMode;
   items: IFoodBasketItem[];
   descriptionOverride?: string;
+  photo?: string;
+  isShared?: boolean;
 }
 
 export type IScanStep =
@@ -46,11 +48,12 @@ export type IScanEvent =
   | { type: "barcodeRead"; code: string }
   | { type: "barcodeFound"; pick: IFoodPick }
   | { type: "barcodeMissed"; code: string; error?: string }
-  | { type: "photoReviewed"; choices: IFoodPhotoChoice[]; nonce: number }
+  | { type: "photoReviewed"; choices: IFoodPhotoChoice[]; nonce: number; photo?: string }
   | { type: "quickEntered"; name: string; nutrients: INutrients }
   | { type: "gramsChanged"; key: string; grams: number }
   | { type: "itemRemoved"; key: string }
   | { type: "descriptionChanged"; text: string }
+  | { type: "shareToggled"; isShared: boolean }
   | { type: "back" };
 
 export function FoodScanSteps_modes(hasAi: boolean): IScanMode[] {
@@ -151,8 +154,13 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
       return servingOf("barcode", FoodBasket_put([], event.pick));
     case "barcodeMissed":
       return { kind: "notFound", code: event.code, error: event.error };
-    case "photoReviewed":
-      return servingOf("ai", FoodBasket_putAll([], FoodBasket_fromChoices(event.choices, "photo", event.nonce)));
+    case "photoReviewed": {
+      const serving = servingOf(
+        "ai",
+        FoodBasket_putAll([], FoodBasket_fromChoices(event.choices, "photo", event.nonce))
+      );
+      return event.photo != null ? mapServing(serving, (s) => ({ ...s, photo: event.photo })) : serving;
+    }
     case "quickEntered":
       return servingOf("describe", FoodBasket_put([], FoodAddFlow_manualPick(event.name, event.nutrients), 0));
     case "gramsChanged":
@@ -161,6 +169,8 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
       return mapServing(step, (s) => ({ ...s, items: FoodBasket_remove(s.items, event.key) }));
     case "descriptionChanged":
       return mapServing(step, (s) => ({ ...s, descriptionOverride: event.text }));
+    case "shareToggled":
+      return mapServing(step, (s) => ({ ...s, isShared: event.isShared }));
     case "back":
       return backFrom(step);
   }

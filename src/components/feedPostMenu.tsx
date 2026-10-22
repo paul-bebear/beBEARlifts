@@ -1,6 +1,6 @@
 import { JSX, useState } from "react";
 import { Pressable, View } from "react-native";
-import { IFeedItem } from "../models/feed";
+import { Feed_reportTarget, IFeedItem } from "../models/feed";
 import { FeedModeration_menu, FeedModeration_reasons, IPostMenuItem, IReportReason } from "../models/feedModeration";
 import { ModerationCommand_block, ModerationCommand_report } from "../utils/moderationCommand";
 import { Text } from "./primitives/text";
@@ -68,7 +68,7 @@ export function FeedPostMenu(props: { item: IFeedItem }): JSX.Element | null {
             disabled={busy}
             onClick={async () => {
               setBusy(true);
-              const outcome = await ModerationCommand_report(props.item.post.id, reason, note);
+              const outcome = await ModerationCommand_report(Feed_reportTarget(props.item), reason, note);
               setMessage(outcome.message);
               setOpen(outcome.keepOpen);
               setReporting(outcome.keepOpen);

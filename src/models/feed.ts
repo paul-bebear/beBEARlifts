@@ -1,5 +1,6 @@
 import { IFriendsState, IProfile } from "./friends";
-import { IWorkoutPostSummary, WorkoutPost_parse } from "./workoutPost";
+import { IMealPost, IMealPostDraft, MealPost_parse, MealPost_parseDraft, MealPost_photoPath } from "./mealPost";
+import { IPostBear, IWorkoutPostSummary, WorkoutPost_parse } from "./workoutPost";
 
 export interface IFeedPost {
   id?: number;
@@ -11,29 +12,41 @@ export interface IFeedPost {
 
 export type IFeedOp =
   | { type: "post"; userId: string; workoutId: number; queuedAt: number; summary: IWorkoutPostSummary }
-  | { type: "remove"; userId: string; workoutId: number; queuedAt: number };
+  | { type: "remove"; userId: string; workoutId: number; queuedAt: number }
+  | { type: "meal"; userId: string; queuedAt: number; meal: IMealPostDraft; photo?: string };
 
 export interface IFeedState {
   version: 1;
   userId?: string;
   posts: IFeedPost[];
+  meals: IMealPost[];
   loadedAt?: number;
-  shareByDefault?: boolean;
   outbox: IFeedOp[];
 }
 
-export interface IFeedItem {
-  post: IFeedPost;
+interface IFeedItemBase {
   author: IProfile;
   isMine: boolean;
+  bear?: IPostBear;
 }
+
+export type IFeedItem =
+  | (IFeedItemBase & { kind: "workout"; post: IFeedPost })
+  | (IFeedItemBase & { kind: "meal"; post: IMealPost });
+
+export type IFeedReportTarget = { kind: "workout"; id: number } | { kind: "meal"; id: string };
 
 export type IFeedShareStatus = "shared" | "sending" | "notShared";
 
+export type IFeedScreenView = "feed" | "people";
+
 export const Feed_limit = 50;
+export const Feed_staleMs = 10 * 60000;
+
+const jpegDataUrl = /^data:image\/jpeg;base64,/;
 
 export function Feed_empty(): IFeedState {
-  return { version: 1, posts: [], outbox: [] };
+  return { version: 1, posts: [], meals: [], outbox: [] };
 }
 
 function num(value: unknown): number | undefined {
@@ -51,16 +64,28 @@ function parsePost(raw: unknown): IFeedPost | undefined {
     : undefined;
 }
 
-function sortPosts(posts: IFeedPost[]): IFeedPost[] {
+function newestFirst<T extends { postedAt: number }>(posts: T[]): T[] {
   return [...posts].sort((a, b) => b.postedAt - a.postedAt).slice(0, Feed_limit);
+}
+
+export function Feed_parseMeals(rows: unknown): IMealPost[] {
+  return newestFirst((Array.isArray(rows) ? rows : []).map(MealPost_parse).filter((p) => p != null));
 }
 
 function parseOp(raw: unknown): IFeedOp | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const workoutId = num(r.workoutId);
   const queuedAt = num(r.queuedAt);
   const userId = typeof r.userId === "string" ? r.userId : undefined;
-  if (workoutId == null || queuedAt == null || userId == null) {
+  if (queuedAt == null || userId == null) {
+    return undefined;
+  }
+  if (r.type === "meal") {
+    const meal = MealPost_parseDraft(r.meal);
+    const photo = typeof r.photo === "string" && jpegDataUrl.test(r.photo) ? r.photo : undefined;
+    return meal != null ? { type: "meal", userId, queuedAt, meal, ...(photo != null ? { photo } : {}) } : undefined;
+  }
+  const workoutId = num(r.workoutId);
+  if (workoutId == null) {
     return undefined;
   }
   if (r.type === "remove") {
@@ -75,11 +100,9 @@ export function Feed_parse(raw: unknown): IFeedState {
   const state = Feed_empty();
   if (typeof r.userId === "string") {
     state.userId = r.userId;
-    state.posts = sortPosts((Array.isArray(r.posts) ? r.posts : []).map(parsePost).filter((p) => p != null));
+    state.posts = newestFirst((Array.isArray(r.posts) ? r.posts : []).map(parsePost).filter((p) => p != null));
+    state.meals = Feed_parseMeals(r.meals);
     state.loadedAt = num(r.loadedAt);
-  }
-  if (typeof r.shareByDefault === "boolean") {
-    state.shareByDefault = r.shareByDefault;
   }
   state.outbox = (Array.isArray(r.outbox) ? r.outbox : []).map(parseOp).filter((o) => o != null);
   return state;
@@ -87,42 +110,57 @@ export function Feed_parse(raw: unknown): IFeedState {
 
 export function Feed_withServerPosts(state: IFeedState, userId: string, rows: unknown, now: number): IFeedState {
   const posts = (Array.isArray(rows) ? rows : []).map(parsePost).filter((p) => p != null);
-  return { ...state, userId, posts: sortPosts(posts), loadedAt: now };
+  const meals = state.userId === userId ? state.meals : [];
+  return { ...state, userId, posts: newestFirst(posts), meals, loadedAt: now };
+}
+
+export function Feed_withServerMeals(state: IFeedState, userId: string, meals: IMealPost[]): IFeedState {
+  return state.userId === userId ? { ...state, meals: newestFirst(meals) } : state;
+}
+
+function opKey(op: IFeedOp): string {
+  return op.type === "meal" ? `meal:${op.meal.id}` : `workout:${op.workoutId}`;
 }
 
 // One pending change per workout. A later toggle replaces an earlier one that has not been sent yet.
 export function Feed_queue(state: IFeedState, op: IFeedOp): IFeedState {
-  const others = state.outbox.filter((o) => !(o.userId === op.userId && o.workoutId === op.workoutId));
+  const others = state.outbox.filter((o) => !(o.userId === op.userId && opKey(o) === opKey(op)));
   return { ...state, outbox: [...others, op] };
 }
 
 // An op waits for the account that queued it, so a sign-in switch never posts under the other account.
-export function Feed_nextOp(state: IFeedState, userId: string): IFeedOp | undefined {
-  return state.outbox.find((o) => o.userId === userId);
-}
-
-export function Feed_setShareByDefault(state: IFeedState, share: boolean): IFeedState {
-  return { ...state, shareByDefault: share };
+export function Feed_pendingOps(state: IFeedState, userId: string): IFeedOp[] {
+  return state.outbox.filter((o) => o.userId === userId);
 }
 
 // The cached feed changes at once, so the user's own post shows or goes even before a refresh.
 export function Feed_sent(state: IFeedState, op: IFeedOp, now: number): IFeedState {
-  const { userId, workoutId } = op;
+  const { userId } = op;
   const outbox = state.outbox.filter(
-    (o) => !(o.userId === userId && o.workoutId === workoutId && o.queuedAt === op.queuedAt)
+    (o) => !(o.userId === userId && opKey(o) === opKey(op) && o.queuedAt === op.queuedAt)
   );
+  if (state.userId != null && state.userId !== userId) {
+    return { ...state, outbox };
+  }
+  if (op.type === "meal") {
+    const mine: IMealPost = {
+      ...op.meal,
+      userId,
+      postedAt: now,
+      ...(op.photo != null ? { photoPath: MealPost_photoPath(userId, op.meal.id) } : {}),
+    };
+    const meals = newestFirst([mine, ...state.meals.filter((m) => m.id !== op.meal.id)]);
+    return { ...state, userId, outbox, meals };
+  }
+  const { workoutId } = op;
   const others = state.posts.filter((p) => !(p.userId === userId && p.workoutId === workoutId));
   const posts =
-    op.type === "post" ? sortPosts([{ userId, workoutId, postedAt: now, summary: op.summary }, ...others]) : others;
-  return state.userId == null || state.userId === userId ? { ...state, userId, outbox, posts } : { ...state, outbox };
-}
-
-export function Feed_shouldShareOnFinish(state: IFeedState, userId: string, workoutId: number): boolean {
-  return state.shareByDefault === true && Feed_shareStatus(state, userId, workoutId) === "notShared";
+    op.type === "post" ? newestFirst([{ userId, workoutId, postedAt: now, summary: op.summary }, ...others]) : others;
+  return { ...state, userId, outbox, posts };
 }
 
 export function Feed_shareStatus(state: IFeedState, userId: string, workoutId: number): IFeedShareStatus {
-  const pending = state.outbox.find((o) => o.userId === userId && o.workoutId === workoutId);
+  const pending = state.outbox.find((o) => o.userId === userId && o.type !== "meal" && o.workoutId === workoutId);
   if (pending != null) {
     return pending.type === "post" ? "sending" : "notShared";
   }
@@ -132,6 +170,7 @@ export function Feed_shareStatus(state: IFeedState, userId: string, workoutId: n
 }
 
 // Posts from someone no longer a friend can stay in the cache until the next refresh. The feed hides them at once.
+// A meal row carries no bear, so it borrows the bear from the author's newest workout post.
 export function Feed_items(state: IFeedState, friends: IFriendsState): IFeedItem[] {
   if (state.userId == null || state.userId !== friends.userId) {
     return [];
@@ -142,15 +181,52 @@ export function Feed_items(state: IFeedState, friends: IFriendsState): IFeedItem
       authors.set(link.other.userId, link.other);
     }
   }
-  const result: IFeedItem[] = [];
+  const bears = new Map<string, IPostBear>();
   for (const post of state.posts) {
-    const isMine = post.userId === state.userId;
-    const author = isMine ? friends.me : authors.get(post.userId);
-    if (author != null) {
-      result.push({ post, author, isMine });
+    if (post.summary.bear != null && !bears.has(post.userId)) {
+      bears.set(post.userId, post.summary.bear);
     }
   }
-  return result;
+  const authorOf = (userId: string): IProfile | undefined =>
+    userId === state.userId ? friends.me : authors.get(userId);
+  const result: IFeedItem[] = [];
+  for (const post of state.posts) {
+    const author = authorOf(post.userId);
+    if (author != null) {
+      const isMine = post.userId === state.userId;
+      const bear = post.summary.bear ?? bears.get(post.userId);
+      result.push({ kind: "workout", post, author, isMine, bear });
+    }
+  }
+  for (const post of state.meals) {
+    const author = authorOf(post.userId);
+    if (author != null) {
+      const isMine = post.userId === state.userId;
+      result.push({ kind: "meal", post, author, isMine, bear: bears.get(post.userId) });
+    }
+  }
+  return result.sort((a, b) => b.post.postedAt - a.post.postedAt);
+}
+
+export function Feed_itemKey(item: IFeedItem): string {
+  return item.kind === "meal" ? `meal-${item.post.id}` : `${item.post.userId}-${item.post.workoutId}`;
+}
+
+export function Feed_reportTarget(item: IFeedItem): IFeedReportTarget | undefined {
+  if (item.kind === "meal") {
+    return { kind: "meal", id: item.post.id };
+  }
+  return item.post.id != null ? { kind: "workout", id: item.post.id } : undefined;
+}
+
+// The TV reads the cache and asks for a refresh at most every 10 minutes, so visiting My bear stays offline-friendly.
+export function Feed_needsRefresh(state: IFeedState, userId: string | undefined, now: number): boolean {
+  return userId != null && (state.userId !== userId || state.loadedAt == null || now - state.loadedAt > Feed_staleMs);
+}
+
+// With no friends yet, the screen opens on the friends part, so "Add a friend" is the first thing (U28).
+export function Feed_screenView(chosen: IFeedScreenView | undefined, friendCount: number): IFeedScreenView {
+  return chosen ?? (friendCount === 0 ? "people" : "feed");
 }
 
 export function Feed_ago(then: number, now: number): string {

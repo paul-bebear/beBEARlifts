@@ -1,5 +1,6 @@
 import { JSX, useState } from "react";
-import { View, Pressable } from "react-native";
+import { Image, View, Pressable } from "react-native";
+import { IMealShareSwitch } from "../models/mealPost";
 import { Text } from "./primitives/text";
 import { Switch } from "./primitives/switch";
 import { FoodLog_mealNames, IFoodMeal } from "../models/foodLog";
@@ -21,6 +22,8 @@ interface IProps {
   onGrams: (key: string, grams: number) => void;
   onRemove: (key: string) => void;
   onDescription: (text: string) => void;
+  share: IMealShareSwitch;
+  onShare: (isShared: boolean) => void;
   onAdd: () => void;
 }
 
@@ -119,12 +122,26 @@ export function FoodServingPanel(props: IProps): JSX.Element {
           />
         </View>
       )}
-      <View className="flex-row items-center mt-4" testID="food-serving-share">
+      <View className="flex-row items-center mt-4" style={{ gap: 10 }} testID="food-serving-share">
+        {serving.photo != null && (
+          <Image
+            testID="food-serving-photo"
+            source={{ uri: serving.photo }}
+            className="rounded-lg"
+            style={{ width: 48, height: 48 }}
+            resizeMode="cover"
+          />
+        )}
         <View className="flex-1">
-          <Text className="text-base text-text-secondary">Share with friends</Text>
-          <Text className="text-xs text-text-secondary">Coming soon</Text>
+          <Text className={`text-base ${props.share.enabled ? "" : "text-text-secondary"}`}>Share with friends</Text>
+          <Text className="text-xs text-text-secondary">{props.share.note}</Text>
         </View>
-        <Switch value={false} disabled={true} onValueChange={() => undefined} testID="food-serving-share-switch" />
+        <Switch
+          value={serving.isShared === true && props.share.enabled}
+          disabled={!props.share.enabled}
+          onValueChange={props.onShare}
+          testID="food-serving-share-switch"
+        />
       </View>
       <View className="flex-row mt-5">
         <Button
