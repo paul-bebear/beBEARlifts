@@ -1,16 +1,11 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { act, createElement } from "react";
+import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { createRoot, Root } from "test-renderer";
 import * as htmlToImage from "html-to-image";
-import { StoryImage_render, useStoryImage } from "../src/utils/storyImage";
-import * as storyImage from "../src/utils/storyImage";
-import { WorkoutStoryCardSection } from "../src/components/workoutStoryCard";
-import { RunShareCard } from "../src/components/runShareCard";
-import * as foodUi from "../src/components/foodUi";
-import { IRun } from "../src/models/runLog";
+import { ShareCardImage_capture, ShareCardImage_share } from "../src/utils/shareCardImage";
+import { WorkoutSharePage } from "../src/components/shareCards/workoutSharePage";
 import {
   ILiftEquivalent,
   LiftEquivalents_all,
@@ -19,11 +14,21 @@ import {
   LiftEquivalents_pick,
 } from "../src/models/liftEquivalents";
 import {
+  WorkoutStoryCard_build,
   WorkoutStoryCard_duration,
+  WorkoutStoryCard_headline,
+  WorkoutStoryCard_iconCount,
   WorkoutStoryCard_muscles,
+  WorkoutStoryCard_prCount,
+  WorkoutStoryCard_receipt,
+  WorkoutStoryCard_setsText,
   WorkoutStoryCard_stats,
+  WorkoutStoryCard_summary,
+  WorkoutStoryCard_toNext,
   WorkoutStoryCard_weightNumber,
 } from "../src/models/workoutStoryCard";
+import { BearTier_progress } from "../src/models/bearTier";
+import { IPersonalRecords } from "../src/models/history";
 import { Settings_build } from "../src/models/settings";
 import { Weight_build } from "../src/models/weight";
 import { IHistoryRecord, ISet } from "../src/types";
@@ -100,86 +105,61 @@ describe("WorkoutStoryCard", () => {
 
   it("headlines sets for bodyweight and empty workouts, and weight for loaded workouts", () => {
     for (const units of ["kg", "lb"] as const) {
+      const unitSettings = { ...settings, units };
       const bodyweight = {
         ...record,
         entries: [{ ...record.entries[0], exercise: { id: "pushUp" }, sets: [set(10, 0), set(8, 0)] }],
-      };
-      const html = renderToStaticMarkup(
-        createElement(WorkoutStoryCardSection, { record: bodyweight, settings: { ...settings, units } })
-      );
-      expect(html).to.contain("TRAINED TODAY").and.not.to.contain("LIFTED TODAY");
-      expect(html).to.not.contain(`>${units}<`);
-      expect(html).to.contain("2");
-      const empty = renderToStaticMarkup(
-        createElement(WorkoutStoryCardSection, { record: { ...record, entries: [] }, settings: { ...settings, units } })
-      );
-      expect(empty).to.contain("TRAINED TODAY").and.not.to.contain(`>${units}<`);
+      } as IHistoryRecord;
+      const stats = WorkoutStoryCard_stats(bodyweight, unitSettings);
+      expect(WorkoutStoryCard_headline(stats)).to.deep.equal({ label: "TRAINED TODAY", value: "2", unit: "sets" });
+      expect(WorkoutStoryCard_summary(stats, WorkoutStoryCard_setsText(2))).to.equal("1h 2m · 2 sets");
+      const empty = WorkoutStoryCard_stats({ ...record, entries: [] }, unitSettings);
+      expect(WorkoutStoryCard_headline(empty).label).to.equal("TRAINED TODAY");
     }
-    const loaded = renderToStaticMarkup(createElement(WorkoutStoryCardSection, { record, settings }));
-    expect(loaded).to.contain("LIFTED TODAY").and.to.contain(">kg<");
+    const loaded = WorkoutStoryCard_stats(record, settings);
+    expect(WorkoutStoryCard_headline(loaded)).to.deep.equal({ label: "LIFTED TODAY", value: "1,980", unit: "kg" });
+    expect(WorkoutStoryCard_summary(loaded, WorkoutStoryCard_setsText(1))).to.equal("1,980 kg · 1h 2m · 1 set");
   });
 
-  it("shares each prepared card on the tap without rendering another PNG", async () => {
-    const png = sinon.stub(htmlToImage, "toPng").resolves("data:image/png;base64,AA==");
-    sinon.stub(storyImage, "useStoryImage").returns({ dataUrl: "data:image/png;base64,AA==", retry: () => undefined });
+  it("totals a bodyweight receipt in sets and leaves its line volume blank", () => {
+    const bodyweight = {
+      ...record,
+      entries: [{ ...record.entries[0], exercise: { id: "pushUp" }, sets: [set(10, 0), set(8, 0)] }],
+    } as IHistoryRecord;
+    const receipt = WorkoutStoryCard_receipt(bodyweight, settings, {});
+    expect([receipt.total, receipt.lines.map((l) => l.volume)]).to.deep.equal(["2 sets", [""]]);
+  });
+
+  it("writes headline text on every card for a bodyweight workout", () => {
+    const bodyweight = {
+      ...record,
+      entries: [{ ...record.entries[0], exercise: { id: "pushUp" }, sets: [set(10, 0), set(8, 0)] }],
+    } as IHistoryRecord;
+    const achievements = { lifetimeKg: new Map(), badges: [] };
+    const data = WorkoutStoryCard_build({ record: bodyweight, settings, prs: {}, achievements, seed: 1 });
+    for (const page of ["photo", "count", "rank", "receipt"] as const) {
+      const html = renderToStaticMarkup(createElement(WorkoutSharePage, { page, data }));
+      expect(html, page)
+        .to.not.contain(">kg<")
+        .and.not.match(/(^|[>\s])0 kg/);
+    }
+    expect(renderToStaticMarkup(createElement(WorkoutSharePage, { page: "photo", data }))).to.contain("TRAINED TODAY");
+  });
+
+  it("calls navigator.share before the first await, inside the tap", async () => {
     const share = sinon.stub().resolves();
     sinon.stub(globalThis, "navigator").value({ userAgent: "iPhone", canShare: () => true, share });
-    const buttons = new Map<string, Parameters<typeof foodUi.FoodPrimaryButton>[0]>();
-    sinon.stub(foodUi, "FoodPrimaryButton").callsFake((props) => {
-      buttons.set(props.testID!, props);
-      return createElement("button");
-    });
-    const run: IRun = {
-      id: 1,
-      startedAt: 1,
-      endedAt: 2,
-      distanceM: 1000,
-      movingMs: 300000,
-      elevationGainM: 0,
-      route: [],
-      splits: [],
-    };
-    renderToStaticMarkup(createElement(WorkoutStoryCardSection, { record, settings }));
-    renderToStaticMarkup(createElement(RunShareCard, { run }));
-    for (const id of ["workout-story-share", "run-share"]) {
-      const button = buttons.get(id)!;
-      expect(button.disabled).to.equal(false);
-      button.onPress();
-      expect(share.callCount).to.equal(id === "workout-story-share" ? 1 : 2);
-    }
-    await Promise.resolve();
-    expect(png.called).to.equal(false);
-    expect(share.firstCall.args[0].files[0].name).to.equal("workout-story.png");
-    expect(share.secondCall.args[0].files[0].name).to.equal("run-story.png");
+    const pending = ShareCardImage_share(["data:image/png;base64,AA=="], "bebear-workout");
+    expect(share.callCount).to.equal(1);
+    expect(share.firstCall.args[0].files[0].name).to.equal("bebear-workout.png");
+    expect(await pending).to.equal("shared");
   });
 });
 
-describe("StoryImage", () => {
-  let root: Root;
-  let latest: ReturnType<typeof useStoryImage>;
-  const ref = { current: {} as HTMLElement };
-  const size = { width: 360, height: 640 };
-  const actGlobal = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
-  let previousActEnvironment: boolean | undefined;
+describe("ShareCardImage_capture", () => {
+  afterEach(() => sinon.restore());
 
-  function Harness(props: { source: object }): ReturnType<typeof createElement> {
-    latest = useStoryImage(ref, props.source, size);
-    return createElement("div");
-  }
-
-  beforeEach(() => {
-    previousActEnvironment = actGlobal.IS_REACT_ACT_ENVIRONMENT;
-    actGlobal.IS_REACT_ACT_ENVIRONMENT = true;
-    root = createRoot();
-  });
-
-  afterEach(async () => {
-    await act(async () => root.unmount());
-    actGlobal.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment;
-    sinon.restore();
-  });
-
-  it("does one warm-up pass before the final PNG at the supplied size", async () => {
+  it("does one warm-up pass before the final PNG at the card size", async () => {
     let finishWarmup!: (value: string) => void;
     const png = sinon.stub(htmlToImage, "toPng");
     png.onFirstCall().returns(
@@ -188,56 +168,13 @@ describe("StoryImage", () => {
       })
     );
     png.onSecondCall().resolves("final");
-    const result = StoryImage_render(ref.current, { width: 200, height: 300 });
+    const element = {} as HTMLElement;
+    const result = ShareCardImage_capture(element);
     expect(png.callCount).to.equal(1);
     finishWarmup("warmup");
     expect(await result).to.equal("final");
     expect(png.callCount).to.equal(2);
-    expect(png.alwaysCalledWithExactly(ref.current, { pixelRatio: 3, width: 200, height: 300 })).to.equal(true);
-  });
-
-  it("invalidates a prepared image immediately when the photo or seed changes", async () => {
-    const png = sinon.stub(htmlToImage, "toPng").resolves("old");
-    await act(async () => root.render(createElement(Harness, { source: { photo: "one", seed: 1 } })));
-    expect(latest.dataUrl).to.equal("old");
-    let finish!: (value: string) => void;
-    png.returns(
-      new Promise((resolve) => {
-        finish = resolve;
-      })
-    );
-    await act(async () => root.render(createElement(Harness, { source: { photo: "two", seed: 2 } })));
-    expect(latest.dataUrl).to.equal(undefined);
-    png.resolves("new");
-    await act(async () => finish("warmup"));
-    expect(latest.dataUrl).to.equal("new");
-  });
-
-  it("ignores an older render that completes after a new source", async () => {
-    let finishOld!: (value: string) => void;
-    const png = sinon.stub(htmlToImage, "toPng").resolves("new");
-    png.onFirstCall().returns(
-      new Promise((resolve) => {
-        finishOld = resolve;
-      })
-    );
-    await act(async () => root.render(createElement(Harness, { source: { seed: 1 } })));
-    await act(async () => root.render(createElement(Harness, { source: { seed: 2 } })));
-    expect(latest.dataUrl).to.equal("new");
-    png.resolves("old");
-    await act(async () => finishOld("warmup"));
-    expect(latest.dataUrl).to.equal("new");
-  });
-
-  it("offers a retry after a render fails and clears the error when it succeeds", async () => {
-    const png = sinon.stub(htmlToImage, "toPng").rejects(new Error("render failed"));
-    await act(async () => root.render(createElement(Harness, { source: {} })));
-    expect(latest.dataUrl).to.equal(undefined);
-    expect(latest.error).to.contain("story card");
-    png.resolves("recovered");
-    await act(async () => latest.retry());
-    expect(latest.error).to.equal(undefined);
-    expect(latest.dataUrl).to.equal("recovered");
+    expect(png.alwaysCalledWithExactly(element, { pixelRatio: 3, width: 360, height: 640 })).to.equal(true);
   });
 });
 
@@ -246,21 +183,27 @@ function allPicks(totalKg: number): ILiftEquivalent[] {
 }
 
 describe("LiftEquivalents_pick", () => {
-  it("has at least 40 things, each with a plural name and an emoji", () => {
+  it("has only bear-world things, each with a unique plural and an emoji", () => {
     const things = LiftEquivalents_all();
-    expect(things.length).to.be.at.least(40);
+    expect(things.length).to.be.at.least(15);
     expect(new Set(things.map((t) => t.many)).size).to.equal(things.length);
-    expect(things.every((t) => t.kg > 0 && t.emoji !== "" && t.many !== t.one)).to.equal(true);
+    expect(things.every((t) => t.kg > 0 && t.emoji !== "")).to.equal(true);
+    expect(things.some((t) => t.many === "grizzly bears")).to.equal(true);
   });
 
-  it("keeps every count between 2 and 999, so there is never 0.3 elephants or 48,000 bananas", () => {
-    for (const totalKg of [1, 25, 300, 2438, 15000, 80000, 600000]) {
+  it("keeps counts between 2 and 999, except a swarm, which can reach millions", () => {
+    for (const totalKg of [25, 300, 2438, 15000, 80000]) {
       const picks = allPicks(totalKg);
       expect(picks.length, `${totalKg} kg`).to.be.at.least(3);
-      expect(picks.every((e) => e.count >= 2 && e.count <= 999)).to.equal(true);
+      const swarm = new Set(
+        LiftEquivalents_all()
+          .filter((t) => t.swarm)
+          .map((t) => t.many)
+      );
+      expect(picks.every((e) => e.count >= 2 && (swarm.has(e.noun) || e.count <= 999))).to.equal(true);
     }
-    expect(allPicks(500).some((e) => e.noun === "African elephants")).to.equal(false);
-    expect(allPicks(6000).some((e) => e.noun === "bananas")).to.equal(false);
+    expect(allPicks(6000).some((e) => e.noun === "jars of honey")).to.equal(false);
+    expect(allPicks(5000).find((e) => e.noun === "honeybees")?.number).to.equal("50 million");
   });
 
   it("shows every fitting thing once before it repeats", () => {
@@ -283,22 +226,65 @@ describe("LiftEquivalents_pick", () => {
       expect(e.text).to.equal([e.lead, `${e.number} ${e.noun}`, e.tail].filter((s) => s !== "").join(" "));
     }
     expect(leads.size).to.be.at.least(4);
-    const piano = allPicks(1200).find((e) => e.noun === "grand pianos");
-    expect(piano?.number).to.equal("3");
+    const grizzly = allPicks(1200).find((e) => e.noun === "grizzly bears");
+    expect(grizzly?.number).to.equal("4");
   });
 
-  it("rounds under 10 to one decimal and adds commas from 1,000", () => {
-    expect([2.04, 2.46, 9.96, 148.4, 1083.2].map(LiftEquivalents_formatCount)).to.deep.equal([
+  it("rounds under 10 to one decimal, adds commas from 1,000 and words from a million", () => {
+    expect([2.04, 2.46, 9.96, 148.4, 1083.2, 2140000, 50000000].map(LiftEquivalents_formatCount)).to.deep.equal([
       "2",
       "2.5",
       "10",
       "148",
       "1,083",
+      "2.1 million",
+      "50 million",
     ]);
   });
 
   it("has nothing for an empty workout and handles a negative seed", () => {
     expect(LiftEquivalents_pick(0, 3)).to.equal(undefined);
     expect(LiftEquivalents_pick(2438, -1)).to.not.equal(undefined);
+  });
+});
+
+describe("WorkoutStoryCard share data", () => {
+  const prs: IPersonalRecords = {
+    1: {
+      benchPress_barbell: { maxWeightSet: set(10, 60), prevMaxWeightSet: set(5, 55) },
+      squat_barbell: { maxWeightSet: set(5, 100) },
+    },
+  };
+
+  it("counts only PRs that beat a previous best", () => {
+    expect(WorkoutStoryCard_prCount(record, prs)).to.equal(1);
+    expect(WorkoutStoryCard_prCount(record, {})).to.equal(0);
+  });
+
+  it("lists exercises with sets and volume that add up to the total, capped at 6 lines", () => {
+    const receipt = WorkoutStoryCard_receipt(record, settings, prs);
+    expect(receipt.lines.map((l) => l.detail)).to.deep.equal(["3 sets", "1×5"]);
+    expect(receipt.lines.map((l) => l.volume)).to.deep.equal(["1,480", "500"]);
+    expect(receipt.total).to.equal("1,980 kg");
+    const many = { ...record, entries: Array.from({ length: 9 }, () => record.entries[1]) };
+    const long = WorkoutStoryCard_receipt(many, settings, {});
+    expect([long.lines.length, long.moreCount]).to.deep.equal([6, 3]);
+  });
+
+  it("says how far the next tier is, in the user's units", () => {
+    const tier = BearTier_progress(0, 24420);
+    expect(WorkoutStoryCard_toNext(tier, settings)).to.equal("580 kg to Sun bear");
+    expect(WorkoutStoryCard_toNext(BearTier_progress(0, 9e6), settings)).to.equal("Top of the food chain");
+  });
+
+  it("draws between 1 and 24 icons", () => {
+    expect([0, 3.4, 28, 5e7].map(WorkoutStoryCard_iconCount)).to.deep.equal([1, 3, 24, 24]);
+  });
+
+  it("builds the rank from the lifetime totals around this workout", () => {
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
+    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, seed: 1 });
+    expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Sun bear", true]);
+    expect(data.equivalent).to.not.equal(undefined);
   });
 });

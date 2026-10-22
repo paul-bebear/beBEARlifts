@@ -191,7 +191,14 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
           />
         )}
 
-        {OfflineOnly_isEnabled() && <WorkoutStoryCardSection record={record} settings={props.settings} />}
+        {OfflineOnly_isEnabled() && (
+          <WorkoutStoryCardSection
+            record={record}
+            history={props.history}
+            settings={props.settings}
+            stats={props.stats}
+          />
+        )}
 
         {OfflineOnly_isEnabled() && (
           <View className="items-center px-gutter pb-4">
