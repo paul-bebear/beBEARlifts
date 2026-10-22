@@ -2,7 +2,13 @@ import { FoodPhotoEstimate_failure, FoodPhotoEstimate_parse, IFoodPhotoEstimate 
 import { INutritionLabel, NutritionLabel_note, NutritionLabel_parse } from "../models/nutritionLabel";
 import { SavedFoods_find, SavedFoods_search } from "../models/savedFoods";
 import { UsdaFoodData_parseBarcodeResponse } from "../models/usdaFoodData";
-import { AiRequest_post, AiRequest_text } from "./aiRequest";
+import { AiRequest_post, AiRequest_signInMessage, AiRequest_text } from "./aiRequest";
+import {
+  BodyScanRead_parse,
+  BodyScanRead_signIn,
+  BodyScanRead_unreadable,
+  IBodyScanRead,
+} from "../models/bodyScanRead";
 import { ApiUrl_for } from "./apiUrl";
 import {
   IFoodProduct,
@@ -76,7 +82,7 @@ interface IAiAnswer {
 }
 
 async function askAiAnswer(body: {
-  kind: "meal" | "label" | "describe";
+  kind: "meal" | "label" | "describe" | "bodyscan";
   image?: string;
   text?: string;
 }): Promise<IFoodApiResult<IAiAnswer>> {
@@ -131,4 +137,13 @@ export async function FoodApi_readLabel(imageDataUrl: string): Promise<IFoodApiR
   }
   const note = NutritionLabel_note(result.value);
   return { ok: false, error: note ?? "The label could not be read. Try a closer photo, or type the numbers in." };
+}
+
+export async function FoodApi_readBodyScan(imageDataUrl: string): Promise<IFoodApiResult<IBodyScanRead>> {
+  const result = await askAiAnswer({ kind: "bodyscan", image: imageDataUrl });
+  if (!result.ok) {
+    return { ok: false, error: result.error === AiRequest_signInMessage ? BodyScanRead_signIn : result.error };
+  }
+  const scan = BodyScanRead_parse(result.value.text);
+  return scan != null ? { ok: true, value: scan } : { ok: false, error: BodyScanRead_unreadable };
 }
