@@ -114,4 +114,14 @@ describe("CloudBackup", () => {
     });
     expect(CloudBackup_parse({ restoreOffer: { cloud: { workouts: 1 } } }).restoreOffer).to.equal(undefined);
   });
+
+  it("keeps a pending Apple or Google sign-in and its last error", () => {
+    const pending = { provider: "apple", verifier: "v1", startedAt: now };
+    expect(CloudBackup_parse({ pending, signInError: "Sign-in was cancelled." })).to.deep.equal({
+      version: 1,
+      pending,
+      signInError: "Sign-in was cancelled.",
+    });
+    expect(CloudBackup_parse({ pending: { provider: "apple" }, signInError: "" })).to.deep.equal({ version: 1 });
+  });
 });

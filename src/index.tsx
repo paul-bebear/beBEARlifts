@@ -35,6 +35,9 @@ import {
   InviteClient_openHere,
   InviteClient_rememberOpenHere,
 } from "./utils/inviteClient";
+import { SupabaseOAuth_finishReturn, SupabaseOAuth_takeReturn } from "./utils/supabaseOAuth";
+
+const signInReturn = SupabaseOAuth_takeReturn();
 
 if (OfflineOnly_isEnabled()) {
   OfflineOnly_installFetchGuard(window);
@@ -126,7 +129,7 @@ function main(): void {
   );
 }
 
-main();
+SupabaseOAuth_finishReturn(signInReturn).then(main);
 
 setTimeout(() => {
   const appEl = document.getElementById("app");
