@@ -2,7 +2,9 @@ import { JSX, ReactNode } from "react";
 import { StyleProp, TextStyle, View, ViewStyle } from "react-native";
 import { TextRaw, Text_resolveFontFamily } from "../primitives/text";
 import { Svg, Defs, LinearGradient, Rect, Stop } from "../primitives/svg";
+import { IShareCardBear } from "../../models/workoutStoryCard";
 import { BearMark } from "./bearMark";
+import { ShareCardBear } from "./shareCardBear";
 import { ShareCardTheme } from "./shareCardTheme";
 
 type IWeight = "regular" | "semibold" | "bold";
@@ -67,10 +69,22 @@ export function ShareCardFrame(props: {
   );
 }
 
-export function ShareCardBrand(props: { size: number; color: string; faceColor: string }): JSX.Element {
+const brandBearHeight = 1.5;
+
+export function ShareCardBrand(props: {
+  size: number;
+  color: string;
+  faceColor: string;
+  bear?: IShareCardBear;
+  onImageLoad?: (uri: string) => void;
+}): JSX.Element {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: props.size * 0.3 }}>
-      <BearMark size={props.size} color={props.color} faceColor={props.faceColor} />
+      {props.bear != null ? (
+        <ShareCardBear bear={props.bear} height={props.size * brandBearHeight} onImageLoad={props.onImageLoad} />
+      ) : (
+        <BearMark size={props.size} color={props.color} faceColor={props.faceColor} />
+      )}
       <ShareCardText size={props.size * 0.9} weight="bold" color={props.color} spacing={-0.5}>
         beBEAR
       </ShareCardText>

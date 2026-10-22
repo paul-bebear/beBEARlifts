@@ -17,11 +17,11 @@ export interface IShareCardExport<T> {
   isBusy: boolean;
   needsSurface: boolean;
   title: (idleTitle: string) => string;
-  prepare: (pages: string[], frozen: T, photo?: string) => void;
-  share: (pages: string[], frozen: T, photo?: string) => void;
+  prepare: (pages: string[], frozen: T, images?: string[]) => void;
+  share: (pages: string[], frozen: T, images?: string[]) => void;
   setRef: (page: string, view: unknown) => void;
   onLayout: (page: string) => void;
-  onPhotoLoad: (photo: string) => void;
+  onImageLoad: (uri: string) => void;
 }
 
 function nextFrame(): Promise<void> {
@@ -80,21 +80,21 @@ export function useShareCardExport<T>(baseName: string): IShareCardExport<T> {
     isBusy: ShareCardExport_isBusy(job),
     needsSurface: ShareCardExport_needsSurface(job),
     title: (idleTitle) => ShareCardExport_buttonTitle(job, idleTitle),
-    prepare: (pages, frozen, photo) => dispatch({ type: "start", pages, frozen, photo }),
-    share: (pages, frozen, photo) => {
+    prepare: (pages, frozen, images) => dispatch({ type: "start", pages, frozen, images }),
+    share: (pages, frozen, images) => {
       const phase = jobRef.current.phase;
       if (phase === "prepared") {
         dispatch({ type: "share", pages });
       } else if (phase === "ready" || phase === "failed") {
         dispatch({ type: "retry" });
       } else {
-        dispatch({ type: "start", pages, frozen, photo, share: pages });
+        dispatch({ type: "start", pages, frozen, images, share: pages });
       }
     },
     setRef: (page, view) => {
       views.current.set(page, view);
     },
     onLayout: (page) => dispatch({ type: "layout", page }),
-    onPhotoLoad: (photo) => dispatch({ type: "photoLoaded", photo }),
+    onImageLoad: (uri) => dispatch({ type: "imageLoaded", uri }),
   };
 }

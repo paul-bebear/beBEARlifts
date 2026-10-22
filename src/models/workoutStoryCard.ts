@@ -8,7 +8,9 @@ import {
 } from "./history";
 import { Exercise_get, Exercise_synergistMusclesGroups, Exercise_targetMusclesGroups } from "./exercise";
 import { Weight_convertTo } from "./weight";
-import { BearTier_progress, IBearTierProgress, IBearTierSet } from "./bearTier";
+import { BearTier_progress, IBearLevel, IBearTierProgress, IBearTierSet } from "./bearTier";
+import { BearArt_cardSprite } from "./bearArt";
+import { IBearLine } from "./bearStoreData";
 import { BearBadges_forRecord, IBearBadgeCard } from "./bearBadges";
 import { IShareAchievements } from "./shareAchievements";
 import { ILiftEquivalent, LiftEquivalents_pick } from "./liftEquivalents";
@@ -42,8 +44,14 @@ export interface IWorkoutReceipt {
   prCount: number;
 }
 
+export interface IShareCardBear {
+  sprite: string;
+  size: IBearLevel["size"];
+}
+
 export interface IWorkoutShareData {
   stats: IWorkoutStoryStats;
+  bear: IShareCardBear;
   tier: IBearTierProgress;
   toNext: string;
   badge: IBearBadgeCard;
@@ -59,6 +67,7 @@ export interface IWorkoutShareInput {
   prs: IPersonalRecords;
   achievements: IShareAchievements;
   tierSet: IBearTierSet;
+  line?: IBearLine;
   seed: number;
 }
 
@@ -213,6 +222,16 @@ export function WorkoutStoryCard_toNext(
   return `${Math.ceil(amount).toLocaleString("en-US")} ${settings.units} to Level ${tier.next.level} · ${tier.next.name}`;
 }
 
+// Every workout card draws the bear sprite, so the export waits for it. The photo only shows on photo and collage.
+export function WorkoutStoryCard_exportImages(
+  data: IWorkoutShareData,
+  pages: readonly IShareCardPage[],
+  photo?: string
+): string[] {
+  const usesPhoto = photo != null && pages.some((page) => page === "photo" || page === "collage");
+  return usesPhoto ? [data.bear.sprite, photo] : [data.bear.sprite];
+}
+
 export function WorkoutStoryCard_iconCount(count: number): number {
   return Math.max(1, Math.min(maxIcons, Math.round(count)));
 }
@@ -225,6 +244,10 @@ export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShare
   const equivalent = LiftEquivalents_pick(stats.weightKg, input.seed);
   return {
     stats,
+    bear: {
+      sprite: BearArt_cardSprite(input.line ?? input.tierSet, tier.tier.level),
+      size: tier.tier.size,
+    },
     tier: { ...tier, tier: { ...tier.tier, name: `Level ${tier.tier.level} · ${tier.tier.name}` } },
     toNext: WorkoutStoryCard_toNext(tier, settings, lifetime.afterKg),
     badge: BearBadges_forRecord(achievements.badges, record),

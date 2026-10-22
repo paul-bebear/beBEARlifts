@@ -24,26 +24,55 @@ function run(
 }
 
 describe("ShareCardExport", () => {
-  it("waits for every layout and the photo, then captures in order and shares once", () => {
+  it("waits for every layout, the bear and the photo, then captures in order and shares once", () => {
     const { job, effects } = run([
-      { type: "start", pages: ["rank", "photo"], frozen: 1, photo: "p1", share: ["rank", "photo"] },
+      { type: "start", pages: ["rank", "photo"], frozen: 1, images: ["bear", "p1"], share: ["rank", "photo"] },
       { type: "layout", page: "rank" },
       { type: "layout", page: "photo" },
-      { type: "photoLoaded", photo: "p1" },
-      { type: "captured", jobId: 1, file: "a" },
-      { type: "captured", jobId: 1, file: "b" },
+      { type: "imageLoaded", uri: "p1" },
     ]);
-    expect(effects).to.deep.equal(["capture:rank", "capture:photo", "share"]);
-    expect([job.phase, job.files]).to.deep.equal(["sharing", ["a", "b"]]);
+    expect([job.phase, effects]).to.deep.equal(["preparing", []]);
+    const done = run(
+      [
+        { type: "imageLoaded", uri: "bear" },
+        { type: "captured", jobId: 1, file: "a" },
+        { type: "captured", jobId: 1, file: "b" },
+      ],
+      job
+    );
+    expect(done.effects).to.deep.equal(["capture:rank", "capture:photo", "share"]);
+    expect([done.job.phase, done.job.files]).to.deep.equal(["sharing", ["a", "b"]]);
+  });
+
+  it("does not capture a card before its bear sprite has loaded", () => {
+    const sprite = "/images/bear/male/mood-small-pumped.webp";
+    const waiting = run([
+      { type: "start", pages: ["rank"], frozen: 1, images: [sprite] },
+      { type: "layout", page: "rank" },
+    ]);
+    expect([waiting.job.phase, waiting.effects]).to.deep.equal(["preparing", []]);
+    expect(run([{ type: "imageLoaded", uri: sprite }], waiting.job).effects).to.deep.equal(["capture:rank"]);
   });
 
   it("ignores a load from an older photo", () => {
     const { job, effects } = run([
-      { type: "start", pages: ["photo"], frozen: 1, photo: "new", share: ["photo"] },
+      { type: "start", pages: ["photo"], frozen: 1, images: ["new"], share: ["photo"] },
       { type: "layout", page: "photo" },
-      { type: "photoLoaded", photo: "old" },
+      { type: "imageLoaded", uri: "old" },
     ]);
     expect([job.phase, effects]).to.deep.equal(["preparing", []]);
+  });
+
+  it("captures once when several cards load the same sprite", () => {
+    const { effects } = run([
+      { type: "start", pages: ["rank", "collage"], frozen: 1, images: ["bear"] },
+      { type: "layout", page: "rank" },
+      { type: "imageLoaded", uri: "bear" },
+      { type: "imageLoaded", uri: "bear" },
+      { type: "layout", page: "collage" },
+      { type: "imageLoaded", uri: "bear" },
+    ]);
+    expect(effects).to.deep.equal(["capture:rank"]);
   });
 
   it("cleans up files after a failure halfway", () => {
@@ -123,13 +152,13 @@ describe("ShareCardExport prepared before the tap", () => {
 
   it("drops a render that finishes after the photo, seed or card changed", () => {
     const { job, effects } = run([
-      { type: "start", pages: ["rank"], frozen: 1, photo: "old" },
+      { type: "start", pages: ["rank"], frozen: 1, images: ["old"] },
       { type: "layout", page: "rank" },
-      { type: "photoLoaded", photo: "old" },
-      { type: "start", pages: ["rank"], frozen: 2, photo: "new" },
+      { type: "imageLoaded", uri: "old" },
+      { type: "start", pages: ["rank"], frozen: 2, images: ["new"] },
       { type: "captured", jobId: 1, file: "stale" },
       { type: "layout", page: "rank" },
-      { type: "photoLoaded", photo: "new" },
+      { type: "imageLoaded", uri: "new" },
       { type: "captured", jobId: 2, file: "fresh" },
     ]);
     expect(effects).to.deep.equal(["capture:rank", "cleanup", "capture:rank"]);

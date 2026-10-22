@@ -1,11 +1,15 @@
 import { JSX } from "react";
 import { View } from "react-native";
 import { IWorkoutShareData, WorkoutStoryCard_setsText, WorkoutStoryCard_summary } from "../../models/workoutStoryCard";
-import { BearMark } from "./bearMark";
 import { ShareCardBrand, ShareCardFrame, ShareCardProgress, ShareCardText } from "./cardParts";
+import { ShareCardBear } from "./shareCardBear";
 import { ShareCardTheme as T } from "./shareCardTheme";
 
-export function RankCard(props: { data: IWorkoutShareData }): JSX.Element {
+// The tallest bear that leaves the two-line level name, the progress bar and the badge pill on a 640px card.
+const bearHeight = 240;
+const ringSize = 200;
+
+export function RankCard(props: { data: IWorkoutShareData; onImageLoad?: (uri: string) => void }): JSX.Element {
   const { stats, tier, badge } = props.data;
   return (
     <ShareCardFrame background={T.green}>
@@ -16,21 +20,22 @@ export function RankCard(props: { data: IWorkoutShareData }): JSX.Element {
         <ShareCardText size={13} weight="semibold" color={T.honey} spacing={3}>
           {tier.isTierUp ? "NEW RANK" : "RANK"}
         </ShareCardText>
-        <View
-          style={{
-            marginTop: 16,
-            width: 150,
-            height: 150,
-            borderRadius: 75,
-            borderWidth: 4,
-            borderColor: T.honey,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <BearMark size={96} color={T.cream} faceColor={T.green} />
+        <View style={{ marginTop: 12, height: bearHeight, alignItems: "center", justifyContent: "flex-end" }}>
+          <View
+            style={{
+              position: "absolute",
+              bottom: 0,
+              width: ringSize,
+              height: ringSize,
+              borderRadius: ringSize / 2,
+              borderWidth: 4,
+              borderColor: T.honey,
+              backgroundColor: "rgba(251,243,226,0.08)",
+            }}
+          />
+          <ShareCardBear bear={props.data.bear} height={bearHeight} onImageLoad={props.onImageLoad} />
         </View>
-        <ShareCardText size={44} weight="bold" style={{ marginTop: 16 }}>
+        <ShareCardText size={44} weight="bold" align="center" style={{ marginTop: 12 }}>
           {tier.tier.name.toUpperCase()}
         </ShareCardText>
         <ShareCardText size={15} style={{ marginTop: 6, opacity: 0.85 }}>

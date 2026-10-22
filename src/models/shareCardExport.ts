@@ -7,18 +7,18 @@ export interface IShareExportJob<T> {
   autoShare: boolean;
   selection: string[];
   frozen?: T;
-  photo?: string;
+  images: string[];
   laidOut: string[];
-  photoLoaded: boolean;
+  loaded: string[];
   index: number;
   files: string[];
   error?: string;
 }
 
 export type IShareExportEvent<T> =
-  | { type: "start"; pages: string[]; frozen: T; photo?: string; share?: string[] }
+  | { type: "start"; pages: string[]; frozen: T; images?: string[]; share?: string[] }
   | { type: "layout"; page: string }
-  | { type: "photoLoaded"; photo: string }
+  | { type: "imageLoaded"; uri: string }
   | { type: "captured"; jobId: number; file: string }
   | { type: "share"; pages: string[] }
   | { type: "shared"; jobId: number }
@@ -44,8 +44,9 @@ export function ShareCardExport_idle<T>(id: number = 0): IShareExportJob<T> {
     pages: [],
     autoShare: false,
     selection: [],
+    images: [],
     laidOut: [],
-    photoLoaded: false,
+    loaded: [],
     index: 0,
     files: [],
   };
@@ -54,7 +55,7 @@ export function ShareCardExport_idle<T>(id: number = 0): IShareExportJob<T> {
 const retryMessage = "Could not make the card image. Tap Retry image.";
 
 function isReady<T>(job: IShareExportJob<T>): boolean {
-  return job.pages.every((p) => job.laidOut.includes(p)) && (job.photo == null || job.photoLoaded);
+  return job.pages.every((p) => job.laidOut.includes(p)) && job.images.every((uri) => job.loaded.includes(uri));
 }
 
 function startCapturing<T>(job: IShareExportJob<T>): IStep<T> {
@@ -87,7 +88,7 @@ function begin<T>(job: IShareExportJob<T>, event: IShareExportEvent<T> & { type:
     autoShare: event.share != null,
     selection: event.share ?? [],
     frozen: event.frozen,
-    photo: event.photo,
+    images: event.images ?? [],
   };
 }
 
@@ -122,11 +123,11 @@ export function ShareCardExport_next<T>(job: IShareExportJob<T>, event: IShareEx
       }
       return startCapturing({ ...job, laidOut: [...job.laidOut, event.page] });
     }
-    case "photoLoaded": {
-      if (job.phase !== "preparing" || event.photo !== job.photo) {
+    case "imageLoaded": {
+      if (job.phase !== "preparing" || !job.images.includes(event.uri) || job.loaded.includes(event.uri)) {
         return { job, effects: [] };
       }
-      return startCapturing({ ...job, photoLoaded: true });
+      return startCapturing({ ...job, loaded: [...job.loaded, event.uri] });
     }
     case "captured": {
       if (event.jobId !== job.id || job.phase !== "capturing") {
@@ -176,7 +177,7 @@ export function ShareCardExport_next<T>(job: IShareExportJob<T>, event: IShareEx
           type: "start",
           pages: job.pages,
           frozen: job.frozen,
-          photo: job.photo,
+          images: job.images,
         };
         return { job: begin(job, restart), effects: [] };
       }

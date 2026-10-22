@@ -105,9 +105,10 @@ export function RunShareCard(props: { run: IRun }): JSX.Element {
   const previewScale = Math.min(0.86, (width - 32) / T.width);
   const frozen = exporter.job.frozen;
   const { prepare } = exporter;
+  const images = photo != null ? [photo] : [];
   useEffect(() => {
     if (ShareCardImage_prepareAhead) {
-      prepare([page], { seed, photo }, photo);
+      prepare([page], { seed, photo }, images);
     }
   }, [props.run, seed, photo]);
   const pickPhoto = async (): Promise<void> => {
@@ -151,7 +152,7 @@ export function RunShareCard(props: { run: IRun }): JSX.Element {
           kind="pill"
           className="flex-1"
           disabled={exporter.isBusy}
-          onPress={() => exporter.share([page], { seed, photo }, photo)}
+          onPress={() => exporter.share([page], { seed, photo }, images)}
         >
           {exporter.title("Share run")}
         </Button>
@@ -164,7 +165,7 @@ export function RunShareCard(props: { run: IRun }): JSX.Element {
           setRef={exporter.setRef}
           onLayout={exporter.onLayout}
           renderPage={() => (
-            <RunStoryCard run={props.run} photo={frozen.photo} seed={frozen.seed} onPhotoLoad={exporter.onPhotoLoad} />
+            <RunStoryCard run={props.run} photo={frozen.photo} seed={frozen.seed} onPhotoLoad={exporter.onImageLoad} />
           )}
         />
       )}

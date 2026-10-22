@@ -10,7 +10,7 @@ import { ShareCardTheme as T } from "./shareCardTheme";
 interface IProps {
   data: IWorkoutShareData;
   photo?: string;
-  onPhotoLoad?: (photo: string) => void;
+  onImageLoad?: (uri: string) => void;
 }
 
 function muscleStyles(levels: Partial<Record<IScreenMuscle, number>>): Partial<Record<IScreenMuscle, IMuscleStyle>> {
@@ -47,14 +47,20 @@ export function PhotoCard(props: IProps): JSX.Element {
         <Image
           source={{ uri: photo }}
           resizeMode="cover"
-          onLoad={() => props.onPhotoLoad?.(photo)}
+          onLoad={() => props.onImageLoad?.(photo)}
           style={{ position: "absolute", top: 0, left: 0, width: T.width, height: T.height }}
         />
       )}
       <ShareCardScrim edge="top" height={300} opacity={photo != null ? 0.75 : 0.3} />
       <ShareCardScrim edge="bottom" height={300} opacity={photo != null ? 0.85 : 0.3} />
-      <View style={{ alignItems: "center", paddingTop: 26 }}>
-        <ShareCardBrand size={32} color={T.cream} faceColor={T.green} />
+      <View style={{ alignItems: "center", paddingTop: 16 }}>
+        <ShareCardBrand
+          size={32}
+          color={T.cream}
+          faceColor={T.green}
+          bear={props.data.bear}
+          onImageLoad={props.onImageLoad}
+        />
         <ShareCardText size={12} weight="semibold" spacing={3} style={{ marginTop: 12, opacity: 0.85 }}>
           {headline.label}
         </ShareCardText>

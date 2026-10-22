@@ -16,19 +16,19 @@ interface IProps {
   page: IShareCardPage;
   data: IWorkoutShareData;
   photo?: string;
-  onPhotoLoad?: (photo: string) => void;
+  onImageLoad?: (uri: string) => void;
 }
 
 function Card(props: IProps & { page: IShareCardStyle }): JSX.Element {
   switch (props.page) {
     case "rank":
-      return <RankCard data={props.data} />;
+      return <RankCard data={props.data} onImageLoad={props.onImageLoad} />;
     case "receipt":
-      return <ReceiptCard data={props.data} />;
+      return <ReceiptCard data={props.data} onImageLoad={props.onImageLoad} />;
     case "count":
-      return <CountCard data={props.data} />;
+      return <CountCard data={props.data} onImageLoad={props.onImageLoad} />;
     case "photo":
-      return <PhotoCard data={props.data} photo={props.photo} onPhotoLoad={props.onPhotoLoad} />;
+      return <PhotoCard data={props.data} photo={props.photo} onImageLoad={props.onImageLoad} />;
   }
 }
 
