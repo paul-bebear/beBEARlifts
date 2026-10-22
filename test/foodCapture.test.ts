@@ -43,6 +43,10 @@ describe("Native food capture", () => {
 
   it("accepts image data and handles cancellation, missing data, unsupported formats, and permissions", () => {
     expect(FoodCapture_photo(photo)).to.deep.equal({ kind: "photo", dataUrl: "data:image/jpeg;base64,YWJj" });
+    expect(FoodCapture_photo({ assets: [{ type: "image/jpg", base64: "YWJj" }] })).to.deep.equal({
+      kind: "photo",
+      dataUrl: "data:image/jpeg;base64,YWJj",
+    });
     expect(FoodCapture_photo({ didCancel: true })).to.deep.equal({ kind: "cancelled" });
     expect(FoodCapture_photo({})).to.have.property("kind", "error");
     expect(FoodCapture_photo({ assets: [{ type: "image/heic", base64: "a" }] })).to.have.property("kind", "error");

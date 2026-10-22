@@ -1,6 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  OpenFoodFacts_firstBarcode,
   OpenFoodFacts_isBarcode,
   OpenFoodFacts_parseBarcodeResponse,
   OpenFoodFacts_parseSearchResponse,
@@ -125,5 +126,15 @@ describe("OpenFoodFacts_isBarcode", () => {
     expect(OpenFoodFacts_isBarcode("3017624010701")).to.equal(true);
     expect(OpenFoodFacts_isBarcode("1234567")).to.equal(false);
     expect(OpenFoodFacts_isBarcode("greek yogurt")).to.equal(false);
+  });
+});
+
+describe("OpenFoodFacts_firstBarcode", () => {
+  it("returns the first scanned value that is a product barcode", () => {
+    expect(OpenFoodFacts_firstBarcode([undefined, "https://example.com", " 0012345678905 ", "3017624010701"])).to.equal(
+      "0012345678905"
+    );
+    expect(OpenFoodFacts_firstBarcode([undefined, "ABC-123"])).to.equal(undefined);
+    expect(OpenFoodFacts_firstBarcode([])).to.equal(undefined);
   });
 });

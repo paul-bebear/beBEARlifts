@@ -156,3 +156,9 @@ export function OpenFoodFacts_parseSearchResponse(raw: unknown): IFoodProduct[] 
 export function OpenFoodFacts_isBarcode(text: string): boolean {
   return /^\d{8,14}$/.test(text.trim());
 }
+
+export function OpenFoodFacts_firstBarcode(values: Array<string | undefined>): string | undefined {
+  return values
+    .map((value) => value?.trim())
+    .find((value): value is string => value != null && OpenFoodFacts_isBarcode(value));
+}
