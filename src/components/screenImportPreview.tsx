@@ -4,6 +4,7 @@ import { LegendList } from "@legendapp/list";
 import { Text } from "./primitives/text";
 import { IDispatch } from "../ducks/types";
 import { useNavOptions } from "../navigation/useNavOptions";
+import { useTabBarContentPadding } from "../navigation/useTabBarContentPadding";
 import { Thunk_applyImport, Thunk_pushScreen } from "../ducks/thunks";
 import { Dialog_alert } from "../utils/dialog";
 import { IHistoryRecord, ISettings } from "../types";
@@ -53,6 +54,7 @@ function formatRowError(error: IImportRowError): string {
 
 export function ScreenImportPreview(props: IProps): JSX.Element {
   const { result, source } = props.preview;
+  const tabBarPadding = useTabBarContentPadding();
   // Duplicate detection runs over ALL parsed records (against existing history).
   const summary = useMemo(() => ImportUtils_summarize(result, props.history), [result, props.history]);
   // The created custom exercises aren't in settings until the import is applied, so merge them in
@@ -121,6 +123,7 @@ export function ScreenImportPreview(props: IProps): JSX.Element {
         keyExtractor={(record) => `${record.id}`}
         estimatedItemSize={300}
         style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: tabBarPadding }}
         renderItem={({ item }) => (
           <View className="px-gutter mb-6" pointerEvents="none">
             <HistoryRecordView

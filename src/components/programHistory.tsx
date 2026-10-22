@@ -7,6 +7,7 @@ import { IDispatch } from "../ducks/types";
 import { IProgram, IHistoryRecord, ISettings, ISubscription } from "../types";
 import { INavCommon, IState, updateState } from "../models/state";
 import { useNavOptions } from "../navigation/useNavOptions";
+import { useTabBarContentPadding } from "../navigation/useTabBarContentPadding";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { lb } from "lens-shmens";
@@ -146,6 +147,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
   const isOngoing = !!(props.progress && Progress_isCurrent(props.progress));
 
   const flatListRef = useRef<LegendListRef>(null);
+  const tabBarPadding = useTabBarContentPadding();
 
   const initialHistoryRecordId = props.initialHistoryRecordId;
 
@@ -223,7 +225,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
 
   if (sortedHistory.length === 0) {
     return (
-      <View className="flex-1">
+      <View className="flex-1" style={{ paddingBottom: tabBarPadding }}>
         {stickyHeader}
         {checklist}
         <HistoryRecordsNullState />
@@ -243,6 +245,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         extraData={expandedIds}
         keyExtractor={keyExtractor}
         estimatedItemSize={300}
+        contentContainerStyle={{ paddingBottom: tabBarPadding }}
         initialScrollIndex={initialScrollIndex}
         waitForInitialLayout={true}
         onScrollBeginDrag={scrollMarkers.onScrollBeginDrag}

@@ -28,7 +28,7 @@ export function LiftoEditorDock(): JSX.Element | null {
   const [hintDismissed, setHintDismissed] = useLiftoEditorHintDismissed();
   const blurFocused = useLiftoEditorBlurFocused();
   const keypadHeight = useCustomKeyboardAnimatedHeight();
-  // This dock bottoms out at the tab bar (NavScreenContent's footer lives inside the screen),
+  // This dock bottoms out at the tab bar (NavScreenContent lifts its footer above the floating bar),
   // but the keypad is a root-level overlay that covers the tab bar too — so only the part of
   // it standing above the tab bar actually overlaps us. Clamped at 0 so a keypad shorter than
   // the tab bar doesn't push the dock down into it.

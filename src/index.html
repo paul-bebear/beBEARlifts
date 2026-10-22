@@ -136,35 +136,177 @@
         --color-text-link: #FFD820;
         --color-background-subtle: #0C0819;
       }
-      /* The one glass surface on screen: the tab bar. */
+      /* The one blurred surface on screen: the floating tab bar. Safari ignores SVG displacement inside
+         backdrop-filter, so the depth comes from a light-to-clear fill, a specular rim and sheen, and
+         the shadow. The lens, the "+" and the fade below are plain gradients with no blur. */
       .glass-bar {
-        background: rgba(255, 255, 255, 0.6);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
-        backdrop-filter: blur(24px) saturate(180%);
-        border: 0.5px solid rgba(0, 0, 0, 0.08);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.62) 0%,
+          rgba(255, 255, 255, 0.3) 48%,
+          rgba(255, 255, 255, 0.2) 100%
+        );
+        -webkit-backdrop-filter: blur(30px) saturate(210%) brightness(1.06);
+        backdrop-filter: blur(30px) saturate(210%) brightness(1.06);
+        border: 0.5px solid rgba(255, 255, 255, 0.7);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.95),
+          inset 0 -0.5px 0 rgba(255, 255, 255, 0.45),
+          inset 0 0 0 0.5px rgba(0, 0, 0, 0.05),
+          0 12px 32px -8px rgba(0, 0, 0, 0.24),
+          0 2px 8px rgba(0, 0, 0, 0.06);
         border-radius: 999px;
       }
+      .glass-bar::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background: radial-gradient(140% 90% at 50% -35%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 55%);
+      }
+      .glass-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 22px;
+        right: 22px;
+        height: 1px;
+        pointer-events: none;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 1) 30%,
+          rgba(255, 255, 255, 1) 70%,
+          rgba(255, 255, 255, 0) 100%
+        );
+      }
       html.dark .glass-bar {
-        background: rgba(28, 28, 30, 0.6);
-        border-color: rgba(255, 255, 255, 0.12);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        background: linear-gradient(
+          180deg,
+          rgba(74, 74, 80, 0.56) 0%,
+          rgba(38, 38, 42, 0.44) 50%,
+          rgba(28, 28, 30, 0.4) 100%
+        );
+        -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(0.88);
+        backdrop-filter: blur(30px) saturate(180%) brightness(0.88);
+        border-color: rgba(255, 255, 255, 0.14);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.3),
+          inset 0 -0.5px 0 rgba(255, 255, 255, 0.08),
+          0 12px 32px -8px rgba(0, 0, 0, 0.7),
+          0 2px 8px rgba(0, 0, 0, 0.35);
+      }
+      html.dark .glass-bar::before {
+        background: radial-gradient(140% 90% at 50% -35%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 55%);
+      }
+      html.dark .glass-bar::after {
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.5) 30%,
+          rgba(255, 255, 255, 0.5) 70%,
+          rgba(255, 255, 255, 0) 100%
+        );
+      }
+      /* The active tab: a raised light lens under the icon and label. */
+      .glass-tab-lens {
+        position: absolute;
+        top: 5px;
+        bottom: 5px;
+        left: 3px;
+        right: 3px;
+        border-radius: 999px;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.6) 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 1),
+          inset 0 -1px 1px rgba(0, 0, 0, 0.04),
+          0 0 0 0.5px rgba(0, 0, 0, 0.04),
+          0 3px 10px rgba(0, 0, 0, 0.1);
+        animation: glass-lens-in 180ms ease-out;
+      }
+      html.dark .glass-tab-lens {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.09) 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.32),
+          0 3px 10px rgba(0, 0, 0, 0.35);
+      }
+      @keyframes glass-lens-in {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .glass-tab-lens {
+          animation: none;
+        }
+      }
+      /* The inline style sets the honey; this adds the gloss on top of it. */
+      .glass-plus {
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 55%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.75),
+          inset 0 -1px 1px rgba(0, 0, 0, 0.12),
+          0 10px 24px -6px rgba(181, 110, 0, 0.5),
+          0 2px 6px rgba(0, 0, 0, 0.12);
+      }
+      html.dark .glass-plus {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.6),
+          inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+          0 10px 24px -6px rgba(0, 0, 0, 0.7);
+      }
+      /* Softens content under the home indicator, the way iOS fades a scroll edge. */
+      .tab-bar-fade {
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          color-mix(in srgb, var(--color-background-default) 72%, transparent) 100%
+        );
       }
       /* iOS 17 Safari has only the prefixed property, so the test checks both names. */
       @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
         .glass-bar {
           background: #ffffff;
+          border-color: rgba(0, 0, 0, 0.08);
         }
         html.dark .glass-bar {
           background: #1c1c1e;
+        }
+        .glass-tab-lens {
+          background: rgba(0, 0, 0, 0.05);
+        }
+        html.dark .glass-tab-lens {
+          background: rgba(255, 255, 255, 0.1);
         }
       }
       @media (prefers-reduced-transparency: reduce) {
         .glass-bar {
           background: #ffffff;
+          border-color: rgba(0, 0, 0, 0.08);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
         }
         html.dark .glass-bar {
           background: #1c1c1e;
+          border-color: rgba(255, 255, 255, 0.14);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+        .glass-tab-lens {
+          background: rgba(0, 0, 0, 0.05);
+        }
+        html.dark .glass-tab-lens {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        .tab-bar-fade {
+          background: none;
         }
       }
       /* Monochrome option (Settings → Appearance). The root filter greys colours that components read from

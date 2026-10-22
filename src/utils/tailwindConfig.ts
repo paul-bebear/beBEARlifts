@@ -39,6 +39,11 @@ const bearSemantic = {
   dark: BearThemeColors_apply(semanticColors.dark, "dark"),
 };
 
+const monoSemantic = {
+  light: BearThemeColors_apply(semanticColors.light, "light", true),
+  dark: BearThemeColors_apply(semanticColors.dark, "dark", true),
+};
+
 export function Tailwind_semantic(): ISemanticVars {
   if (isPageRenderContext) {
     return semanticVars;
@@ -51,7 +56,11 @@ export function Tailwind_semantic(): ISemanticVars {
     return semanticVars;
   }
   const theme = root.classList.contains("dark") ? "dark" : "light";
-  const colors = root.classList.contains("bear") ? bearSemantic : semanticColors;
+  const colors = root.classList.contains("mono")
+    ? monoSemantic
+    : root.classList.contains("bear")
+      ? bearSemantic
+      : semanticColors;
   return colors[theme] as unknown as ISemanticVars;
 }
 

@@ -27,22 +27,56 @@ const dark: IBearThemeOverrides = {
   background: { subtle: "#0C0819" },
 };
 
-export function BearThemeColors_overrides(theme: "light" | "dark"): IBearThemeOverrides {
-  return theme === "dark" ? dark : light;
-}
+const monoLight: IBearThemeOverrides = {
+  button: { primarybackground: "#000000", primarylabel: "#FFFFFF" },
+  menu: { buttonprimary: "#000000", iconactive: "#000000", labelactive: "#000000" },
+  icon: { purple: "#000000" },
+  text: { purple: "#000000", link: "#000000" },
+};
 
-export function BearThemeColors_apply<T extends object>(semantic: T, theme: "light" | "dark"): T {
-  const source = semantic as unknown as IBearThemeOverrides;
-  const result: IBearThemeOverrides = { ...source };
-  const overrides = BearThemeColors_overrides(theme);
-  for (const category of Object.keys(overrides)) {
-    result[category] = { ...source[category], ...overrides[category] };
+const monoDark: IBearThemeOverrides = {
+  button: { primarybackground: "#3A3A3C", primarylabel: "#FFFFFF" },
+  menu: { buttonprimary: "#3A3A3C", iconactive: "#FFFFFF", labelactive: "#FFFFFF" },
+  icon: { purple: "#FFFFFF" },
+  text: { purple: "#FFFFFF", link: "#FFFFFF" },
+};
+
+function merge(base: IBearThemeOverrides, top: IBearThemeOverrides): IBearThemeOverrides {
+  const result: IBearThemeOverrides = { ...base };
+  for (const category of Object.keys(top)) {
+    result[category] = { ...base[category], ...top[category] };
   }
-  return result as unknown as T;
+  return result;
 }
 
-export function BearThemeColors_cssVars(theme: "light" | "dark"): Record<string, string> {
-  const overrides = BearThemeColors_overrides(theme);
+export function BearThemeColors_overrides(theme: "light" | "dark", isMonochrome: boolean = false): IBearThemeOverrides {
+  const bear = theme === "dark" ? dark : light;
+  if (!isMonochrome) {
+    return bear;
+  }
+  return merge(bear, theme === "dark" ? monoDark : monoLight);
+}
+
+export function BearThemeColors_monoOverrides(theme: "light" | "dark"): IBearThemeOverrides {
+  return theme === "dark" ? monoDark : monoLight;
+}
+
+export function BearThemeColors_apply<T extends object>(
+  semantic: T,
+  theme: "light" | "dark",
+  isMonochrome: boolean = false
+): T {
+  return merge(
+    semantic as unknown as IBearThemeOverrides,
+    BearThemeColors_overrides(theme, isMonochrome)
+  ) as unknown as T;
+}
+
+export function BearThemeColors_cssVars(
+  theme: "light" | "dark",
+  isMonochrome: boolean = false
+): Record<string, string> {
+  const overrides = BearThemeColors_overrides(theme, isMonochrome);
   const vars: Record<string, string> = {};
   for (const category of Object.keys(overrides)) {
     for (const name of Object.keys(overrides[category])) {

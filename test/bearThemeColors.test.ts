@@ -6,6 +6,7 @@ import {
   BearThemeColors_apply,
   BearThemeColors_cssVars,
   BearThemeColors_honey,
+  BearThemeColors_monoOverrides,
   BearThemeColors_overrides,
 } from "../src/models/bearThemeColors";
 
@@ -76,6 +77,37 @@ describe("BearThemeColors", () => {
     for (const [name, value] of Object.entries(BearThemeColors_cssVars("dark"))) {
       expect(darkCss[name]?.toUpperCase(), name).to.equal(value.toUpperCase());
     }
+  });
+
+  it("matches the html.mono variables in src/index.html", () => {
+    const blocks = { light: cssBlock(html, "html.mono"), dark: cssBlock(html, "html.mono.dark") };
+    for (const theme of ["light", "dark"] as const) {
+      const vars = BearThemeColors_cssVars(theme, true);
+      const monoNames = Object.keys(blocks[theme]).filter((name) => name.startsWith("--color-"));
+      expect(monoNames.length, theme).to.be.greaterThan(0);
+      for (const name of monoNames) {
+        expect(vars[name]?.toUpperCase(), `${theme} ${name}`).to.equal(blocks[theme][name].toUpperCase());
+      }
+    }
+  });
+
+  it("lets Monochrome override only colours the bear theme sets", () => {
+    for (const theme of ["light", "dark"] as const) {
+      const bear = BearThemeColors_overrides(theme);
+      const mono = BearThemeColors_monoOverrides(theme);
+      for (const category of Object.keys(mono)) {
+        for (const name of Object.keys(mono[category])) {
+          expect(bear[category]?.[name], `${theme} ${category}.${name}`).to.be.a("string");
+        }
+      }
+    }
+  });
+
+  it("turns honey back on when Monochrome is switched off", () => {
+    expect(BearThemeColors_cssVars("light", true)["--color-button-primarybackground"]).to.equal("#000000");
+    expect(BearThemeColors_cssVars("light", false)["--color-button-primarybackground"]).to.equal(BearThemeColors_honey);
+    expect(BearThemeColors_apply(semanticColors.dark, "dark", true).text.link).to.equal("#FFFFFF");
+    expect(BearThemeColors_apply(semanticColors.dark, "dark", true).background.subtle).to.equal("#0C0819");
   });
 
   it("sets the theme class on the html tag", () => {

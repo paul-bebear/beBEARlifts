@@ -19,3 +19,7 @@ export function GlassBar(props: IGlassBarProps): JSX.Element {
     </View>
   );
 }
+
+export function GlassTabLens(): JSX.Element {
+  return <View pointerEvents="none" className="glass-tab-lens" />;
+}
