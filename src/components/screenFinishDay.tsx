@@ -1,12 +1,8 @@
 import { WorkoutReportCard } from "./workoutReportCard";
-import { ListenLinks_open } from "./listenLinksCard";
-import { JSX, useState } from "react";
-import { View, Pressable, Platform } from "react-native";
-import { SvgUri, SvgXml } from "react-native-svg";
-import { BundledImages_svgXml } from "../utils/bundledImages";
+import { JSX, useCallback } from "react";
+import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { IDispatch } from "../ducks/types";
-import { Dialog_alert } from "../utils/dialog";
 import {
   History_getPersonalRecords,
   History_totalRecordWeight,
@@ -16,7 +12,6 @@ import {
   History_collectMuscleGroups,
   History_workoutTime,
 } from "../models/history";
-import { Button } from "./button";
 import { Weight_display } from "../models/weight";
 import { Confetti } from "./confetti";
 import { IHistoryRecord, IProgram, IScreenMuscle, ISettings, IStats } from "../types";
@@ -28,28 +23,15 @@ import { Collector } from "../utils/collector";
 import { CollectionUtils_splitIntoNGroups } from "../utils/collection";
 import { ObjectUtils_keys } from "../utils/object";
 import { TimeUtils_formatHHMM } from "../utils/time";
-import { IconInstagram } from "./icons/iconInstagram";
-import { WorkoutShareButton } from "./workoutShareButton";
-import { IconLink } from "./icons/iconLink";
-import { IconKebab } from "./icons/iconKebab";
-import { IconPicture } from "./icons/iconPicture";
-import { Share_generateLink } from "../models/share";
-import { ClipboardUtils_copy } from "../utils/clipboard";
-import { InternalLink } from "../internalLink";
-import { LinkButton } from "./linkButton";
-import { IconTiktok } from "./icons/iconTiktok";
 import { PersonalRecords } from "./personalRecords";
-import { ImagePreloader_dynohappy } from "../utils/imagePreloader";
-import { HostConfig_resolveUrl } from "../utils/hostConfig";
 import { n } from "../utils/math";
 import { Muscle_getMuscleGroupName } from "../models/muscle";
-import { IconDoc } from "./icons/iconDoc";
-import { LiftohistorySerializer_serialize } from "../liftohistory/liftohistorySerializer";
-import { navigateToModal } from "../navigation/navigationService";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { WorkoutStoryCardSection } from "./workoutStoryCard";
 import { CloudBackupAfterWorkout } from "./cloudBackupAfterWorkout";
 import { FeedShareToggle } from "./feedShareToggle";
+import { BearMark } from "./shareCards/bearMark";
+import { ShareCardTheme } from "./shareCards/shareCardTheme";
 
 interface IProps {
   history: IHistoryRecord[];
@@ -63,11 +45,19 @@ interface IProps {
 }
 
 export function ScreenFinishDay(props: IProps): JSX.Element {
-  useNavOptions({ navTitle: "Congratulations!" });
-
   const recordById =
     props.historyRecordId != null ? props.history.find((h) => h.id === props.historyRecordId) : undefined;
   const record = recordById ?? props.history[0];
+
+  const { dispatch } = props;
+  const onClose = useCallback((): boolean => {
+    dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }));
+    dispatch(Thunk_maybeRequestReview());
+    dispatch(Thunk_maybeRequestSignup());
+    return false;
+  }, [dispatch]);
+
+  useNavOptions({ navTitle: record?.dayName ?? "", navOnBack: onClose });
 
   // On the very first workout, history is momentarily empty between the
   // navigate-to-finishDay and the FinishProgramDayAction commit, so `record`
@@ -94,25 +84,32 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
   }, []);
   muscleGroups.sort((a, b) => b[1] - a[1]);
   const muscleGroupsGrouped = CollectionUtils_splitIntoNGroups(muscleGroups, 2);
-  const eligibleForCreateProgramDay = props.allPrograms.every((p) => p.id !== record.programId);
-
-  const isMobile = Platform.OS === "ios" || Platform.OS === "android";
 
   return (
     <>
       {OfflineOnly_isEnabled() && <CloudBackupAfterWorkout dispatch={props.dispatch} />}
       <View className="px-gutter pb-6">
         <View className="flex-row items-center justify-center pb-2">
-          {Platform.OS === "web" ? (
-            <SvgUri uri={HostConfig_resolveUrl(ImagePreloader_dynohappy)} width={170} height={150} />
-          ) : (
-            <SvgXml xml={BundledImages_svgXml(ImagePreloader_dynohappy) ?? ""} width={170} height={150} />
-          )}
+          <BearMark size={120} color={ShareCardTheme.green} faceColor={ShareCardTheme.cream} />
         </View>
         <View className="items-center px-gutter pb-2">
           <Text className="text-sm text-text-secondary">{record.programName}</Text>
           <Text className="text-base">{record.dayName}</Text>
         </View>
+        {OfflineOnly_isEnabled() && (
+          <WorkoutStoryCardSection
+            record={record}
+            history={props.history}
+            settings={props.settings}
+            stats={props.stats}
+            musicEnabled={true}
+            onMusic={() => props.dispatch(Thunk_pushScreen("music"))}
+          />
+        )}
+        {OfflineOnly_isEnabled() && (
+          <FeedShareToggle record={record} history={props.history} settings={props.settings} />
+        )}
+        <View className="h-2" />
         <View className="px-4 pt-2 pb-3 rounded-lg bg-background-purpledark" testID="totals-summary">
           <GroupHeader name="Totals" />
           <View className="flex-row gap-2">
@@ -136,10 +133,6 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
             </View>
           </View>
         </View>
-
-        {OfflineOnly_isEnabled() && (
-          <FeedShareToggle record={record} history={props.history} settings={props.settings} />
-        )}
 
         {startedEntries.length > 0 && (
           <View className="px-4 py-2 mt-2 rounded-lg bg-background-purpledark" testID="completed-exercises">
@@ -190,243 +183,8 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
             dispatch={props.dispatch}
           />
         )}
-
-        {OfflineOnly_isEnabled() && (
-          <WorkoutStoryCardSection
-            record={record}
-            history={props.history}
-            settings={props.settings}
-            stats={props.stats}
-          />
-        )}
-
-        {OfflineOnly_isEnabled() && (
-          <View className="items-center px-gutter pb-4">
-            <LinkButton name="finish-day-music" onClick={() => props.dispatch(Thunk_pushScreen("music"))}>
-              Review this workout's songs
-            </LinkButton>
-            {props.settings.listenLinks?.cooldown != null && (
-              <View className="mt-3">
-                <LinkButton
-                  name="finish-day-cooldown"
-                  onClick={() => ListenLinks_open(props.settings.listenLinks?.cooldown ?? "")}
-                >
-                  Play cooldown for the walk home
-                </LinkButton>
-              </View>
-            )}
-          </View>
-        )}
-
-        {isMobile ? (
-          <MobileShare userId={props.userId} history={props.history} record={record} settings={props.settings} />
-        ) : (
-          <WebappShare userId={props.userId} history={props.history} record={record} settings={props.settings} />
-        )}
-
-        {eligibleForCreateProgramDay && (
-          <Text className="mx-2 my-1 text-xs text-text-secondary">You can create a program day from this workout</Text>
-        )}
-
-        <View className="flex-row w-full gap-4 pt-4">
-          {eligibleForCreateProgramDay && (
-            <View className="items-center flex-1">
-              <Button
-                name="create-program-day"
-                kind="purple"
-                buttonSize="lg2"
-                className="w-36"
-                testID="create-program-day"
-                onPress={() => {
-                  navigateToModal("dayFromAdhocModal", { historyRecordId: record.id });
-                }}
-              >
-                Create Program Day
-              </Button>
-            </View>
-          )}
-          <View className="items-center justify-center flex-1 pb-8">
-            <Button
-              name="finish-day-continue"
-              kind="purple"
-              className="w-36"
-              testID="finish-day-continue"
-              onPress={() => {
-                props.dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }));
-                props.dispatch(Thunk_maybeRequestReview());
-                props.dispatch(Thunk_maybeRequestSignup());
-              }}
-            >
-              Continue
-            </Button>
-          </View>
-        </View>
       </View>
       <Confetti />
     </>
-  );
-}
-
-interface IMobileShareProps {
-  history: IHistoryRecord[];
-  record: IHistoryRecord;
-  settings: ISettings;
-  userId?: string;
-}
-
-function MobileShare(props: IMobileShareProps): JSX.Element {
-  const historyRecordId = props.record.id;
-  return (
-    <View className="px-gutter py-4">
-      <GroupHeader name="Share it!" />
-      <View className="flex-row justify-between gap-4">
-        <View className="items-center">
-          <Pressable
-            testID="finish-day-share-igstory"
-            className="nm-finishday-share-igstory"
-            onPress={() => navigateToModal("socialShareModal", { type: "igstory", historyRecordId })}
-          >
-            <IconInstagram />
-          </Pressable>
-          <Text className="text-xs text-text-secondary">IG Story</Text>
-        </View>
-        <View className="items-center">
-          <Pressable
-            testID="finish-day-share-igfeed"
-            className="nm-finishday-share-igfeed"
-            onPress={() => navigateToModal("socialShareModal", { type: "igfeed", historyRecordId })}
-          >
-            <IconInstagram />
-          </Pressable>
-          <Text className="text-xs text-text-secondary">IG Feed</Text>
-        </View>
-        <View className="items-center">
-          <Pressable
-            testID="finish-day-share-tiktok"
-            className="nm-finishday-share-tiktok"
-            onPress={() => navigateToModal("socialShareModal", { type: "tiktok", historyRecordId })}
-          >
-            <IconTiktok />
-          </Pressable>
-          <Text className="text-xs text-text-secondary">Tiktok</Text>
-        </View>
-        <View className="items-center">
-          <Pressable
-            testID="finish-day-share-text"
-            className="items-center justify-center w-scaled-10 h-scaled-10 rounded-full nm-finishday-share-text bg-background-subtle"
-            onPress={() => {
-              const text = LiftohistorySerializer_serialize(props.record, props.settings);
-              ClipboardUtils_copy(text);
-              Dialog_alert("Copied!");
-            }}
-          >
-            <IconDoc />
-          </Pressable>
-          <Text className="text-xs text-text-secondary">Text</Text>
-        </View>
-        <View className="items-center">
-          <WorkoutShareButton
-            history={props.history}
-            record={props.record}
-            settings={props.settings}
-            icon={<IconKebab />}
-          />
-          <Text className="text-xs text-text-secondary">More</Text>
-        </View>
-      </View>
-      {!OfflineOnly_isEnabled() && (
-        <View className="items-center mt-1">
-          <LinkButton
-            name="copy-workout-link"
-            onPress={() => {
-              if (props.userId) {
-                const link = Share_generateLink(props.userId, props.record.id);
-                ClipboardUtils_copy(link);
-                Dialog_alert("Copied!");
-              } else {
-                Dialog_alert("You should be logged in to copy link to a workout");
-              }
-            }}
-          >
-            or just copy a link
-          </LinkButton>
-        </View>
-      )}
-    </View>
-  );
-}
-
-interface IWebappShareProps {
-  history: IHistoryRecord[];
-  record: IHistoryRecord;
-  userId?: string;
-  settings: ISettings;
-}
-
-function WebappShare(props: IWebappShareProps): JSX.Element {
-  const [copiedLink, setCopiedLink] = useState<string | undefined>(undefined);
-  const userId = props.userId;
-
-  return (
-    <View className="px-gutter py-4">
-      <GroupHeader name="Share it!" />
-      <View className="flex-row justify-between gap-4">
-        <View className="items-center">
-          <WorkoutShareButton
-            history={props.history}
-            record={props.record}
-            settings={props.settings}
-            icon={<IconPicture />}
-          />
-          <Text className="text-xs text-text-secondary">Image</Text>
-        </View>
-        <View className="items-center">
-          <Pressable
-            testID="finishday-share-text"
-            className="items-center justify-center w-scaled-10 h-scaled-10 rounded-full bg-background-subtle"
-            onPress={() => {
-              const text = LiftohistorySerializer_serialize(props.record, props.settings);
-              ClipboardUtils_copy(text);
-              Dialog_alert("Copied!");
-            }}
-          >
-            <IconDoc />
-          </Pressable>
-          <Text className="text-xs text-text-secondary">Text</Text>
-        </View>
-        {!OfflineOnly_isEnabled() && (
-          <View className="items-center">
-            <Pressable
-              className="items-center justify-center w-scaled-10 h-scaled-10 rounded-full bg-background-subtle"
-              onPress={() => {
-                if (userId) {
-                  const link = Share_generateLink(userId, props.record.id);
-                  ClipboardUtils_copy(link);
-                  setCopiedLink(link);
-                } else {
-                  Dialog_alert("You should be logged in to copy link to a workout");
-                }
-              }}
-            >
-              <IconLink />
-            </Pressable>
-            {copiedLink ? (
-              <View className="flex-row">
-                <Text className="text-xs text-text-secondary">Copied: </Text>
-                <InternalLink
-                  name="shared-workout-link"
-                  href={copiedLink}
-                  className="font-bold underline text-text-link"
-                >
-                  Link
-                </InternalLink>
-              </View>
-            ) : (
-              <Text className="text-xs text-text-secondary">Copy Link</Text>
-            )}
-          </View>
-        )}
-      </View>
-    </View>
   );
 }
