@@ -1,5 +1,6 @@
 import { IEvaluatedProgram, Program_getDayData } from "./program";
 import { IPlannerProgramExercise, IPlannerProgramExerciseEvaluatedSet } from "../pages/planner/models/types";
+import { IWeekSlots, WeekSchedule_weekdayNames } from "./weekSchedule";
 
 export interface IProgramPlanCard {
   dayIndex: number;
@@ -47,16 +48,47 @@ export function ProgramPlanCards_currentWeekIndex(program: IEvaluatedProgram): n
   return Math.max(0, Math.min(program.weeks.length - 1, (week ?? 1) - 1));
 }
 
-export function ProgramPlanCards_build(program: IEvaluatedProgram, weekIndex: number): IProgramPlanCard[] {
+export function ProgramPlanCards_build(
+  program: IEvaluatedProgram,
+  weekIndex: number,
+  nextDay: number = program.nextDay
+): IProgramPlanCard[] {
   const week = program.weeks[weekIndex];
   if (week == null) {
     return [];
   }
-  const next = Program_getDayData(program, program.nextDay);
+  const next = Program_getDayData(program, nextDay);
   return week.days.map((day, dayIndex) => ({
     dayIndex,
     name: day.name,
     lines: day.exercises.filter((exercise) => !exercise.notused).map(ProgramPlanCards_exerciseLine),
     isNext: next.week === weekIndex + 1 && next.dayInWeek === dayIndex + 1,
   }));
+}
+
+export interface IProgramPlanRow {
+  weekday: number;
+  weekdayName: string;
+  isToday: boolean;
+  card?: IProgramPlanCard;
+}
+
+export interface IProgramPlanWeek {
+  rows: IProgramPlanRow[];
+  unplaced: IProgramPlanCard[];
+}
+
+// A program with more than 7 days a week has days no weekday can hold; they list after Sunday.
+export function ProgramPlanCards_weekRows(
+  cards: IProgramPlanCard[],
+  slots: IWeekSlots,
+  todayWeekday: number
+): IProgramPlanWeek {
+  const rows = WeekSchedule_weekdayNames.map((weekdayName, weekday) => {
+    const dayIndex = slots[weekday];
+    const card = dayIndex != null ? cards[dayIndex] : undefined;
+    return { weekday, weekdayName, isToday: weekday === todayWeekday, card };
+  });
+  const placed = new Set(slots);
+  return { rows, unplaced: cards.filter((card) => !placed.has(card.dayIndex)) };
 }

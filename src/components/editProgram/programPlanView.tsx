@@ -20,9 +20,21 @@ import { Tailwind_semantic } from "../../utils/tailwindConfig";
 import { ProgramDayOrder_apply, ProgramDayOrder_hasUnsavedEdits } from "../../models/programDayOrder";
 import {
   IProgramPlanCard,
+  IProgramPlanRow,
   ProgramPlanCards_build,
   ProgramPlanCards_currentWeekIndex,
+  ProgramPlanCards_weekRows,
 } from "../../models/programPlanCards";
+import {
+  WeekSchedule_dayCount,
+  WeekSchedule_forProgram,
+  WeekSchedule_moveDay,
+  WeekSchedule_today,
+  WeekSchedule_upNextDay,
+  WeekSchedule_workedOutToday,
+} from "../../models/weekSchedule";
+import { WeekScheduleStore } from "../../utils/weekScheduleStore";
+import { useTrackedState } from "../../navigation/TrackedStateContext";
 
 interface IProps {
   evaluatedProgram: IEvaluatedProgram;
@@ -38,12 +50,29 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
   const { evaluatedProgram, savedProgram, draftProgram, settings, dispatch, plannerDispatch } = props;
   const weekCount = evaluatedProgram.weeks.length;
   const [weekIndex, setWeekIndex] = useState(() => ProgramPlanCards_currentWeekIndex(evaluatedProgram));
+  const [isOrdering, setIsOrdering] = useState(false);
   const safeWeekIndex = Math.min(weekIndex, Math.max(0, weekCount - 1));
+  const schedule = WeekScheduleStore.use();
+  const history = useTrackedState().storage.history;
+  const now = Date.now();
+  const programId = savedProgram.id;
+  const dayCount = WeekSchedule_dayCount(evaluatedProgram);
+  const slots = WeekSchedule_forProgram(schedule, programId, dayCount);
+  const today = WeekSchedule_today(evaluatedProgram, slots, now);
+  const upNextDay = WeekSchedule_upNextDay(evaluatedProgram, today, WeekSchedule_workedOutToday(history, now));
   const cards = useMemo(
-    () => ProgramPlanCards_build(evaluatedProgram, safeWeekIndex),
-    [evaluatedProgram, safeWeekIndex]
+    () => ProgramPlanCards_build(evaluatedProgram, safeWeekIndex, upNextDay),
+    [evaluatedProgram, safeWeekIndex, upNextDay]
   );
+  const week = ProgramPlanCards_weekRows(cards, slots, today.weekday);
   const hasUnsavedEdits = ProgramDayOrder_hasUnsavedEdits(savedProgram, draftProgram);
+
+  const onMoveWeekday = useCallback(
+    (from: number, to: number) => {
+      WeekScheduleStore.update((log) => WeekSchedule_moveDay(log, programId, dayCount, from, to));
+    },
+    [programId, dayCount]
+  );
 
   const onMove = useCallback(
     (from: number, to: number) => {
@@ -81,9 +110,9 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
       {weekCount > 1 && (
         <View className="mb-2">
           <View className="flex-row flex-wrap gap-2">
-            {evaluatedProgram.weeks.map((week, index) => (
+            {evaluatedProgram.weeks.map((w, index) => (
               <Pressable
-                key={`${week.name}-${index}`}
+                key={`${w.name}-${index}`}
                 testID={`plan-week-${index}`}
                 data-testid={`plan-week-${index}`}
                 className={`px-3 py-1 rounded-full border ${
@@ -92,7 +121,7 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
                 onPress={() => setWeekIndex(index)}
               >
                 <Text className={`text-sm ${index === safeWeekIndex ? "text-text-purple" : "text-text-secondary"}`}>
-                  {week.name}
+                  {w.name}
                 </Text>
               </Pressable>
             ))}
@@ -100,28 +129,57 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
           <Text className="mt-2 text-xs text-text-secondary">Moving a day moves it in every week.</Text>
         </View>
       )}
-      <Text className="mb-3 text-sm text-text-secondary">
-        Hold the dots and drag a day to move it, or use the arrows.
-      </Text>
-      {hasUnsavedEdits && (
-        <Text className="mb-3 text-sm text-text-error">
-          You have unsaved changes. Moves stay with them until you tap Save in Edit.
-        </Text>
-      )}
-      <DraggableList2
-        items={cards}
-        onDragEnd={onMove}
-        element={(card, index, handle) => (
-          <PlanDayCard
-            card={card}
-            isFirst={index === 0}
-            isLast={index === cards.length - 1}
-            handle={handle}
-            onMove={onMove}
+      {isOrdering ? (
+        <>
+          <Text className="mb-3 text-sm text-text-secondary">
+            This is the order the program runs in. Hold the dots and drag a day to move it, or use the arrows.
+          </Text>
+          {hasUnsavedEdits && (
+            <Text className="mb-3 text-sm text-text-error">
+              You have unsaved changes. Moves stay with them until you tap Save in Edit.
+            </Text>
+          )}
+          <DraggableList2
+            items={cards}
+            onDragEnd={onMove}
+            element={(card, index, handle) => (
+              <PlanDayCard
+                card={card}
+                isFirst={index === 0}
+                isLast={index === cards.length - 1}
+                handle={handle}
+                onMove={onMove}
+              />
+            )}
           />
-        )}
-      />
-      <View className="mt-4">
+        </>
+      ) : (
+        <>
+          <Text className="mb-3 text-sm text-text-secondary">Use the arrows to move a day to another weekday.</Text>
+          {week.rows.map((row) => (
+            <PlanWeekdayRow key={row.weekday} row={row} onMove={onMoveWeekday} />
+          ))}
+          {week.unplaced.length > 0 && (
+            <View className="mb-3">
+              <Text className="mb-1 text-sm font-semibold text-text-secondary">No weekday</Text>
+              {week.unplaced.map((card) => (
+                <PlanDayLines key={card.dayIndex} card={card} />
+              ))}
+            </View>
+          )}
+        </>
+      )}
+      <View className="flex-row flex-wrap gap-2 mt-4">
+        <Button
+          kind="pill-outline"
+          buttonSize="md"
+          name="plan-toggle-order"
+          testID="plan-toggle-order"
+          data-testid="plan-toggle-order"
+          onClick={() => setIsOrdering(!isOrdering)}
+        >
+          {isOrdering ? "Back to the week" : "Change day order"}
+        </Button>
         <Button
           kind="pill-outline"
           buttonSize="md"
@@ -136,6 +194,90 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
     </View>
   );
 });
+
+function NextTag(): JSX.Element {
+  return (
+    <View className="px-2 rounded-full bg-background-purpledark">
+      <Text className="text-xs text-text-link">Next</Text>
+    </View>
+  );
+}
+
+function PlanDayLines(props: { card: IProgramPlanCard }): JSX.Element {
+  const { card } = props;
+  return (
+    <View className="px-4 pb-3">
+      {card.lines.length === 0 ? (
+        <Text className="text-sm text-text-secondary">Rest day</Text>
+      ) : (
+        card.lines.map((line, index) => (
+          <Text key={index} className="text-sm">
+            {line}
+          </Text>
+        ))
+      )}
+    </View>
+  );
+}
+
+interface IPlanWeekdayRowProps {
+  row: IProgramPlanRow;
+  onMove: (from: number, to: number) => void;
+}
+
+function PlanWeekdayRow(props: IPlanWeekdayRowProps): JSX.Element {
+  const { row } = props;
+  const card = row.card;
+  const disabledColor = Tailwind_semantic().icon.neutralsubtle;
+  const isFirst = row.weekday === 0;
+  const isLast = row.weekday === 6;
+  return (
+    <View
+      className={`mb-3 border rounded-2xl bg-background-default ${
+        row.isToday ? "border-button-primarybackground" : "border-border-neutral"
+      }`}
+      testID={`plan-weekday-${row.weekday}`}
+      data-testid={`plan-weekday-${row.weekday}`}
+    >
+      <View className="flex-row items-center pl-4 pr-1">
+        <View className="flex-1 py-3">
+          <Text className={`text-xs font-semibold ${row.isToday ? "text-text-purple" : "text-text-secondary"}`}>
+            {row.isToday ? `${row.weekdayName} · Today` : row.weekdayName}
+          </Text>
+          <View className="flex-row items-center gap-2 mt-1">
+            <Text className={`text-base font-bold ${card == null ? "text-text-secondary" : ""}`}>
+              {card?.name ?? "Rest"}
+            </Text>
+            {card?.isNext && <NextTag />}
+          </View>
+        </View>
+        {card != null && (
+          <>
+            <Pressable
+              className="p-3"
+              testID={`plan-weekday-up-${row.weekday}`}
+              data-testid={`plan-weekday-up-${row.weekday}`}
+              disabled={isFirst}
+              onPress={() => props.onMove(row.weekday, row.weekday - 1)}
+            >
+              <IconArrowUp color={isFirst ? disabledColor : undefined} />
+            </Pressable>
+            <Pressable
+              className="p-3"
+              testID={`plan-weekday-down-${row.weekday}`}
+              data-testid={`plan-weekday-down-${row.weekday}`}
+              disabled={isLast}
+              onPress={() => props.onMove(row.weekday, row.weekday + 1)}
+            >
+              <IconArrowDown2 color={isLast ? disabledColor : undefined} />
+            </Pressable>
+          </>
+        )}
+      </View>
+      {card != null && <PlanDayLines card={card} />}
+    </View>
+  );
+}
 
 interface IPlanDayCardProps {
   card: IProgramPlanCard;
@@ -162,11 +304,7 @@ function PlanDayCard(props: IPlanDayCardProps): JSX.Element {
         )}
         <View className="flex-row items-center flex-1 gap-2">
           <Text className="text-base font-bold">{card.name}</Text>
-          {card.isNext && (
-            <View className="px-2 rounded-full bg-background-purpledark">
-              <Text className="text-xs text-text-link">Next</Text>
-            </View>
-          )}
+          {card.isNext && <NextTag />}
         </View>
         <Pressable
           className="p-3"
@@ -187,17 +325,7 @@ function PlanDayCard(props: IPlanDayCardProps): JSX.Element {
           <IconArrowDown2 color={props.isLast ? disabledColor : undefined} />
         </Pressable>
       </View>
-      <View className="px-4 pb-3">
-        {card.lines.length === 0 ? (
-          <Text className="text-sm text-text-secondary">Rest day</Text>
-        ) : (
-          card.lines.map((line, index) => (
-            <Text key={index} className="text-sm">
-              {line}
-            </Text>
-          ))
-        )}
-      </View>
+      <PlanDayLines card={card} />
     </View>
   );
 }

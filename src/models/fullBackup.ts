@@ -11,6 +11,7 @@ import { IStepsLog, Steps_parse } from "./steps";
 import { DailyChecklist_parse, IChecklistLog } from "./dailyChecklist";
 import { BearStoreData_empty, BearStoreData_parse, IBearStoreData } from "./bearStoreData";
 import { INotesLog, Notes_empty, Notes_parse } from "./notes";
+import { IWeekScheduleLog, WeekSchedule_empty, WeekSchedule_parse } from "./weekSchedule";
 import { JournalExport_files } from "./journalExport";
 import { FoodLog_dayKey } from "./foodLog";
 import { History_getPersonalRecords } from "./history";
@@ -35,6 +36,7 @@ const readme = [
   "journal: one Markdown file per day, keyed by path journal/YYYY-MM-DD.md, written from the workouts, food, music, weigh-ins and notes above. It is a readable copy; restore reads the parts above.",
   "runs.runs: GPS runs, newest first. startedAt and endedAt are ms; distanceM is metres; movingMs leaves out pauses; elevationGainM is metres climbed. splits: moving ms for each full km. route: simplified [lat, lon] lines, one per stretch between pauses.",
   "bear: the bebear_bear store. line is male or female. celebratedLevel is the highest level-up shown. seenBadges lists badge ids already shown. spent is the honey spent in the shop.",
+  "schedule: the bebear_schedule store. programs maps a program id to 7 entries, Monday first. Each entry is the position of a program day in its week (0 is the first day), or null for a rest day.",
 ].join("\n");
 
 export interface IFullBackup {
@@ -55,6 +57,7 @@ export interface IFullBackup {
   checklist: IChecklistLog;
   bear: IBearStoreData;
   notes?: INotesLog;
+  schedule: IWeekScheduleLog;
   journal: Record<string, string>;
 }
 
@@ -72,6 +75,7 @@ export interface IFullBackupParts {
   checklist: IChecklistLog;
   bear?: IBearStoreData;
   notes?: INotesLog;
+  schedule?: IWeekScheduleLog;
 }
 
 export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBackup {
@@ -105,6 +109,7 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     checklist,
     bear: BearStoreData_parse(parts.bear ?? BearStoreData_empty()),
     notes,
+    schedule: WeekSchedule_parse(parts.schedule ?? WeekSchedule_empty()),
     journal,
   };
 }
@@ -127,6 +132,7 @@ export interface IFullBackupContents {
   checklist?: IChecklistLog;
   bear?: IBearStoreData;
   notes?: INotesLog;
+  schedule?: IWeekScheduleLog;
 }
 
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
@@ -149,6 +155,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     checklist: r.checklist != null ? DailyChecklist_parse(r.checklist) : undefined,
     bear: r.bear != null ? BearStoreData_parse(r.bear) : undefined,
     notes: r.notes != null ? Notes_parse(r.notes) : undefined,
+    schedule: r.schedule != null ? WeekSchedule_parse(r.schedule) : undefined,
   };
 }
 

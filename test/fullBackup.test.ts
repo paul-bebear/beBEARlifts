@@ -25,6 +25,7 @@ import {
   DailyChecklist_toggleCheckIn,
 } from "../src/models/dailyChecklist";
 import { Notes_empty, Notes_new, Notes_save } from "../src/models/notes";
+import { WeekSchedule_empty, WeekSchedule_save } from "../src/models/weekSchedule";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 
@@ -189,6 +190,16 @@ describe("FullBackup", () => {
     const { bear, ...older } = FullBackup_build(parts({}), now);
     expect(bear).to.deep.equal(BearStoreData_empty());
     expect(FullBackup_unwrap(older).bear).to.equal(undefined);
+  });
+
+  it("round-trips the bebear_schedule store and reads an older file without it", () => {
+    const schedule = WeekSchedule_save(WeekSchedule_empty(), "bebear-ulppl", [0, 1, null, 2, 3, 4, null]);
+    const backup = FullBackup_build(parts({ schedule }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).schedule).to.deep.equal(schedule);
+    expect(backup.readme).to.include("bebear_schedule");
+    const { schedule: empty, ...older } = FullBackup_build(parts({}), now);
+    expect(empty).to.deep.equal(WeekSchedule_empty());
+    expect(FullBackup_unwrap(older).schedule).to.equal(undefined);
   });
 
   it("parses a broken bear in a backup to the empty value", () => {

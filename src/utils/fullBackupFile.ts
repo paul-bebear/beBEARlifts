@@ -12,25 +12,43 @@ import { StepsStore } from "./stepsStore";
 import { ChecklistStore } from "./checklistStore";
 import { BearStore } from "./bearStore";
 import { NotesStore } from "./notesStore";
+import { WeekScheduleStore } from "./weekScheduleStore";
 
 export async function FullBackupFile_build(getStorage: () => IStorage): Promise<{ text: string; now: number }> {
-  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes] = await Promise.all([
-    FoodLogStore_load(),
-    MusicStore_load(),
-    BodyScanStore_load(),
-    WarmupStore_load(),
-    ReportStore.load(),
-    SetClipStore.load(),
-    RunStore.load(),
-    ProgramGoalStore.load(),
-    StepsStore.load(),
-    ChecklistStore.load(),
-    BearStore.load(),
-    NotesStore.load(),
-  ]);
+  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes, schedule] =
+    await Promise.all([
+      FoodLogStore_load(),
+      MusicStore_load(),
+      BodyScanStore_load(),
+      WarmupStore_load(),
+      ReportStore.load(),
+      SetClipStore.load(),
+      RunStore.load(),
+      ProgramGoalStore.load(),
+      StepsStore.load(),
+      ChecklistStore.load(),
+      BearStore.load(),
+      NotesStore.load(),
+      WeekScheduleStore.load(),
+    ]);
   const now = Date.now();
   const backup = FullBackup_build(
-    { storage: getStorage(), food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes },
+    {
+      storage: getStorage(),
+      food,
+      music,
+      body,
+      warmups,
+      reports,
+      clips,
+      runs,
+      goal,
+      steps,
+      checklist,
+      bear,
+      notes,
+      schedule,
+    },
     now
   );
   return { text: JSON.stringify(backup, null, 2), now };
@@ -70,6 +88,7 @@ export async function FullBackupFile_restore(contents: IFullBackupContents): Pro
     step(contents.checklist, ChecklistStore.load, (value) => ChecklistStore.update(() => value)),
     step(contents.bear, BearStore.load, (value) => BearStore.update(() => value)),
     step(contents.notes, NotesStore.load, (value) => NotesStore.update(() => value)),
+    step(contents.schedule, WeekScheduleStore.load, (value) => WeekScheduleStore.update(() => value)),
   ]);
   const done: IRestoreStep[] = [];
   for (const s of steps) {
