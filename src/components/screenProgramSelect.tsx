@@ -75,9 +75,9 @@ export function ScreenProgramSelect(props: IScreenProgramSelectProps): JSX.Eleme
       <View className="flex-1 px-gutter pt-8 pb-4">
         <View className="items-center p-4">
           <Image
-            source={{ uri: ImagePreloader_uri("/images/dinoprogramselect.png") }}
+            source={{ uri: ImagePreloader_uri("/images/bear/male/level-01.webp") }}
             style={{ width: 208, height: 208 }}
-            resizeMode="cover"
+            resizeMode="contain"
           />
         </View>
         <View className="px-2 -mt-1">

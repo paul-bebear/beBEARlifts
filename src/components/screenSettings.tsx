@@ -561,7 +561,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       )}
 
       <GroupHeader name="Miscellaneous" topPadding={true} />
-      <MenuItem name="Changelog" onClick={() => WhatsNew_showWhatsNew(props.dispatch)} />
+      {!OfflineOnly_isEnabled() && <MenuItem name="Changelog" onClick={() => WhatsNew_showWhatsNew(props.dispatch)} />}
       <Pressable
         className="py-3 border-b border-border-neutral"
         onPress={() => openExternal(`mailto:${Support_email}`)}
