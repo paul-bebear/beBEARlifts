@@ -33,6 +33,7 @@ export interface ICloudBackupForm {
   error?: string;
   message?: string;
   showOlderCopies: boolean;
+  sentAt?: number;
   // undefined while the delete confirmation is closed.
   deleteText?: string;
 }
@@ -44,8 +45,8 @@ export type ICloudBackupEvent =
   | { type: "deleteOpen" | "deleteCancel" | "toggleOlderCopies" }
   | { type: "deleted" }
   | { type: "session"; email?: string }
-  | { type: "request"; operation: ICloudBackupOperation; copy?: ICloudCopy }
-  | { type: "sent" }
+  | { type: "request"; operation: ICloudBackupOperation; copy?: ICloudCopy; now?: number }
+  | { type: "sent"; now?: number }
   | { type: "verified" }
   | { type: "done"; message?: string }
   | { type: "signedOut" }
@@ -58,7 +59,26 @@ export interface ISentCode {
   sentAt?: number;
 }
 
-export const CloudBackupForm_codeLifetimeMs = 10 * 60 * 1000;
+// Supabase's default "Email OTP expiration" is 3600 s. The dashboard value was not read.
+export const CloudBackupForm_codeLifetimeMs = 60 * 60 * 1000;
+export const CloudBackupForm_resendWaitMs = 3 * 60 * 1000;
+export const CloudBackupForm_codeHint = "The code can take a few minutes. Check Junk too.";
+export const CloudBackupForm_resendNote = "A new code cancels the last one.";
+
+export function CloudBackupForm_resendRemainingMs(sentAt: number | undefined, now: number): number {
+  if (sentAt == null) {
+    return 0;
+  }
+  return Math.min(CloudBackupForm_resendWaitMs, Math.max(0, sentAt + CloudBackupForm_resendWaitMs - now));
+}
+
+export function CloudBackupForm_resendLabel(sentAt: number | undefined, now: number): string {
+  const seconds = Math.ceil(CloudBackupForm_resendRemainingMs(sentAt, now) / 1000);
+  if (seconds <= 0) {
+    return "Send a new code";
+  }
+  return `Send a new code in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
 
 export function CloudBackupForm_empty(): ICloudBackupForm {
   return { step: "email", email: "", code: "", proCode: "", showOlderCopies: false };
@@ -84,7 +104,7 @@ function resume(state: ICloudBackupForm, sent: ISentCode, now: number): ICloudBa
   const age = sent.sentAt == null ? undefined : now - sent.sentAt;
   const fresh = age != null && age >= 0 && age < CloudBackupForm_codeLifetimeMs;
   return fresh && sent.email != null && state.step === "email" && state.command == null && state.email === ""
-    ? { ...state, step: "code", email: sent.email, code: "" }
+    ? { ...state, step: "code", email: sent.email, code: "", sentAt: sent.sentAt }
     : state;
 }
 
@@ -103,7 +123,14 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
     return { ...state, command: undefined, error: event.error, message: undefined };
   }
   if (event.type === "sent") {
-    return { ...state, step: "code", command: undefined, code: "", message: "Check your email for the code." };
+    return {
+      ...state,
+      step: "code",
+      command: undefined,
+      code: "",
+      sentAt: event.now,
+      message: "Check your email for the code.",
+    };
   }
   if (event.type === "verified") {
     return {
@@ -162,6 +189,14 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
     }
     if (event.operation === "deleteAccount" && !AccountDeletion_isConfirmed(state.deleteText ?? "")) {
       return state.deleteText == null ? state : { ...state, error: `Type ${AccountDeletion_confirmWord} to confirm.` };
+    }
+    if (
+      event.operation === "sendCode" &&
+      state.step === "code" &&
+      event.now != null &&
+      CloudBackupForm_resendRemainingMs(state.sentAt, event.now) > 0
+    ) {
+      return state;
     }
     const signedOutOperation = event.operation === "sendCode" || event.operation === "verify";
     if (signedOutOperation === (state.step === "signedIn") || (event.operation === "verify" && state.step !== "code")) {
