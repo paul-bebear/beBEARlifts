@@ -1,17 +1,7 @@
-import { JSX, ReactNode, useMemo, useState } from "react";
-import { DailyChecklist_doneDays, DailyChecklist_streak } from "../models/dailyChecklist";
-import {
-  MonthCalendar_build,
-  MonthCalendar_monthOf,
-  MonthCalendar_shift,
-  MonthCalendar_workoutDays,
-} from "../models/monthCalendar";
-import { ChecklistStore } from "../utils/checklistStore";
-import { ProgressCalendarHeader } from "./progressCalendarHeader";
+import { JSX, ReactNode, useMemo } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
-import { useNavOptions } from "../navigation/useNavOptions";
 import { Thunk_pushScreen, Thunk_pushToEditProgram } from "../ducks/thunks";
 import { ProgramCard_build } from "../models/programCard";
 import type { IProgramCard } from "../models/programCard";
@@ -36,10 +26,11 @@ import {
   ProgressPhotosCard,
   ProgressStepsCard,
 } from "./progressHubCards";
-import { FoodLog_dayKey } from "../models/foodLog";
+import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
+import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
+import { WeekInsights } from "./weekInsights";
 import { useFoodLog } from "../utils/foodLogStore";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
-import { IconMe } from "./icons/iconMe";
 import { IconCog2 } from "./icons/iconCog2";
 import { IconStats } from "./icons/iconStats";
 import { IconFood } from "./icons/iconFood";
@@ -99,7 +90,7 @@ function LinkRow(props: { testID: string; icon: ReactNode; title: string; onPres
   );
 }
 
-export function ScreenProgressDashboard(): JSX.Element {
+export function ProgressSections(): JSX.Element {
   const state = useTrackedState();
   const dispatch = useTrackedDispatch();
   const history = untrack(state.storage.history);
@@ -132,66 +123,33 @@ export function ScreenProgressDashboard(): JSX.Element {
     [goalLog, history, stats, foodLog, steps, photos, plannedPerWeek, settings, isFocused]
   );
 
-  const checklistLog = ChecklistStore.use();
-  const today = FoodLog_dayKey(new Date());
-  const [selectedDay, setSelectedDay] = useState(today);
-  const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
-  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(true);
-  const streak = useMemo(
-    () => DailyChecklist_streak(DailyChecklist_doneDays({ stats, foodLog, log: checklistLog }), today),
-    [stats, foodLog, checklistLog, today]
-  );
-  const calendar = useMemo(
-    () => MonthCalendar_build({ month, today, selected: selectedDay, workoutDays: MonthCalendar_workoutDays(history) }),
-    [month, today, selectedDay, history]
-  );
-
-  const selectDay = (day: string): void => {
-    setSelectedDay(day);
-    setMonth(MonthCalendar_monthOf(day));
-  };
+  const subscription = untrack(state.storage.subscription);
+  const weekInsights = useMemo(() => {
+    const startWeekFromMonday = !!settings.startWeekFromMonday;
+    const thisWeekStart = DateUtils_firstDayOfWeekTimestamp(Date.now(), startWeekFromMonday);
+    const lastWeekStart = new Date(thisWeekStart);
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+    return {
+      prs: History_getHomeAggregates(history, startWeekFromMonday).prs,
+      thisWeekStart,
+      thisWeekHistory: History_getHistoryRecordsForTimerange(history, thisWeekStart, "week", startWeekFromMonday),
+      lastWeekHistory: History_getHistoryRecordsForTimerange(
+        history,
+        lastWeekStart.getTime(),
+        "week",
+        startWeekFromMonday
+      ),
+    };
+  }, [history, settings.startWeekFromMonday, isFocused]);
 
   useStepsHealthSync(steps.syncHealth, isFocused);
   const semantic = Tailwind_semantic();
   const iconColor = semantic.icon.neutral;
   const blue = semantic.icon.blue;
 
-  useNavOptions({
-    navTitle: "Progress",
-    navRightButtons: [
-      <Pressable
-        key="me"
-        className="p-2"
-        testID="progress-profile"
-        data-testid="progress-profile"
-        onPress={() => dispatch(Thunk_pushScreen("stats"))}
-      >
-        <IconMe color={iconColor} />
-      </Pressable>,
-      <Pressable
-        key="settings"
-        className="p-2"
-        testID="progress-settings"
-        data-testid="progress-settings"
-        onPress={() => dispatch(Thunk_pushScreen("settings"))}
-      >
-        <IconCog2 color={iconColor} size={22} />
-      </Pressable>,
-    ],
-  });
-
   return (
     <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
       {OfflineOnly_isEnabled() && <CloudRestoreBanner dispatch={dispatch} />}
-      <ProgressCalendarHeader
-        streak={streak}
-        calendar={calendar}
-        isCollapsed={isCalendarCollapsed}
-        onToggleCollapse={() => setIsCalendarCollapsed(!isCalendarCollapsed)}
-        onShiftMonth={(delta) => setMonth(MonthCalendar_shift(month, delta))}
-        onSelectDay={selectDay}
-        onStreakPress={() => dispatch(Thunk_pushScreen("streak"))}
-      />
       {OfflineOnly_isEnabled() && (
         <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />
       )}
@@ -246,6 +204,17 @@ export function ScreenProgressDashboard(): JSX.Element {
           onPress={() => dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
         />
       </ProgressExpandRow>
+      <View className="mx-4 mb-3">
+        <WeekInsights
+          dispatch={dispatch}
+          prs={weekInsights.prs}
+          selectedFirstDayOfWeek={weekInsights.thisWeekStart}
+          thisWeekHistory={weekInsights.thisWeekHistory}
+          lastWeekHistory={weekInsights.lastWeekHistory}
+          settings={settings}
+          subscription={subscription}
+        />
+      </View>
       <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">
         Bonus tracking
       </Text>

@@ -1,23 +1,27 @@
 import { JSX, useMemo } from "react";
 import { IDispatch } from "../ducks/types";
-import { Thunk_pushScreen } from "../ducks/thunks";
-import {
-  DailyChecklist_build,
-  DailyChecklist_greeting,
-  DailyChecklist_toggleCheckIn,
-  IChecklistItemKey,
-} from "../models/dailyChecklist";
+import { Thunk_pushScreen, Thunk_startProgramDay } from "../ducks/thunks";
+import { DailyChecklist_build, IChecklistItemKey } from "../models/dailyChecklist";
 import { FoodLog_dayKey } from "../models/foodLog";
+import { MonthCalendar_workoutDays } from "../models/monthCalendar";
 import { IStats, IUnit } from "../types";
-import { ChecklistStore } from "../utils/checklistStore";
 import { useFoodLog } from "../utils/foodLogStore";
 import { ProgramGoalStore } from "../utils/programGoalStore";
 import { DailyChecklistCard } from "./dailyChecklistCard";
 
-export function HomeChecklist(props: { stats: IStats; units: IUnit; dispatch: IDispatch }): JSX.Element {
-  const { stats, units, dispatch } = props;
+interface IProps {
+  stats: IStats;
+  units: IUnit;
+  dispatch: IDispatch;
+  history?: { startTime: number }[];
+  isOngoing?: boolean;
+  onTrain: () => void;
+  startWeekFromMonday?: boolean;
+}
+
+export function HomeChecklist(props: IProps): JSX.Element {
+  const { stats, units, dispatch, history, isOngoing, onTrain, startWeekFromMonday } = props;
   const foodLog = useFoodLog();
-  const checklistLog = ChecklistStore.use();
   const goalLog = ProgramGoalStore.use();
   const today = FoodLog_dayKey(new Date());
   const checklist = useMemo(
@@ -27,11 +31,12 @@ export function HomeChecklist(props: { stats: IStats; units: IUnit; dispatch: ID
         today,
         stats,
         foodLog,
-        log: checklistLog,
         units,
+        workoutDays: MonthCalendar_workoutDays(history ?? []),
         goalStartedAt: goalLog.current?.startedAt,
+        startWeekFromMonday,
       }),
-    [today, stats, foodLog, checklistLog, units, goalLog]
+    [today, stats, foodLog, units, history, goalLog, startWeekFromMonday]
   );
 
   const onItemPress = (item: IChecklistItemKey): void => {
@@ -39,18 +44,12 @@ export function HomeChecklist(props: { stats: IStats; units: IUnit; dispatch: ID
       dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }));
     } else if (item === "food") {
       dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
+    } else if (isOngoing) {
+      dispatch(Thunk_startProgramDay());
     } else {
-      ChecklistStore.update((l) => DailyChecklist_toggleCheckIn(l, today));
+      onTrain();
     }
   };
 
-  return (
-    <DailyChecklistCard
-      greeting={DailyChecklist_greeting(new Date().getHours())}
-      checklist={checklist}
-      isToday={true}
-      onBackToToday={() => undefined}
-      onItemPress={onItemPress}
-    />
-  );
+  return <DailyChecklistCard checklist={checklist} onItemPress={onItemPress} />;
 }
