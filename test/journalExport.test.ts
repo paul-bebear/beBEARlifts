@@ -11,8 +11,12 @@ import {
   JournalExport_day,
   JournalExport_days,
   JournalExport_files,
+  JournalExport_csv,
+  JournalExport_rangeDays,
+  JournalExport_output,
 } from "../src/models/journalExport";
 import { IHistoryRecord, ISet } from "../src/types";
+import { parse } from "papaparse";
 
 function at(day: string, hour: number): number {
   const [y, m, d] = day.split("-").map(Number);
@@ -83,6 +87,111 @@ function sources(extra: Partial<IJournalExportSources> = {}): IJournalExportSour
 }
 
 describe("JournalExport", () => {
+  it("filters the last seven calendar days inclusively and excludes future days", () => {
+    const data = sources({
+      food: { ...FoodLog_empty(), entries: [oats("2026-10-15"), oats("2026-10-16"), oats(today), oats("2026-10-23")] },
+    });
+    expect(JournalExport_rangeDays(data, "today")).to.eql([today]);
+    expect(JournalExport_rangeDays(data, "week")).to.eql(["2026-10-16", today]);
+    expect(JournalExport_rangeDays(data, "all")).to.eql(["2026-10-15", "2026-10-16", today]);
+  });
+
+  it("handles month and year boundaries", () => {
+    const data = sources({
+      today: "2027-01-03",
+      food: { ...FoodLog_empty(), entries: [oats("2026-12-27"), oats("2026-12-28"), oats("2027-01-01")] },
+    });
+    expect(JournalExport_rangeDays(data, "week")).to.eql(["2026-12-28", "2027-01-01"]);
+  });
+
+  it("writes one CSV row per logged item, including multiple weigh-ins", () => {
+    const start = at(today, 18);
+    let notes = Notes_save(
+      Notes_empty(),
+      { ...Notes_new("n", today, 1), title: 'A, "note"', body: "Line 1\nLine 2" },
+      1
+    );
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 2, field: "energy", value: 4 });
+    const data = sources({
+      history: [legs(start)],
+      notes,
+      food: { ...FoodLog_empty(), entries: [oats(today)] },
+      weights: [70, 71].map((value, i) => ({
+        vtype: "stat" as const,
+        value: { value, unit: "kg" as const },
+        timestamp: at(today, 7 + i),
+      })),
+      music: {
+        ...MusicLog_empty(),
+        sessions: [
+          {
+            id: start,
+            startedAt: start,
+            plays: [
+              {
+                track: { id: "s", uri: "spotify:track:s", name: "Song", artists: "Artist", durationMs: 180000 },
+                startedAt: start,
+                heardMs: 170000,
+                source: "live",
+                isKept: true,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const parsed = parse<Record<string, string>>(JournalExport_csv(data, "today"), {
+      header: true,
+      skipEmptyLines: true,
+    });
+    expect(parsed.errors).to.eql([]);
+    expect(parsed.data.map((r) => r.kind)).to.eql([
+      "workout",
+      "meal",
+      "weigh-in",
+      "weigh-in",
+      "note",
+      "check-in",
+      "song",
+    ]);
+    expect(parsed.data[0]).to.include({
+      date: today,
+      title: "Legs",
+      duration_minutes: "48",
+      volume: "500",
+      sets: "1",
+      unit: "kg",
+    });
+    expect(parsed.data[1]).to.include({ calories: "1420", protein_g: "18.4", carbs_g: "60", fat_g: "8" });
+    expect(parsed.data[4]).to.include({ title: 'A, "note"', text: "Line 1\nLine 2" });
+    expect(parsed.data[5].energy).to.equal("4");
+    expect(parsed.data[6]).to.include({ title: "Song", artists: "Artist", duration_seconds: "180" });
+  });
+
+  it("escapes spreadsheet formulas in text while preserving numeric values", () => {
+    const notes = Notes_save(Notes_empty(), { ...Notes_new("n", today, 1), title: "=1+1", body: "@SUM(A1)" }, 1);
+    const parsed = parse<Record<string, string>>(JournalExport_csv(sources({ notes }), "today"), {
+      header: true,
+      skipEmptyLines: true,
+    });
+    expect(parsed.data[0]).to.include({ title: "'=1+1", text: "'@SUM(A1)" });
+  });
+
+  it("exports one Markdown file for one day, a zip for multiple days, and one CSV", () => {
+    expect(JournalExport_output(sources(), "today", "markdown")).to.include({ kind: "file", filename: `${today}.md` });
+    const data = sources({ food: { ...FoodLog_empty(), entries: [oats(today), oats("2026-10-21")] } });
+    const output = JournalExport_output(data, "week", "markdown");
+    expect(output.kind).to.equal("zip");
+    if (output.kind === "zip") {
+      expect(Object.keys(output.files)).to.eql(["journal/2026-10-21.md", `journal/${today}.md`]);
+    }
+    expect(JournalExport_output(data, "week", "csv")).to.include({
+      kind: "file",
+      filename: `bebear-journal-${today}.csv`,
+    });
+    expect(JournalExport_csv(sources(), "all").split("\r\n")).to.have.length(2);
+  });
+
   it("titles a day with the full date", () => {
     expect(JournalExport_dateTitle("2026-10-22")).to.equal("Thursday, October 22, 2026");
   });

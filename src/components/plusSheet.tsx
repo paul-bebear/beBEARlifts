@@ -82,10 +82,9 @@ export function PlusSheetModal(): JSX.Element {
         Thunk_pushScreen("foodAdd", { day: FoodLog_dayKey(now), meal: FoodMealForTime_pick(now) }, { tab: "food" })
       );
     }),
-    measurement: closeThen(() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))),
+    measurement: closeThen(() => dispatch(Thunk_pushScreen("bodyScans", undefined, { tab: "graphs" }))),
     friend: closeThen(() => navigateToModal("addFriendModal")),
-    note: closeThen(async () => {
-      await dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
+    note: closeThen(() => {
       navigateToModal("noteEditorModal", { day: FoodLog_dayKey(new Date()) });
     }),
   };
