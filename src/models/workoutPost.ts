@@ -85,7 +85,34 @@ export function WorkoutPost_statsLine(summary: IWorkoutPostSummary): string {
   const minutes = Math.round(summary.durationMs / 60000);
   const duration = minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
   const volume = `${Math.round(summary.volume.value).toLocaleString("en-US")} ${summary.volume.unit}`;
-  return [duration, volume, `${summary.sets} ${summary.sets === 1 ? "set" : "sets"}`].join(" · ");
+  return [
+    duration,
+    ...(summary.volume.value > 0 ? [volume] : []),
+    `${summary.sets} ${summary.sets === 1 ? "set" : "sets"}`,
+  ].join(" · ");
+}
+
+export function WorkoutPost_hasEarlierExercise(workoutId: number, history: IHistoryRecord[]): boolean {
+  const record = history.find((h) => h.id === workoutId);
+  if (record == null) {
+    return false;
+  }
+  return history.some(
+    (h) =>
+      h.id !== record.id &&
+      h.startTime < record.startTime &&
+      h.startTime >= record.startTime - 28 * 24 * 3600 * 1000 &&
+      h.entries.some(
+        (past) =>
+          past.sets.some((s) => s.isCompleted) &&
+          record.entries.some(
+            (today) =>
+              today.exercise.id === past.exercise.id &&
+              (today.exercise.equipment ?? "") === (past.exercise.equipment ?? "") &&
+              today.sets.some((s) => s.isCompleted)
+          )
+      )
+  );
 }
 
 export function WorkoutPost_setText(set: IPostSet): string {

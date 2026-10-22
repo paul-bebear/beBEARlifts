@@ -1,11 +1,11 @@
-import { JSX, useRef, useState } from "react";
+import { JSX, useMemo, useRef, useState } from "react";
 import { View, useWindowDimensions } from "react-native";
 import { IRun, RunLog_pace } from "../models/runLog";
 import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPaceNumber } from "../models/runTrack";
 import { RunEquivalents_pick } from "../models/runEquivalents";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { ImageShareUtils } from "../utils/imageshare";
-import { RunStoryImage_render } from "../utils/runStoryImage";
+import { useStoryImage } from "../utils/storyImage";
 import { Dialog_alert } from "../utils/dialog";
 import { Text } from "./primitives/text";
 import { FoodPrimaryButton } from "./foodUi";
@@ -77,12 +77,16 @@ export function RunShareCard(props: { run: IRun }): JSX.Element {
   const [photo, setPhoto] = useState<string>();
   const [seed, setSeed] = useState(0);
   const [sharing, setSharing] = useState(false);
+  const source = useMemo(() => ({ photo, seed, run: props.run }), [photo, seed, props.run]);
+  const { dataUrl, error, retry } = useStoryImage(cardRef, source, { width: cardWidth, height: cardHeight });
   const { width } = useWindowDimensions();
   const previewScale = Math.min(0.86, (width - 32) / cardWidth);
   const share = async (): Promise<void> => {
+    if (dataUrl == null) {
+      return;
+    }
     setSharing(true);
     try {
-      const dataUrl = await RunStoryImage_render(cardRef.current as unknown as HTMLElement);
       await new ImageShareUtils(dataUrl, "run-story.png").shareOrDownload();
     } catch {
       Dialog_alert("Could not make the run image. Try again.");
@@ -130,17 +134,18 @@ export function RunShareCard(props: { run: IRun }): JSX.Element {
           kind="outline"
           testID="run-share-shuffle"
           disabled={sharing}
-          onPress={() => setSeed(seed + 1)}
+          onPress={() => setSeed((value) => value + 1)}
         />
       </View>
       <View className="flex-row mt-3">
         <FoodPrimaryButton
-          title={sharing ? "Making image…" : "Share run"}
-          disabled={sharing}
+          title={error != null ? "Retry image" : sharing ? "Sharing…" : dataUrl == null ? "Making image…" : "Share run"}
+          disabled={sharing || (dataUrl == null && error == null)}
           testID="run-share"
-          onPress={share}
+          onPress={error != null ? retry : share}
         />
       </View>
+      {error != null && <Text className="mt-2 text-sm text-text-error">{error}</Text>}
     </View>
   );
 }

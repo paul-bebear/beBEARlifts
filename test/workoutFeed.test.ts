@@ -1,5 +1,26 @@
 import "mocha";
 import { expect } from "chai";
+import sinon from "sinon";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { Thunk_pushScreen } from "../src/ducks/thunks";
+import { IDispatch, IThunk } from "../src/ducks/types";
+import { IEnv, IState } from "../src/models/state";
+import { IScreen } from "../src/models/screen";
+import { Storage_getDefault } from "../src/models/storage";
+import * as navUtils from "../src/navigation/navUtils";
+import * as trackedState from "../src/navigation/TrackedStateContext";
+import { WorkoutReportView } from "../src/components/workoutReportCard";
+import { IWorkoutReport } from "../src/models/workoutReport";
+import { AiConsentStore } from "../src/utils/aiConsentClient";
+import { HomeChecklist } from "../src/components/homeChecklist";
+import * as checklistCard from "../src/components/dailyChecklistCard";
+import * as foodStore from "../src/utils/foodLogStore";
+import { FoodLog_empty } from "../src/models/foodLog";
+import { ChecklistStore } from "../src/utils/checklistStore";
+import { DailyChecklist_empty } from "../src/models/dailyChecklist";
+import { ProgramGoalStore } from "../src/utils/programGoalStore";
+import { ProgramGoal_empty } from "../src/models/programGoal";
 import { Settings_build } from "../src/models/settings";
 import { History_getPersonalRecords } from "../src/models/history";
 import { IExerciseType, IHistoryEntry, IHistoryRecord, ISet } from "../src/types";
@@ -8,6 +29,7 @@ import {
   WorkoutPost_parse,
   WorkoutPost_setText,
   WorkoutPost_statsLine,
+  WorkoutPost_hasEarlierExercise,
   IWorkoutPostSummary,
 } from "../src/models/workoutPost";
 import {
@@ -69,6 +91,101 @@ function record(id: number, entries: IHistoryEntry[]): IHistoryRecord {
 const t0 = Date.UTC(2026, 9, 1);
 const t1 = Date.UTC(2026, 9, 8);
 
+describe("First-launch navigation", () => {
+  let state: IState;
+  let navigate: sinon.SinonStub;
+  const dispatch = sinon.stub();
+
+  beforeEach(() => {
+    state = { storage: { ...Storage_getDefault(), currentProgramId: undefined } } as IState;
+    navigate = sinon.stub();
+    sinon
+      .stub(navUtils, "getNavigationService")
+      .resolves({ navigateTo: navigate } as unknown as Awaited<ReturnType<typeof navUtils.getNavigationService>>);
+    dispatch.resetHistory();
+  });
+
+  afterEach(() => sinon.restore());
+
+  it("opens food, friends, progress and their program-independent screens without a program", async () => {
+    const screens: IScreen[] = [
+      "food",
+      "foodAdd",
+      "friends",
+      "progressDashboard",
+      "settings",
+      "stats",
+      "measurements",
+      "music",
+      "reports",
+      "bodyScans",
+      "runs",
+      "goalWizard",
+      "steps",
+      "progressPhotos",
+      "streak",
+      "account",
+      "recentImports",
+      "importPreview",
+    ];
+    for (const screen of screens) {
+      await Thunk_pushScreen(screen)(dispatch, () => state, {} as IEnv);
+      expect(navigate.lastCall.args[0], screen).to.equal(screen);
+    }
+    const params = { key: "weight" as const };
+    const opts = { tab: "graphs" as const };
+    await Thunk_pushScreen("measurements", params, opts)(dispatch, () => state, {} as IEnv);
+    expect(navigate.lastCall.args).to.deep.equal(["measurements", params, opts]);
+  });
+
+  it("still redirects Home and Workout to program selection until a program is picked", async () => {
+    for (const screen of ["main", "progress"] as const) {
+      await Thunk_pushScreen(screen)(dispatch, () => state, {} as IEnv);
+      expect(navigate.lastCall.args[0]).to.equal("programs");
+      state.storage.currentProgramId = "chosen";
+      await Thunk_pushScreen(screen)(dispatch, () => state, {} as IEnv);
+      expect(navigate.lastCall.args[0]).to.equal(screen);
+      state.storage.currentProgramId = undefined;
+    }
+  });
+
+  it("routes the Home weight checklist item to stats on the Progress stack", async () => {
+    sinon.stub(foodStore, "useFoodLog").returns(FoodLog_empty());
+    sinon.stub(ChecklistStore, "use").returns(DailyChecklist_empty());
+    sinon.stub(ProgramGoalStore, "use").returns(ProgramGoal_empty());
+    let onItemPress!: Parameters<typeof checklistCard.DailyChecklistCard>[0]["onItemPress"];
+    sinon.stub(checklistCard, "DailyChecklistCard").callsFake((props) => {
+      onItemPress = props.onItemPress;
+      return createElement("div");
+    });
+    renderToStaticMarkup(
+      createElement(HomeChecklist, { stats: state.storage.stats, units: "kg", dispatch: dispatch as IDispatch })
+    );
+    onItemPress("weight");
+    await (dispatch.lastCall.args[0] as IThunk)(dispatch, () => state, {} as IEnv);
+    expect(navigate.lastCall.args).to.deep.equal(["stats", undefined, { tab: "graphs" }]);
+  });
+});
+
+describe("Workout report empty state", () => {
+  afterEach(() => sinon.restore());
+
+  it("shows the first-workout message in finish and report views until an earlier exercise can be compared", () => {
+    const first = record(t0, [entry(bench, [set(80, 5)])]);
+    const next = record(t1, [entry(bench, [set(80, 5)])]);
+    const state = { storage: { history: [next, first] } } as IState;
+    sinon.stub(trackedState, "useTrackedState").returns(state);
+    sinon.stub(AiConsentStore, "use").returns({ version: 1, choice: "declined" });
+    const report: IWorkoutReport = { workoutId: first.id, timestamp: t0, dayName: "Push", items: [], answers: {} };
+    const firstHtml = renderToStaticMarkup(createElement(WorkoutReportView, { report }));
+    expect(firstHtml).to.contain("First workout logged. Reports compare from the second one.");
+    const nextHtml = renderToStaticMarkup(
+      createElement(WorkoutReportView, { report: { ...report, workoutId: next.id, timestamp: t1 } })
+    );
+    expect(nextHtml).to.contain("Same weights and effort as your last 4 weeks.");
+  });
+});
+
 describe("WorkoutPost", () => {
   const settings = { ...Settings_build(), units: "kg" as const };
   const first = record(t0, [entry(bench, [set(80, 5)]), entry(squat, [set(100, 5)])]);
@@ -116,6 +233,44 @@ describe("WorkoutPost", () => {
     });
     expect(partial?.topSets).to.have.length(1);
     expect(partial?.prs).to.deep.equal([]);
+  });
+
+  it("omits zero volume from bodyweight and empty workouts in either unit", () => {
+    for (const unit of ["kg", "lb"] as const) {
+      const bodyweight = record(t0, [entry({ id: "pullUp" }, [set(0, 10), set(0, 8)])]);
+      const summary = WorkoutPost_build(bodyweight, { ...settings, units: unit }, {}, undefined);
+      expect(WorkoutPost_statsLine(summary)).to.equal("45 min · 2 sets");
+      expect(WorkoutPost_statsLine({ ...summary, sets: 1, durationMs: 60000 })).to.equal("1 min · 1 set");
+      expect(WorkoutPost_statsLine({ ...summary, sets: 0, durationMs: 0 })).to.equal("0 min · 0 sets");
+    }
+  });
+
+  it("compares only earlier completed sessions of the same exercise and equipment within four weeks", () => {
+    expect(WorkoutPost_hasEarlierExercise(second.id, history)).to.equal(true);
+    expect(WorkoutPost_hasEarlierExercise(first.id, history)).to.equal(false);
+    expect(WorkoutPost_hasEarlierExercise(0, history)).to.equal(false);
+    expect(WorkoutPost_hasEarlierExercise(second.id, [second, { ...first, startTime: second.startTime }])).to.equal(
+      false
+    );
+    expect(WorkoutPost_hasEarlierExercise(second.id, [second, { ...first, startTime: t1 - 29 * 86400000 }])).to.equal(
+      false
+    );
+    expect(
+      WorkoutPost_hasEarlierExercise(second.id, [second, record(t0, [entry({ id: "pullUp" }, [set(0, 10)])])])
+    ).to.equal(false);
+    expect(
+      WorkoutPost_hasEarlierExercise(second.id, [
+        second,
+        record(t0, [entry({ ...bench, equipment: "dumbbell" }, [set(30, 10)])]),
+      ])
+    ).to.equal(false);
+    expect(
+      WorkoutPost_hasEarlierExercise(second.id, [
+        second,
+        record(t0, [entry(bench, [{ ...set(80, 5), isCompleted: false }])]),
+      ])
+    ).to.equal(false);
+    expect(WorkoutPost_hasEarlierExercise(second.id, [record(t1, [entry(bench, [])]), first])).to.equal(false);
   });
 });
 

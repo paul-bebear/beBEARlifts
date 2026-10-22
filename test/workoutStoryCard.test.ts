@@ -1,5 +1,16 @@
 import "mocha";
 import { expect } from "chai";
+import sinon from "sinon";
+import { act, createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createRoot, Root } from "test-renderer";
+import * as htmlToImage from "html-to-image";
+import { StoryImage_render, useStoryImage } from "../src/utils/storyImage";
+import * as storyImage from "../src/utils/storyImage";
+import { WorkoutStoryCardSection } from "../src/components/workoutStoryCard";
+import { RunShareCard } from "../src/components/runShareCard";
+import * as foodUi from "../src/components/foodUi";
+import { IRun } from "../src/models/runLog";
 import {
   ILiftEquivalent,
   LiftEquivalents_all,
@@ -61,6 +72,7 @@ const record = {
 } as IHistoryRecord;
 
 describe("WorkoutStoryCard", () => {
+  afterEach(() => sinon.restore());
   it("formats the duration in hours and minutes", () => {
     expect([47 * 60000, 62 * 60000, 0].map(WorkoutStoryCard_duration)).to.deep.equal(["47m", "1h 2m", "0m"]);
   });
@@ -84,6 +96,148 @@ describe("WorkoutStoryCard", () => {
 
   it("writes the weight as a whole number with thousands commas", () => {
     expect(WorkoutStoryCard_weightNumber(Weight_build(12345.6, "lb"))).to.equal("12,346");
+  });
+
+  it("headlines sets for bodyweight and empty workouts, and weight for loaded workouts", () => {
+    for (const units of ["kg", "lb"] as const) {
+      const bodyweight = {
+        ...record,
+        entries: [{ ...record.entries[0], exercise: { id: "pushUp" }, sets: [set(10, 0), set(8, 0)] }],
+      };
+      const html = renderToStaticMarkup(
+        createElement(WorkoutStoryCardSection, { record: bodyweight, settings: { ...settings, units } })
+      );
+      expect(html).to.contain("TRAINED TODAY").and.not.to.contain("LIFTED TODAY");
+      expect(html).to.not.contain(`>${units}<`);
+      expect(html).to.contain("2");
+      const empty = renderToStaticMarkup(
+        createElement(WorkoutStoryCardSection, { record: { ...record, entries: [] }, settings: { ...settings, units } })
+      );
+      expect(empty).to.contain("TRAINED TODAY").and.not.to.contain(`>${units}<`);
+    }
+    const loaded = renderToStaticMarkup(createElement(WorkoutStoryCardSection, { record, settings }));
+    expect(loaded).to.contain("LIFTED TODAY").and.to.contain(">kg<");
+  });
+
+  it("shares each prepared card on the tap without rendering another PNG", async () => {
+    const png = sinon.stub(htmlToImage, "toPng").resolves("data:image/png;base64,AA==");
+    sinon.stub(storyImage, "useStoryImage").returns({ dataUrl: "data:image/png;base64,AA==", retry: () => undefined });
+    const share = sinon.stub().resolves();
+    sinon.stub(globalThis, "navigator").value({ userAgent: "iPhone", canShare: () => true, share });
+    const buttons = new Map<string, Parameters<typeof foodUi.FoodPrimaryButton>[0]>();
+    sinon.stub(foodUi, "FoodPrimaryButton").callsFake((props) => {
+      buttons.set(props.testID!, props);
+      return createElement("button");
+    });
+    const run: IRun = {
+      id: 1,
+      startedAt: 1,
+      endedAt: 2,
+      distanceM: 1000,
+      movingMs: 300000,
+      elevationGainM: 0,
+      route: [],
+      splits: [],
+    };
+    renderToStaticMarkup(createElement(WorkoutStoryCardSection, { record, settings }));
+    renderToStaticMarkup(createElement(RunShareCard, { run }));
+    for (const id of ["workout-story-share", "run-share"]) {
+      const button = buttons.get(id)!;
+      expect(button.disabled).to.equal(false);
+      button.onPress();
+      expect(share.callCount).to.equal(id === "workout-story-share" ? 1 : 2);
+    }
+    await Promise.resolve();
+    expect(png.called).to.equal(false);
+    expect(share.firstCall.args[0].files[0].name).to.equal("workout-story.png");
+    expect(share.secondCall.args[0].files[0].name).to.equal("run-story.png");
+  });
+});
+
+describe("StoryImage", () => {
+  let root: Root;
+  let latest: ReturnType<typeof useStoryImage>;
+  const ref = { current: {} as HTMLElement };
+  const size = { width: 360, height: 640 };
+  const actGlobal = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
+  let previousActEnvironment: boolean | undefined;
+
+  function Harness(props: { source: object }): ReturnType<typeof createElement> {
+    latest = useStoryImage(ref, props.source, size);
+    return createElement("div");
+  }
+
+  beforeEach(() => {
+    previousActEnvironment = actGlobal.IS_REACT_ACT_ENVIRONMENT;
+    actGlobal.IS_REACT_ACT_ENVIRONMENT = true;
+    root = createRoot();
+  });
+
+  afterEach(async () => {
+    await act(async () => root.unmount());
+    actGlobal.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment;
+    sinon.restore();
+  });
+
+  it("does one warm-up pass before the final PNG at the supplied size", async () => {
+    let finishWarmup!: (value: string) => void;
+    const png = sinon.stub(htmlToImage, "toPng");
+    png.onFirstCall().returns(
+      new Promise((resolve) => {
+        finishWarmup = resolve;
+      })
+    );
+    png.onSecondCall().resolves("final");
+    const result = StoryImage_render(ref.current, { width: 200, height: 300 });
+    expect(png.callCount).to.equal(1);
+    finishWarmup("warmup");
+    expect(await result).to.equal("final");
+    expect(png.callCount).to.equal(2);
+    expect(png.alwaysCalledWithExactly(ref.current, { pixelRatio: 3, width: 200, height: 300 })).to.equal(true);
+  });
+
+  it("invalidates a prepared image immediately when the photo or seed changes", async () => {
+    const png = sinon.stub(htmlToImage, "toPng").resolves("old");
+    await act(async () => root.render(createElement(Harness, { source: { photo: "one", seed: 1 } })));
+    expect(latest.dataUrl).to.equal("old");
+    let finish!: (value: string) => void;
+    png.returns(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+    await act(async () => root.render(createElement(Harness, { source: { photo: "two", seed: 2 } })));
+    expect(latest.dataUrl).to.equal(undefined);
+    png.resolves("new");
+    await act(async () => finish("warmup"));
+    expect(latest.dataUrl).to.equal("new");
+  });
+
+  it("ignores an older render that completes after a new source", async () => {
+    let finishOld!: (value: string) => void;
+    const png = sinon.stub(htmlToImage, "toPng").resolves("new");
+    png.onFirstCall().returns(
+      new Promise((resolve) => {
+        finishOld = resolve;
+      })
+    );
+    await act(async () => root.render(createElement(Harness, { source: { seed: 1 } })));
+    await act(async () => root.render(createElement(Harness, { source: { seed: 2 } })));
+    expect(latest.dataUrl).to.equal("new");
+    png.resolves("old");
+    await act(async () => finishOld("warmup"));
+    expect(latest.dataUrl).to.equal("new");
+  });
+
+  it("offers a retry after a render fails and clears the error when it succeeds", async () => {
+    const png = sinon.stub(htmlToImage, "toPng").rejects(new Error("render failed"));
+    await act(async () => root.render(createElement(Harness, { source: {} })));
+    expect(latest.dataUrl).to.equal(undefined);
+    expect(latest.error).to.contain("story card");
+    png.resolves("recovered");
+    await act(async () => latest.retry());
+    expect(latest.error).to.equal(undefined);
+    expect(latest.dataUrl).to.equal("recovered");
   });
 });
 

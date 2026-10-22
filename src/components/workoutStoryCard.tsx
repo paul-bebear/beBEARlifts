@@ -1,6 +1,5 @@
 import { JSX, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
-import * as htmlToImage from "html-to-image";
 import { Text } from "./primitives/text";
 import { IHistoryRecord, IScreenMuscle, ISettings } from "../types";
 import {
@@ -14,6 +13,7 @@ import { FrontMusclesSvg } from "./muscles/images/frontMusclesSvg";
 import { BackMusclesSvg, IMuscleStyle } from "./muscles/images/backMusclesSvg";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { ImageShareUtils } from "../utils/imageshare";
+import { useStoryImage } from "../utils/storyImage";
 import { Dialog_alert } from "../utils/dialog";
 import { FoodPrimaryButton } from "./foodUi";
 import { GroupHeader } from "./groupHeader";
@@ -25,8 +25,6 @@ interface IProps {
 
 const cardWidth = 360;
 const cardHeight = 640;
-// 360 x 640 CSS px at 3x is 1080 x 1920, the Instagram story size.
-const pixelRatio = 3;
 const previewScale = 0.86;
 const muscleColor = "#ff6b3d";
 const textShadow = {
@@ -122,14 +120,14 @@ function StoryCard(props: IStoryCardProps): JSX.Element {
       <Scrim edge="bottom" height={360} opacity={hasPhoto ? 0.85 : 0.45} />
       <View className="items-center pt-9">
         <Text className="text-xs font-semibold tracking-widest text-white" style={{ opacity: 0.85, ...textShadow }}>
-          LIFTED TODAY
+          {stats.weightKg > 0 ? "LIFTED TODAY" : "TRAINED TODAY"}
         </Text>
         <View className="flex-row" style={{ alignItems: "baseline" }}>
           <Text className="font-bold text-white" style={{ fontSize: 76, lineHeight: 88, ...textShadow }}>
-            {WorkoutStoryCard_weightNumber(stats.weight)}
+            {stats.weightKg > 0 ? WorkoutStoryCard_weightNumber(stats.weight) : stats.sets}
           </Text>
           <Text className="ml-2 font-bold text-white" style={{ fontSize: 28, ...textShadow }}>
-            {stats.weight.unit}
+            {stats.weightKg > 0 ? stats.weight.unit : stats.sets === 1 ? "set" : "sets"}
           </Text>
         </View>
         <View className="flex-row items-center mt-2" style={{ gap: 12 }}>
@@ -168,27 +166,26 @@ function StoryCard(props: IStoryCardProps): JSX.Element {
   );
 }
 
-// html-to-image inlines images and fonts on the first passes; Safari often drops them from the first render.
-async function toPng(element: HTMLElement): Promise<string> {
-  const options = { pixelRatio, width: cardWidth, height: cardHeight };
-  await htmlToImage.toPng(element, options);
-  await htmlToImage.toPng(element, options);
-  return htmlToImage.toPng(element, options);
-}
-
 export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const cardRef = useRef<View>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<string | undefined>(undefined);
   const [seed, setSeed] = useState(() => Math.floor(Date.now() / 1000));
   const [isSharing, setIsSharing] = useState(false);
+  const source = useMemo(
+    () => ({ photo, seed, record: props.record, settings: props.settings }),
+    [photo, seed, props.record, props.settings]
+  );
+  const { dataUrl, error, retry } = useStoryImage(cardRef, source, { width: cardWidth, height: cardHeight });
   const stats = WorkoutStoryCard_stats(props.record, props.settings);
   const equivalent = LiftEquivalents_pick(stats.weightKg, seed);
 
   const share = async (): Promise<void> => {
+    if (dataUrl == null) {
+      return;
+    }
     setIsSharing(true);
     try {
-      const dataUrl = await toPng(cardRef.current as unknown as HTMLElement);
       await new ImageShareUtils(dataUrl, "workout-story.png").shareOrDownload();
     } catch (e) {
       console.error(e);
@@ -232,6 +229,7 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
           testID="workout-story-photo"
           kind="outline"
           title={photo == null ? "Add photo" : "Change photo"}
+          disabled={isSharing}
           onPress={() => inputRef.current?.click()}
         />
         {equivalent != null && (
@@ -239,18 +237,20 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
             testID="workout-story-shuffle"
             kind="outline"
             title="Shuffle"
-            onPress={() => setSeed(seed + 1)}
+            disabled={isSharing}
+            onPress={() => setSeed((value) => value + 1)}
           />
         )}
       </View>
       <View className="flex-row mt-2">
         <FoodPrimaryButton
           testID="workout-story-share"
-          title={isSharing ? "Making image…" : "Share"}
-          disabled={isSharing}
-          onPress={share}
+          title={error != null ? "Retry image" : isSharing ? "Sharing…" : dataUrl == null ? "Making image…" : "Share"}
+          disabled={isSharing || (dataUrl == null && error == null)}
+          onPress={error != null ? retry : share}
         />
       </View>
+      {error != null && <Text className="mt-2 text-sm text-text-error">{error}</Text>}
     </View>
   );
 }
