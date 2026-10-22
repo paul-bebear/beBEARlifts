@@ -3,7 +3,7 @@ import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog } from ".
 import { MonthCalendar_dayTitle } from "./monthCalendar";
 import { ProgramGoal_formatWeight } from "./programGoal";
 
-export type IChecklistItemKey = "weight" | "food" | "checkIn";
+export type IChecklistItemKey = "train" | "food" | "weight";
 
 export interface IChecklistLog {
   version: 1;
@@ -31,11 +31,13 @@ export interface IChecklistSources {
   log: IChecklistLog;
 }
 
-export interface IChecklistDayInput extends IChecklistSources {
+export interface IChecklistDayInput extends Omit<IChecklistSources, "log"> {
   day: string;
   today: string;
   units: IUnit;
+  workoutDays: ReadonlySet<string>;
   goalStartedAt?: number;
+  startWeekFromMonday?: boolean;
 }
 
 const dayKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -78,35 +80,48 @@ function weekdayOf(day: string): number {
   return new Date(year, month - 1, date, 12).getDay();
 }
 
-function daysBetween(earlier: string, later: string): number {
-  const [a, b] = [earlier, later].map((d) => {
-    const [year, month, date] = d.split("-").map(Number);
-    return Date.UTC(year, month - 1, date);
-  });
-  return Math.round((b - a) / (24 * 60 * 60 * 1000));
+const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// The goal store keeps only startedAt, so the weigh-in weekday is the weekday the goal started.
+// Without a goal it is the first day of the user's week.
+export function DailyChecklist_weighInWeekday(
+  goalStartedAt: number | undefined,
+  startWeekFromMonday?: boolean
+): number {
+  if (goalStartedAt != null) {
+    return new Date(goalStartedAt).getDay();
+  }
+  return startWeekFromMonday ? monday : 0;
 }
 
-// The weekly check-in falls on the weekday the goal started, so a goal set on a Thursday checks in on Thursdays.
-export function DailyChecklist_hasCheckIn(day: string, goalStartedAt: number | undefined): boolean {
-  const weekday = goalStartedAt != null ? new Date(goalStartedAt).getDay() : monday;
-  return weekdayOf(day) === weekday;
+function trainItem(input: IChecklistDayInput): IChecklistItem {
+  const isDone = input.workoutDays.has(input.day);
+  const subtitle = isDone ? "Workout done" : input.day === input.today ? "Do today's workout" : "No workout";
+  return { key: "train", title: "Train", subtitle, isDone };
 }
 
 function weightItem(input: IChecklistDayInput): IChecklistItem {
   const { stats, day, units } = input;
+  const weekday = DailyChecklist_weighInWeekday(input.goalStartedAt, input.startWeekFromMonday);
+  const weekStart = FoodLog_shiftDay(day, -((weekdayOf(day) - weekday + 7) % 7));
   const upToDay = (stats.weight.weight ?? []).filter((w) => dayOf(w.timestamp) <= day);
-  const latest = upToDay.reduce<{ value: IWeight; timestamp: number } | undefined>(
-    (best, w) => (best == null || w.timestamp > best.timestamp ? w : best),
-    undefined
-  );
-  const isDone = latest != null && dayOf(latest.timestamp) === day;
-  let subtitle = "No weight logged yet";
-  if (latest != null) {
-    const ago = daysBetween(dayOf(latest.timestamp), day);
-    const when = ago === 0 ? "today" : ago === 1 ? "1 day ago" : `${ago} days ago`;
-    subtitle = `Last: ${ProgramGoal_formatWeight(latest.value, units)} · ${when}`;
+  const latestOf = (list: typeof upToDay): IWeight | undefined =>
+    list.reduce<{ value: IWeight; timestamp: number } | undefined>(
+      (best, w) => (best == null || w.timestamp > best.timestamp ? w : best),
+      undefined
+    )?.value;
+  const inWeek = upToDay.filter((w) => dayOf(w.timestamp) >= weekStart);
+  const weekWeight = latestOf(inWeek);
+  const lastWeight = latestOf(upToDay);
+  const isDone = weekWeight != null;
+  const every = `Weekly, every ${weekdayNames[weekday]}`;
+  let subtitle = every;
+  if (weekWeight != null) {
+    subtitle = `Done this week · ${ProgramGoal_formatWeight(weekWeight, units)}`;
+  } else if (lastWeight != null) {
+    subtitle = `${every} · Last: ${ProgramGoal_formatWeight(lastWeight, units)}`;
   }
-  return { key: "weight", title: "Log your weight", subtitle, isDone };
+  return { key: "weight", title: "Weigh-in", subtitle, isDone };
 }
 
 function foodItem(input: IChecklistDayInput): IChecklistItem {
@@ -119,24 +134,11 @@ function foodItem(input: IChecklistDayInput): IChecklistItem {
       : day === today
         ? "Start logging today"
         : "Nothing logged";
-  return { key: "food", title: "Update your food log", subtitle, isDone: count > 0 };
-}
-
-function checkInItem(input: IChecklistDayInput): IChecklistItem {
-  const isDone = input.log.checkIns.includes(input.day);
-  return {
-    key: "checkIn",
-    title: "Nutrition check-in",
-    subtitle: isDone ? "Checked in. Tap to undo" : "Tap when you have looked back at this week's eating",
-    isDone,
-  };
+  return { key: "food", title: "Feed the bear", subtitle, isDone: count > 0 };
 }
 
 export function DailyChecklist_build(input: IChecklistDayInput): IChecklistDay {
-  const items = [weightItem(input), foodItem(input)];
-  if (DailyChecklist_hasCheckIn(input.day, input.goalStartedAt) || input.log.checkIns.includes(input.day)) {
-    items.push(checkInItem(input));
-  }
+  const items = [trainItem(input), foodItem(input), weightItem(input)];
   return {
     day: input.day,
     title: `${MonthCalendar_dayTitle(input.day)}'s checklist`,
@@ -165,11 +167,4 @@ export function DailyChecklist_streak(doneDays: Set<string>, today: string): num
     day = FoodLog_shiftDay(day, -1);
   }
   return streak;
-}
-
-export function DailyChecklist_greeting(hour: number): string {
-  if (hour < 12) {
-    return "Morning, there!";
-  }
-  return hour < 18 ? "Afternoon, there!" : "Evening, there!";
 }

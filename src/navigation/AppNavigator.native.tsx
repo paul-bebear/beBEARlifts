@@ -39,7 +39,7 @@ import {
 import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./screens/NavScreenWorkout";
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
 import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
-import { NavScreenProgressDashboard } from "./screens/NavScreenProgressDashboard";
+import { ScreenMyBear } from "../components/screenMyBear";
 import { NavScreenFood } from "./screens/NavScreenFood";
 import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
@@ -326,7 +326,7 @@ function GraphsStackScreen(): JSX.Element {
     <GraphsStack.Navigator screenOptions={stackScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
       <GraphsStack.Screen
         name="progressDashboard"
-        component={NavScreenProgressDashboard}
+        component={ScreenMyBear}
         options={{ headerShown: true, header: NavHeader }}
       />
       <GraphsStack.Screen

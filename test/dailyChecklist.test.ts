@@ -5,11 +5,10 @@ import {
   DailyChecklist_commit,
   DailyChecklist_doneDays,
   DailyChecklist_empty,
-  DailyChecklist_greeting,
-  DailyChecklist_hasCheckIn,
   DailyChecklist_parse,
   DailyChecklist_streak,
   DailyChecklist_toggleCheckIn,
+  DailyChecklist_weighInWeekday,
   IChecklistDayInput,
 } from "../src/models/dailyChecklist";
 import { FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
@@ -49,47 +48,74 @@ function input(patch: Partial<IChecklistDayInput> = {}): IChecklistDayInput {
     today: "2026-10-25",
     stats,
     foodLog: FoodLog_empty(),
-    log: DailyChecklist_empty(),
     units: "kg",
+    workoutDays: new Set<string>(),
     ...patch,
   };
 }
 
 describe("DailyChecklist", () => {
-  it("shows the last weight and that today's food log is empty", () => {
+  it("lists Train, Feed the bear and Weigh-in, all open on an empty Sunday", () => {
     const day = DailyChecklist_build(input());
     expect(day.title).to.equal("October 25's checklist");
-    expect(day.items.map((i) => [i.key, i.subtitle, i.isDone])).to.deep.equal([
-      ["weight", "Last: 74.8 kg · 6 days ago", false],
-      ["food", "Start logging today", false],
+    expect(day.items.map((i) => [i.key, i.title, i.subtitle, i.isDone])).to.deep.equal([
+      ["train", "Train", "Do today's workout", false],
+      ["food", "Feed the bear", "Start logging today", false],
+      ["weight", "Weigh-in", "Weekly, every Sunday · Last: 74.8 kg", false],
     ]);
     expect(day.doneCount).to.equal(0);
   });
 
-  it("marks weight and food done on the day they were logged", () => {
+  it("marks Train and Feed the bear done on the day they happened", () => {
     const foodLog = { ...FoodLog_empty(), entries: [food("2026-10-19", 600), food("2026-10-19", 650)] };
-    const day = DailyChecklist_build(input({ day: "2026-10-19", foodLog }));
+    const day = DailyChecklist_build(input({ day: "2026-10-19", foodLog, workoutDays: new Set(["2026-10-19"]) }));
     expect(day.items.map((i) => [i.subtitle, i.isDone])).to.deep.equal([
-      ["Last: 74.8 kg · today", true],
+      ["Workout done", true],
       ["2 items · 1,250 Cal", true],
-      ["Tap when you have looked back at this week's eating", false],
+      ["Done this week · 74.8 kg", true],
     ]);
-    expect(day.doneCount).to.equal(2);
+    expect(day.doneCount).to.equal(3);
   });
 
   it("does not use a weight logged after the selected day", () => {
-    const day = DailyChecklist_build(input({ day: "2026-10-15", today: "2026-10-25" }));
-    expect(day.items[0].subtitle).to.equal("Last: 75.4 kg · 3 days ago");
+    const day = DailyChecklist_build(input({ day: "2026-10-10", today: "2026-10-25" }));
+    expect(day.items[0].subtitle).to.equal("No workout");
     expect(day.items[1].subtitle).to.equal("Nothing logged");
+    expect(day.items[2].subtitle).to.equal("Weekly, every Sunday");
   });
 
-  it("adds the weekly check-in on the goal's start weekday, Monday by default", () => {
-    expect(DailyChecklist_hasCheckIn("2026-10-19", undefined)).to.equal(true);
-    expect(DailyChecklist_hasCheckIn("2026-10-22", at("2026-10-01"))).to.equal(true);
-    const monday = DailyChecklist_build(input({ day: "2026-10-26", today: "2026-10-26" }));
-    expect(monday.items.map((i) => i.key)).to.deep.equal(["weight", "food", "checkIn"]);
+  it("asks for a weigh-in with no history yet", () => {
+    const empty: IStats = { weight: {}, length: {}, percentage: {} };
+    expect(DailyChecklist_build(input({ stats: empty })).items[2].subtitle).to.equal("Weekly, every Sunday");
+  });
+
+  it("keeps Weigh-in ticked from the goal's weekday until the next one", () => {
+    const goalStartedAt = at("2026-10-01");
+    const weighIn = (day: string, withWeights: IStats = stats): { done: boolean; subtitle: string } => {
+      const item = DailyChecklist_build(input({ day, today: day, stats: withWeights, goalStartedAt })).items[2];
+      return { done: item.isDone, subtitle: item.subtitle };
+    };
+    const thursdayWeight: IStats = {
+      ...stats,
+      weight: { weight: [{ vtype: "stat", value: { value: 74.2, unit: "kg" }, timestamp: at("2026-10-22") }] },
+    };
+    expect(weighIn("2026-10-19")).to.deep.equal({ done: true, subtitle: "Done this week · 74.8 kg" });
+    expect(weighIn("2026-10-22")).to.deep.equal({ done: false, subtitle: "Weekly, every Thursday · Last: 74.8 kg" });
+    expect(weighIn("2026-10-22", thursdayWeight).done).to.equal(true);
+    expect(weighIn("2026-10-24", thursdayWeight).subtitle).to.equal("Done this week · 74.2 kg");
+    expect(weighIn("2026-10-28", thursdayWeight).done).to.equal(true);
+    expect(weighIn("2026-10-29", thursdayWeight).done).to.equal(false);
+  });
+
+  it("picks the weigh-in weekday from the goal, else the first day of the week", () => {
+    expect(DailyChecklist_weighInWeekday(at("2026-10-01"), false)).to.equal(4);
+    expect(DailyChecklist_weighInWeekday(undefined, false)).to.equal(0);
+    expect(DailyChecklist_weighInWeekday(undefined, true)).to.equal(1);
+  });
+
+  it("toggles a stored check-in day on and off", () => {
     const log = DailyChecklist_toggleCheckIn(DailyChecklist_empty(), "2026-10-26");
-    expect(DailyChecklist_build(input({ day: "2026-10-26", log })).doneCount).to.equal(1);
+    expect(log.checkIns).to.deep.equal(["2026-10-26"]);
     expect(DailyChecklist_toggleCheckIn(log, "2026-10-26").checkIns).to.deep.equal([]);
   });
 
@@ -111,11 +137,5 @@ describe("DailyChecklist", () => {
     });
     expect(DailyChecklist_parse(undefined)).to.deep.equal(DailyChecklist_empty());
     expect(DailyChecklist_commit(DailyChecklist_empty(), 9).committedAt).to.equal(9);
-  });
-
-  it("greets by the time of day", () => {
-    expect(DailyChecklist_greeting(7)).to.equal("Morning, there!");
-    expect(DailyChecklist_greeting(14)).to.equal("Afternoon, there!");
-    expect(DailyChecklist_greeting(21)).to.equal("Evening, there!");
   });
 });
