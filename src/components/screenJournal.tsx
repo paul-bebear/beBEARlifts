@@ -184,9 +184,17 @@ export function ScreenJournal(): JSX.Element {
     () => DailyChecklist_streak(DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts }), today),
     [food, bear.workouts, today]
   );
+  const startsMonday = !!sources.settings.startWeekFromMonday;
   const calendar = useMemo(
-    () => MonthCalendar_build({ month, today, selected: day, workoutDays: MonthCalendar_workoutDays(history) }),
-    [month, today, day, history]
+    () =>
+      MonthCalendar_build({
+        month,
+        today,
+        selected: day,
+        workoutDays: MonthCalendar_workoutDays(history),
+        startsMonday,
+      }),
+    [month, today, day, history, startsMonday]
   );
   const selectDay = (next: string): void => {
     setDay(next);

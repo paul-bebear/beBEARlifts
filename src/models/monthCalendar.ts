@@ -13,6 +13,7 @@ export interface ICalendarCell {
 export interface IMonthCalendar {
   month: string;
   title: string;
+  weekdayLabels: string[];
   weeks: ICalendarCell[][];
 }
 
@@ -21,9 +22,11 @@ export interface IMonthCalendarInput {
   today: string;
   selected: string;
   workoutDays: Set<string>;
+  startsMonday: boolean;
 }
 
-export const MonthCalendar_weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+const mondayFirstLabels = ["M", "T", "W", "T", "F", "S", "S"];
+const sundayFirstLabels = ["S", "M", "T", "W", "T", "F", "S"];
 
 const monthNames = [
   "January",
@@ -74,13 +77,13 @@ export function MonthCalendar_workoutDays(history: { startTime: number }[]): Set
 }
 
 export function MonthCalendar_build(input: IMonthCalendarInput): IMonthCalendar {
-  const { month, today, selected, workoutDays } = input;
+  const { month, today, selected, workoutDays, startsMonday } = input;
   const { year, monthIndex } = parseMonth(month);
   const first = new Date(year, monthIndex, 1, 12);
-  const mondayOffset = (first.getDay() + 6) % 7;
-  const start = FoodLog_shiftDay(FoodLog_dayKey(first), -mondayOffset);
+  const leadingDays = startsMonday ? (first.getDay() + 6) % 7 : first.getDay();
+  const start = FoodLog_shiftDay(FoodLog_dayKey(first), -leadingDays);
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  const weekCount = Math.ceil((mondayOffset + daysInMonth) / 7);
+  const weekCount = Math.ceil((leadingDays + daysInMonth) / 7);
   const weeks: ICalendarCell[][] = [];
   for (let w = 0; w < weekCount; w += 1) {
     const week: ICalendarCell[] = [];
@@ -98,7 +101,12 @@ export function MonthCalendar_build(input: IMonthCalendarInput): IMonthCalendar 
     }
     weeks.push(week);
   }
-  return { month, title: MonthCalendar_title(month), weeks };
+  return {
+    month,
+    title: MonthCalendar_title(month),
+    weekdayLabels: startsMonday ? mondayFirstLabels : sundayFirstLabels,
+    weeks,
+  };
 }
 
 export function MonthCalendar_visibleWeeks(calendar: IMonthCalendar, isCollapsed: boolean): ICalendarCell[][] {

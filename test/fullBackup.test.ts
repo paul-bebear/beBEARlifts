@@ -12,7 +12,7 @@ import { WarmupPlan_empty } from "../src/models/warmupPlan";
 import { WorkoutReport_empty } from "../src/models/workoutReport";
 import { FoodLog_empty } from "../src/models/foodLog";
 import { IMusicLog, MusicLog_empty } from "../src/models/musicLog";
-import { Storage_getDefault } from "../src/models/storage";
+import { Storage_get, Storage_getDefault } from "../src/models/storage";
 import { BodyScans_empty } from "../src/models/bodyScans";
 import { SetClips_empty } from "../src/models/setClips";
 import { RunLog_empty } from "../src/models/runLog";
@@ -62,6 +62,11 @@ describe("FullBackup", () => {
     expect(FullBackup_filename(now)).to.equal("bebearlifts-backup-2026-10-20.json");
   });
 
+  it("names the file by the local date, also late in the evening and just after midnight", () => {
+    expect(FullBackup_filename(new Date(2026, 9, 20, 23, 30).getTime())).to.equal("bebearlifts-backup-2026-10-20.json");
+    expect(FullBackup_filename(new Date(2026, 9, 20, 0, 30).getTime())).to.equal("bebearlifts-backup-2026-10-20.json");
+  });
+
   it("unwraps a full backup after a JSON round trip", () => {
     const food = { ...FoodLog_empty(), goals: { ...FoodLog_empty().goals, calories: { min: 2600, max: 2700 } } };
     const body = { version: 1 as const, scans: [{ id: 1, timestamp: now, unit: "kg" as const, weight: 82 }] };
@@ -101,6 +106,21 @@ describe("FullBackup", () => {
     const { clips, ...older } = backup;
     expect(clips.clips).to.deep.equal([]);
     expect(FullBackup_unwrap(older).clips).to.equal(undefined);
+  });
+
+  it("leaves no storage to import from a backup file without workouts, so the import stops", () => {
+    const food = { ...FoodLog_empty(), goals: { ...FoodLog_empty().goals, calories: { min: 2600, max: 2700 } } };
+    const contents = FullBackup_unwrap({ format: FullBackup_format, version: 1, food });
+    expect(contents.storage).to.equal(undefined);
+    expect(contents.food?.goals.calories).to.deep.equal({ min: 2600, max: 2700 });
+    expect(Storage_get(contents.storage as Record<string, unknown> | undefined, false).success).to.equal(false);
+  });
+
+  it("reads a file with a newer version number the same way, because version is not checked", () => {
+    const backup = JSON.parse(JSON.stringify(FullBackup_build(parts({}), now)));
+    const current = FullBackup_unwrap(backup);
+    const newer = FullBackup_unwrap({ ...backup, version: 2 });
+    expect(newer).to.deep.equal(current);
   });
 
   it("passes a plain Liftosaur export through as storage only", () => {

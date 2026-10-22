@@ -25,6 +25,7 @@ import { JsonStore_create } from "./jsonStore";
 import {
   CloudStore,
   ICloudResult,
+  Supabase_notSignedIn,
   Supabase_origin,
   SupabaseClient_authed,
   SupabaseClient_json,
@@ -161,7 +162,7 @@ export async function FeedClient_setShared(
 ): Promise<ICloudResult<undefined>> {
   const userId = (await CloudStore.load()).session?.userId;
   if (userId == null) {
-    return { ok: false, error: "Not signed in" };
+    return { ok: false, error: Supabase_notSignedIn };
   }
   const queuedAt = Date.now();
   const op: IFeedOp =

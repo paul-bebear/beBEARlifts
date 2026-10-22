@@ -35,6 +35,7 @@ import { IHistoryRecord, ISettings } from "../types";
 import { SongPerSet_hasAny, SongPerSet_match, SongPerSet_rowLabel } from "../models/songPerSet";
 import { Exercise_get } from "../models/exercise";
 import { Exporter_toFile } from "../utils/exporter";
+import { ExportFilename_dated } from "../models/exportFilename";
 
 type IStatus = { kind: "busy" } | { kind: "message"; text: string; url?: string };
 
@@ -247,9 +248,7 @@ export function ScreenMusic(): JSX.Element {
             name="music-export"
             kind="pill-outline"
             className="flex-1"
-            onPress={() =>
-              Exporter_toFile(`bebear_music_${new Date().toISOString().slice(0, 10)}.json`, MusicLog_exportJson(log))
-            }
+            onPress={() => Exporter_toFile(ExportFilename_dated("bebear_music_", Date.now()), MusicLog_exportJson(log))}
           >
             Export music log
           </Button>

@@ -8,6 +8,7 @@ import {
   RunTrack_formatKm,
   RunTrack_formatPace,
   RunTrack_judge,
+  RunTrack_pace,
   RunTrack_recentPace,
   RunTrack_stats,
 } from "../src/models/runTrack";
@@ -59,6 +60,27 @@ describe("RunTrack", () => {
     expect(RunTrack_elevationGainM([100, 101, 99, 100, 102, 101, 100])).to.equal(0);
     expect(RunTrack_elevationGainM([])).to.equal(0);
     expect(RunTrack_elevationGainM([0, 0, 0, 5, 10, 15, 20, 20, 20])).to.be.greaterThan(10);
+  });
+
+  it("shows no pace before 50 m or without moving time", () => {
+    expect(RunTrack_pace(49, 60000)).to.equal(undefined);
+    expect(RunTrack_pace(1000, 0)).to.equal(undefined);
+    expect(RunTrack_pace(50, 15000)).to.be.closeTo(300, 0.001);
+    const stats = RunTrack_stats([{ startedAt: 0, points: [point(0, 0)] }], 0);
+    expect(stats).to.deep.include({ distanceM: 0, movingMs: 0, paceSecPerKm: undefined, splits: [] });
+  });
+
+  it("records one split when a point lands exactly on the km mark", () => {
+    const points = [point(0, 0), point(500, 150000), point(1000, 300000)];
+    const stats = RunTrack_stats([{ startedAt: 0, endedAt: 300000, points }], 300000);
+    expect(stats.splits).to.deep.equal([{ km: 1, ms: 300000 }]);
+  });
+
+  it("counts no climb from fewer points than the smoothing window", () => {
+    expect(RunTrack_elevationGainM([100])).to.equal(0);
+    expect(RunTrack_elevationGainM([100, 110])).to.equal(0);
+    const climb = RunTrack_stats([{ startedAt: 0, points: [{ ...point(0, 0), alt: 100 }] }], 0);
+    expect(climb.elevationGainM).to.equal(0);
   });
 
   it("formats rounded pace and elapsed time", () => {

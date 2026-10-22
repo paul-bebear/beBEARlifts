@@ -6,6 +6,7 @@ import { IWarmupLog, WarmupPlan_parseLog } from "./warmupPlan";
 import { IReportLog, WorkoutReport_parseLog } from "./workoutReport";
 import { ISetClipLog, SetClips_parse } from "./setClips";
 import { IRunLog, RunLog_parse } from "./runLog";
+import { ExportFilename_dated } from "./exportFilename";
 import { IProgramGoalLog, ProgramGoal_parse } from "./programGoal";
 import { IStepsLog, Steps_parse } from "./steps";
 import { DailyChecklist_parse, IChecklistLog } from "./dailyChecklist";
@@ -115,7 +116,7 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
 }
 
 export function FullBackup_filename(now: number): string {
-  return `bebearlifts-backup-${new Date(now).toISOString().slice(0, 10)}.json`;
+  return ExportFilename_dated("bebearlifts-backup-", now);
 }
 
 export interface IFullBackupContents {

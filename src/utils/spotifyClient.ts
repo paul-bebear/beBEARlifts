@@ -161,7 +161,7 @@ async function validTokens(): Promise<ISpotifyTokens | undefined> {
   return SpotifyAuth_needsRefresh(tokens, Date.now()) ? refresh(tokens) : tokens;
 }
 
-export async function SpotifyClient_api(path: string, init: RequestInit = {}): Promise<Response | undefined> {
+async function SpotifyClient_api(path: string, init: RequestInit = {}): Promise<Response | undefined> {
   const send = (tokens: ISpotifyTokens): Promise<Response> =>
     fetch(`${apiBase}${path}`, {
       ...init,
@@ -189,7 +189,7 @@ async function json(response: Response | undefined): Promise<unknown> {
   return response.json().catch(() => undefined);
 }
 
-export async function SpotifyClient_profile(): Promise<ISpotifyProfile | undefined> {
+async function SpotifyClient_profile(): Promise<ISpotifyProfile | undefined> {
   const response = await SpotifyClient_api("/me");
   if (response?.status === 403) {
     localStorage.setItem(errorKey, SpotifyClient_testerLimitMessage);
@@ -203,7 +203,7 @@ export async function SpotifyClient_nowPlaying(): Promise<ISpotifyNowPlaying | u
   return SpotifyTracks_parseNowPlaying(await json(await SpotifyClient_api("/me/player/currently-playing")));
 }
 
-export async function SpotifyClient_rawHistory(): Promise<unknown> {
+async function SpotifyClient_rawHistory(): Promise<unknown> {
   return json(await SpotifyClient_api("/me/player/recently-played?limit=50"));
 }
 

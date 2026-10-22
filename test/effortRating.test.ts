@@ -101,6 +101,16 @@ describe("Effort rating", () => {
     expect(EffortRating_stripSetIndex([], rating, true, false)).to.equal(undefined);
   });
 
+  it("offers the strip for AMRAP and one-side-at-a-time sets, and keeps their reps", () => {
+    const amrap = ticked(1000, { isAmrap: true, completedReps: 12 });
+    const unilateral = ticked(2000, { isUnilateral: true, completedReps: 5, completedRepsLeft: 4 });
+    expect(EffortRating_stripSetIndex([amrap], rating, true, false)).to.equal(0);
+    expect(EffortRating_stripSetIndex([amrap, unilateral], rating, true, false)).to.equal(1);
+    const rated = EffortRating_rate(unilateral, "hard");
+    expect(rated).to.deep.include({ completedReps: 5, completedRepsLeft: 4, completedEffort: "hard" });
+    expect(EffortRating_rate(amrap, "easy")).to.deep.include({ completedReps: 12, completedEffort: "easy" });
+  });
+
   it("stores the rating in its own field and clears it on a second tap", () => {
     const rated = EffortRating_rate(doneSet(5, 5), "right");
     expect(rated.completedEffort).to.equal("right");

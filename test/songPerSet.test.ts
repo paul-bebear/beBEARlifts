@@ -54,6 +54,16 @@ describe("SongPerSet", () => {
     ]);
   });
 
+  it("matches a set ticked before the session started by the plays alone", () => {
+    const early = session([play(track("a"), t0 - 60000, 200000), play(track("b"), t0 + 140000, 200000)]);
+    const r = record([[set(t0 - 1000), set(t0 - 90000)]]);
+    expect(SongPerSet_match(r, early).map((m) => m.track?.id)).to.deep.equal(["a", undefined]);
+    expect(SongPerSet_match(r, session([play(track("b"), t0, 200000)])).map((m) => m.track)).to.deep.equal([
+      undefined,
+      undefined,
+    ]);
+  });
+
   it("gives none to a set in a gap where nothing played", () => {
     const s = session([play(track("a", 60000), t0, 60000), play(track("b"), t0 + 300000, 200000)]);
     expect(SongPerSet_trackAt(s, t0 + 59000)?.id).to.equal("a");
