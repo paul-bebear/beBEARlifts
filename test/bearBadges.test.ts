@@ -1,15 +1,19 @@
 import "mocha";
 import { expect } from "chai";
+import { existsSync, readFileSync, statSync } from "fs";
+import { resolve } from "path";
 import {
   BearBadges_all,
   BearBadges_compute,
   BearBadges_forRecord,
   BearBadges_grid,
+  BearBadges_image,
   IBearBadgeSources,
 } from "../src/models/bearBadges";
 import { FoodLog_empty, IFoodLog } from "../src/models/foodLog";
 import { IHistoryRecord, ISet } from "../src/types";
 import { Weight_build } from "../src/models/weight";
+import { ShareCardExport_idle, ShareCardExport_next } from "../src/models/shareCardExport";
 
 const hour = 60 * 60 * 1000;
 const day = 24 * hour;
@@ -162,7 +166,44 @@ describe("BearBadges", () => {
       "Mars",
     ]);
     expect(new Set(all.map((i) => i.id)).size).to.equal(all.length);
-    expect(all.every((i) => i.emoji.length > 0 && i.image == null)).to.equal(true);
+    expect(all.every((i) => i.emoji.length > 0 && i.image === `/images/badges/${i.id}.webp`)).to.equal(true);
+  });
+
+  it("ships earned and grey locked art for every badge under 25 KB each", () => {
+    const native = readFileSync(resolve(__dirname, "../src/utils/bearImage.native.ts"), "utf8");
+    for (const info of BearBadges_all()) {
+      for (const isEarned of [true, false]) {
+        const image = BearBadges_image(info, isEarned)!;
+        const file = resolve(__dirname, "..", image.slice(1));
+        expect(existsSync(file), image).to.equal(true);
+        expect(statSync(file).size, image).to.be.lessThan(25000);
+        expect(native).to.include(`"${image}": require("../..${image}")`);
+      }
+      expect(BearBadges_image(info, false)).to.equal(`/images/badges/${info.id}-locked.webp`);
+    }
+  });
+
+  it("keeps the emoji fallback when a badge has no image", () => {
+    const info = { id: "firstPr" as const, name: "First PR", description: "Beat a previous best", emoji: "🏆" };
+    expect(BearBadges_image(info, true)).to.equal(undefined);
+    expect(BearBadges_image(info, false)).to.equal(undefined);
+  });
+
+  it("waits for each badge image before capturing its share card", () => {
+    for (const info of BearBadges_all()) {
+      const started = ShareCardExport_next(ShareCardExport_idle(), {
+        type: "start",
+        pages: ["badge"],
+        frozen: info,
+        images: [info.image!],
+        share: ["badge"],
+      });
+      const laidOut = ShareCardExport_next(started.job, { type: "layout", page: "badge" });
+      expect(laidOut.job.phase).to.equal("preparing");
+      expect(laidOut.effects).to.deep.equal([]);
+      const loaded = ShareCardExport_next(laidOut.job, { type: "imageLoaded", uri: info.image! });
+      expect(loaded.effects).to.deep.equal([{ kind: "capture", page: "badge", jobId: 1 }]);
+    }
   });
 
   it("builds the grid with earned badges first, newest first, then locked in list order", () => {

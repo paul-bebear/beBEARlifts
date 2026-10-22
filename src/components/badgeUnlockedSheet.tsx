@@ -63,7 +63,7 @@ export function BadgeUnlockedSheet(props: IProps): JSX.Element {
             data-testid="badge-unlocked-share"
             accessibilityRole="button"
             disabled={exporter.isBusy}
-            onPress={() => exporter.share([sharePage], badge)}
+            onPress={() => exporter.share([sharePage], badge, badge.image != null ? [badge.image] : [])}
             className="items-center py-4 rounded-full"
             style={{ backgroundColor: T.honey, opacity: exporter.isBusy ? 0.5 : 1 }}
           >
@@ -96,7 +96,7 @@ export function BadgeUnlockedSheet(props: IProps): JSX.Element {
             pages={exporter.job.pages}
             setRef={exporter.setRef}
             onLayout={exporter.onLayout}
-            renderPage={() => <BadgeCard info={frozen} />}
+            renderPage={() => <BadgeCard info={frozen} onImageLoad={exporter.onImageLoad} />}
           />
         )}
       </SafeAreaView>

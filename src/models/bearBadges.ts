@@ -89,19 +89,62 @@ function levelId(level: number): IBearBadgeId {
 }
 
 const infos: IBearBadgeInfo[] = [
-  { id: "firstPr", name: "First PR", description: "Beat a previous best", emoji: "🏆" },
-  { id: "bearWeek", name: "Bear week", description: "Logged 7 days in a row", emoji: "🔥" },
-  { id: "outOfHibernation", name: "Out of hibernation", description: "Back after 14+ days off", emoji: "🌱" },
-  { id: "honeyHunter", name: "Honey hunter", description: "Protein goal 7 days in a row", emoji: "🍯" },
-  { id: "earlyBear", name: "Early bear", description: "Started before 7am", emoji: "🌅" },
-  { id: "nightBear", name: "Night bear", description: "Started after 10pm", emoji: "🌙" },
-  { id: "hundredWorkouts", name: "100 workouts", description: "Finished 100 workouts", emoji: "💯" },
+  {
+    id: "firstPr",
+    name: "First PR",
+    description: "Beat a previous best",
+    emoji: "🏆",
+    image: "/images/badges/firstPr.webp",
+  },
+  {
+    id: "bearWeek",
+    name: "Bear week",
+    description: "Logged 7 days in a row",
+    emoji: "🔥",
+    image: "/images/badges/bearWeek.webp",
+  },
+  {
+    id: "outOfHibernation",
+    name: "Out of hibernation",
+    description: "Back after 14+ days off",
+    emoji: "🌱",
+    image: "/images/badges/outOfHibernation.webp",
+  },
+  {
+    id: "honeyHunter",
+    name: "Honey hunter",
+    description: "Protein goal 7 days in a row",
+    emoji: "🍯",
+    image: "/images/badges/honeyHunter.webp",
+  },
+  {
+    id: "earlyBear",
+    name: "Early bear",
+    description: "Started before 7am",
+    emoji: "🌅",
+    image: "/images/badges/earlyBear.webp",
+  },
+  {
+    id: "nightBear",
+    name: "Night bear",
+    description: "Started after 10pm",
+    emoji: "🌙",
+    image: "/images/badges/nightBear.webp",
+  },
+  {
+    id: "hundredWorkouts",
+    name: "100 workouts",
+    description: "Finished 100 workouts",
+    emoji: "💯",
+    image: "/images/badges/hundredWorkouts.webp",
+  },
   ...streakBadges.map(
     (b): IBearBadgeInfo => ({
       id: b.id,
       name: `${b.days}-day streak`,
       description: `Trained or logged food ${b.days} days in a row`,
       emoji: b.emoji,
+      image: `/images/badges/${b.id}.webp`,
     })
   ),
   ...BearTier_all("male")
@@ -112,6 +155,7 @@ const infos: IBearBadgeInfo[] = [
         name: tier.name,
         description: `Reached level ${tier.level}, ${tier.name}`,
         emoji: levelEmoji[tier.id] ?? "🐻",
+        image: `/images/badges/${levelId(tier.level)}.webp`,
       })
     ),
 ];
@@ -125,6 +169,10 @@ const hundred = 100;
 
 export function BearBadges_all(): readonly IBearBadgeInfo[] {
   return infos;
+}
+
+export function BearBadges_image(info: IBearBadgeInfo, isEarned: boolean): string | undefined {
+  return isEarned ? info.image : info.image?.replace(/\.webp$/, "-locked.webp");
 }
 
 function recordTime(record: IHistoryRecord): number {
