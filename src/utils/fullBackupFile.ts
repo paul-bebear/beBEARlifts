@@ -11,9 +11,10 @@ import { ProgramGoalStore } from "./programGoalStore";
 import { StepsStore } from "./stepsStore";
 import { ChecklistStore } from "./checklistStore";
 import { BearStore } from "./bearStore";
+import { NotesStore } from "./notesStore";
 
 export async function FullBackupFile_build(getStorage: () => IStorage): Promise<{ text: string; now: number }> {
-  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear] = await Promise.all([
+  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes] = await Promise.all([
     FoodLogStore_load(),
     MusicStore_load(),
     BodyScanStore_load(),
@@ -25,10 +26,11 @@ export async function FullBackupFile_build(getStorage: () => IStorage): Promise<
     StepsStore.load(),
     ChecklistStore.load(),
     BearStore.load(),
+    NotesStore.load(),
   ]);
   const now = Date.now();
   const backup = FullBackup_build(
-    { storage: getStorage(), food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear },
+    { storage: getStorage(), food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes },
     now
   );
   return { text: JSON.stringify(backup, null, 2), now };
@@ -67,6 +69,7 @@ export async function FullBackupFile_restore(contents: IFullBackupContents): Pro
     step(contents.steps, StepsStore.load, (value) => StepsStore.update(() => value)),
     step(contents.checklist, ChecklistStore.load, (value) => ChecklistStore.update(() => value)),
     step(contents.bear, BearStore.load, (value) => BearStore.update(() => value)),
+    step(contents.notes, NotesStore.load, (value) => NotesStore.update(() => value)),
   ]);
   const done: IRestoreStep[] = [];
   for (const s of steps) {
