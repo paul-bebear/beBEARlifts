@@ -1,11 +1,6 @@
 import { useEffect } from "react";
-import {
-  IMusicWorkout,
-  MusicTracking_finishOthers,
-  MusicTracking_mergeHistory,
-  MusicTracking_observe,
-  MusicTracking_pollMs,
-} from "../models/musicTracking";
+import { IMusicWorkout, MusicTracking_finishOthers, MusicTracking_pollMs } from "../models/musicTracking";
+import { IMusicPollEffects, MusicPoll_catchUp, MusicPoll_nowPlaying } from "../models/musicPoll";
 import { MusicStore_load, MusicStore_update } from "../utils/musicStore";
 import {
   SpotifyClient_history,
@@ -20,6 +15,19 @@ interface IProps {
   workoutStartTime?: number;
   isNavReady: boolean;
   dispatch: IDispatch;
+}
+
+function browserEffects(isStopped: () => boolean): IMusicPollEffects {
+  return {
+    isVisible: () => document.visibilityState === "visible",
+    hasTokens: async () => (await MusicStore_load()).tokens != null,
+    nowPlaying: SpotifyClient_nowPlaying,
+    history: SpotifyClient_history,
+    update: MusicStore_update,
+    isStopped,
+    now: () => Date.now(),
+    warn: (message, error) => console.warn(message, error),
+  };
 }
 
 export function MusicTracker(props: IProps): null {
@@ -38,35 +46,9 @@ export function MusicTracker(props: IProps): null {
     }
     const workout: IMusicWorkout = { id: workoutId, startTime: workoutStartTime };
     let isStopped = false;
-
-    const poll = async (): Promise<void> => {
-      if (document.visibilityState !== "visible" || (await MusicStore_load()).tokens == null) {
-        return;
-      }
-      try {
-        const snapshot = await SpotifyClient_nowPlaying();
-        if (!isStopped) {
-          await MusicStore_update((log) => MusicTracking_observe(log, workout, snapshot, Date.now()));
-        }
-      } catch (e) {
-        console.warn("Spotify poll failed", e);
-      }
-    };
-
-    const catchUp = async (): Promise<void> => {
-      if (document.visibilityState !== "visible" || (await MusicStore_load()).tokens == null) {
-        return;
-      }
-      try {
-        const history = await SpotifyClient_history();
-        if (!isStopped) {
-          await MusicStore_update((log) => MusicTracking_mergeHistory(log, workout, history, Date.now()));
-        }
-      } catch (e) {
-        console.warn("Spotify history failed", e);
-      }
-      await poll();
-    };
+    const effects = browserEffects(() => isStopped);
+    const poll = (): Promise<void> => MusicPoll_nowPlaying(workout, effects);
+    const catchUp = (): Promise<void> => MusicPoll_catchUp(workout, effects);
 
     catchUp();
     const interval = window.setInterval(poll, MusicTracking_pollMs);

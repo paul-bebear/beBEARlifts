@@ -320,7 +320,7 @@ const mcpToolsWithoutOutputSchema: Omit<IMcpToolDef, "outputSchema">[] = [
   {
     name: "get_liftoscript_reference",
     description:
-      "Get the Liftoscript language reference. Liftoscript is a custom DSL for defining weightlifting programs in beBEAR — it is NOT a standard format and you cannot guess the syntax.\n\nYou MUST call this BEFORE creating or editing any program. The reference covers: exercise syntax, sets/reps/weight notation, progressions (lp, dp, custom), templates, multi-week programs, state variables, supersets, warmups, and common mistakes to avoid.\n\nAfter reading this, also call get_liftoscript_examples for complete program examples.",
+      "Get the Liftoscript language reference. Liftoscript is a custom DSL for defining weightlifting programs in Liftosaur — it is NOT a standard format and you cannot guess the syntax.\n\nYou MUST call this BEFORE creating or editing any program. The reference covers: exercise syntax, sets/reps/weight notation, progressions (lp, dp, custom), templates, multi-week programs, state variables, supersets, warmups, and common mistakes to avoid.\n\nAfter reading this, also call get_liftoscript_examples for complete program examples.",
     annotations: {
       title: "Get Liftoscript reference",
       readOnlyHint: true,
@@ -365,7 +365,7 @@ const mcpToolsWithoutOutputSchema: Omit<IMcpToolDef, "outputSchema">[] = [
   {
     name: "get_liftohistory_reference",
     description:
-      "Get the Liftohistory format reference. Liftohistory is a human-readable text format for workout history records used by beBEAR. Call this if you need to create or edit history records and are unsure about the format.",
+      "Get the Liftohistory format reference. Liftohistory is a human-readable text format for workout history records used by Liftosaur. Call this if you need to create or edit history records and are unsure about the format.",
     annotations: {
       title: "Get Liftohistory reference",
       readOnlyHint: true,
@@ -379,7 +379,7 @@ const mcpToolsWithoutOutputSchema: Omit<IMcpToolDef, "outputSchema">[] = [
   },
   {
     name: "list_builtin_programs",
-    description: "List all built-in beBEAR programs with their id and name.",
+    description: "List all built-in Liftosaur programs with their id and name.",
     annotations: { title: "List built-in programs", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     inputSchema: {
       type: "object",
@@ -402,7 +402,7 @@ const mcpToolsWithoutOutputSchema: Omit<IMcpToolDef, "outputSchema">[] = [
   {
     name: "list_exercises",
     description:
-      "List all built-in exercise names available in beBEAR. Use this to find the correct exercise name and equipment variant (e.g. 'Standing Calf Raise' instead of 'Calf Raise', or 'Bicep Curl, Barbell' instead of 'Barbell Curl').",
+      "List all built-in exercise names available in Liftosaur. Use this to find the correct exercise name and equipment variant (e.g. 'Standing Calf Raise' instead of 'Calf Raise', or 'Bicep Curl, Barbell' instead of 'Barbell Curl').",
     annotations: { title: "List built-in exercises", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     inputSchema: {
       type: "object",
@@ -574,7 +574,7 @@ const mcpToolsWithoutOutputSchema: Omit<IMcpToolDef, "outputSchema">[] = [
   {
     name: "list_equipment",
     description:
-      "List all of a gym's equipment, including soft-deleted ones (each carries an isDeleted flag). Equipment configuration (bar weight, available plates, fixed weights) drives how beBEAR rounds prescribed weights during a workout. Built-in equipment keys: barbell, cable, dumbbell, smith, band, kettlebell, bodyweight, leverageMachine, medicineball, ezbar, trapbar. Custom equipment has keys like 'equipment-xxxxxxxx'. Call list_gyms first to get the gymId.",
+      "List all of a gym's equipment, including soft-deleted ones (each carries an isDeleted flag). Equipment configuration (bar weight, available plates, fixed weights) drives how Liftosaur rounds prescribed weights during a workout. Built-in equipment keys: barbell, cable, dumbbell, smith, band, kettlebell, bodyweight, leverageMachine, medicineball, ezbar, trapbar. Custom equipment has keys like 'equipment-xxxxxxxx'. Call list_gyms first to get the gymId.",
     annotations: { title: "List equipment", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     inputSchema: {
       type: "object",

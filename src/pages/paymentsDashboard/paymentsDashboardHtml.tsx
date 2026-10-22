@@ -25,7 +25,7 @@ export function PaymentsDashboardHtml(props: IPaymentsDashboardHtmlProps): JSX.E
       css={["paymentsdashboard"]}
       js={["paymentsdashboard"]}
       maxWidth={1300}
-      title="Payments Dashboard | beBEAR"
+      title="Payments Dashboard | Liftosaur"
       canonical="https://www.liftosaur.com/dashboards/payments"
       description="The dashboard to see all payments"
       ogUrl="https://www.liftosaur.com/dashboards/payments"

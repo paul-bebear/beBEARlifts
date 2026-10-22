@@ -44,7 +44,7 @@ import {
   IFirstUseEvent,
   IFirstUseTipsState,
 } from "../models/firstUseTips";
-import { FirstUseTipContext } from "./workoutExerciseSetFields";
+import { FirstUseTipContext } from "./firstUseTipContext";
 import { TipBar } from "./tipBar";
 import { IEvaluatedProgram, IEvaluatedProgramDay, Program_isEmpty } from "../models/program";
 import { lb } from "lens-shmens";

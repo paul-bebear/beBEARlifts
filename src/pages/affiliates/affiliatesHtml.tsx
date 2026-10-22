@@ -17,10 +17,10 @@ export function AffiliatesHtml(props: IAffiliatesHtmlProps): JSX.Element {
       css={["affiliates"]}
       js={["affiliates"]}
       maxWidth={1200}
-      title="Affiliate Program | beBEAR"
-      ogTitle="Affiliate Program | beBEAR"
+      title="Affiliate Program | Liftosaur"
+      ogTitle="Affiliate Program | Liftosaur"
       canonical="https://www.liftosaur.com/affiliates"
-      description="beBEAR's affiliate program - earn money by referring paid users to beBEAR"
+      description="Liftosaur's affiliate program - earn money by referring paid users to Liftosaur"
       ogUrl="https://www.liftosaur.com/affiliates"
       data={data}
       client={client}

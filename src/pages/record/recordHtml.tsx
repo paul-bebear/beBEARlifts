@@ -19,7 +19,7 @@ export function RecordHtml({
     <Page
       css={["main", "record"]}
       js={["record"]}
-      title="Workout summary | beBEAR"
+      title="Workout summary | Liftosaur"
       description="Workout summary - what exercises were done, with what sets, reps, weights, new personal records."
       canonical={url}
       ogUrl={url}

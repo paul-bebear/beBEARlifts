@@ -127,7 +127,13 @@ function isComponentOrHook(node: ts.Node): node is ts.FunctionLikeDeclaration {
   if (name == null) {
     return false;
   }
-  return /^use[A-Z]/.test(name) || containsJsx(node.body);
+  return /^use[A-Z]/.test(name) || containsJsx(node.body) || returnsViewType(node);
+}
+
+// An effect-only component such as `MusicTracker(): null` renders no JSX, so its declared type is the only signal.
+function returnsViewType(node: ts.FunctionLikeDeclaration): boolean {
+  const type = node.type?.getText().replace(/\s/g, "");
+  return type != null && type.split("|").every((part) => part === "null" || part === "JSX.Element");
 }
 
 function lintFile(file: string): IFinding[] {

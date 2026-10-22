@@ -230,8 +230,6 @@ The inventory below uses `master` at `a5153e38` on 2026-10-21, with `7eef7634` a
 - `ios/LiftosaurWorkoutWidgetExtension/`: `Info.plist`, `LiftosaurWorkoutWidget.swift`, `LiftosaurWorkoutWidgetExtension.entitlements`, `LiveActivityViews.swift`, `WorkoutIntents.swift`.
 - `ios/Shared/`: `ComplicationStore.swift`, `EventManager.swift`, `Settings.swift`.
 - `ios/Shared/LftUpdater/`: `LftUpdaterPath.swift`.
-- `lambda/`: `index.ts`.
-- `lambda/mcp/`: `handler.ts`, `reference.ts`, `tools.ts`.
 - `lambda/utils/`: `programImageGenerator.ts`.
 - `programs/builtin/`: `gzcl-general-gainz-burrito-but-big.md`, `gzcl-general-gainz.md`, `gzcl-jacked-and-tan-2.md`, `gzcl-the-rippler.md`, `gzcl-uhf-5-weeks.md`, `gzcl-uhf-9-weeks.md`, `gzcl-vdip.md`, `gzclp.md`, `juggernaut-method.md`, `monolith531.md`, `tactical-barbell-operator.md`, `the531bbb.md`.
 - `scripts/`: `build-licenses.ts`, `food-api-dev.mjs`, `lint-views-baseline.json`, `release-ios-production.sh`.
@@ -253,33 +251,10 @@ The inventory below uses `master` at `a5153e38` on 2026-10-21, with `7eef7634` a
 - `src/navigation/`: `AppNavigator.native.tsx`, `AppNavigator.tsx`, `navigationService.ts`, `types.ts`.
 - `src/navigation/modals/`: `NavModalCorruptedState.tsx`, `NavModalFoodGoals.tsx`, `NavModalHelp.tsx`.
 - `src/navigation/screens/`: `NavScreenHome.tsx`.
-- `src/pages/affiliateDashboard/`: `affiliateDashboardHtml.tsx`.
-- `src/pages/affiliates/`: `affiliatesContent.tsx`, `affiliatesHtml.tsx`.
-- `src/pages/ai/`: `aiPromptContent.tsx`, `aiPromptHtml.tsx`.
-- `src/pages/allExercises/`: `allExercisesHtml.tsx`.
-- `src/pages/docs/`: `docDetailsHtml.tsx`, `docsListContent.tsx`, `docsListHtml.tsx`.
-- `src/pages/exercise/`: `exerciseContent.tsx`, `exerciseHtml.tsx`.
-- `src/pages/features/`: `featureDetailsHtml.tsx`, `featuresListContent.tsx`, `featuresListHtml.tsx`.
-- `src/pages/login/`: `loginHtml.tsx`.
-- `src/pages/main/components/`: `testimonialsView.tsx`.
-- `src/pages/main/`: `mainHtml.tsx`.
-- `src/pages/oauthConsent/`: `oauthConsentHtml.tsx`.
-- `src/pages/paymentsDashboard/`: `paymentsDashboardHtml.tsx`.
+- `src/pages/affiliates/`: `affiliatesContent.tsx`.
+- `src/pages/exercise/`: `exerciseContent.tsx`.
 - `src/pages/planner/components/`: `plannerHelp.tsx`.
-- `src/pages/planner/`: `plannerBanner.tsx`, `plannerContent.tsx`, `plannerHtml.tsx`.
-- `src/pages/program/`: `programHtml.tsx`.
-- `src/pages/programs/programDetails/`: `programDetailsUpsell.tsx`.
-- `src/pages/programs/`: `programDetailsHtml.tsx`, `programPreviewHtml.tsx`.
-- `src/pages/programs/programList/`: `programsPageHtml.tsx`.
-- `src/pages/programsList/`: `programsListHtml.tsx`.
-- `src/pages/record/`: `recordHtml.tsx`.
-- `src/pages/repmax/`: `repMaxContent.tsx`, `repMaxHtml.tsx`.
-- `src/pages/resetPassword/`: `resetPasswordContent.tsx`, `resetPasswordHtml.tsx`.
-- `src/pages/user/`: `userHtml.tsx`.
-- `src/pages/userAffiliates/`: `userAffiliatesHtml.tsx`.
-- `src/pages/userDashboard/`: `userDashboardHtml.tsx`.
-- `src/pages/usersDashboard/`: `usersDashboardHtml.tsx`.
-- `src/pages/verifyEmail/`: `verifyEmailContent.tsx`, `verifyEmailHtml.tsx`.
+- `src/pages/planner/`: `plannerContent.tsx`.
 - `src/utils/`: `analytics.native.ts`, `appEnv.ts`, `bundledImagesSvg.native.ts`, `eventManager.native.ts`, `foodApi.ts`, `health.android.ts`, `health.ios.ts`, `health.ts`, `healthAdapter.ts`, `hostConfig.ts`, `iapHelpers.ts`, `imagePicker.native.ts`, `imageResize.ts`, `importFromHevy.ts`, `importFromLiftosaur.ts`, `offlineOnly.ts`, `signIn.native.ts`, `workoutExerciseUtils.ts`.
 - `test/`: `api.test.ts`, `foodPhotoEstimate.test.ts`, `importFromHevy.test.ts`, `importFromLiftosaur.test.ts`, `offlineOnly.test.ts`, `openFoodFacts.test.ts`, `setAddSet.test.ts`.
 - `test/utils/`: `mockHealthAdapter.ts`.
