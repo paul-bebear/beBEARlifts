@@ -13,6 +13,7 @@ import { BearScene } from "./bearScene";
 import { BearTv } from "./bearTv";
 import { BearPanel } from "./bearPanel";
 import { useBear } from "../utils/useBear";
+import { useBearHoney } from "../utils/useBearHoney";
 import { useBadgeCelebration } from "../utils/useBearBadges";
 import { BadgeUnlockedSheet } from "./badgeUnlockedSheet";
 import { BearStore } from "../utils/bearStore";
@@ -58,6 +59,7 @@ function MyBearHead(): JSX.Element {
   const settings = untrack(tracked.storage.settings);
   const notes = NotesStore.use();
   const { state, plannedPerWeek } = useBear();
+  const honey = useBearHoney();
   const now = Date.now();
   const tiles = useMemo(
     () =>
@@ -81,7 +83,7 @@ function MyBearHead(): JSX.Element {
         onTile={(tile) => openBoardTarget(dispatch, tile.target)}
         tv={(box) => <BearTv box={box} />}
       />
-      <BearPanel state={state} now={now} onLine={setLine} />
+      <BearPanel state={state} now={now} honey={honey.balance} todayHoney={honey.today} onLine={setLine} />
     </View>
   );
 }

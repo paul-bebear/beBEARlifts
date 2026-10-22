@@ -1,5 +1,6 @@
 import { IBearState } from "./bear";
 import { IBearCountedWorkout } from "./bearGrowth";
+import { BearHoney_dailyMax, IHoneyDay } from "./bearHoney";
 import { FoodLog_dayKey } from "./foodLog";
 import { BearTier_all, IBearTierProgress } from "./bearTier";
 import { IHistoryRecord } from "../types";
@@ -52,10 +53,23 @@ export function BearText_status(state: IBearState, now: number): string {
   }
 }
 
+export function BearText_honeyLine(balance: number): string {
+  return `🍯 ${Math.max(0, Math.round(balance)).toLocaleString("en-US")} honey`;
+}
+
+export function BearText_honeyBreakdown(day: IHoneyDay | undefined): string {
+  if (day == null || day.items.length === 0) {
+    return "Nothing earned yet today";
+  }
+  const parts = day.items.map((item) => `${item.label} +${item.amount}`);
+  return day.isCapped ? [...parts, `Daily max ${BearHoney_dailyMax}`].join(" · ") : parts.join(" · ");
+}
+
 export function BearText_finishLine(
   record: IHistoryRecord,
   workouts: readonly IBearCountedWorkout[],
-  progress: IBearTierProgress
+  progress: IBearTierProgress,
+  honey = 0
 ): string {
   const counted = workouts.find((workout) => workout.record.id === record.id);
   if (counted == null) {
@@ -66,7 +80,8 @@ export function BearText_finishLine(
     return sameDay ? "+0 kg · one workout a day grows your bear" : "+0 kg · train 10 minutes or more to grow your bear";
   }
   const next = progress.next == null ? "Top level" : `${progress.next.name} in ${BearText_kg(progress.kgToNext)}`;
-  return `+${BearText_kg(counted.countedKg)} · ${next}`;
+  const earned = honey > 0 ? ` · +${honey.toLocaleString("en-US")} honey` : "";
+  return `+${BearText_kg(counted.countedKg)}${earned} · ${next}`;
 }
 
 export function BearText_levelUp(level: number): { title: string; subtitle: string } {

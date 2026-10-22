@@ -6,12 +6,13 @@ export interface IBearStoreData {
   line?: IBearLine;
   celebratedLevel: number;
   seenBadges: string[];
+  spent: number;
   seeded?: true;
   badgesSeeded?: true;
 }
 
 export function BearStoreData_empty(): IBearStoreData {
-  return { celebratedLevel: 1, seenBadges: [] };
+  return { celebratedLevel: 1, seenBadges: [], spent: 0 };
 }
 
 export function BearStoreData_parse(raw: unknown): IBearStoreData {
@@ -33,6 +34,7 @@ export function BearStoreData_parse(raw: unknown): IBearStoreData {
     ...(r.line === "male" || r.line === "female" ? { line: r.line } : {}),
     celebratedLevel: r.celebratedLevel,
     seenBadges: [...r.seenBadges],
+    spent: typeof r.spent === "number" && Number.isSafeInteger(r.spent) && r.spent > 0 ? r.spent : 0,
     ...(r.seeded === true ? { seeded: true as const } : {}),
     ...(r.badgesSeeded === true ? { badgesSeeded: true as const } : {}),
   };
