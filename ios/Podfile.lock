@@ -3014,7 +3014,7 @@ SPEC CHECKSUMS:
   React-callinvoker: bc2a26f8d84fb01f003fc6de6c9337b64715f95b
   React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 7840d3a80b43a95c5e80ef75146bd70925ebab0f
-  React-Core-prebuilt: 53e06fa1b2670ff44bd63d4e9f95fb2d3628f7b1
+  React-Core-prebuilt: 8c3b8d76817546b25f8582893b18abd6c27f5fce
   React-CoreModules: 2eb010400b63b89e53a324ffb3c112e4c7c3ce42
   React-cxxreact: a558e92199d26f145afa9e62c4233cf8e7950efe
   React-debug: d196e6df0599d78360b3211367e28c5583054133
@@ -3083,9 +3083,9 @@ SPEC CHECKSUMS:
   React-utils: 7ace4a70a287291541c646e3f02688ba439ed743
   React-webperformancenativemodule: 4b56d01c3a3f403231c3756ac7031db8ab64f504
   ReactAppDependencyProvider: e96e93b493d8d86eeaee3e590ba0be53f6abe46f
-  ReactCodegen: 6fd205f091c67e98ae3d078989008e91a3426cde
+  ReactCodegen: c207495e6995866a8532da389050b867106caf9c
   ReactCommon: 07572bf9e687c8a52fbe4a3641e9e3a1a477c78e
-  ReactNativeDependencies: c7578ef33e839894fddbebf878dec4c079c194c1
+  ReactNativeDependencies: 90e4af5c05c3c9a61a9821a260ae0b51cd78b991
   ReactNativeHealthkit: b81525b73d998c228ac466f2a0c8e0aa0fbcce8f
   RNAppleAuthentication: a89c9804592b38ed4ab11f0aee68d05ba12ad432
   RNCClipboard: fc456104340b49bdf812f68bd00e764abf360361
