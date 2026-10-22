@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>beBEAR: your bear grows when you do</title>
-<meta name="description" content="A pocket bear that grows every time you lift. Free lift and food tracking. Coming to iPhone soon.">
+<meta name="description" content="A pocket bear that grows every time you lift. Feed it, train it, level it up. Coming to iPhone soon.">
 <meta property="og:title" content="beBEAR: your bear grows when you do">
-<meta property="og:description" content="A pocket bear that grows every time you lift. Free lift and food tracking. Coming to iPhone soon.">
+<meta property="og:description" content="A pocket bear that grows every time you lift. Feed it, train it, level it up. Coming to iPhone soon.">
 <meta name="theme-color" content="#12402c">
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -198,14 +198,13 @@
   .board .big { font-size: 15cqw; text-transform: uppercase; margin: 1.5cqw 0; }
   .scene .bear {
     position: absolute;
-    left: 50%;
-    bottom: 3%;
-    height: 66%;
     width: auto;
     max-width: none;
     transform: translateX(-50%);
     filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.35));
   }
+  .scene .bear.back { left: 68%; bottom: 6%; height: 56%; }
+  .scene .bear.front { left: 32%; bottom: 2%; height: 62%; }
 
   .features { padding-block: 40px 72px; }
   .features h2 { font-size: clamp(36px, 7vw, 56px); text-transform: uppercase; line-height: 0.98; max-width: 16ch; margin-bottom: 28px; }
@@ -224,8 +223,13 @@
   .cell img { align-self: end; justify-self: end; height: 220px; width: auto; margin-top: 12px; }
   .cell.one { background: var(--forest); color: var(--cream); }
   .cell.one p { color: #cfd9cf; }
-  .cell.one img.wide { height: auto; width: 100%; max-width: 560px; justify-self: center; }
   .cell.one img.tall { height: 300px; }
+  .levels { align-self: end; display: grid; gap: 10px; margin-top: 16px; }
+  .levels div { display: flex; align-items: flex-end; justify-content: space-between; }
+  .levels img { margin: 0; width: auto; }
+  .levels img:nth-child(1) { height: 92px; }
+  .levels img:nth-child(2) { height: 140px; }
+  .levels img:nth-child(3) { height: 176px; }
   .cell.two { background: var(--tint-honey); }
   .cell.three { background: var(--tint-sage); }
   .cell.two p, .cell.three p { color: var(--muted); }
@@ -237,7 +241,9 @@
   .closing label { color: var(--cream); }
   .closing .msg { color: #ffb4a8; }
   .closing .thanks { background: var(--forest-deep); color: #8fe3bb; border-color: #24543d; }
-  .closing img { height: 340px; width: auto; justify-self: center; align-self: end; }
+  .duo { display: flex; justify-content: center; align-items: flex-end; align-self: end; }
+  .duo img { height: 300px; width: auto; }
+  .duo img + img { margin-left: -48px; }
 
   footer { padding-block: 32px 48px; color: var(--muted); font-size: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
   footer a { color: var(--text); font-weight: 600; }
@@ -252,7 +258,10 @@
     .bento { grid-template-columns: 1.25fr 1fr; grid-template-rows: auto auto; }
     .cell.one { grid-row: span 2; min-height: 620px; }
     .closing .wrap { grid-template-columns: 1.2fr 0.8fr; padding-block: 72px 0; }
-    .closing img { height: 420px; }
+    .duo img { height: 400px; }
+    .levels img:nth-child(1) { height: 120px; }
+    .levels img:nth-child(2) { height: 190px; }
+    .levels img:nth-child(3) { height: 240px; }
   }
   @media (prefers-reduced-motion: no-preference) {
     .scene .bear { animation: rise 0.9s var(--ease) both; }
@@ -288,24 +297,25 @@
     <div class="scene">
       <img class="gym" src="gym.webp" alt="" width="768" height="1152">
       <div class="board" aria-hidden="true"><span class="small">Level up</span><span class="big">Level 7</span><span class="small">Pumped and fed</span></div>
-      <img class="bear" src="hero-bear.webp" alt="The beBEAR bear lifting a barbell in the gym" width="512" height="768">
+      <img class="bear back" src="hero-male.webp" alt="" width="512" height="768">
+      <img class="bear front" src="hero-female.webp" alt="Two beBEAR bears lifting barbells in the gym" width="512" height="768">
     </div>
   </section>
 
   <section class="wrap features">
-    <h2>Train it. Feed it. Watch it grow.</h2>
+    <h2>A pet that trains with you.</h2>
     <div class="bento">
       <article class="cell one">
-        <div><h3>Lift. It grows.</h3><p>Every workout makes your bear bigger. 12 levels, and levels never drop.</p></div>
-        <img class="wide" src="card-1.webp" alt="The bear at level 1, level 6 and level 12" loading="lazy">
+        <div><h3>Lift. It grows.</h3><p>Every workout makes your bear bigger. 12 levels, from your bedroom to Mars. Levels never drop.</p></div>
+        <div class="levels" role="img" aria-label="The bear at level 1, level 6 and level 12"><div><img src="male-1.webp" alt="" loading="lazy"><img src="male-6.webp" alt="" loading="lazy"><img src="male-12.webp" alt="" loading="lazy"></div><div><img src="female-1.webp" alt="" loading="lazy"><img src="female-6.webp" alt="" loading="lazy"><img src="female-12.webp" alt="" loading="lazy"></div></div>
       </article>
       <article class="cell two">
-        <div><h3>Eat. It gets fed.</h3><p>Log your meals to keep it happy. Skip workouts and it gets lazy.</p></div>
+        <div><h3>Feed it.</h3><p>Log your meals to keep your bear full and happy.</p></div>
         <img src="card-2.webp" alt="The bear holding a bowl of food" width="512" height="768" loading="lazy">
       </article>
       <article class="cell three">
-        <div><h3>A real tracker inside.</h3><p>Sets, reps, weights and meals. All free to track.</p></div>
-        <img src="card-3.webp" alt="The bear lifting a barbell" width="512" height="768" loading="lazy">
+        <div><h3>Skip, and it gets lazy.</h3><p>Miss your workouts and your bear slows down. Train again and it bounces back.</p></div>
+        <img src="card-3.webp" alt="A tired bear sitting down" width="512" height="768" loading="lazy">
       </article>
     </div>
   </section>
@@ -324,7 +334,10 @@
           <p class="msg" role="alert" aria-live="polite"></p>
         </form>
       </div>
-      <img src="closing-bear.webp" alt="" width="512" height="768" loading="lazy">
+      <div class="duo">
+        <img src="closing-male.webp" alt="" width="512" height="768" loading="lazy">
+        <img src="closing-female.webp" alt="" width="512" height="768" loading="lazy">
+      </div>
     </div>
   </section>
 </main>
