@@ -5,6 +5,8 @@ import {
   CloudBackupForm_parsePlan,
   CloudBackupForm_parseSentCode,
   CloudBackupForm_redeemedMessage,
+  CloudBackupForm_resendLabel,
+  CloudBackupForm_resendRemainingMs,
   CloudBackupForm_reduce as reduce,
 } from "../src/models/cloudBackupForm";
 
@@ -123,16 +125,33 @@ describe("CloudBackupForm", () => {
     expect(reduce(signedIn, { type: "request", operation: "sendCode" })).to.equal(signedIn);
   });
 
-  it("reopens the code step after a restart when the code is under 10 minutes old", () => {
+  it("reopens the code step after a restart when the code is under 60 minutes old", () => {
     const sentAt = 1_000_000;
     const sent = CloudBackupForm_parseSentCode({ email: "paul@example.com", sentAt });
-    const resumed = reduce(CloudBackupForm_empty(), { type: "resume", sent, now: sentAt + 9 * 60 * 1000 });
-    expect(resumed).to.include({ step: "code", email: "paul@example.com", code: "" });
-    const stale = reduce(CloudBackupForm_empty(), { type: "resume", sent, now: sentAt + 11 * 60 * 1000 });
+    const resumed = reduce(CloudBackupForm_empty(), { type: "resume", sent, now: sentAt + 50 * 60 * 1000 });
+    expect(resumed).to.include({ step: "code", email: "paul@example.com", code: "", sentAt });
+    const stale = reduce(CloudBackupForm_empty(), { type: "resume", sent, now: sentAt + 61 * 60 * 1000 });
     expect(stale.step).to.equal("email");
     const typing = reduce(CloudBackupForm_empty(), { type: "email", value: "other@example.com" });
     expect(reduce(typing, { type: "resume", sent, now: sentAt })).to.equal(typing);
     expect(CloudBackupForm_parseSentCode({ email: "x", sentAt: "soon" })).to.deep.equal({});
+  });
+
+  it("counts down 3 minutes before a new code and refuses an early resend", () => {
+    const sentAt = 5_000_000;
+    expect(CloudBackupForm_resendLabel(undefined, sentAt)).to.equal("Send a new code");
+    expect(CloudBackupForm_resendLabel(sentAt, sentAt)).to.equal("Send a new code in 3:00");
+    expect(CloudBackupForm_resendLabel(sentAt, sentAt + 19_000)).to.equal("Send a new code in 2:41");
+    expect(CloudBackupForm_resendLabel(sentAt, sentAt + 179_001)).to.equal("Send a new code in 0:01");
+    expect(CloudBackupForm_resendLabel(sentAt, sentAt + 180_000)).to.equal("Send a new code");
+    expect(CloudBackupForm_resendRemainingMs(sentAt, sentAt - 10_000)).to.equal(180_000);
+    const sent = reduce(emailStep(), { type: "sent", now: sentAt });
+    expect(sent.sentAt).to.equal(sentAt);
+    const early = reduce(sent, { type: "request", operation: "sendCode", now: sentAt + 60_000 });
+    expect(early).to.equal(sent);
+    const later = reduce(sent, { type: "request", operation: "sendCode", now: sentAt + 180_000 });
+    expect(later.command?.operation).to.equal("sendCode");
+    expect(reduce(later, { type: "sent", now: sentAt + 181_000 }).sentAt).to.equal(sentAt + 181_000);
   });
 
   it("redeems a trimmed beBEAR+ code only when signed in", () => {

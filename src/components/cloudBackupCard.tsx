@@ -1,7 +1,14 @@
 import { JSX, useEffect, useReducer, useState } from "react";
 import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
-import { CloudBackupForm_empty, CloudBackupForm_reduce } from "../models/cloudBackupForm";
+import {
+  CloudBackupForm_codeHint,
+  CloudBackupForm_empty,
+  CloudBackupForm_reduce,
+  CloudBackupForm_resendLabel,
+  CloudBackupForm_resendNote,
+  CloudBackupForm_resendRemainingMs,
+} from "../models/cloudBackupForm";
 import { AccountDeletion_confirmWord, AccountDeletion_isConfirmed } from "../models/accountDeletion";
 import { CloudStore, SentCodeStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_loadPlan, CloudBackupCommand_run } from "../utils/cloudBackupCommand";
@@ -21,6 +28,17 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
   const busy = form.command != null;
   const [oauth, setOAuth] = useState<{ busy: boolean; error?: string }>({ busy: false });
   const [showEmail, setShowEmail] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const waiting = form.step === "code" && CloudBackupForm_resendRemainingMs(form.sentAt, now) > 0;
+
+  useEffect(() => {
+    if (!waiting) {
+      return undefined;
+    }
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [waiting]);
 
   const startOAuth = (provider: IOAuthProvider): void => {
     setOAuth({ busy: true });
@@ -253,6 +271,7 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
                 autoCorrect={false}
                 editable={!busy}
               />
+              <Text className="text-sm text-text-secondary">{CloudBackupForm_codeHint}</Text>
               <Button
                 name="cloud-sign-in"
                 kind="purple"
@@ -264,11 +283,12 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
               <Button
                 name="cloud-resend-code"
                 kind="lightpurple"
-                disabled={busy}
-                onClick={() => emit({ type: "request", operation: "sendCode" })}
+                disabled={busy || waiting}
+                onClick={() => emit({ type: "request", operation: "sendCode", now: Date.now() })}
               >
-                Send code again
+                {CloudBackupForm_resendLabel(form.sentAt, now)}
               </Button>
+              <Text className="text-sm text-text-secondary">{CloudBackupForm_resendNote}</Text>
               <Button
                 name="cloud-change-email"
                 kind="lightgrayv3"

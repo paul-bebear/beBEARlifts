@@ -48,7 +48,7 @@ export function SupabaseClient_errorText(path: string, status: number, body: unk
   const r = (body ?? {}) as Record<string, unknown>;
   const message = r.msg ?? r.message ?? r.error_description ?? r.error;
   if (path.startsWith("/auth/v1/verify") && (status === 401 || status === 403)) {
-    return "That code is wrong or expired. Tap Send code again.";
+    return "That code is wrong or expired. Send a new code.";
   }
   if (path.startsWith("/auth/v1/otp") && status === 429) {
     return typeof message === "string" && /security purposes/i.test(message)

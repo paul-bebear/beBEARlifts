@@ -5,7 +5,7 @@ import { SupabaseClient_errorText } from "../src/utils/supabaseClient";
 describe("Supabase error text", () => {
   it("explains a wrong or expired code and the resend limit in plain words", () => {
     expect(SupabaseClient_errorText("/auth/v1/verify", 403, { msg: "Token has expired or is invalid" })).to.equal(
-      "That code is wrong or expired. Tap Send code again."
+      "That code is wrong or expired. Send a new code."
     );
     expect(SupabaseClient_errorText("/auth/v1/otp", 429, { msg: "For security purposes, you can only…" })).to.equal(
       "Wait a minute before asking for another code."

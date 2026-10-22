@@ -33,7 +33,7 @@ export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (even
           if (result.ok) {
             await SentCodeStore.update(() => ({ email: command.email, sentAt: Date.now() })).catch(() => undefined);
           }
-          emit(result.ok ? { type: "sent" } : { type: "failed", error: result.error });
+          emit(result.ok ? { type: "sent", now: Date.now() } : { type: "failed", error: result.error });
           break;
         }
         case "verify": {
