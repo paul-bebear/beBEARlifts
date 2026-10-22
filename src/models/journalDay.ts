@@ -58,8 +58,6 @@ export interface IJournalDay {
   mindfulness: string;
 }
 
-export const journalDayRest = "Rest day";
-
 export type IJournalSection = "checkIn" | "workouts" | "meals" | "songs" | "weight" | "notes";
 
 export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSection): string | undefined {

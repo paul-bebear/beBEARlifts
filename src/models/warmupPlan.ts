@@ -1,6 +1,7 @@
 import { IHistoryRecord, IMuscle, ISettings } from "../types";
 import { Exercise_get, Exercise_targetMuscles } from "./exercise";
 import { SetClips_workoutId } from "./setClips";
+import { JsonInText_extract } from "./jsonInText";
 
 export interface IWarmupItem {
   name: string;
@@ -116,18 +117,7 @@ function text(value: unknown, max: number): string | undefined {
 
 // The model's reply is untrusted text, so only well-formed items survive.
 export function WarmupPlan_parseAi(raw: string): IWarmupItem[] | undefined {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) {
-    return undefined;
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw.slice(start, end + 1));
-  } catch {
-    return undefined;
-  }
-  const list = (parsed as { items?: unknown })?.items;
+  const list = (JsonInText_extract(raw) as { items?: unknown } | undefined)?.items;
   if (!Array.isArray(list)) {
     return undefined;
   }

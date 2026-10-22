@@ -125,7 +125,7 @@ export type IInviteEvent =
   | { type: "forgotten" }
   | { type: "failed"; error: string };
 
-export const Invite_offlineError = "No connection";
+const Invite_offlineError = "No connection";
 
 export function Invite_empty(): IInviteFlow {
   return { step: "idle", signedIn: false, hidden: false, myHandle: "", myName: "" };

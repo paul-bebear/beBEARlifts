@@ -24,7 +24,6 @@ export interface IQuickActionsInput {
 
 export const quickActionsSoon = "Soon";
 export const quickActionsRun = "Run";
-export const quickActionsResume = "Resume";
 
 export function QuickActions_list(input: IQuickActionsInput): IQuickActions {
   return {

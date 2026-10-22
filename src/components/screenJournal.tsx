@@ -32,7 +32,7 @@ import { useMusicLog } from "../utils/musicStore";
 import { NotesStore } from "../utils/notesStore";
 import { useBear } from "../utils/useBear";
 
-export function useJournalSources(): IJournalExportSources {
+function useJournalSources(): IJournalExportSources {
   const state = useTrackedState();
   const { history, settings, stats } = state.storage;
   const food = useFoodLog();

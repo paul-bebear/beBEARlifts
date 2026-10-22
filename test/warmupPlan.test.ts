@@ -55,6 +55,15 @@ describe("WarmupPlan", () => {
     ]);
   });
 
+  it("reads the AI's JSON from a markdown fence with prose after it", () => {
+    const raw =
+      '```json\n{"items":[{"name":"Bike","detail":"Easy pace"},{"name":"Air squats","detail":"10 reps"}]}\n```\nHave a good session {you got this}';
+    expect(WarmupPlan_parseAi(raw)).to.deep.equal([
+      { name: "Bike", detail: "Easy pace" },
+      { name: "Air squats", detail: "10 reps" },
+    ]);
+  });
+
   it("rejects an answer that is not a usable list", () => {
     expect(WarmupPlan_parseAi("Sorry, I can't")).to.equal(undefined);
     expect(WarmupPlan_parseAi(`{"items":[{"name":"Bike","detail":"Easy"}]}`)).to.equal(undefined);

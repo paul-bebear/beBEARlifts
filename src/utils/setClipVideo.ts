@@ -6,37 +6,20 @@ import {
   SetClips_thumbnailWidth,
 } from "../models/setClips";
 import { SetClipStore } from "./setClipStore";
+import { FileShare_download, FileShare_share, IFileShareNavigator } from "./fileShare";
 
 export async function SetClipVideo_share(
   file: File,
-  nav: Pick<Navigator, "share" | "canShare">
+  nav: IFileShareNavigator
 ): Promise<ISetClip["savedVia"] | undefined> {
-  try {
-    if (typeof nav.share === "function" && nav.canShare?.({ files: [file] })) {
-      await nav.share({ files: [file] });
-      return "share";
-    }
-  } catch (error) {
-    if ((error as { name?: string }).name === "AbortError") {
-      return undefined;
-    }
-    throw error;
+  const result = await FileShare_share([file], nav);
+  if (result === "refused") {
+    throw new Error("The share sheet was refused");
   }
-  return "download";
+  return result === "shared" ? "share" : result === "unavailable" ? "download" : undefined;
 }
 
-export function SetClipVideo_download(file: File): void {
-  const url = URL.createObjectURL(file);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = file.name;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60 * 1000);
-}
-
-export function SetClipVideo_frame(file: File): Promise<Pick<ISetClip, "duration" | "thumbnail">> {
+function SetClipVideo_frame(file: File): Promise<Pick<ISetClip, "duration" | "thumbnail">> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
@@ -106,7 +89,7 @@ export interface ISetClipVideoEffects {
 
 const browserEffects: ISetClipVideoEffects = {
   share: (file) => SetClipVideo_share(file, navigator),
-  download: SetClipVideo_download,
+  download: FileShare_download,
   frame: SetClipVideo_frame,
   put: (clip) => SetClipStore.update((log) => SetClips_put(log, clip)),
   now: () => Date.now(),

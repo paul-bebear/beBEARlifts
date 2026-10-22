@@ -22,7 +22,7 @@ export interface IMealPost extends IMealPostDraft {
 }
 
 export const MealPost_bucket = "meal-photos";
-export const MealPost_maxDescription = 200;
+const MealPost_maxDescription = 200;
 export const MealPost_photoUrlSeconds = 6 * 3600;
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -47,7 +47,7 @@ function macro(value: unknown): number | undefined {
     : undefined;
 }
 
-export function MealPost_macros(nutrients: INutrients): IMealMacros {
+function MealPost_macros(nutrients: INutrients): IMealMacros {
   return {
     kcal: macro(nutrients.calories) ?? 0,
     protein: macro(nutrients.protein) ?? 0,

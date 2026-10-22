@@ -13,6 +13,12 @@ describe("OnboardingAnswer", () => {
     );
     expect(answer.renamed).to.deep.equal([["Barbell squat", "Squat"]]);
   });
+  it("reads an answer wrapped in a markdown fence or a sentence", () => {
+    const fenced = '```json\n{"builtin":"fierce-5","note":"Fits your goal"}\n```';
+    expect(OnboardingAnswer_parse(fenced, ["fierce-5"]).builtin).to.equal("fierce-5");
+    const prose = 'Here is your plan: {"liftoscript":"Squat / 3x5","note":"Start light"}';
+    expect(OnboardingAnswer_parse(prose, []).liftoscript).to.equal("Squat / 3x5");
+  });
   it("rejects malformed JSON, prose, unknown IDs, and ambiguous answers", () => {
     for (const value of [
       "not JSON",

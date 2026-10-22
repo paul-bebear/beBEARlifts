@@ -9,6 +9,7 @@ import {
 } from "./programGoal";
 import { IStepsLog, Steps_count } from "./steps";
 import { IProgressPhotoLog } from "./progressPhotos";
+import { LocalDay_between, LocalDay_ms, LocalDay_start } from "./localDay";
 
 export interface IProgressHubInput {
   goalLog: IProgramGoalLog;
@@ -37,20 +38,9 @@ export interface IProgressHub {
   photos: { count: number; subtitle: string };
 }
 
-const dayMs = 24 * 60 * 60 * 1000;
 const defaultPlannedPerWeek = 3;
 const consistencyDays = { min: 7, max: 28 };
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function startOfDay(timestamp: number): number {
-  const date = new Date(timestamp);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
-}
-
-function daysBetween(earlier: number, later: number): number {
-  return Math.round((startOfDay(later) - startOfDay(earlier)) / dayMs);
-}
 
 export function ProgressHub_formatDate(timestamp: number, now: number): string {
   const date = new Date(timestamp);
@@ -92,7 +82,7 @@ function weightRow(input: IProgressHubInput): IProgressHub["weight"] {
       : undefined;
   return {
     value: ProgramGoal_formatWeight(latest.value, settings.units),
-    subtitle: loggedAgo(daysBetween(latest.timestamp, now)),
+    subtitle: loggedAgo(LocalDay_between(latest.timestamp, now)),
     change: delta != null ? `${delta > 0 ? "+" : ""}${delta} ${settings.units} since the goal started` : undefined,
   };
 }
@@ -101,7 +91,7 @@ function nutritionRow(input: IProgressHubInput): IProgressHub["nutrition"] {
   const { foodLog, now, goalLog } = input;
   const today = FoodLog_dayKey(new Date(now));
   const startedAt = goalLog.current?.startedAt;
-  const daysTracked = startedAt != null ? Math.max(1, daysBetween(startedAt, now) + 1) : 7;
+  const daysTracked = startedAt != null ? Math.max(1, LocalDay_between(startedAt, now) + 1) : 7;
   const firstDay = FoodLog_shiftDay(today, -(daysTracked - 1));
   const logged = new Set(foodLog.entries.map((e) => e.day).filter((d) => d >= firstDay && d <= today));
   return {
@@ -114,9 +104,9 @@ function nutritionRow(input: IProgressHubInput): IProgressHub["nutrition"] {
 function consistencyRow(input: IProgressHubInput): IProgressHub["consistency"] {
   const { history, now, goalLog, plannedPerWeek } = input;
   const startedAt = goalLog.current?.startedAt;
-  const sinceStart = startedAt != null ? daysBetween(startedAt, now) + 1 : consistencyDays.max;
+  const sinceStart = startedAt != null ? LocalDay_between(startedAt, now) + 1 : consistencyDays.max;
   const windowDays = Math.min(consistencyDays.max, Math.max(consistencyDays.min, sinceStart));
-  const windowStart = startOfDay(now) - (windowDays - 1) * dayMs;
+  const windowStart = LocalDay_start(now) - (windowDays - 1) * LocalDay_ms;
   const done = history.filter((r) => r.startTime >= windowStart && r.startTime <= now).length;
   const planned = Math.max(1, Math.round((plannedPerWeek * windowDays) / 7));
   return { percent: Math.min(100, Math.round((done / planned) * 100)), done, planned, windowDays };

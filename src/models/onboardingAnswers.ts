@@ -70,7 +70,7 @@ function inRange(text: string, min: number, max: number): number | undefined {
   return text.trim() !== "" && Number.isFinite(n) && n >= min && n <= max ? n : undefined;
 }
 
-export function OnboardingAnswers_age(answers: IOnboardingAnswers): number | undefined {
+function OnboardingAnswers_age(answers: IOnboardingAnswers): number | undefined {
   const age = inRange(answers.age, 13, 100);
   return age == null ? undefined : Math.round(age);
 }
@@ -91,7 +91,7 @@ export function OnboardingAnswers_planInput(answers: IOnboardingAnswers): IBearP
   };
 }
 
-export function OnboardingAnswers_goalKind(goal: IBearGoal): IProgramGoalKind {
+function OnboardingAnswers_goalKind(goal: IBearGoal): IProgramGoalKind {
   return goal === "strength" ? "maintain" : "buildMuscle";
 }
 
