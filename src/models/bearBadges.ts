@@ -1,6 +1,8 @@
 import { IHistoryRecord } from "../types";
 import { IPersonalRecords } from "./history";
 import { FoodLog_dayKey, FoodLog_shiftDay, IFoodLog } from "./foodLog";
+import { IBearCountedWorkout } from "./bearGrowth";
+import { BearTier_all } from "./bearTier";
 
 export type IBearBadgeId =
   | "firstPr"
@@ -9,13 +11,20 @@ export type IBearBadgeId =
   | "honeyHunter"
   | "earlyBear"
   | "nightBear"
-  | "hundredWorkouts";
+  | "hundredWorkouts"
+  | "streak3"
+  | "streak7"
+  | "streak14"
+  | "streak30"
+  | "streak100"
+  | `level${number}`;
 
 export interface IBearBadgeInfo {
   id: IBearBadgeId;
   name: string;
   description: string;
   emoji: string;
+  image?: string;
 }
 
 export type IBearBadge = { id: IBearBadgeId; recordId: number; at: number } | { id: IBearBadgeId; day: string };
@@ -25,6 +34,18 @@ export interface IBearBadgeSources {
   prs: IPersonalRecords;
   doneDays: Set<string>;
   foodLog: IFoodLog;
+  workouts?: readonly IBearCountedWorkout[];
+}
+
+export interface IBearBadgeEntry {
+  info: IBearBadgeInfo;
+  badge?: IBearBadge;
+}
+
+export interface IBearBadgeGrid {
+  entries: IBearBadgeEntry[];
+  earned: number;
+  total: number;
 }
 
 export interface IBearBadgeCard {
@@ -32,6 +53,36 @@ export interface IBearBadgeCard {
   isNew: boolean;
   earned: number;
   total: number;
+}
+
+const streakBadges: { id: IBearBadgeId; days: number; emoji: string }[] = [
+  { id: "streak3", days: 3, emoji: "✨" },
+  { id: "streak7", days: 7, emoji: "⭐" },
+  { id: "streak14", days: 14, emoji: "🌟" },
+  { id: "streak30", days: 30, emoji: "💎" },
+  { id: "streak100", days: 100, emoji: "👑" },
+];
+
+const levelEmoji: Record<string, string> = {
+  teen: "🧢",
+  amateur: "💪",
+  rookie: "🏋️",
+  regular: "⚙️",
+  strong: "🦾",
+  athlete: "🏅",
+  power: "⚡",
+  titan: "🗿",
+  astronaut: "🚀",
+  lunar: "🌕",
+  mars: "🔴",
+};
+
+const levelBadges: { id: IBearBadgeId; minKg: number }[] = BearTier_all()
+  .filter((tier) => tier.level > 1)
+  .map((tier) => ({ id: levelId(tier.level), minKg: tier.minKg }));
+
+function levelId(level: number): IBearBadgeId {
+  return `level${level}`;
 }
 
 const infos: IBearBadgeInfo[] = [
@@ -42,6 +93,24 @@ const infos: IBearBadgeInfo[] = [
   { id: "earlyBear", name: "Early bear", description: "Started before 7am", emoji: "🌅" },
   { id: "nightBear", name: "Night bear", description: "Started after 10pm", emoji: "🌙" },
   { id: "hundredWorkouts", name: "100 workouts", description: "Finished 100 workouts", emoji: "💯" },
+  ...streakBadges.map(
+    (b): IBearBadgeInfo => ({
+      id: b.id,
+      name: `${b.days}-day streak`,
+      description: `Trained or logged food ${b.days} days in a row`,
+      emoji: b.emoji,
+    })
+  ),
+  ...BearTier_all()
+    .filter((tier) => tier.level > 1)
+    .map(
+      (tier): IBearBadgeInfo => ({
+        id: levelId(tier.level),
+        name: tier.name,
+        description: `Reached level ${tier.level}, ${tier.name}`,
+        emoji: levelEmoji[tier.id] ?? "🐻",
+      })
+    ),
 ];
 
 const dayMs = 24 * 60 * 60 * 1000;
@@ -59,15 +128,15 @@ function recordTime(record: IHistoryRecord): number {
   return record.endTime ?? record.startTime;
 }
 
-function seventhDayOfFirstRun(days: Set<string>): string | undefined {
+function lastDayOfFirstRun(days: Set<string>, runLength: number): string | undefined {
   for (const day of Array.from(days).sort()) {
     let length = 1;
     let cursor = day;
-    while (length < runDays && days.has(FoodLog_shiftDay(cursor, 1))) {
+    while (length < runLength && days.has(FoodLog_shiftDay(cursor, 1))) {
       cursor = FoodLog_shiftDay(cursor, 1);
       length += 1;
     }
-    if (length === runDays) {
+    if (length === runLength) {
       return cursor;
     }
   }
@@ -118,15 +187,38 @@ export function BearBadges_compute(sources: IBearBadgeSources): IBearBadge[] {
       earn("hundredWorkouts", record);
     }
   });
-  const bearWeekDay = seventhDayOfFirstRun(sources.doneDays);
+  const bearWeekDay = lastDayOfFirstRun(sources.doneDays, runDays);
   if (bearWeekDay != null) {
     earned.set("bearWeek", { id: "bearWeek", day: bearWeekDay });
   }
-  const honeyDay = seventhDayOfFirstRun(proteinDays(sources.foodLog));
+  const honeyDay = lastDayOfFirstRun(proteinDays(sources.foodLog), runDays);
   if (honeyDay != null) {
     earned.set("honeyHunter", { id: "honeyHunter", day: honeyDay });
   }
+  for (const streak of streakBadges) {
+    const day = lastDayOfFirstRun(sources.doneDays, streak.days);
+    if (day != null) {
+      earned.set(streak.id, { id: streak.id, day });
+    }
+  }
+  addLevelBadges(earned, sources.workouts ?? []);
   return Array.from(earned.values()).sort((a, b) => sortKey(a) - sortKey(b));
+}
+
+function addLevelBadges(earned: Map<IBearBadgeId, IBearBadge>, workouts: readonly IBearCountedWorkout[]): void {
+  let totalKg = 0;
+  let next = 0;
+  const ordered = [...workouts].sort(
+    (a, b) => recordTime(a.record) - recordTime(b.record) || a.record.id - b.record.id
+  );
+  for (const { record, countedKg } of ordered) {
+    totalKg += countedKg;
+    while (next < levelBadges.length && totalKg >= levelBadges[next].minKg) {
+      const id = levelBadges[next].id;
+      earned.set(id, { id, recordId: record.id, at: recordTime(record) });
+      next += 1;
+    }
+  }
 }
 
 function sortKey(badge: IBearBadge): number {
@@ -147,4 +239,19 @@ export function BearBadges_forRecord(badges: IBearBadge[], record: IHistoryRecor
     earned: owned.length,
     total: infos.length,
   };
+}
+
+// Earned badges come first, newest first. Locked badges follow in the order of the list.
+export function BearBadges_grid(badges: IBearBadge[]): IBearBadgeGrid {
+  const byId = new Map(badges.map((b) => [b.id, b]));
+  const earned = infos
+    .filter((info) => byId.has(info.id))
+    .map((info): IBearBadgeEntry => ({ info, badge: byId.get(info.id) }))
+    .sort((a, b) => sortKey(b.badge!) - sortKey(a.badge!));
+  const locked = infos.filter((info) => !byId.has(info.id)).map((info): IBearBadgeEntry => ({ info }));
+  return { entries: [...earned, ...locked], earned: earned.length, total: infos.length };
+}
+
+export function BearBadges_info(id: string): IBearBadgeInfo | undefined {
+  return infos.find((info) => info.id === id);
 }

@@ -30,7 +30,7 @@ import {
 import { useFoodLog } from "../utils/foodLogStore";
 import { useMusicLog } from "../utils/musicStore";
 import { NotesStore } from "../utils/notesStore";
-import { ChecklistStore } from "../utils/checklistStore";
+import { useBear } from "../utils/useBear";
 
 export function useJournalSources(): IJournalExportSources {
   const state = useTrackedState();
@@ -174,16 +174,15 @@ export function ScreenJournal(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const sources = useJournalSources();
   const { today, history, food } = sources;
-  const stats = useTrackedState().storage.stats;
-  const checklist = ChecklistStore.use();
+  const { state: bear } = useBear();
   const [day, setDay] = useState(today);
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showsExport, setShowsExport] = useState(false);
   const journal = JournalDay_build({ ...sources, day });
   const streak = useMemo(
-    () => DailyChecklist_streak(DailyChecklist_doneDays({ stats, foodLog: food, log: checklist }), today),
-    [stats, food, checklist, today]
+    () => DailyChecklist_streak(DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts }), today),
+    [food, bear.workouts, today]
   );
   const calendar = useMemo(
     () => MonthCalendar_build({ month, today, selected: day, workoutDays: MonthCalendar_workoutDays(history) }),

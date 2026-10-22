@@ -12,6 +12,8 @@ import { CheckInChart } from "./checkInChart";
 import { BearScene } from "./bearScene";
 import { BearPanel } from "./bearPanel";
 import { useBear } from "../utils/useBear";
+import { useBadgeCelebration } from "../utils/useBearBadges";
+import { BadgeUnlockedSheet } from "./badgeUnlockedSheet";
 import { BearStore } from "../utils/bearStore";
 import { NotesStore } from "../utils/notesStore";
 import { BearBoard_tiles, IBearBoardTarget } from "../models/bearBoard";
@@ -94,11 +96,22 @@ export function ScreenMyBear(): JSX.Element {
       </Pressable>,
     ],
   });
+  const celebration = useBadgeCelebration();
   return (
     <NavScreenContent>
       <MyBearLayout head={<MyBearHead />} checkIns={<CheckInChart />}>
         <ProgressSections />
       </MyBearLayout>
+      {celebration.badge != null && (
+        <BadgeUnlockedSheet
+          badge={celebration.badge}
+          onClose={() => celebration.dismiss(true)}
+          onViewAll={() => {
+            celebration.dismiss(false);
+            dispatch(Thunk_pushScreen("streak"));
+          }}
+        />
+      )}
     </NavScreenContent>
   );
 }
