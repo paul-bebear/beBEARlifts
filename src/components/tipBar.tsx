@@ -7,7 +7,7 @@ import { IFirstUseTip } from "../models/firstUseTips";
 export function TipBar(props: { tip: IFirstUseTip; onClose: () => void }): JSX.Element {
   return (
     <View
-      className="flex-row items-start px-4 py-3 mx-4 my-2 border rounded-2xl bg-yellow-50 border-yellow-300"
+      className="flex-row items-start px-4 py-3 mx-4 my-2 border rounded-2xl bg-background-cardyellow border-border-cardyellow"
       testID={props.tip.id}
       accessibilityRole="alert"
     >

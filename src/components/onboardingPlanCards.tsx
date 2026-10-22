@@ -24,7 +24,7 @@ export function OnboardingPlanCards(props: {
               aria-checked={active}
               disabled={props.busy}
               className={`w-full p-4 text-left border-2 rounded-2xl ${
-                active ? "border-yellow-500 bg-yellow-50" : "border-border-prominent"
+                active ? "border-yellow-500 bg-background-cardyellow" : "border-border-prominent"
               }`}
               onClick={() => props.onPick(i)}
             >
