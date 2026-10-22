@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import { createContext, JSX, useContext, useEffect } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { ISettings, ISet, IExerciseType } from "../types";
@@ -19,6 +19,11 @@ import {
   Weight_getOneRepMax,
 } from "../models/weight";
 import { Exercise_onerm } from "../models/exercise";
+import { FirstUseTips_hasCrossedWeight, IFirstUseEvent, IFirstUseTip } from "../models/firstUseTips";
+
+export const FirstUseTipContext = createContext<
+  { reportTip: (event: IFirstUseEvent) => void; tip?: IFirstUseTip } | undefined
+>(undefined);
 
 export type IWorkoutSetType = "program" | "warmup" | "adhoc";
 
@@ -30,6 +35,13 @@ interface IWorkoutExerciseSetTargetProps {
 }
 
 export function WorkoutExerciseSetTarget(props: IWorkoutExerciseSetTargetProps): JSX.Element {
+  const tipContext = useContext(FirstUseTipContext);
+  const hasCrossedWeight = FirstUseTips_hasCrossedWeight(props.set, props.setType);
+  useEffect(() => {
+    if (hasCrossedWeight) {
+      tipContext?.reportTip("crossedWeight");
+    }
+  }, [hasCrossedWeight, tipContext]);
   const cls = StyledText_cls(useRem());
   const sizeClass = props.sizeClass ?? "text-sm";
   switch (props.setType) {
@@ -57,7 +69,7 @@ export function WorkoutExerciseSetTarget(props: IWorkoutExerciseSetTargetProps):
     case "adhoc":
     case "program": {
       const aSet = props.set;
-      const isDiffWeight = aSet.weight && aSet.originalWeight && !Weight_eq(aSet.weight, aSet.originalWeight);
+      const isDiffWeight = hasCrossedWeight;
       const hasTarget = aSet.reps != null || aSet.weight != null;
       const builder = new StyledText();
       if (aSet.reps != null) {
