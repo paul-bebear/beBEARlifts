@@ -41,10 +41,14 @@ describe("BearArt", () => {
     }
   }
 
-  it("shows the pumped flex on cards while no lifting art is listed", () => {
-    expect(BearArt_liftingSizes).to.deep.equal([]);
-    expect(BearArt_cardSprite("male", 2)).to.equal("/images/bear/male/mood-small-pumped.webp");
-    expect(BearArt_cardSprite("female", 11)).to.equal("/images/bear/female/mood-space-pumped.webp");
+  it("shows the lifting pose on cards at every size", () => {
+    expect(BearArt_liftingSizes).to.deep.equal(["small", "medium", "big", "space"]);
+    expect(BearArt_cardSprite("male", 2)).to.equal("/images/bear/male/lift-small.webp");
+    expect(BearArt_cardSprite("female", 11)).to.equal("/images/bear/female/lift-space.webp");
+  });
+
+  it("falls back to the pumped flex for a size with no lifting art", () => {
+    expect(BearArt_cardSprite("male", 2, [])).to.equal("/images/bear/male/mood-small-pumped.webp");
   });
 
   it("shows the lifting pose on cards for the listed sizes only", () => {
