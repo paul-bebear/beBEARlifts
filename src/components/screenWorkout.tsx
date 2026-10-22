@@ -1,5 +1,5 @@
 import { JSX, memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { Platform, InteractionManager, View } from "react-native";
+import { Platform, InteractionManager, Pressable, View } from "react-native";
 import { useTrackClick } from "../utils/clickTracking";
 import { IHistoryRecord, IProgram, ISettings, IStats, ISubscription } from "../types";
 import { IDispatch } from "../ducks/types";
@@ -15,7 +15,9 @@ import { WorkoutHeartRate } from "./workoutHeartRate";
 import { Workout } from "./workout";
 import { WorkoutFinishButton } from "./workoutFinishButton";
 import { WorkoutMenu } from "./workoutMenu";
-import { Thunk_updateLiveActivity, Thunk_deleteProgress, Thunk_pauseWorkout } from "../ducks/thunks";
+import { Thunk_updateLiveActivity, Thunk_deleteProgress, Thunk_pauseWorkout, Thunk_pushScreen } from "../ducks/thunks";
+import { IconChevronDown } from "./icons/iconFoodUi";
+import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { Reps_findNextSetIndex } from "../models/set";
 import { Subscriptions_hasSubscription } from "../utils/subscriptions";
 import { navigateToModal, getCurrentRouteName } from "../navigation/navigationService";
@@ -254,10 +256,34 @@ function ScreenWorkoutInner(props: IScreenWorkoutProps): JSX.Element | null {
   const progressView = WorkoutProgressView_next(progressViewRef.current, progress);
   progressViewRef.current = progressView;
 
+  const navLeftButtons = useMemo(
+    () =>
+      isCurrent
+        ? [
+            <Pressable
+              key="close"
+              testID="workout-close"
+              data-testid="workout-close"
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              className="p-2"
+              onPress={() => {
+                trackClick("workout-close");
+                dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }));
+              }}
+            >
+              <IconChevronDown size={24} color={Tailwind_semantic().icon.neutral} />
+            </Pressable>,
+          ]
+        : undefined,
+    [isCurrent, dispatch, trackClick]
+  );
+
   useNavOptions({
     navTitle: isCurrent ? "Ongoing workout" : `${DateUtils_format(progress.date)}`,
     navOnTitleClick: !isCurrent ? onTitleClick : undefined,
     navSubtitle,
+    navLeftButtons,
     navRightButtons,
   });
 

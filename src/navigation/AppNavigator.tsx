@@ -97,6 +97,8 @@ import { NavModalAffiliate } from "./modals/NavModalAffiliate";
 import { NavModalImportFromOtherApps } from "./modals/NavModalImportFromOtherApps";
 import { NavModalDayFromAdhoc } from "./modals/NavModalDayFromAdhoc";
 import { NavModalNextWorkout } from "./modals/NavModalNextWorkout";
+import { PlusSheetModal } from "../components/plusSheet";
+import { AddFriendModal } from "../components/addFriendSheet";
 import { NavModalWhatsnew } from "./modals/NavModalWhatsnew";
 import { NavModalSignupRequest } from "./modals/NavModalSignupRequest";
 import { NavModalHearAboutUs } from "./modals/NavModalHearAboutUs";
@@ -428,6 +430,8 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="importFromOtherAppsModal" component={NavModalImportFromOtherApps} />
           <RootStack.Screen name="dayFromAdhocModal" component={NavModalDayFromAdhoc} />
           <RootStack.Screen name="nextWorkoutModal" component={NavModalNextWorkout} />
+          <RootStack.Screen name="plusSheetModal" component={PlusSheetModal} />
+          <RootStack.Screen name="addFriendModal" component={AddFriendModal} />
           <RootStack.Screen name="whatsnewModal" component={NavModalWhatsnew} />
           <RootStack.Screen name="signupRequestModal" component={NavModalSignupRequest} />
           <RootStack.Screen name="hearAboutUsModal" component={NavModalHearAboutUs} />

@@ -10,6 +10,7 @@ import type { IHelpKey } from "../components/help/helpRegistry";
 export interface INavHeaderOptions {
   navTitle?: ReactNode;
   navSubtitle?: ReactNode;
+  navLeftButtons?: JSX.Element[];
   navRightButtons?: JSX.Element[];
   navOnBack?: () => boolean;
   navOnTitleClick?: () => void;
@@ -52,6 +53,7 @@ export function NavHeader(props: IHeaderProps): JSX.Element | null {
         navCommon={navCommon}
         title={options.navTitle ?? ""}
         subtitle={options.navSubtitle}
+        leftButtons={options.navLeftButtons}
         rightButtons={options.navRightButtons}
         onBack={options.navOnBack}
         onTitleClick={options.navOnTitleClick}

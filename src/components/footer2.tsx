@@ -1,160 +1,118 @@
 import { JSX } from "react";
-import { View, Pressable, Platform } from "react-native";
+import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Thunk_pushScreen, Thunk_pushToEditProgram, Thunk_startProgramDay } from "../ducks/thunks";
+import { Thunk_pushScreen } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
 import { ITab } from "../models/screen";
-import { FooterButton } from "./footerButton";
-import { IconGraphs } from "./icons/iconGraphs";
 import { IconHome } from "./icons/iconHome";
-import { IconMe } from "./icons/iconMe";
+import { IconNotebook } from "./icons/iconNotebook";
+import { IconPlus2 } from "./icons/iconPlus2";
+import { BearMark } from "./shareCards/bearMark";
+import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { Tailwind_semantic, Tailwind_colors } from "../utils/tailwindConfig";
-import { IconDoc2 } from "./icons/iconDoc2";
-import { IconFriends } from "./icons/iconFriends";
-import { INavCommon } from "../models/state";
-import { IconBarbell2 } from "./icons/iconBarbell2";
-import { IconFood } from "./icons/iconFood";
-import { ObjectUtils_values } from "../utils/object";
-import { ProgramCard_hasErrors } from "../models/programCard";
 import { navigateToModal } from "../navigation/navigationService";
-import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 
 interface IFooterProps {
   dispatch: IDispatch;
-  navCommon: INavCommon;
   currentTab: ITab;
 }
+
+const pillHeight = 60;
 
 function getNativeShadowStyle(semantic: ReturnType<typeof Tailwind_semantic>): Record<string, unknown> {
   const colors = Tailwind_colors();
   const isDark = semantic.background.default === colors.black;
   const shadowColor = isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.2)";
   return {
-    boxShadow: [{ offsetX: 0, offsetY: -2, blurRadius: 6, spreadDistance: 0, color: shadowColor }],
+    boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 10, spreadDistance: 0, color: shadowColor }],
   };
+}
+
+interface ITabButtonProps {
+  name: string;
+  text: string;
+  isActive: boolean;
+  icon: (color: string) => JSX.Element;
+  onPress?: () => void;
+}
+
+function TabButton(props: ITabButtonProps): JSX.Element {
+  const color = props.isActive ? T.honey : Tailwind_semantic().icon.neutral;
+  return (
+    <Pressable
+      className="items-center justify-center flex-1"
+      data-testid={`footer-${props.name}`}
+      testID={`footer-${props.name}`}
+      accessibilityRole="tab"
+      accessibilityLabel={props.text}
+      accessibilityState={{ selected: props.isActive }}
+      onPress={props.onPress}
+    >
+      <View className="items-center justify-center w-scaled-6 h-scaled-6">{props.icon(color)}</View>
+      <Text numberOfLines={1} className="pt-0.5 text-xs font-semibold" style={{ color }}>
+        {props.text}
+      </Text>
+    </Pressable>
+  );
 }
 
 export function Footer2View(props: IFooterProps): JSX.Element {
   const semantic = Tailwind_semantic();
-  const activeColor = semantic.icon.purple;
-  const inactiveColor = semantic.icon.neutral;
   const currentTab = props.currentTab;
-  const isUserLoading = ObjectUtils_values(props.navCommon.loading.items).some(
-    (i) => i?.type === "fetchStorage" && !i.endTime
-  );
-  const hasErrorsInProgram = ProgramCard_hasErrors(props.navCommon.currentProgram, props.navCommon.settings);
   const insets = useSafeAreaInsets();
-  const nativeShadow = getNativeShadowStyle(semantic);
+  const shadow = getNativeShadowStyle(semantic);
+  const isMyBear = currentTab === "graphs" || currentTab === "me";
   return (
-    <View
-      className="items-center w-full bg-background-default footer-shadow"
-      style={[nativeShadow, { paddingBottom: insets.bottom }]}
-    >
-      <View className={`flex-row w-full px-1 pt-3 ${Platform.OS !== "web" ? "" : "pb-3"}`}>
-        <FooterButton
-          name="home"
-          currentTab={currentTab}
-          icon={(isActive) => <IconHome size={20} isSelected={isActive} />}
-          text="Home"
-          onClick={() => props.dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
-        />
-        {OfflineOnly_isEnabled() ? (
-          <FooterButton
-            name="friends"
-            currentTab={currentTab}
-            icon={(isActive) => <IconFriends isSelected={isActive} color={isActive ? activeColor : inactiveColor} />}
-            text="Friends"
-            onClick={() => props.dispatch(Thunk_pushScreen("friends", undefined, { tab: "friends" }))}
+    <View className="w-full bg-background-default" style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
+      <View className="flex-row items-center px-4 pt-2" style={{ gap: 12 }}>
+        <View
+          className="flex-row flex-1 border rounded-full bg-background-default border-border-neutral"
+          style={[shadow, { height: pillHeight }]}
+          accessibilityRole="tablist"
+        >
+          <TabButton
+            name="home"
+            text="Home"
+            isActive={currentTab === "home"}
+            icon={(color) => <IconHome size={22} color={color} isSelected={currentTab === "home"} />}
+            onPress={
+              currentTab === "home"
+                ? undefined
+                : () => props.dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))
+            }
           />
-        ) : (
-          <FooterButton
-            name="program"
-            currentTab={currentTab}
-            icon={(isActive) => <IconDoc2 isSelected={isActive} />}
-            hasDot={hasErrorsInProgram}
-            text="Program"
-            onClick={() => props.dispatch(Thunk_pushToEditProgram())}
+          <TabButton
+            name="journal"
+            text="Journal"
+            isActive={currentTab === "food"}
+            icon={(color) => <IconNotebook size={22} color={color} />}
+            onPress={
+              currentTab === "food"
+                ? undefined
+                : () => props.dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))
+            }
           />
-        )}
-        <View className="items-center flex-1">
-          <Pressable
-            data-testid="footer-workout"
-            testID="footer-workout"
-            className="-mt-scaled-6"
-            onPress={() => {
-              if (props.navCommon.isOngoingProgress) {
-                props.dispatch(Thunk_startProgramDay());
-              } else {
-                navigateToModal("nextWorkoutModal");
-              }
-            }}
-          >
-            <CreateButton isActive={currentTab === "workout"} />
-          </Pressable>
-          <Text
-            numberOfLines={1}
-            className={`text-2xs pt-0.5 ${currentTab === "workout" ? "text-text-purple" : "text-text-secondary"}`}
-          >
-            Workout
-          </Text>
+          <TabButton
+            name="my-bear"
+            text="My bear"
+            isActive={isMyBear}
+            icon={(color) => <BearMark size={24} color={color} faceColor={semantic.background.default} />}
+            onPress={() => props.dispatch(Thunk_pushScreen("progressDashboard", undefined, { tab: "graphs" }))}
+          />
         </View>
-        <FooterButton
-          name="food"
-          currentTab={currentTab}
-          icon={(isActive) => <IconFood size={20} isSelected={isActive} />}
-          text="Food"
-          onClick={() => props.dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
-        />
-        {OfflineOnly_isEnabled() ? (
-          <FooterButton
-            name="graphs"
-            currentTab={currentTab}
-            isActive={currentTab === "graphs" || currentTab === "me"}
-            popsToRoot={true}
-            icon={(isActive) => <IconGraphs color={isActive ? activeColor : inactiveColor} />}
-            text="Progress"
-            onClick={() => props.dispatch(Thunk_pushScreen("progressDashboard", undefined, { tab: "graphs" }))}
-          />
-        ) : (
-          <>
-            <FooterButton
-              name="graphs"
-              currentTab={currentTab}
-              icon={(isActive) => <IconGraphs color={isActive ? activeColor : inactiveColor} />}
-              text="Graphs"
-              onClick={() => props.dispatch(Thunk_pushScreen("graphsList", undefined, { tab: "graphs" }))}
-            />
-            <FooterButton
-              name="me"
-              currentTab={currentTab}
-              icon={(isActive) => {
-                const color = isActive
-                  ? undefined
-                  : props.navCommon.userId
-                    ? Tailwind_colors().green[600]
-                    : isUserLoading
-                      ? Tailwind_colors().lightgray[600]
-                      : Tailwind_colors().red[600];
-                return <IconMe isSelected={isActive} color={color} />;
-              }}
-              text="Me"
-              onClick={() => props.dispatch(Thunk_pushScreen("settings", undefined, { tab: "me" }))}
-            />
-          </>
-        )}
+        <Pressable
+          data-testid="footer-plus"
+          testID="footer-plus"
+          accessibilityRole="button"
+          accessibilityLabel="Add"
+          className="items-center justify-center rounded-full"
+          style={[shadow, { width: pillHeight, height: pillHeight, backgroundColor: T.honey }]}
+          onPress={() => navigateToModal("plusSheetModal")}
+        >
+          <IconPlus2 size={20} color={T.greenDark} />
+        </Pressable>
       </View>
-    </View>
-  );
-}
-
-function CreateButton(props: { isActive: boolean }): JSX.Element {
-  return (
-    <View
-      className="items-center justify-center rounded-full w-scaled-14 h-scaled-14 bg-button-primarybackground border-background-default footer-shadow"
-      style={[{ borderWidth: 3 }, getNativeShadowStyle(Tailwind_semantic())]}
-    >
-      <IconBarbell2 isSelected={props.isActive} />
     </View>
   );
 }

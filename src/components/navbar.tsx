@@ -25,6 +25,7 @@ interface INavbarCenterProps {
 
 interface INavbarProps extends INavbarCenterProps {
   dispatch: IDispatch;
+  leftButtons?: JSX.Element[];
   rightButtons?: JSX.Element[];
   onBack?: () => boolean;
   navCommon: INavCommon;
@@ -47,7 +48,7 @@ export const NavbarView = (props: INavbarProps): JSX.Element => {
   const error = ObjectUtils_values(errors)[0]?.error;
 
   const isLoading = Object.keys(loadingKeys).length > 0;
-  const numberOfLeftButtons = (showBackButton ? 1 : 0) + (isLoading ? 1 : 0);
+  const numberOfLeftButtons = (showBackButton ? 1 : 0) + (props.leftButtons?.length ?? 0) + (isLoading ? 1 : 0);
   const numberOfRightButtons = (props.rightButtons?.length ?? 0) + (props.helpKey || props.helpTourId ? 1 : 0);
   const numberOfButtons = Math.max(numberOfLeftButtons, numberOfRightButtons);
   const [rightRailWidth, setRightRailWidth] = useState(0);
@@ -70,6 +71,7 @@ export const NavbarView = (props: INavbarProps): JSX.Element => {
               <IconBack color={Tailwind_semantic().icon.neutral} />
             </Pressable>
           ) : null}
+          {props.leftButtons}
           {isLoading ? (
             <View className="pl-2">
               <IconSpinner width={20} height={20} color={Tailwind_semantic().icon.neutral} />

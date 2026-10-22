@@ -9,6 +9,7 @@ describe("WorkoutMenuActions", () => {
       hasNonEmptyProgram: true,
       hasNonEmptyCurrentProgram: true,
       isInAnyProgram: true,
+      hasTour: true,
     });
     expect(actions).to.eql(["editDay", "muscles", "notes", "tour", "delete"]);
   });
@@ -19,6 +20,7 @@ describe("WorkoutMenuActions", () => {
       hasNonEmptyProgram: false,
       hasNonEmptyCurrentProgram: false,
       isInAnyProgram: false,
+      hasTour: true,
     });
     expect(actions).to.eql(["notes", "share", "createProgramDay", "tour", "delete"]);
   });
@@ -29,7 +31,19 @@ describe("WorkoutMenuActions", () => {
       hasNonEmptyProgram: true,
       hasNonEmptyCurrentProgram: false,
       isInAnyProgram: true,
+      hasTour: true,
     });
     expect(actions).to.eql(["muscles", "notes", "tour", "delete"]);
+  });
+
+  it("drops the tour in the offline build", () => {
+    const actions = WorkoutMenuActions_list({
+      isCurrent: true,
+      hasNonEmptyProgram: true,
+      hasNonEmptyCurrentProgram: true,
+      isInAnyProgram: true,
+      hasTour: false,
+    });
+    expect(actions).to.eql(["editDay", "muscles", "notes", "delete"]);
   });
 });
