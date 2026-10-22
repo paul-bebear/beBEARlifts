@@ -13,7 +13,7 @@ import { FoodTextInput } from "./foodUi";
 import { FoodChoicesReview } from "./foodChoicesReview";
 import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
 import { AiConsent_disabledMessage, AiConsent_ensure } from "../utils/aiConsentClient";
-import { FoodAiSignIn } from "./foodPhotoPanel";
+import { FoodAiSignIn } from "./foodAiSignIn";
 import { IconCamera } from "./icons/iconCamera";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
