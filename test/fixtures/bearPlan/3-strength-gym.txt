@@ -1,0 +1,36 @@
+# Week 1
+## Full Body A
+main / used: none / 2x5, 1x5+ / 150s / progress: lp(5lb)
+build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
+iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+run / used: none / 1x1 0lb 600s|0s / warmup: none
+mobility / used: none / 2x1 0lb 45s|15s / warmup: none
+
+Squat / ...main / 95lb / progress: lp(10lb)
+Bench Press / ...main / 95lb
+Bent Over Row / ...build / 75lb
+Romanian Deadlift, Barbell / ...build / 95lb / progress: dp(10lb, 8, 12)
+Lateral Raise, Cable / ...iso / 10lb
+// Bike or treadmill, 10 easy minutes. You should still be able to talk.
+Cycling / ...run
+
+## Full Body B
+Deadlift / ...main / 135lb / progress: lp(10lb)
+Overhead Press / ...main / 65lb
+Lat Pulldown / ...build / 70lb
+Lunge, Dumbbell / ...build / 20lb
+Triceps Pushdown / ...iso / 40lb
+Calf Press on Leg Press / ...iso / 90lb
+
+## Full Body C
+Leg Press / ...main / 180lb / progress: lp(10lb)
+Incline Bench Press, Dumbbell / ...main / 30lb
+Seated Row / ...build / 70lb
+Hip Thrust / ...build / 95lb / progress: dp(10lb, 8, 12)
+Hammer Curl / ...iso / 20lb
+// Sit in a deep squat. Hold a door frame for balance.
+Assisted Squat / ...mobility
+// Slow, no weight. Sit tall and turn your chest side to side.
+Russian Twist / ...mobility
+// Slow reach to the floor. Feel the back of the leg.
+Single Leg Deadlift, Bodyweight / ...mobility

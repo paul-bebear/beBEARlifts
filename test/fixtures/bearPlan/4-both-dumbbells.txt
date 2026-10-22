@@ -1,0 +1,46 @@
+# Week 1
+## Upper A
+main / used: none / 2x5, 1x5+ / 150s / progress: lp(5lb)
+build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
+iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
+  if (completedReps >= reps && reps[1] < 12) {
+    reps += 1
+  }
+~}
+
+// No bench? Press from the floor.
+Bench Press, Dumbbell / ...main / 30lb
+Bent Over One Arm Row / ...build / 30lb
+Shoulder Press / ...build / 20lb
+Pullover / ...build / 25lb
+Lateral Raise / ...iso / 10lb
+Bicep Curl / ...iso / 15lb
+Skullcrusher, Dumbbell / ...iso / 15lb
+
+## Lower A
+Goblet Squat / ...main / 30lb
+Single Leg Deadlift / ...build / 25lb
+Lunge, Dumbbell / ...build / 20lb
+Single Leg Glute Bridge Straight Leg / ...bw
+Standing Calf Raise / ...iso / 30lb
+Dead Bug / ...bw
+
+## Upper B
+// Hands on a table or a bench.
+Incline Push Up / ...bw
+// Hold a door frame, or a towel looped round a post, lean back and pull.
+Vertical Row / ...bw
+Bent Over Row, Dumbbell / ...main / 25lb
+Chest Fly / ...iso / 15lb
+Reverse Fly / ...iso / 10lb
+Hammer Curl / ...iso / 15lb
+Triceps Extension / ...iso / 15lb
+
+## Lower B
+Romanian Deadlift / ...main / 40lb
+Bulgarian Split Squat / ...build / 20lb
+Glute Bridge / ...build / 40lb
+Step up / ...iso / 15lb
+Side Lying Clam / ...bw
+Standing Calf Raise / ...iso / 30lb

@@ -1,0 +1,43 @@
+# Week 1
+## Full Body A
+bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
+  if (completedReps >= reps && reps[1] < 12) {
+    reps += 1
+  }
+~}
+run / used: none / 1x1 0lb 600s|0s / warmup: none
+mobility / used: none / 2x1 0lb 45s|15s / warmup: none
+
+Squat, Bodyweight / ...bw
+Push Up / ...bw
+// Use a low bar, or lie under a sturdy table and pull your chest to the edge.
+Inverted Row / ...bw
+Romanian Deadlift, Bodyweight / ...bw
+Dead Bug / ...bw
+// 10 easy minutes. A jog outside counts too.
+High Knee Skips / ...run
+
+## Full Body B
+Single Leg Deadlift, Bodyweight / ...bw
+Pike Push Up / ...bw
+// Hold a door frame, or a towel looped round a post, lean back and pull.
+Vertical Row / ...bw
+Reverse Lunge, Bodyweight / ...bw
+Diamond Push Up / ...bw
+// Stand on a step and let the heels drop.
+Standing Calf Raise, Bodyweight / ...bw
+
+## Full Body C
+Split Squat, Bodyweight / ...bw
+// Hands on a table or a bench.
+Incline Push Up / ...bw
+// Use a low bar, or lie under a sturdy table and pull your chest to the edge.
+Wide Row / ...bw
+// Shoulders on a couch or a bed.
+Hip Thrust, Bodyweight / ...bw
+// Sit in a deep squat. Hold a door frame for balance.
+Assisted Squat / ...mobility
+// Slow, no weight. Sit tall and turn your chest side to side.
+Russian Twist / ...mobility
+// Slow reach to the floor. Feel the back of the leg.
+stretch: Single Leg Deadlift, Bodyweight / ...mobility
