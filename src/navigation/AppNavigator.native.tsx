@@ -104,6 +104,8 @@ import { NavModalPlaygroundEditExercise } from "./modals/NavModalPlaygroundEditE
 import { NavModalProgramPreviewMuscles } from "./modals/NavModalProgramPreviewMuscles";
 import { NavModalAmrap } from "./modals/NavModalAmrap";
 import { NavModalNextWorkout } from "./modals/NavModalNextWorkout";
+import { PlusSheetModal } from "../components/plusSheet";
+import { AddFriendModal } from "../components/addFriendSheet";
 import { NavModalEditTarget } from "./modals/NavModalEditTarget";
 import { NavModalSetTimer } from "./modals/NavModalSetTimer";
 import { NavModalSetTimerEdit } from "./modals/NavModalSetTimerEdit";
@@ -521,6 +523,8 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           />
           <RootStack.Screen name="programPreviewMusclesModal" component={NavModalProgramPreviewMuscles} />
           <RootStack.Screen name="nextWorkoutModal" component={NavModalNextWorkout} />
+          <RootStack.Screen name="plusSheetModal" component={PlusSheetModal} />
+          <RootStack.Screen name="addFriendModal" component={AddFriendModal} />
           <RootStack.Screen name="graphsModal" component={NavModalGraphs} options={{ sheetAllowedDetents: [0.9] }} />
           <RootStack.Screen name="statsSettingsModal" component={NavModalStatsSettings} />
           <RootStack.Screen name="rm1Modal" component={NavModal1RM} />

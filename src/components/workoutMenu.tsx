@@ -13,6 +13,7 @@ import { ActionMenu, IActionMenuAction } from "./actionMenu";
 import { IconKebab } from "./icons/iconKebab";
 import { Tour_start } from "./tour/tourConfigs";
 import { workoutTourConfig } from "./tour/workoutTourConfig";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 
 interface IWorkoutMenuProps {
   progress: IHistoryRecord;
@@ -33,7 +34,7 @@ const labels: Record<IWorkoutMenuAction, string> = {
   share: "Share",
   createProgramDay: "Create Program Day",
   tour: "Show Tour",
-  delete: "Delete Workout",
+  delete: "Discard workout",
 };
 
 function WorkoutMenuInner(props: IWorkoutMenuProps): JSX.Element {
@@ -47,6 +48,7 @@ function WorkoutMenuInner(props: IWorkoutMenuProps): JSX.Element {
     hasNonEmptyProgram: program != null && !Program_isEmpty(program),
     hasNonEmptyCurrentProgram: currentProgram != null && !Program_isEmpty(currentProgram),
     isInAnyProgram: allPrograms.some((p) => p.id === progress.programId),
+    hasTour: !OfflineOnly_isEnabled(),
   });
 
   const handlers = useMemo<Record<IWorkoutMenuAction, () => void>>(

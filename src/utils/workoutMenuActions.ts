@@ -5,6 +5,7 @@ export interface IWorkoutMenuActionsArgs {
   hasNonEmptyProgram: boolean;
   hasNonEmptyCurrentProgram: boolean;
   isInAnyProgram: boolean;
+  hasTour: boolean;
 }
 
 export function WorkoutMenuActions_list(args: IWorkoutMenuActionsArgs): IWorkoutMenuAction[] {
@@ -22,7 +23,9 @@ export function WorkoutMenuActions_list(args: IWorkoutMenuActionsArgs): IWorkout
   if (!args.isCurrent && !args.isInAnyProgram) {
     actions.push("createProgramDay");
   }
-  actions.push("tour");
+  if (args.hasTour) {
+    actions.push("tour");
+  }
   actions.push("delete");
   return actions;
 }
