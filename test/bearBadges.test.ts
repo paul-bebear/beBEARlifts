@@ -45,7 +45,7 @@ const set: ISet = {
 };
 
 function sources(history: IHistoryRecord[], extra: Partial<IBearBadgeSources> = {}): IBearBadgeSources {
-  return { history, prs: {}, doneDays: new Set(), foodLog: FoodLog_empty(), ...extra };
+  return { history, prs: {}, doneDays: new Set(), foodLog: FoodLog_empty(), tierSet: "male", ...extra };
 }
 
 function ids(s: IBearBadgeSources): string[] {
@@ -119,15 +119,30 @@ describe("BearBadges", () => {
       workout(3, at("2026-10-03", 12)),
     ];
     const workouts = [
-      { record: history[0], countedKg: 1500 },
-      { record: history[1], countedKg: 600 },
-      { record: history[2], countedKg: 8000 },
+      { record: history[0], countedKg: 4000 },
+      { record: history[1], countedKg: 1200 },
+      { record: history[2], countedKg: 20000 },
     ];
     const levels = BearBadges_compute(sources(history, { workouts })).filter((b) => b.id.startsWith("level"));
     expect(levels).to.deep.equal([
       { id: "level2", recordId: 2, at: history[1].endTime },
       { id: "level3", recordId: 3, at: history[2].endTime },
     ]);
+  });
+
+  it("crosses the women's level badges at the women's thresholds", () => {
+    const history = [workout(1, at("2026-10-01", 12)), workout(2, at("2026-10-02", 12))];
+    const workouts = [
+      { record: history[0], countedKg: 3500 },
+      { record: history[1], countedKg: 12000 },
+    ];
+    const levels = (side: "male" | "female"): unknown[] =>
+      BearBadges_compute(sources(history, { workouts, tierSet: side })).filter((b) => b.id.startsWith("level"));
+    expect(levels("female")).to.deep.equal([
+      { id: "level2", recordId: 1, at: history[0].endTime },
+      { id: "level3", recordId: 2, at: history[1].endTime },
+    ]);
+    expect(levels("male")).to.deep.equal([{ id: "level2", recordId: 2, at: history[1].endTime }]);
   });
 
   it("lists the old seven, five streak badges and 11 level badges from Teen to Mars", () => {

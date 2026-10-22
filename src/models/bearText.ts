@@ -2,7 +2,8 @@ import { IBearState } from "./bear";
 import { IBearCountedWorkout } from "./bearGrowth";
 import { BearHoney_dailyMax, IHoneyDay } from "./bearHoney";
 import { FoodLog_dayKey } from "./foodLog";
-import { BearTier_all, IBearTierProgress } from "./bearTier";
+import { BearComparison_for } from "./bearComparison";
+import { BearTier_all, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { IHistoryRecord } from "../types";
 
 const dayMs = 86400000;
@@ -19,10 +20,12 @@ export function BearText_levelTitle(progress: IBearTierProgress): string {
 
 export function BearText_levelLine(progress: IBearTierProgress): string {
   if (progress.next == null) {
-    return progress.tier.comparison != null ? `Top level · ${progress.tier.comparison}` : "Top level";
+    const top = BearComparison_for(progress.tier.minKg);
+    return top != null ? `Top level · ${top}` : "Top level";
   }
   const left = `${BearText_kg(progress.kgToNext)} to ${progress.next.name}`;
-  return progress.next.comparison != null ? `${left} · ${progress.next.comparison}` : left;
+  const comparison = BearComparison_for(progress.next.minKg);
+  return comparison != null ? `${left} · ${comparison}` : left;
 }
 
 function since(time: number, now: number): string {
@@ -84,11 +87,12 @@ export function BearText_finishLine(
   return `+${BearText_kg(counted.countedKg)}${earned} · ${next}`;
 }
 
-export function BearText_levelUp(level: number): { title: string; subtitle: string } {
-  const tier = BearTier_all().find((t) => t.level === level) ?? BearTier_all()[0];
+export function BearText_levelUp(level: number, set: IBearTierSet): { title: string; subtitle: string } {
+  const tiers = BearTier_all(set);
+  const tier = tiers.find((t) => t.level === level) ?? tiers[0];
+  const comparison = BearComparison_for(tier.minKg);
   return {
     title: `Level ${tier.level} · ${tier.name}`,
-    subtitle:
-      tier.comparison != null ? `Your bear grew! You have lifted ${tier.comparison} so far.` : "Your bear grew!",
+    subtitle: comparison != null ? `Your bear grew! You have lifted ${comparison} so far.` : "Your bear grew!",
   };
 }

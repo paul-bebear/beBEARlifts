@@ -20,7 +20,8 @@ const now = new Date(2026, 9, 22, 12).getTime();
 function state(overrides: Partial<IBearState>): IBearState {
   return {
     line: "male",
-    level: BearTier_progress(0, 0),
+    tierSet: "male",
+    level: BearTier_progress(0, 0, "male"),
     countedKg: 0,
     fullness: 50,
     energy: 100,
@@ -47,13 +48,17 @@ function record(id: number, endTime: number): IHistoryRecord {
 
 describe("BearText", () => {
   it("names the next level, the kg left and its comparison", () => {
-    const progress = BearTier_progress(0, 3800);
+    const progress = BearTier_progress(0, 12000, "male");
     expect(BearText_levelTitle(progress)).to.equal("Level 2 · Teen");
-    expect(BearText_levelLine(progress)).to.equal("6,200 kg to Amateur · a T. rex");
+    expect(BearText_levelLine(progress)).to.equal("13,000 kg to Amateur · a school bus");
+    expect(BearText_levelLine(BearTier_progress(0, 20000, "female"))).to.equal(
+      "16,000 kg to Rookie · a humpback whale"
+    );
   });
 
   it("says top level at Mars", () => {
-    expect(BearText_levelLine(BearTier_progress(0, 6000000))).to.equal("Top level · a full Starship");
+    expect(BearText_levelLine(BearTier_progress(0, 7000000, "male"))).to.equal("Top level · a full Starship");
+    expect(BearText_levelLine(BearTier_progress(0, 4200000, "female"))).to.equal("Top level · a Saturn V");
   });
 
   it("names the weekday the bear last trained", () => {
@@ -78,18 +83,18 @@ describe("BearText", () => {
 
   it("shows the kg added and the next level on the finish screen", () => {
     const today = record(2, now);
-    const progress = BearTier_progress(0, 3800);
+    const progress = BearTier_progress(0, 12000, "male");
     expect(BearText_finishLine(today, [{ record: today, countedKg: 1840 }], progress)).to.equal(
-      "+1,840 kg · Amateur in 6,200 kg"
+      "+1,840 kg · Amateur in 13,000 kg"
     );
   });
 
   it("puts the honey between the kg and the next level", () => {
     const today = record(2, now);
-    const progress = BearTier_progress(0, 3800);
+    const progress = BearTier_progress(0, 12000, "male");
     const workouts = [{ record: today, countedKg: 1840 }];
-    expect(BearText_finishLine(today, workouts, progress, 5)).to.equal("+1,840 kg · +5 honey · Amateur in 6,200 kg");
-    expect(BearText_finishLine(today, workouts, BearTier_progress(0, 6000000), 10)).to.equal(
+    expect(BearText_finishLine(today, workouts, progress, 5)).to.equal("+1,840 kg · +5 honey · Amateur in 13,000 kg");
+    expect(BearText_finishLine(today, workouts, BearTier_progress(0, 7000000, "male"), 10)).to.equal(
       "+1,840 kg · +10 honey · Top level"
     );
   });
@@ -97,7 +102,7 @@ describe("BearText", () => {
   it("says nothing about honey when the workout earned none", () => {
     const first = record(1, now - hourMs);
     const second = record(2, now);
-    const progress = BearTier_progress(0, 0);
+    const progress = BearTier_progress(0, 0, "male");
     expect(BearText_finishLine(second, [{ record: first, countedKg: 900 }], progress, 0)).to.not.contain("honey");
     expect(BearText_finishLine(second, [], progress, 0)).to.not.contain("honey");
   });
@@ -126,7 +131,7 @@ describe("BearText", () => {
   it("explains a workout that added nothing", () => {
     const first = record(1, now - hourMs);
     const second = record(2, now);
-    const progress = BearTier_progress(0, 0);
+    const progress = BearTier_progress(0, 0, "male");
     expect(BearText_finishLine(second, [{ record: first, countedKg: 900 }], progress)).to.equal(
       "+0 kg · one workout a day grows your bear"
     );
@@ -134,9 +139,17 @@ describe("BearText", () => {
   });
 
   it("titles the level-up card", () => {
-    expect(BearText_levelUp(3)).to.deep.equal({
+    expect(BearText_levelUp(3, "male")).to.deep.equal({
       title: "Level 3 · Amateur",
-      subtitle: "Your bear grew! You have lifted a T. rex so far.",
+      subtitle: "Your bear grew! You have lifted a school bus so far.",
     });
+  });
+
+  it("words the level-up line from the set's own threshold", () => {
+    expect(BearText_levelUp(4, "male").subtitle).to.equal(
+      "Your bear grew! You have lifted an empty Boeing 737 so far."
+    );
+    expect(BearText_levelUp(4, "female").subtitle).to.equal("Your bear grew! You have lifted a humpback whale so far.");
+    expect(BearText_levelUp(1, "female").subtitle).to.equal("Your bear grew!");
   });
 });

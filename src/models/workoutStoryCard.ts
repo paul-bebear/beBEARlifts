@@ -8,7 +8,7 @@ import {
 } from "./history";
 import { Exercise_get, Exercise_synergistMusclesGroups, Exercise_targetMusclesGroups } from "./exercise";
 import { Weight_convertTo } from "./weight";
-import { BearTier_progress, IBearTierProgress } from "./bearTier";
+import { BearTier_progress, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { BearBadges_forRecord, IBearBadgeCard } from "./bearBadges";
 import { IShareAchievements } from "./shareAchievements";
 import { ILiftEquivalent, LiftEquivalents_pick } from "./liftEquivalents";
@@ -58,6 +58,7 @@ export interface IWorkoutShareInput {
   settings: ISettings;
   prs: IPersonalRecords;
   achievements: IShareAchievements;
+  tierSet: IBearTierSet;
   seed: number;
 }
 
@@ -220,7 +221,7 @@ export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShare
   const { record, settings, prs, achievements } = input;
   const stats = WorkoutStoryCard_stats(record, settings);
   const lifetime = achievements.lifetimeKg.get(record.id) ?? { beforeKg: 0, afterKg: stats.weightKg };
-  const tier = BearTier_progress(lifetime.beforeKg, lifetime.afterKg);
+  const tier = BearTier_progress(lifetime.beforeKg, lifetime.afterKg, input.tierSet);
   const equivalent = LiftEquivalents_pick(stats.weightKg, input.seed);
   return {
     stats,

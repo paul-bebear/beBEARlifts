@@ -52,17 +52,17 @@ describe("BadgeCelebration", () => {
 
   it("waits while a level-up card is due, then shows the badge", () => {
     const saved = store({ seeded: true, celebratedLevel: 1 });
-    expect(BadgeCelebration_isLevelUpDue(saved, 2500)).to.equal(true);
-    const waiting = BadgeCelebration_step([level2], saved, 2500);
+    expect(BadgeCelebration_isLevelUpDue(saved, 5000, "male")).to.equal(true);
+    const waiting = BadgeCelebration_step([level2], saved, 5000, "male");
     expect(waiting.badge).to.equal(undefined);
     expect(waiting.store).to.equal(saved);
     const celebrated = { ...saved, celebratedLevel: 2 };
-    expect(BadgeCelebration_isLevelUpDue(celebrated, 2500)).to.equal(false);
-    expect(BadgeCelebration_step([level2], celebrated, 2500).badge).to.equal(level2);
+    expect(BadgeCelebration_isLevelUpDue(celebrated, 5000, "male")).to.equal(false);
+    expect(BadgeCelebration_step([level2], celebrated, 5000, "male").badge).to.equal(level2);
   });
 
   it("does not hold badges back for a store the bear has not seeded yet", () => {
-    expect(BadgeCelebration_isLevelUpDue(store({ celebratedLevel: 1 }), 2500)).to.equal(false);
+    expect(BadgeCelebration_isLevelUpDue(store({ celebratedLevel: 1 }), 5000, "male")).to.equal(false);
   });
 
   it("keeps the seen list and the seeded flag through a parse", () => {

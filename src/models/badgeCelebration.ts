@@ -1,6 +1,7 @@
 import { IBearBadge } from "./bearBadges";
 import { IBearStoreData } from "./bearStoreData";
 import { BearCelebration_reachedLevel } from "./bearCelebration";
+import { IBearTierSet } from "./bearTier";
 
 export interface IBadgeCelebrationStep {
   store: IBearStoreData;
@@ -12,16 +13,17 @@ function withSeen(store: IBearStoreData, ids: string[]): IBearStoreData {
 }
 
 // A level-up card is due while the bear's level is above celebratedLevel. The card shows on the finish screen.
-export function BadgeCelebration_isLevelUpDue(store: IBearStoreData, countedKg: number): boolean {
-  return store.seeded === true && BearCelebration_reachedLevel(countedKg) > store.celebratedLevel;
+export function BadgeCelebration_isLevelUpDue(store: IBearStoreData, countedKg: number, set: IBearTierSet): boolean {
+  return store.seeded === true && BearCelebration_reachedLevel(countedKg, set) > store.celebratedLevel;
 }
 
 export function BadgeCelebration_step(
   badges: IBearBadge[],
   store: IBearStoreData,
-  countedKg: number
+  countedKg: number,
+  set: IBearTierSet
 ): IBadgeCelebrationStep {
-  if (BadgeCelebration_isLevelUpDue(store, countedKg)) {
+  if (BadgeCelebration_isLevelUpDue(store, countedKg, set)) {
     return { store };
   }
   return BadgeCelebration_next(badges, store);

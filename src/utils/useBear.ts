@@ -4,10 +4,11 @@ import { untrack, useTrackedState } from "../navigation/TrackedStateContext";
 import { Bear_state, IBearState } from "../models/bear";
 import { BearCelebration_seed } from "../models/bearCelebration";
 import { IBearStoreData } from "../models/bearStoreData";
+import { BearTier_setFor } from "../models/bearTier";
 import { Program_evaluate, Program_isEmpty } from "../models/program";
 import { ProgressHub_plannedPerWeek } from "../models/progressHub";
 import { BearStore } from "./bearStore";
-import { useFoodLog } from "./foodLogStore";
+import { FoodLogStore_load, useFoodLog } from "./foodLogStore";
 
 export interface IBearView {
   state: IBearState;
@@ -51,7 +52,13 @@ export function useBear(): IBearView {
     [history, foodLog, stats, settings, plannedPerWeek, store, isFocused]
   );
   useEffect(() => {
-    BearStore.update((saved) => BearCelebration_seed(saved, state.countedKg)).catch(() => undefined);
+    FoodLogStore_load()
+      .then((log) =>
+        BearStore.update((saved) =>
+          BearCelebration_seed(saved, state.countedKg, BearTier_setFor(log.profile.sex, saved.line))
+        )
+      )
+      .catch(() => undefined);
   }, []);
   return { state, store, plannedPerWeek };
 }

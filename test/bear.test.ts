@@ -200,13 +200,49 @@ describe("Bear_state", () => {
   });
 
   it("keeps a reached level pending until its celebration is saved", () => {
-    const history = [0, 24, 48, 72, 96].map((hours) => workout(now - hours * hourMs));
+    const history = [0, 24, 48, 72, 96].map((hours) => workout(now - hours * hourMs, 100));
     const data = sources({ history });
     const state = Bear_state(data, now);
-    expect([state.level.tier.level, state.level.isTierUp]).to.deep.equal([2, true]);
+    expect([state.countedKg, state.level.tier.level, state.level.isTierUp]).to.deep.equal([5000, 2, true]);
     expect(
       Bear_state({ ...data, bear: { ...BearStoreData_empty(), celebratedLevel: 2 } }, now).level.isTierUp
     ).to.equal(false);
+  });
+
+  describe("level set", () => {
+    const eighteenThousandKg = Array.from({ length: 18 }, (_, i) => workout(now - i * 24 * hourMs, 100));
+
+    it("starts every bear on the men's set", () => {
+      expect(Bear_state(sources(), now).tierSet).to.equal("male");
+    });
+
+    it("takes the food profile sex first, then the bear line, then the men's set", () => {
+      const female = { ...FoodLog_empty(), profile: { ...FoodLog_empty().profile, sex: "female" as const } };
+      const male = { ...FoodLog_empty(), profile: { ...FoodLog_empty().profile, sex: "male" as const } };
+      const femaleBear = { ...BearStoreData_empty(), line: "female" as const };
+      const maleBear = { ...BearStoreData_empty(), line: "male" as const };
+      expect(Bear_state(sources({ foodLog: female }), now).tierSet).to.equal("female");
+      expect(Bear_state(sources({ foodLog: male, bear: femaleBear }), now).tierSet).to.equal("male");
+      expect(Bear_state(sources({ foodLog: female, bear: maleBear }), now).tierSet).to.equal("female");
+      expect(Bear_state(sources({ bear: femaleBear }), now).tierSet).to.equal("female");
+      expect(Bear_state(sources({ bear: maleBear }), now).tierSet).to.equal("male");
+    });
+
+    it("measures the same counted kg against the women's thresholds", () => {
+      const history = [0, 24, 48].map((hours) => workout(now - hours * hourMs, 100));
+      const female = { ...FoodLog_empty(), profile: { ...FoodLog_empty().profile, sex: "female" as const } };
+      const men = Bear_state(sources({ history }), now);
+      const women = Bear_state(sources({ history, foodLog: female }), now);
+      expect([men.countedKg, men.level.tier.name]).to.deep.equal([3000, "Cub"]);
+      expect([women.countedKg, women.level.tier.name]).to.deep.equal([3000, "Teen"]);
+    });
+
+    it("keeps a level already celebrated when the new numbers put the total lower", () => {
+      const bear = { ...BearStoreData_empty(), celebratedLevel: 3 };
+      const state = Bear_state(sources({ history: eighteenThousandKg, bear }), now);
+      expect([state.countedKg, state.level.tier.name, state.level.isTierUp]).to.deep.equal([18000, "Amateur", false]);
+      expect(Bear_state(sources({ history: eighteenThousandKg }), now).level.tier.name).to.equal("Teen");
+    });
   });
 
   it("uses normal at exactly 40 energy when the bear has enough food", () => {

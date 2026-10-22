@@ -12,6 +12,8 @@ import { History_getPersonalRecords } from "../models/history";
 import { ShareAchievements_build } from "../models/shareAchievements";
 import { DailyChecklist_doneDays } from "../models/dailyChecklist";
 import { useFoodLog } from "../utils/foodLogStore";
+import { BearStore } from "../utils/bearStore";
+import { BearTier_setFor } from "../models/bearTier";
 import { BearGrowth_history } from "../models/bearGrowth";
 import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
 import { Dialog_alert } from "../utils/dialog";
@@ -46,6 +48,7 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [photo, setPhoto] = useState<string | undefined>(undefined);
   const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
+  const tierSet = BearTier_setFor(foodLog.profile.sex, BearStore.use().line);
   const growth = useMemo(
     () => BearGrowth_history(props.history, props.settings, props.stats),
     [props.history, props.settings, props.stats]
@@ -62,12 +65,13 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
         foodLog,
         workouts: growth.workouts,
         settings: props.settings,
+        tierSet,
       }),
-    [props.history, prs, growth, foodLog, props.settings]
+    [props.history, prs, growth, foodLog, props.settings, tierSet]
   );
   const data = useMemo(
-    () => WorkoutStoryCard_build({ record: props.record, settings: props.settings, prs, achievements, seed }),
-    [props.record, props.settings, prs, achievements, seed]
+    () => WorkoutStoryCard_build({ record: props.record, settings: props.settings, prs, achievements, tierSet, seed }),
+    [props.record, props.settings, prs, achievements, tierSet, seed]
   );
   const actions = FinishDayActions_list({ musicEnabled: props.musicEnabled, exportAvailable: true });
   const frozen = exporter.job.frozen;
