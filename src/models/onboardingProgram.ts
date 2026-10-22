@@ -9,7 +9,8 @@ export function OnboardingProgram_prepare(
   programs: IProgram[],
   settings: ISettings,
   id: string,
-  now: number
+  now: number,
+  name: string = "My training plan"
 ): { program: IProgram; days: number } {
   let program: IProgram;
   if (answer.builtin != null) {
@@ -40,7 +41,7 @@ export function OnboardingProgram_prepare(
     program = {
       vtype: "program",
       id,
-      name: "My training plan",
+      name,
       url: "",
       author: "",
       shortDescription: "",
@@ -52,7 +53,7 @@ export function OnboardingProgram_prepare(
       exercises: [],
       tags: [],
       clonedAt: now,
-      planner: { vtype: "planner", name: "My training plan", weeks },
+      planner: { vtype: "planner", name, weeks },
     };
   }
   if (answer.historyCsv?.trim()) {
@@ -63,4 +64,8 @@ export function OnboardingProgram_prepare(
   }
   const days = program.planner?.weeks[0]?.days.length ?? program.days.length;
   return { program, days };
+}
+
+export function OnboardingProgram_dayNames(liftoscript: string): string[] {
+  return Array.from(liftoscript.matchAll(/^## (.+)$/gm), (m) => m[1].trim());
 }

@@ -13,6 +13,9 @@ import * as ai from "../src/utils/aiRequest";
 import ss1 from "../programdata/programs/builtin/ss1.json";
 import { AiConsent_decide } from "../src/models/aiConsent";
 import { AiConsentStore } from "../src/utils/aiConsentClient";
+import { ProgramGoalStore } from "../src/utils/programGoalStore";
+import { IProgramGoalLog, ProgramGoal_empty } from "../src/models/programGoal";
+import { Equipment_getCurrentGym } from "../src/models/equipment";
 
 const csv =
   "Workout DateTime,Program,Day Name,Exercise,Is Warmup Set?,Required Reps,Completed Reps,Is AMRAP?,Required RPE,Completed RPE,Log RPE?,Required Weight Value,Required Weight Unit,Completed Weight Value,Completed Weight Unit,Ask Weight?,Completed Reps Time,Target Muscles,Synergist Muscles,Notes\n2026-03-01T10:00:00.000Z,Plan,Day 1,Squat,0,5,5,0,,,0,60,kg,60,kg,0,,,,";
@@ -22,8 +25,13 @@ describe("Onboarding commands", () => {
   let events: IOnboardingEvent[];
   let dispatch: IDispatch;
   let foodLog = FoodLog_empty();
+  let goalLog: IProgramGoalLog = ProgramGoal_empty();
 
   beforeEach(() => {
+    goalLog = ProgramGoal_empty();
+    sinon.stub(ProgramGoalStore, "update").callsFake(async (fn) => {
+      goalLog = fn(goalLog);
+    });
     sinon.stub(AiConsentStore, "load").resolves(AiConsent_decide(true, 123));
     state = { storage: Storage_getDefault(), programs: OnboardingCatalog_programs(), loading: { items: {} } } as IState;
     events = [];
@@ -46,23 +54,45 @@ describe("Onboarding commands", () => {
     await OnboardingCommand_run(form, (e) => events.push(e))(dispatch, () => state, env);
   }
 
-  it("prepares a bundled plan without network calls or saving it before Start", async () => {
+  function cardsFor(answers: Partial<IOnboardingState["answers"]>): IOnboardingState {
+    let form = Onboarding_reduce(Onboarding_empty(), { type: "auth", signedIn: false });
+    form = Onboarding_reduce(form, { type: "answers", patch: answers });
+    form = { ...form, step: "want" };
+    return Onboarding_reduce(form, { type: "recommend" });
+  }
+
+  it("builds the picked card's plan on Start, offline, with the card's name", async () => {
     state.programs = [];
     const request = sinon.stub(ai, "AiRequest_post");
-    await run({ ...Onboarding_empty(), command: "fallback" });
-    expect(events[0].type).to.equal("ready");
-    if (events[0].type === "ready") {
-      expect(events[0].result).to.include({ name: "Fierce 5", days: 3 });
-    }
-    expect(state.storage.programs).to.have.length(0);
+    const plan = Onboarding_reduce(cardsFor({ places: ["gym"], goal: "size" }), { type: "start" });
+    await run(plan);
+    expect(events).to.deep.equal([]);
     expect(request.called).to.equal(false);
+    const program = state.storage.programs[0];
+    expect(program.name).to.equal(plan.cards[0].name);
+    expect(state.storage.currentProgramId).to.equal(program.id);
+    expect(program.planner?.weeks[0].days.length).to.be.greaterThan(0);
+    expect(goalLog.current?.kind).to.equal("buildMuscle");
+    expect(foodLog.profile).to.include({ goal: "gain", activity: "light" });
+  });
+  it("keeps only the equipment of the picked places in the current gym", async () => {
+    await run(Onboarding_reduce(cardsFor({ places: ["dumbbells"], goal: "strength" }), { type: "start" }));
+    const equipment = Equipment_getCurrentGym(state.storage.settings).equipment;
+    expect(equipment.dumbbell?.isDeleted).to.equal(false);
+    expect(equipment.barbell?.isDeleted).to.equal(true);
+    expect(goalLog.current?.kind).to.equal("maintain");
+  });
+  it("leaves a goal the user already set alone", async () => {
+    goalLog = { version: 1, current: { kind: "loseFat", activity: "under5k", startedAt: 1 }, past: [] };
+    await run(Onboarding_reduce(cardsFor({ places: ["gym"] }), { type: "start" }));
+    expect(goalLog.current?.kind).to.equal("loseFat");
   });
 
-  it("uses the built-in plan when AI permission was revoked", async () => {
+  it("shows the beBEAR cards when AI permission was revoked", async () => {
     (AiConsentStore.load as sinon.SinonStub).resolves(AiConsent_decide(false, 123));
     const request = sinon.stub(ai, "AiRequest_post");
     await run({ ...Onboarding_empty(), useAi: true, command: "prepare" });
-    expect(events[0].type).to.equal("ready");
+    expect(events[0].type).to.equal("fallback");
     expect(request.called).to.equal(false);
   });
   it("repairs an invalid Liftoscript answer once using the exact validation error", async () => {
@@ -106,16 +136,12 @@ describe("Onboarding commands", () => {
     events = [];
     await run({ ...Onboarding_empty(), command: "prepare" });
     expect(request.callCount).to.equal(1);
-    expect(events[0]).to.include({ type: "ready" });
-    if (events[0].type === "ready") {
-      expect(events[0].result.fallbackReason).to.equal("No connection");
-      expect(events[0].result.answer.note).not.to.include("No connection");
-    }
+    expect(events[0]).to.deep.equal({ type: "fallback", run: 0, reason: "No connection" });
   });
   it("tags every answer with the run that asked for it", async () => {
     sinon.stub(ai, "AiRequest_post").resolves({ ok: false, error: "No connection" });
     await run({ ...Onboarding_empty(), command: "prepare", run: 7 });
-    expect(events[0]).to.include({ type: "ready", run: 7 });
+    expect(events[0]).to.include({ type: "fallback", run: 7 });
   });
 
   async function prepareWithHistory(): Promise<IOnboardingState> {
@@ -150,7 +176,7 @@ describe("Onboarding commands", () => {
         unit: "kg",
         age: "30",
         sex: "male",
-        goal: "lose",
+        goal: "strength",
       },
     };
     await run(form);
@@ -161,7 +187,8 @@ describe("Onboarding commands", () => {
     expect(state.storage.history).to.have.length(1);
     expect(state.storage.importSessions?.[0].workoutCount).to.equal(1);
     expect(state.storage.stats.weight.weight?.[0].value).to.deep.equal({ value: 80, unit: "kg" });
-    expect(foodLog.profile).to.include({ heightCm: 180, sex: "male", goal: "lose" });
+    expect(foodLog.profile).to.include({ heightCm: 180, sex: "male", goal: "maintain" });
+    expect(goalLog.current).to.include({ kind: "maintain", sex: "male" });
   });
   it("skips workouts already in history and all workouts when the box is unticked", async () => {
     const done = await prepareWithHistory();

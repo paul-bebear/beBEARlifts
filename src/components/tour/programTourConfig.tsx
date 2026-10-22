@@ -10,6 +10,7 @@ import { IconUiMode } from "../icons/iconUiMode";
 import { getCurrentScreenData } from "../../navigation/navigationService";
 import { IState } from "../../models/state";
 import { Support_docsUrl } from "../../utils/support";
+import { OfflineOnly_isEnabled } from "../../utils/offlineOnly";
 
 const paraCn = "text-sm leading-relaxed text-text-secondary";
 
@@ -34,7 +35,9 @@ function isProgramEmpty(state: Parameters<NonNullable<ITourConfig["shouldStart"]
 export const programTourConfig: ITourConfig = {
   id: "program",
   shouldStart: (state) => {
-    return getCurrentScreenData()?.name === "editProgram" && state.storage.history.length < 4;
+    return (
+      !OfflineOnly_isEnabled() && getCurrentScreenData()?.name === "editProgram" && state.storage.history.length < 4
+    );
   },
   steps: [
     {
