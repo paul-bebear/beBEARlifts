@@ -10,6 +10,7 @@ import { FoodTextInput } from "./foodUi";
 import { Button } from "./button";
 import { FoodTargetsCalculator } from "./foodTargetsCalculator";
 import { IUnit, IWeight } from "../types";
+import { ExportFilename_dated } from "../models/exportFilename";
 
 const rows: { key: keyof IFoodGoals; label: string; unit: string }[] = [
   { key: "calories", label: "Calories", unit: "cal" },
@@ -138,9 +139,7 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
           name="food-goals-content-export-food-log"
           kind="pill-outline"
           className="flex-1"
-          onPress={() =>
-            Exporter_toFile(`bebear_foodlog_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(log))
-          }
+          onPress={() => Exporter_toFile(ExportFilename_dated("bebear_foodlog_", Date.now()), JSON.stringify(log))}
         >
           Export food log
         </Button>

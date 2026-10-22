@@ -32,6 +32,7 @@ export interface IReportLog {
 interface IExerciseSession {
   top: number;
   reps: number;
+  sets: number;
   efforts: IEffort[];
   missedSets: number;
 }
@@ -85,6 +86,7 @@ function sessionOf(entry: IHistoryEntry, unit: IUnit): IExerciseSession | undefi
   return {
     top: Math.max(...weights),
     reps: done.reduce((sum, s) => sum + (s.completedReps ?? 0), 0),
+    sets: done.length,
     efforts,
     missedSets,
   };
@@ -125,11 +127,22 @@ function weightItems(
     ];
   }
   const last = past[0];
-  if (Math.abs(today.top - last.top) <= last.top * 0.025 && today.reps < last.reps * 0.8) {
-    const text = `${name}: ${today.reps} reps in total, down from ${last.reps} last time at about the same weight.`;
-    return [makeItem(key, name, "fewerReps", text, true)];
+  if (Math.abs(today.top - last.top) <= last.top * 0.025 && repsPerSet(today) < repsPerSet(last) * 0.8) {
+    const reps =
+      today.sets === last.sets
+        ? `${today.reps} reps in total, down from ${last.reps}`
+        : `${oneDecimal(repsPerSet(today))} reps a set, down from ${oneDecimal(repsPerSet(last))}`;
+    return [makeItem(key, name, "fewerReps", `${name}: ${reps} last time at about the same weight.`, true)];
   }
   return [];
+}
+
+function repsPerSet(session: IExerciseSession): number {
+  return session.reps / session.sets;
+}
+
+function oneDecimal(value: number): number {
+  return Math.round(value * 10) / 10;
 }
 
 function effortItems(key: string, name: string, today: IExerciseSession, asked: boolean): IReportItem[] {

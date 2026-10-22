@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   ICalendarCell,
+  IMonthCalendarInput,
   MonthCalendar_build,
   MonthCalendar_dayTitle,
   MonthCalendar_shift,
@@ -10,20 +11,35 @@ import {
   MonthCalendar_workoutDays,
 } from "../src/models/monthCalendar";
 
-const october = MonthCalendar_build({
+const octoberInput: IMonthCalendarInput = {
   month: "2026-10",
   today: "2026-10-21",
   selected: "2026-10-14",
   workoutDays: new Set(["2026-10-20", "2026-09-29"]),
-});
+  startsMonday: true,
+};
+const october = MonthCalendar_build(octoberInput);
 
 describe("MonthCalendar", () => {
   it("starts weeks on Monday and pads with the neighbouring months", () => {
     expect(october.title).to.equal("October 2026");
+    expect(october.weekdayLabels).to.deep.equal(["M", "T", "W", "T", "F", "S", "S"]);
     expect(october.weeks.length).to.equal(5);
     expect(october.weeks[0][0]).to.deep.include({ day: "2026-09-28", isInMonth: false, dayNumber: 28 });
     expect(october.weeks[0][3]).to.deep.include({ day: "2026-10-01", isInMonth: true });
     expect(october.weeks[4][6].day).to.equal("2026-11-01");
+  });
+
+  it("starts weeks on Sunday when the week-start setting says so", () => {
+    const sundayFirst = MonthCalendar_build({ ...octoberInput, startsMonday: false });
+    expect(sundayFirst.weekdayLabels).to.deep.equal(["S", "M", "T", "W", "T", "F", "S"]);
+    expect(sundayFirst.weeks.length).to.equal(5);
+    expect(sundayFirst.weeks[0][0]).to.deep.include({ day: "2026-09-27", isInMonth: false });
+    expect(sundayFirst.weeks[0][4]).to.deep.include({ day: "2026-10-01", isInMonth: true });
+    expect(sundayFirst.weeks[4][6].day).to.equal("2026-10-31");
+    const august = MonthCalendar_build({ ...octoberInput, startsMonday: false, month: "2026-08" });
+    expect(august.weeks[0][6].day).to.equal("2026-08-01");
+    expect(august.weeks.length).to.equal(6);
   });
 
   it("marks today, the selected day, future days and workout days", () => {
@@ -40,7 +56,7 @@ describe("MonthCalendar", () => {
     expect(MonthCalendar_visibleWeeks(october, false).length).to.equal(5);
     expect(MonthCalendar_visibleWeeks(october, true)[0][0].day).to.equal("2026-10-12");
     const noSelection = MonthCalendar_build({
-      ...october,
+      ...octoberInput,
       today: "2026-10-21",
       selected: "2026-12-01",
       workoutDays: new Set(),

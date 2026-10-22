@@ -88,6 +88,26 @@ describe("WorkoutReport", () => {
     expect(kinds).to.deep.equal(["fewerReps"]);
   });
 
+  it("does not ask when the program cut sets and every set got its reps", () => {
+    const fiveByFive = [1, 2, 3, 4, 5].map(() => ({ kg: 100, reps: 5 }));
+    const past = [workout(1, 7, { squat: fiveByFive })];
+    const today = workout(3, 0, { squat: three(100, 5) });
+    expect(WorkoutReport_build(today, past, undefined, settings).items).to.deep.equal([]);
+  });
+
+  it("compares reps per set when the set count changed", () => {
+    const past = [workout(1, 7, { squat: three(100, 5) })];
+    const today = workout(3, 0, {
+      squat: [
+        { kg: 100, reps: 5, done: 3 },
+        { kg: 100, reps: 5, done: 3 },
+      ],
+    });
+    const [fewer] = WorkoutReport_build(today, past, undefined, settings).items;
+    expect(fewer.kind).to.equal("fewerReps");
+    expect(fewer.text).to.equal("Squat: 3 reps a set, down from 5 last time at about the same weight.");
+  });
+
   it("reads the effort ratings: too hard keeps the weight, all easy adds weight", () => {
     const today = workout(3, 0, { squat: three(100, 5, "hard"), legExtension: three(50, 12, "easy") });
     const items = WorkoutReport_build(today, history, undefined, settings).items;

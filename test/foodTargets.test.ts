@@ -60,6 +60,25 @@ describe("FoodTargets compute", () => {
     expect(result.goals.carbs).to.deep.equal({ min: 115, max: 140 });
   });
 
+  it("never goes below 1500 calories for a man", () => {
+    const result = FoodTargets_compute({ weightKg: 50, heightCm: 160, sex: "male", age: 70 }, "sedentary", "lose");
+    expect(result.isFloored).to.equal(true);
+    expect(result.goals.calories).to.deep.equal({ min: 1500, max: 1600 });
+  });
+
+  it("splits the calorie target into macros that add back up to it", () => {
+    const mid = (r: { min: number; max: number }): number => (r.min + r.max) / 2;
+    for (const [body, goal] of [
+      [man, "maintain"],
+      [man, "gain"],
+      [woman, "lose"],
+    ] as const) {
+      const { goals } = FoodTargets_compute(body, "moderate", goal);
+      const macroCalories = mid(goals.protein) * 4 + mid(goals.carbs) * 4 + mid(goals.fat) * 9;
+      expect(macroCalories, `${body.sex} ${goal}`).to.be.closeTo(mid(goals.calories), 10);
+    }
+  });
+
   it("caps protein and fat at the height-based weight for a 150 kg person losing weight", () => {
     const body: IFoodBody = { weightKg: 150, heightCm: 170, sex: "male", age: 40 };
     const result = FoodTargets_compute(body, "sedentary", "lose");
@@ -118,6 +137,21 @@ describe("FoodTargets form", () => {
     const form = FoodTargets_setForm(flow, { heightCm: "180", age: "30" }).form;
     expect(FoodTargets_bodyError(form)).to.equal("Pick male or female. The formula uses it.");
     expect(FoodTargets_bodyError({ ...form, sex: "male" })).to.equal(undefined);
+  });
+
+  it("gives the weight range in pounds and the height range in feet for a pound user", () => {
+    const flow = FoodTargets_start(FoodTargets_defaultProfile, undefined, "lb", 2026);
+    const form = FoodTargets_setForm(flow, {
+      weight: "50",
+      heightFt: "5",
+      heightIn: "11",
+      sex: "male",
+      age: "30",
+    }).form;
+    expect(FoodTargets_bodyError(form)).to.equal("Enter a weight from 66 to 660 lb.");
+    expect(FoodTargets_bodyError({ ...form, weight: "176", heightFt: "3" })).to.equal(
+      "Enter a height from 3 ft 11 in to 7 ft 6 in."
+    );
   });
 });
 

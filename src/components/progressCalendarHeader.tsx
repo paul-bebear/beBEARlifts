@@ -2,12 +2,7 @@ import { JSX } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { IconDumbbellBadge, IconFlame } from "./progressIcons";
-import {
-  ICalendarCell,
-  IMonthCalendar,
-  MonthCalendar_visibleWeeks,
-  MonthCalendar_weekdayLabels,
-} from "../models/monthCalendar";
+import { ICalendarCell, IMonthCalendar, MonthCalendar_visibleWeeks } from "../models/monthCalendar";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
 const flameOrange = "#F97316";
@@ -92,7 +87,7 @@ export function ProgressCalendarHeader(props: {
         </View>
       </View>
       <View className="flex-row mb-1">
-        {MonthCalendar_weekdayLabels.map((label, i) => (
+        {props.calendar.weekdayLabels.map((label, i) => (
           <Text key={i} className="flex-1 text-xs text-center text-text-secondary">
             {label}
           </Text>
