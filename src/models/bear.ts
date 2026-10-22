@@ -27,6 +27,8 @@ export interface IBearState {
 }
 
 const hourMs = 3600000;
+const pumpedHours = 2;
+const pumpedHoursAfterRecord = 24;
 
 function feedingAge(start: number, now: number, workouts: IBearCountedWorkout[]): number {
   let acceleratedMs = 0;
@@ -75,6 +77,12 @@ export function Bear_state(sources: IBearSources, now: number): IBearState {
     (pr) => pr?.prevMaxWeightSet != null || pr?.prevMax1RMSet != null
   );
   const mood =
-    hoursSinceWorkout <= 2 || personalRecord ? "pumped" : energy < 40 ? "tired" : fullness < 20 ? "hungry" : "normal";
+    hoursSinceWorkout <= (personalRecord ? pumpedHoursAfterRecord : pumpedHours)
+      ? "pumped"
+      : energy < 40
+        ? "tired"
+        : fullness < 20
+          ? "hungry"
+          : "normal";
   return { line: store.line, level, countedKg: growth.countedKg, fullness, energy, mood, lastCountedWorkoutAt };
 }

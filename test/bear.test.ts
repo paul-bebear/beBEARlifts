@@ -162,11 +162,11 @@ describe("Bear_state", () => {
     expect(Bear_state(data, now + 2 * hourMs + 1).mood).to.equal("hungry");
   });
 
-  it("keeps the latest counted workout pumped when it beat an existing personal record", () => {
+  it("keeps a personal-record workout pumped for 24 hours, then lets the mood fall", () => {
     const data = sources({ history: [workout(now - 48 * hourMs, 40), workout(now, 50)], plannedDaysPerWeek: 3 });
-    expect(Bear_state(data, now + 300 * hourMs).mood).to.equal("pumped");
-    const next = { ...data, history: [...data.history, workout(now + 312 * hourMs, 40)] };
-    expect(Bear_state(next, now + 315 * hourMs).mood).to.equal("hungry");
+    expect(Bear_state(data, now + 24 * hourMs).mood).to.equal("pumped");
+    expect(Bear_state(data, now + 24 * hourMs + 1).mood).to.equal("hungry");
+    expect(Bear_state(data, now + 300 * hourMs).mood).to.equal("tired");
   });
 
   it("uses tired before hungry below 40 energy", () => {
