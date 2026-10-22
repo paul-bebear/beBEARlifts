@@ -30,10 +30,10 @@ import { IconHome } from "./icons/iconHome";
 type IEmit = Dispatch<IOnboardingEvent>;
 
 const chip = "flex items-center gap-3 w-full p-4 text-left text-lg border-2 rounded-2xl";
-const chipOn = `${chip} border-yellow-500 bg-yellow-50`;
+const chipOn = `${chip} border-yellow-500 bg-background-cardyellow`;
 const chipOff = `${chip} border-border-prominent`;
 const pill = "px-4 py-2 border-2 rounded-full";
-const pillOn = `${pill} border-yellow-500 bg-yellow-50`;
+const pillOn = `${pill} border-yellow-500 bg-background-cardyellow`;
 const pillOff = `${pill} border-border-prominent`;
 
 function IconBars(): JSX.Element {
