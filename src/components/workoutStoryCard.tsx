@@ -1,5 +1,5 @@
 import { JSX, useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { IHistoryRecord, ISettings, IStats } from "../types";
 import {
   IShareCardPage,
@@ -7,7 +7,6 @@ import {
   WorkoutStoryCard_build,
   WorkoutStoryCard_pageLabel,
   WorkoutStoryCard_pages,
-  WorkoutStoryCard_styles,
 } from "../models/workoutStoryCard";
 import { History_getPersonalRecords } from "../models/history";
 import { ShareAchievements_build } from "../models/shareAchievements";
@@ -18,7 +17,10 @@ import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
 import { Dialog_alert } from "../utils/dialog";
 import { ShareCardImage_prepareAhead } from "../utils/shareCardImage";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { IconCamera } from "./icons/iconCamera";
+import { IconShare } from "./icons/iconShare";
+import { IconSpeaker } from "./icons/iconSpeaker";
+import { FinishDayActions_list } from "../models/finishDayActions";
 import { GroupHeader } from "./groupHeader";
 import { ShareCardPager } from "./shareCards/shareCardPager";
 import { ShareCardExportSurface } from "./shareCards/shareCardExportSurface";
@@ -30,6 +32,8 @@ interface IProps {
   history: IHistoryRecord[];
   settings: ISettings;
   stats: IStats;
+  musicEnabled: boolean;
+  onMusic: () => void;
 }
 
 interface IFrozen {
@@ -40,7 +44,7 @@ interface IFrozen {
 export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [page, setPage] = useState<IShareCardPage>("rank");
   const [photo, setPhoto] = useState<string | undefined>(undefined);
-  const [seed, setSeed] = useState(() => Math.floor(Date.now() / 1000));
+  const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
   const checklistLog = ChecklistStore.use();
   const exporter = useShareCardExport<IFrozen>("bebear-workout");
@@ -61,6 +65,7 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
     () => WorkoutStoryCard_build({ record: props.record, settings: props.settings, prs, achievements, seed }),
     [props.record, props.settings, prs, achievements, seed]
   );
+  const actions = FinishDayActions_list({ musicEnabled: props.musicEnabled, exportAvailable: true });
   const frozen = exporter.job.frozen;
   const dataKey = JSON.stringify(data);
   const { prepare } = exporter;
@@ -94,42 +99,42 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
         onPageChange={(p) => setPage(p as IShareCardPage)}
         renderPage={(p) => <WorkoutSharePage page={p as IShareCardPage} data={data} photo={photo} />}
       />
-      <View className="px-gutter">
-        <View className="flex-row mt-3" style={{ gap: 8 }}>
-          <FoodPrimaryButton
-            testID="workout-story-photo"
-            kind="outline"
-            title={photo == null ? "Add photo" : "Change photo"}
-            disabled={exporter.isBusy}
-            onPress={pickPhoto}
-          />
-          {data.equivalent != null && (
-            <FoodPrimaryButton
-              testID="workout-story-shuffle"
-              kind="outline"
-              title="Shuffle"
-              disabled={exporter.isBusy}
-              onPress={() => setSeed((value) => value + 1)}
+      <View className="flex-row justify-center px-gutter mt-3" style={{ gap: 24 }}>
+        {actions.map((action) => {
+          if (action === "photo") {
+            return (
+              <FinishActionButton
+                key={action}
+                testID="workout-story-photo"
+                label={photo == null ? "Add photo" : "Change photo"}
+                icon={<IconCamera size={22} />}
+                disabled={exporter.isBusy}
+                onPress={pickPhoto}
+              />
+            );
+          }
+          if (action === "share") {
+            return (
+              <FinishActionButton
+                key={action}
+                testID="workout-story-share"
+                label={exporter.title("Share")}
+                icon={<IconShare size={26} />}
+                disabled={exporter.isBusy}
+                onPress={() => share([page])}
+              />
+            );
+          }
+          return (
+            <FinishActionButton
+              key={action}
+              testID="finish-day-music"
+              label="Music"
+              icon={<IconSpeaker size={22} />}
+              onPress={props.onMusic}
             />
-          )}
-        </View>
-        <View className="flex-row mt-2" style={{ gap: 8 }}>
-          <FoodPrimaryButton
-            testID="workout-story-share"
-            title={exporter.title("Share")}
-            disabled={exporter.isBusy}
-            onPress={() => share([page])}
-          />
-          <FoodPrimaryButton
-            testID="workout-story-share-all"
-            kind="outline"
-            title={
-              exporter.job.phase === "ready" || exporter.job.phase === "failed" ? exporter.title("") : "Share all 4"
-            }
-            disabled={exporter.isBusy}
-            onPress={() => share([...WorkoutStoryCard_styles])}
-          />
-        </View>
+          );
+        })}
       </View>
       {exporter.job.error != null && (
         <View className="px-gutter">
@@ -152,6 +157,32 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
           )}
         />
       )}
+    </View>
+  );
+}
+
+interface IFinishActionButtonProps {
+  testID: string;
+  label: string;
+  icon: JSX.Element;
+  disabled?: boolean;
+  onPress: () => void;
+}
+
+function FinishActionButton(props: IFinishActionButtonProps): JSX.Element {
+  return (
+    <View className="items-center" style={{ width: 72 }}>
+      <Pressable
+        testID={props.testID}
+        data-testid={props.testID}
+        disabled={props.disabled}
+        onPress={props.onPress}
+        className="items-center justify-center rounded-full bg-background-subtle"
+        style={{ width: 48, height: 48, opacity: props.disabled ? 0.4 : 1 }}
+      >
+        {props.icon}
+      </Pressable>
+      <Text className="mt-1 text-xs text-center text-text-secondary">{props.label}</Text>
     </View>
   );
 }
