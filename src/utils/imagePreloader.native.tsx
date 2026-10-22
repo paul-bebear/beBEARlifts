@@ -2,6 +2,10 @@ import { Image } from "react-native";
 import { HostConfig_resolveUrl } from "./hostConfig";
 
 const cache: Map<string, string> = new Map();
+const bundledUris: Record<string, string> = {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  "/images/bear/male/level-01.webp": Image.resolveAssetSource(require("../../images/bear/male/level-01.webp")).uri,
+};
 
 async function fetchAsDataUri(url: string): Promise<string> {
   const resp = await fetch(url);
@@ -18,7 +22,7 @@ async function fetchAsDataUri(url: string): Promise<string> {
 }
 
 export async function ImagePreloader_preload(path: string): Promise<boolean> {
-  if (cache.has(path)) {
+  if (bundledUris[path] || cache.has(path)) {
     return true;
   }
   const resolved = HostConfig_resolveUrl(path);
@@ -33,17 +37,17 @@ export async function ImagePreloader_preload(path: string): Promise<boolean> {
 }
 
 export function ImagePreloader_uri(path: string): string {
-  return cache.get(path) ?? HostConfig_resolveUrl(path);
+  return bundledUris[path] ?? cache.get(path) ?? HostConfig_resolveUrl(path);
 }
 
 export function ImagePreloader_clear(): void {
   cache.clear();
 }
 
-export const ImagePreloader_dynocoach: string = "/images/dinocoach.svg";
+export const ImagePreloader_dynocoach: string = "/images/bear/male/level-01.webp";
 
-export const ImagePreloader_dynoflex: string = "/images/dinoflex.svg";
+export const ImagePreloader_dynoflex: string = "/images/bear/male/level-01.webp";
 
-export const ImagePreloader_dynohappy: string = "/images/dinohappy.svg";
+export const ImagePreloader_dynohappy: string = "/images/bear/male/level-01.webp";
 
 export const ImagePreloader_images: Record<string, unknown> = {};
