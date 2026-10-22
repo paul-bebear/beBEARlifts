@@ -4,13 +4,19 @@ import { IWorkoutShareData, WorkoutStoryCard_headline, WorkoutStoryCard_summary 
 import { ShareCardBrand, ShareCardFrame, ShareCardText } from "./cardParts";
 import { ShareCardTheme as T } from "./shareCardTheme";
 
-export function CountCard(props: { data: IWorkoutShareData }): JSX.Element {
+export function CountCard(props: { data: IWorkoutShareData; onImageLoad?: (uri: string) => void }): JSX.Element {
   const { stats, equivalent } = props.data;
   const headline = WorkoutStoryCard_headline(stats);
   return (
     <ShareCardFrame background={T.honey}>
       <View style={{ paddingTop: 32, alignItems: "center" }}>
-        <ShareCardBrand size={44} color={T.greenDark} faceColor={T.honey} />
+        <ShareCardBrand
+          size={44}
+          color={T.greenDark}
+          faceColor={T.honey}
+          bear={props.data.bear}
+          onImageLoad={props.onImageLoad}
+        />
       </View>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
         {equivalent == null ? (

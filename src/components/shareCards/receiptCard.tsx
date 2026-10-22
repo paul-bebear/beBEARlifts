@@ -25,13 +25,19 @@ function Dashes(): JSX.Element {
   return <View style={{ borderTopWidth: 1, borderStyle: "dashed", borderColor: "#9A9488", marginVertical: 12 }} />;
 }
 
-export function ReceiptCard(props: { data: IWorkoutShareData }): JSX.Element {
+export function ReceiptCard(props: { data: IWorkoutShareData; onImageLoad?: (uri: string) => void }): JSX.Element {
   const receipt = props.data.receipt;
   return (
     <ShareCardFrame background={T.green} style={{ padding: 24 }}>
       <View style={{ flex: 1, backgroundColor: T.paper, borderRadius: 6, padding: 20 }}>
         <View style={{ alignItems: "center" }}>
-          <ShareCardBrand size={30} color={T.green} faceColor={T.paper} />
+          <ShareCardBrand
+            size={30}
+            color={T.green}
+            faceColor={T.paper}
+            bear={props.data.bear}
+            onImageLoad={props.onImageLoad}
+          />
           <ShareCardText size={12} color={T.ink} spacing={1} style={{ marginTop: 6, opacity: 0.7 }}>
             {`${receipt.title.toUpperCase()} · ${receipt.date.toUpperCase()}`}
           </ShareCardText>

@@ -1,6 +1,12 @@
 import "mocha";
 import { expect } from "chai";
-import { BearArt_gym, BearArt_scale, BearArt_sprite } from "../src/models/bearArt";
+import {
+  BearArt_cardSprite,
+  BearArt_gym,
+  BearArt_liftingSizes,
+  BearArt_scale,
+  BearArt_sprite,
+} from "../src/models/bearArt";
 
 describe("BearArt", () => {
   for (const line of ["male", "female"] as const) {
@@ -34,6 +40,19 @@ describe("BearArt", () => {
       });
     }
   }
+
+  it("shows the pumped flex on cards while no lifting art is listed", () => {
+    expect(BearArt_liftingSizes).to.deep.equal([]);
+    expect(BearArt_cardSprite("male", 2)).to.equal("/images/bear/male/mood-small-pumped.webp");
+    expect(BearArt_cardSprite("female", 11)).to.equal("/images/bear/female/mood-space-pumped.webp");
+  });
+
+  it("shows the lifting pose on cards for the listed sizes only", () => {
+    const sizes = ["medium", "space"] as const;
+    expect(BearArt_cardSprite("female", 5, sizes)).to.equal("/images/bear/female/lift-medium.webp");
+    expect(BearArt_cardSprite("male", 12, sizes)).to.equal("/images/bear/male/lift-space.webp");
+    expect(BearArt_cardSprite("male", 8, sizes)).to.equal("/images/bear/male/mood-big-pumped.webp");
+  });
 
   it("maps every gym band, including each space level", () => {
     const gyms = [
