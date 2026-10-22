@@ -34,7 +34,7 @@ export interface IStepsChartLayout {
   goalY: number;
 }
 
-export const Steps_defaultGoal = 10000;
+const Steps_defaultGoal = 10000;
 export const Steps_chartDays = 14;
 export const Steps_goalStep = 500;
 const goalLimits = { min: 1000, max: 50000 };
@@ -78,7 +78,7 @@ export function Steps_parse(raw: unknown): IStepsLog {
   };
 }
 
-export function Steps_clampGoal(goal: number): number {
+function Steps_clampGoal(goal: number): number {
   const rounded = Math.round(goal / Steps_goalStep) * Steps_goalStep;
   return Math.min(goalLimits.max, Math.max(goalLimits.min, rounded));
 }

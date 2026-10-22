@@ -27,7 +27,7 @@ const daysOfExperience: Record<IBearPlanInput["experience"], IBearPlanParams["da
   years: 5,
 };
 
-export const BearPlanRecommend_names: Record<IBearPlanParams["days"], string> = {
+const BearPlanRecommend_names: Record<IBearPlanParams["days"], string> = {
   3: "beBEAR 3-Day Full Body",
   4: "beBEAR 4-Day Upper/Lower",
   5: "beBEAR 5-Day Upper/Lower/Push/Pull/Lower",

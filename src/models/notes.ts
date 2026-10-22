@@ -36,7 +36,7 @@ export const Notes_checkInScales: ICheckInScale[] = [
 
 export const Notes_faces = ["😞", "🙁", "😐", "🙂", "😄"];
 
-export const notesUntitled = "Untitled note";
+const notesUntitled = "Untitled note";
 
 const dayPattern = /^\d{4}-\d{2}-\d{2}$/;
 const linkPattern = /\[\[([^[\]\n]+)\]\]/g;

@@ -1,7 +1,7 @@
 import { BodyScans_empty, BodyScans_parse } from "../models/bodyScans";
 import { JsonStore_create } from "./jsonStore";
 
-export const BodyScanStore_key = "bebear_bodyscans";
+const BodyScanStore_key = "bebear_bodyscans";
 
 const store = JsonStore_create(BodyScanStore_key, BodyScans_parse, BodyScans_empty);
 

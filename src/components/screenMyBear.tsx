@@ -29,7 +29,7 @@ interface IMyBearLayoutProps {
   children: ReactNode;
 }
 
-export function MyBearLayout(props: IMyBearLayoutProps): JSX.Element {
+function MyBearLayout(props: IMyBearLayoutProps): JSX.Element {
   return (
     <View testID="my-bear" data-testid="my-bear">
       {props.head}

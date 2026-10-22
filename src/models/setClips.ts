@@ -20,7 +20,7 @@ export interface ISetClipLog {
   clips: ISetClip[];
 }
 
-export const SetClips_maxRecords = 300;
+const SetClips_maxRecords = 300;
 export const SetClips_thumbnailWidth = 160;
 export const SetClips_thumbnailMaxBytes = 30 * 1024;
 

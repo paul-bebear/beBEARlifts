@@ -29,13 +29,13 @@ export interface IRunStats {
 export type IRunPointVerdict = "keep" | "inaccurate" | "jump" | "still" | "stale";
 
 export const RunTrack_maxAccuracyM = 25;
-export const RunTrack_maxSpeedKmh = 25;
+const RunTrack_maxSpeedKmh = 25;
 // GPS wanders a few metres while you stand still; counting every wobble adds distance you never ran.
-export const RunTrack_minStepM = 5;
+const RunTrack_minStepM = 5;
 // Phone altitude is noisy by several metres, so smaller changes are not climbs.
-export const RunTrack_minClimbM = 3;
-export const RunTrack_minPaceDistanceM = 50;
-export const RunTrack_recentPaceWindowMs = 30 * 1000;
+const RunTrack_minClimbM = 3;
+const RunTrack_minPaceDistanceM = 50;
+const RunTrack_recentPaceWindowMs = 30 * 1000;
 
 const earthRadiusM = 6371000;
 const altitudeWindow = 5;
@@ -84,11 +84,11 @@ function pathM(points: IRunPoint[]): number {
   return total;
 }
 
-export function RunTrack_totalDistanceM(segments: IRunSegment[]): number {
+function RunTrack_totalDistanceM(segments: IRunSegment[]): number {
   return segments.reduce((sum, segment) => sum + pathM(segment.points), 0);
 }
 
-export function RunTrack_movingMs(segments: IRunSegment[], now: number): number {
+function RunTrack_movingMs(segments: IRunSegment[], now: number): number {
   return segments.reduce((sum, s) => sum + Math.max(0, (s.endedAt ?? now) - s.startedAt), 0);
 }
 
@@ -100,7 +100,7 @@ export function RunTrack_pace(distanceM: number, movingMs: number): number | und
 }
 
 // The time of a km boundary is interpolated between the two points that straddle it.
-export function RunTrack_splits(segments: IRunSegment[]): IRunSplit[] {
+function RunTrack_splits(segments: IRunSegment[]): IRunSplit[] {
   const splits: IRunSplit[] = [];
   let distance = 0;
   let movingBefore = 0;

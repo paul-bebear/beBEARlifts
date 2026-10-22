@@ -129,7 +129,7 @@ export function GoalWizard_start(input: IGoalWizardStartInput): IGoalWizard {
   };
 }
 
-export function GoalWizard_steps(w: IGoalWizard): IGoalWizardStep[] {
+function GoalWizard_steps(w: IGoalWizard): IGoalWizardStep[] {
   if (w.mode === "pace") {
     return ["result"];
   }

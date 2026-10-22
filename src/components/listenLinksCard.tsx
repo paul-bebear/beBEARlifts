@@ -15,7 +15,7 @@ import {
   ListenLinks_spotifyUri,
 } from "../models/listenLinks";
 
-export function ListenLinks_open(url: string): void {
+function ListenLinks_open(url: string): void {
   Linking.openURL(ListenLinks_spotifyUri(url) ?? url).catch(() => Linking.openURL(url).catch(() => undefined));
 }
 

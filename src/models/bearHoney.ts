@@ -32,10 +32,10 @@ export interface IHoneyEarned {
   days: IHoneyDay[];
 }
 
-export const BearHoney_workout = 5;
+const BearHoney_workout = 5;
 export const BearHoney_dailyMax = 10;
-export const BearHoney_streakWeek = 7;
-export const BearHoney_streakBonus = 5;
+const BearHoney_streakWeek = 7;
+const BearHoney_streakBonus = 5;
 
 const macros = ["protein", "carbs", "fat"] as const;
 const macroLabels = { protein: "Protein", carbs: "Carbs", fat: "Fat" };

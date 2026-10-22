@@ -75,7 +75,7 @@ export async function SupabaseClient_saveSession(response: Response): Promise<IC
 
 export const Supabase_notSignedIn = "Not signed in";
 
-export async function SupabaseClient_session(): Promise<ICloudResult<ICloudSession>> {
+async function SupabaseClient_session(): Promise<ICloudResult<ICloudSession>> {
   const current = (await CloudStore.load()).session;
   if (current == null) {
     return { ok: false, error: Supabase_notSignedIn };

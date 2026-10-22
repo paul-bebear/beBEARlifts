@@ -6,7 +6,7 @@ export interface ISpotifyTokens {
 
 export type ISpotifyRedirect = { kind: "none" } | { kind: "code"; code: string } | { kind: "error"; message: string };
 
-export const SpotifyAuth_scopes = [
+const SpotifyAuth_scopes = [
   "user-read-currently-playing",
   "user-read-playback-state",
   "user-read-recently-played",

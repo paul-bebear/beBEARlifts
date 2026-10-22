@@ -20,7 +20,7 @@ export interface IFoodCaptureDependencies {
   readLabel: (photo: string) => Promise<IFoodCaptureResult<INutritionLabel>>;
 }
 
-export async function FoodCapture_pick(
+async function FoodCapture_pick(
   kind: IFoodCaptureKind,
   source: IFoodCaptureSource,
   deps: IFoodCaptureDependencies

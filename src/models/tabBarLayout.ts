@@ -4,7 +4,7 @@ export interface ITabBarLayout {
   height: number;
 }
 
-export const TabBarLayout_pillHeight = 60;
+const TabBarLayout_pillHeight = 60;
 
 // Phones without a home indicator report a 0 inset, and a pill flush with the screen edge looks docked.
 const minBottomGap = 12;

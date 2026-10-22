@@ -41,7 +41,7 @@ export type IFeedShareStatus = "shared" | "sending" | "notShared";
 export type IFeedScreenView = "feed" | "people";
 
 export const Feed_limit = 50;
-export const Feed_staleMs = 10 * 60000;
+const Feed_staleMs = 10 * 60000;
 
 const jpegDataUrl = /^data:image\/jpeg;base64,/;
 

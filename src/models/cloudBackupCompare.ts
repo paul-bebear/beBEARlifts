@@ -60,7 +60,7 @@ function count(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-export function CloudBackupCompare_holds(summary: ICloudBackupSummary): string {
+function CloudBackupCompare_holds(summary: ICloudBackupSummary): string {
   return `${count(summary.workouts, "workout", "workouts")} and ${count(summary.foodDays, "day", "days")} of food`;
 }
 

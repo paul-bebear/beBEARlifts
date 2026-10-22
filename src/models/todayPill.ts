@@ -7,9 +7,9 @@ export interface ITodayPillInput {
   now: number;
 }
 
-export const todayPillRestDay = "Rest day";
-export const todayPillDone = "Done today";
-export const todayPillUnnamed = "Workout!";
+const todayPillRestDay = "Rest day";
+const todayPillDone = "Done today";
+const todayPillUnnamed = "Workout!";
 
 // The weekly schedule names today's day. A program with no days falls back to the next day in order.
 export function TodayPill_dayName(today: IScheduleToday, nextDayName?: string): string | undefined {

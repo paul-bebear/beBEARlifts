@@ -171,7 +171,7 @@ export function JournalExport_dateTitle(day: string): string {
   return `${weekday}, ${months[month - 1]} ${date}, ${year}`;
 }
 
-export function JournalExport_path(day: string): string {
+function JournalExport_path(day: string): string {
   return `journal/${day}.md`;
 }
 
@@ -196,7 +196,7 @@ function mealLines(day: string, food: IFoodLog): string[] {
   return lines;
 }
 
-export function JournalExport_dayMarkdown(journal: IJournalDay, food: IFoodLog): string {
+function JournalExport_dayMarkdown(journal: IJournalDay, food: IFoodLog): string {
   const { checkIn, totals } = journal;
   const scores = checkIn != null ? Notes_scoresLine(checkIn) : "";
   const reflection = checkIn?.body.trim() ?? "";

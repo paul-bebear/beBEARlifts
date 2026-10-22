@@ -143,7 +143,7 @@ export function ProgramGoal_paceLabel(kind: IProgramGoalKind, pace: IProgramGoal
   return paceLabels[pace];
 }
 
-export function ProgramGoal_weeklyPercent(kind: IProgramGoalKind, pace: IProgramGoalPace | undefined): number {
+function ProgramGoal_weeklyPercent(kind: IProgramGoalKind, pace: IProgramGoalPace | undefined): number {
   if (kind === "maintain" || pace == null) {
     return 0;
   }
@@ -206,15 +206,15 @@ export function ProgramGoal_recommend(
   return { pace: isLean ? "moderate" : "slow" };
 }
 
-export function ProgramGoal_foodGoalKind(kind: IProgramGoalKind): IFoodGoalKind {
+function ProgramGoal_foodGoalKind(kind: IProgramGoalKind): IFoodGoalKind {
   return kind === "loseFat" ? "lose" : kind === "buildMuscle" ? "gain" : "maintain";
 }
 
-export function ProgramGoal_foodActivity(band: IStepsBand): IFoodActivity {
+function ProgramGoal_foodActivity(band: IStepsBand): IFoodActivity {
   return ProgramGoal_stepsBands.find((b) => b.key === band)?.activity ?? "moderate";
 }
 
-export function ProgramGoal_weightKg(weight: IWeight): number {
+function ProgramGoal_weightKg(weight: IWeight): number {
   return weight.unit === "kg" ? weight.value : weight.value * kgPerLb;
 }
 

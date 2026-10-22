@@ -19,7 +19,7 @@ function repsText(set: IPlannerProgramExerciseEvaluatedSet): string {
 }
 
 // "3×8-12" for one kind of set, "1×5+, 3×8" when the sets differ.
-export function ProgramPlanCards_setsText(sets: IPlannerProgramExerciseEvaluatedSet[]): string {
+function ProgramPlanCards_setsText(sets: IPlannerProgramExerciseEvaluatedSet[]): string {
   const groups: { count: number; reps: string }[] = [];
   for (const set of sets) {
     const reps = repsText(set);
@@ -33,7 +33,7 @@ export function ProgramPlanCards_setsText(sets: IPlannerProgramExerciseEvaluated
   return groups.map((group) => `${group.count}×${group.reps}`).join(", ");
 }
 
-export function ProgramPlanCards_exerciseLine(exercise: IPlannerProgramExercise): string {
+function ProgramPlanCards_exerciseLine(exercise: IPlannerProgramExercise): string {
   const variation = exercise.evaluatedSetVariations.find((v) => v.isCurrent) ?? exercise.evaluatedSetVariations[0];
   const sets = ProgramPlanCards_setsText(variation?.sets ?? []);
   // `name` drops the equipment, and "Lateral Raise" alone does not say cable or dumbbell.
