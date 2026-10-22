@@ -84,7 +84,7 @@ export function EditProgram_setNextDay(dispatch: IDispatch, programId: string, n
   );
 }
 
-export const EditProgram_tabLabels = ["Preview", "Edit", "Playground"] as const;
+export const EditProgram_tabLabels = ["Plan", "Preview", "Edit", "Playground"] as const;
 
 export function EditProgram_mode(ui: IPlannerUi): IPlannerEditMode {
   return ui.mode ?? "grid";
