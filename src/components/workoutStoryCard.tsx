@@ -12,7 +12,7 @@ import { History_getPersonalRecords } from "../models/history";
 import { ShareAchievements_build } from "../models/shareAchievements";
 import { DailyChecklist_doneDays } from "../models/dailyChecklist";
 import { useFoodLog } from "../utils/foodLogStore";
-import { ChecklistStore } from "../utils/checklistStore";
+import { BearGrowth_history } from "../models/bearGrowth";
 import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
 import { Dialog_alert } from "../utils/dialog";
 import { ShareCardImage_prepareAhead } from "../utils/shareCardImage";
@@ -46,7 +46,10 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [photo, setPhoto] = useState<string | undefined>(undefined);
   const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
-  const checklistLog = ChecklistStore.use();
+  const growth = useMemo(
+    () => BearGrowth_history(props.history, props.settings, props.stats),
+    [props.history, props.settings, props.stats]
+  );
   const exporter = useShareCardExport<IFrozen>("bebear-workout");
   const prs = useMemo(() => History_getPersonalRecords(props.history), [props.history]);
 
@@ -55,11 +58,12 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
       ShareAchievements_build({
         history: props.history,
         prs,
-        doneDays: DailyChecklist_doneDays({ stats: props.stats, foodLog, log: checklistLog }),
+        doneDays: DailyChecklist_doneDays({ foodLog, workouts: growth.workouts }),
         foodLog,
+        workouts: growth.workouts,
         settings: props.settings,
       }),
-    [props.history, prs, props.stats, foodLog, checklistLog, props.settings]
+    [props.history, prs, growth, foodLog, props.settings]
   );
   const data = useMemo(
     () => WorkoutStoryCard_build({ record: props.record, settings: props.settings, prs, achievements, seed }),

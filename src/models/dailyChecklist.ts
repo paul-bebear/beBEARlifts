@@ -1,4 +1,5 @@
 import type { IStats, IUnit, IWeight } from "../types";
+import { IBearCountedWorkout } from "./bearGrowth";
 import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import { MonthCalendar_dayTitle } from "./monthCalendar";
 import { ProgramGoal_formatWeight } from "./programGoal";
@@ -25,13 +26,14 @@ export interface IChecklistDay {
   doneCount: number;
 }
 
-export interface IChecklistSources {
-  stats: IStats;
+export interface IStreakSources {
   foodLog: IFoodLog;
-  log: IChecklistLog;
+  workouts: readonly IBearCountedWorkout[];
 }
 
-export interface IChecklistDayInput extends Omit<IChecklistSources, "log"> {
+export interface IChecklistDayInput {
+  stats: IStats;
+  foodLog: IFoodLog;
   day: string;
   today: string;
   units: IUnit;
@@ -147,10 +149,10 @@ export function DailyChecklist_build(input: IChecklistDayInput): IChecklistDay {
   };
 }
 
-export function DailyChecklist_doneDays(sources: IChecklistSources): Set<string> {
-  const days = new Set<string>(sources.log.checkIns);
-  for (const w of sources.stats.weight.weight ?? []) {
-    days.add(dayOf(w.timestamp));
+export function DailyChecklist_doneDays(sources: IStreakSources): Set<string> {
+  const days = new Set<string>();
+  for (const { record } of sources.workouts) {
+    days.add(dayOf(record.endTime ?? record.startTime));
   }
   for (const e of sources.foodLog.entries) {
     days.add(e.day);

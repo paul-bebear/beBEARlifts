@@ -7,6 +7,7 @@ export interface IBearStoreData {
   celebratedLevel: number;
   seenBadges: string[];
   seeded?: true;
+  badgesSeeded?: true;
 }
 
 export function BearStoreData_empty(): IBearStoreData {
@@ -33,5 +34,6 @@ export function BearStoreData_parse(raw: unknown): IBearStoreData {
     celebratedLevel: r.celebratedLevel,
     seenBadges: [...r.seenBadges],
     ...(r.seeded === true ? { seeded: true as const } : {}),
+    ...(r.badgesSeeded === true ? { badgesSeeded: true as const } : {}),
   };
 }
