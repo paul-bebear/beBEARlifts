@@ -79,11 +79,11 @@ function BreakdownRow(props: { label: string; value: number; range: IFoodRange; 
   );
 }
 
-export function FoodSummaryCard(props: IProps): JSX.Element {
+function SummaryDetails(props: IProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(false);
   if (!FoodLog_hasGoals(props.goals)) {
     return (
-      <View className="p-4 mx-4 mt-2 rounded-2xl bg-background-subtle" testID="food-summary" data-testid="food-summary">
+      <View className="p-4 mt-2 rounded-2xl bg-background-subtle" testID="food-summary" data-testid="food-summary">
         <Text className="mb-3 text-base text-text-secondary">No targets yet</Text>
         <FoodPrimaryButton
           testID="food-set-targets"
@@ -104,7 +104,7 @@ export function FoodSummaryCard(props: IProps): JSX.Element {
   }
   const calories = FoodLog_progress(props.totals.calories, props.goals.calories, props.mode);
   return (
-    <View className="p-4 mx-4 mt-2 rounded-2xl bg-background-subtle" testID="food-summary" data-testid="food-summary">
+    <View className="p-4 mt-2 rounded-2xl bg-background-subtle" testID="food-summary" data-testid="food-summary">
       <ModeToggle mode={props.mode} onChange={props.onModeChange} />
       <View className="flex-row items-end mt-3">
         <Text className="font-bold text-text-primary" style={{ fontSize: 56, lineHeight: 62 }}>
@@ -155,6 +155,36 @@ export function FoodSummaryCard(props: IProps): JSX.Element {
           <BreakdownRow label="Fat" value={props.totals.fat} range={props.goals.fat} unit="g" />
         </View>
       )}
+      <Pressable
+        className="items-center pt-4"
+        testID="food-goals"
+        data-testid="food-goals"
+        onPress={() => navigateToModal("foodGoalsModal")}
+      >
+        <Text className="text-base text-text-link">Targets</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+export function FoodSummaryCard(props: IProps): JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
+  const { totals } = props;
+  const text = `🔥 ${Math.round(totals.calories).toLocaleString("en-US")} · C ${Math.round(totals.carbs)} · P ${Math.round(totals.protein)} · F ${Math.round(totals.fat)}`;
+  return (
+    <View className="px-4 pt-3">
+      <Pressable
+        className="flex-row items-center self-start px-4 py-2 rounded-full bg-background-subtle"
+        testID="food-pill"
+        data-testid="food-pill"
+        onPress={() => setIsOpen(!isOpen)}
+      >
+        <Text className="text-base font-semibold">{text}</Text>
+        <View className="ml-2" style={{ transform: [{ rotate: isOpen ? "180deg" : "0deg" }] }}>
+          <IconChevronDown size={14} color={Tailwind_semantic().icon.neutral} />
+        </View>
+      </Pressable>
+      {isOpen && <SummaryDetails {...props} />}
     </View>
   );
 }
