@@ -21,8 +21,14 @@ export interface IBearSceneLayout {
 export const BearScene_canvas = { width: 1024, height: 1536 };
 export const BearScene_spriteFoot = { x: 512, y: 1470 };
 export const BearScene_gymFoot = { x: 512, y: 1490 };
-export const BearScene_spriteScale = 0.48;
 export const BearScene_dashboardRect: IBearRect = [125, 195, 825, 675];
+
+// Lowest row of whiteboard ink in the art canvas. Measured on the owner's iPhone screenshot of level 3: the second
+// row of tiles ends 593 px down. The bear's head never goes above this line.
+export const BearScene_boardInkBottom = 593;
+export const BearScene_minHeightShare = 0.38;
+const inLevelGrowth = 0.005;
+const levelCount = 12;
 
 const visibleBoxes: Record<string, IBearRect> = {
   "female/level-01": [260, 892, 765, 1472],
@@ -86,16 +92,33 @@ export function BearScene_visibleBox(spritePath: string): IBearRect {
   return visibleBoxes[key] ?? [0, 0, BearScene_canvas.width, BearScene_canvas.height];
 }
 
-export function BearScene_layout(width: number, fraction: number): IBearSceneLayout {
+// The tallest the bear gets: its feet on the gym foot line and its head on the last row of whiteboard ink.
+export function BearScene_maxHeightShare(): number {
+  return (BearScene_gymFoot.y - BearScene_boardInkBottom) / BearScene_canvas.height;
+}
+
+// The bear's visible height as a share of the scene height. Level 1 starts at the minimum and level 12 ends at
+// the maximum. BearArt_scale moves it a little inside a level, and never past the next level's start.
+export function BearScene_heightShare(level: number, fraction: number): number {
+  const first = BearScene_minHeightShare;
+  const last = BearScene_maxHeightShare();
+  const step = (last - first - inLevelGrowth) / (levelCount - 1);
+  const index = Math.max(0, Math.min(levelCount - 1, Math.round(level) - 1));
+  const grown = (BearArt_scale(fraction) - BearArt_scale(0)) / (BearArt_scale(1) - BearArt_scale(0));
+  return Math.min(last, first + step * index + inLevelGrowth * grown);
+}
+
+export function BearScene_layout(width: number, level: number, fraction: number, spritePath: string): IBearSceneLayout {
   const unit = width / BearScene_canvas.width;
-  const scale = BearScene_spriteScale * BearArt_scale(fraction);
   const [x1, y1, x2, y2] = BearScene_dashboardRect;
+  const [, boxTop, , boxBottom] = BearScene_visibleBox(spritePath);
+  const scale = (BearScene_heightShare(level, fraction) * BearScene_canvas.height) / Math.max(1, boxBottom - boxTop);
   return {
     width: round(width),
     height: round(BearScene_canvas.height * unit),
     sprite: {
       left: round((BearScene_gymFoot.x - BearScene_spriteFoot.x * scale) * unit),
-      top: round((BearScene_gymFoot.y - BearScene_spriteFoot.y * scale) * unit),
+      top: round((BearScene_gymFoot.y - boxBottom * scale) * unit),
       width: round(BearScene_canvas.width * scale * unit),
       height: round(BearScene_canvas.height * scale * unit),
     },
