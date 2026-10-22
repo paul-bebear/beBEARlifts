@@ -159,7 +159,12 @@ describe("First-launch navigation", () => {
       return createElement("div");
     });
     renderToStaticMarkup(
-      createElement(HomeChecklist, { stats: state.storage.stats, units: "kg", dispatch: dispatch as IDispatch })
+      createElement(HomeChecklist, {
+        stats: state.storage.stats,
+        units: "kg",
+        dispatch: dispatch as IDispatch,
+        onTrain: () => undefined,
+      })
     );
     onItemPress("weight");
     await (dispatch.lastCall.args[0] as IThunk)(dispatch, () => state, {} as IEnv);

@@ -22,6 +22,7 @@ import { Program_nextHistoryRecord } from "../models/program";
 import { useTrackedState } from "../navigation/TrackedStateContext";
 import { HistoryRecordView } from "./historyRecord";
 import { HomeChecklist } from "./homeChecklist";
+import { navigateToModal } from "../navigation/navigationService";
 import { Program_evaluate, Program_getProgramDay } from "../models/program";
 import {
   HistoryCollapse_expand,
@@ -214,6 +215,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         dispatch={dispatch}
         history={props.history}
         isOngoing={isOngoing}
+        onTrain={() => navigateToModal("nextWorkoutModal")}
         startWeekFromMonday={props.settings.startWeekFromMonday}
       />
     </View>

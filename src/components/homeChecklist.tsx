@@ -4,7 +4,6 @@ import { Thunk_pushScreen, Thunk_startProgramDay } from "../ducks/thunks";
 import { DailyChecklist_build, IChecklistItemKey } from "../models/dailyChecklist";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { MonthCalendar_workoutDays } from "../models/monthCalendar";
-import { navigateToModal } from "../navigation/navigationService";
 import { IStats, IUnit } from "../types";
 import { useFoodLog } from "../utils/foodLogStore";
 import { ProgramGoalStore } from "../utils/programGoalStore";
@@ -16,11 +15,12 @@ interface IProps {
   dispatch: IDispatch;
   history?: { startTime: number }[];
   isOngoing?: boolean;
+  onTrain: () => void;
   startWeekFromMonday?: boolean;
 }
 
 export function HomeChecklist(props: IProps): JSX.Element {
-  const { stats, units, dispatch, history, isOngoing, startWeekFromMonday } = props;
+  const { stats, units, dispatch, history, isOngoing, onTrain, startWeekFromMonday } = props;
   const foodLog = useFoodLog();
   const goalLog = ProgramGoalStore.use();
   const today = FoodLog_dayKey(new Date());
@@ -47,7 +47,7 @@ export function HomeChecklist(props: IProps): JSX.Element {
     } else if (isOngoing) {
       dispatch(Thunk_startProgramDay());
     } else {
-      navigateToModal("nextWorkoutModal");
+      onTrain();
     }
   };
 
