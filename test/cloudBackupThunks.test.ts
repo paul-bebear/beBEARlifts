@@ -43,6 +43,9 @@ import { Steps_empty, Steps_setManual } from "../src/models/steps";
 import { StepsStore } from "../src/utils/stepsStore";
 import { DailyChecklist_empty, DailyChecklist_toggleCheckIn } from "../src/models/dailyChecklist";
 import { ChecklistStore } from "../src/utils/checklistStore";
+import { BearStore } from "../src/utils/bearStore";
+import { BearStoreData_empty, IBearStoreData } from "../src/models/bearStoreData";
+import { FullBackupFile_restore } from "../src/utils/fullBackupFile";
 
 const now = Date.UTC(2026, 9, 20, 18);
 const session = {
@@ -98,6 +101,7 @@ describe("Cloud backup thunks", () => {
   let saveReplaced: sinon.SinonStub;
   let confirm: sinon.SinonStub;
   let dispatch: sinon.SinonStub;
+  let bear: IBearStoreData;
 
   async function run(thunk: IThunk): Promise<void> {
     await thunk(dispatch as IDispatch, () => state, {} as IEnv);
@@ -131,6 +135,11 @@ describe("Cloud backup thunks", () => {
     sinon.stub(ProgramGoalStore, "load").resolves(ProgramGoal_empty());
     sinon.stub(StepsStore, "load").resolves(Steps_empty());
     sinon.stub(ChecklistStore, "load").resolves(DailyChecklist_empty());
+    bear = BearStoreData_empty();
+    sinon.stub(BearStore, "load").callsFake(async () => bear);
+    sinon.stub(BearStore, "update").callsFake(async (fn) => {
+      bear = fn(bear);
+    });
   });
   afterEach(() => sinon.restore());
 
@@ -210,6 +219,7 @@ describe("Cloud backup thunks", () => {
   });
 
   it("shares the full export builder and leaves both logins out of its JSON", async () => {
+    bear = { line: "female", celebratedLevel: 8, seenBadges: ["level-8"] };
     const toFile = sinon.stub(exporter, "Exporter_toFile");
     await run(Thunk_exportEverything());
     await run(Thunk_cloudBackup("manual"));
@@ -231,11 +241,13 @@ describe("Cloud backup thunks", () => {
       "runs",
       "goal",
       "steps",
-      "checklist"
+      "checklist",
+      "bear"
     );
     expect(text).to.not.include("secret-refresh");
     expect(text).to.not.include("spotify-refresh");
     expect(text).to.not.include("bebear_cloud");
+    expect(backup.bear).to.deep.equal(bear);
   });
 
   it("reports upload and local read errors to the settings caller", async () => {
@@ -279,6 +291,7 @@ describe("Cloud backup thunks", () => {
   it("restores every full-backup store while keeping this phone's logins", async () => {
     const parts = {
       ...emptyParts(state.storage),
+      bear: { line: "female" as const, celebratedLevel: 9, seenBadges: ["level-9"] },
       goal: ProgramGoal_set(ProgramGoal_empty(), { kind: "maintain", activity: "5to10k", startedAt: now }),
       steps: Steps_setManual(Steps_empty(), "2026-10-20", 9000),
       checklist: DailyChecklist_toggleCheckIn(DailyChecklist_empty(), "2026-10-19"),
@@ -331,6 +344,7 @@ describe("Cloud backup thunks", () => {
     expect(replaceGoal.firstCall.args[0](ProgramGoal_empty())).to.deep.equal(parts.goal);
     expect(replaceSteps.firstCall.args[0](Steps_empty())).to.deep.equal(parts.steps);
     expect(replaceChecklist.firstCall.args[0](DailyChecklist_empty())).to.deep.equal(parts.checklist);
+    expect(bear).to.deep.equal(parts.bear);
     expect(cloudState.syncedExportedAt).to.equal(file.exportedAt);
     expect(cloudState.restoreOffer).to.equal(undefined);
     expect(cloudState.session).to.deep.equal(session);
@@ -356,8 +370,41 @@ describe("Cloud backup thunks", () => {
     expect(result.firstCall.args[0]).to.deep.equal({ ok: true, value: false });
     expect(replaceFood.lastCall.args[0]).to.equal(localFood);
     expect(checklist.called).to.equal(false);
+    expect((BearStore.update as sinon.SinonStub).called).to.equal(false);
     expect(dispatch.calledWithMatch({ type: "UpdateState" })).to.equal(false);
     expect((dialogs.Dialog_alert as sinon.SinonStub).lastCall.args[0]).to.include("Nothing on this phone was changed");
+  });
+
+  it("keeps the phone's bear when an older backup has no bear", async () => {
+    bear = { line: "female", celebratedLevel: 7, seenBadges: ["level-7"] };
+    const before = bear;
+    await FullBackupFile_restore({ storage: state.storage });
+    expect(bear).to.equal(before);
+    expect((BearStore.update as sinon.SinonStub).called).to.equal(false);
+  });
+
+  it("rolls back the earlier stores when saving the restored bear fails", async () => {
+    bear = { line: "female", celebratedLevel: 2, seenBadges: ["level-2"] };
+    const before = bear;
+    const localFood = FoodLog_empty();
+    (food.FoodLogStore_load as sinon.SinonStub).resolves(localFood);
+    const replaceFood = sinon.stub(food, "FoodLogStore_replace").resolves();
+    for (const store of [music, body, warmups]) {
+      sinon.stub(store, Object.keys(store).find((key) => key.endsWith("_update")) as never).resolves();
+    }
+    for (const store of [ReportStore, SetClipStore, RunStore, ProgramGoalStore, StepsStore, ChecklistStore]) {
+      sinon.stub(store, "update").resolves();
+    }
+    (BearStore.update as sinon.SinonStub).rejects(new Error("QuotaExceededError"));
+    const parts = { ...emptyParts(state.storage), bear: { line: "male" as const, celebratedLevel: 9, seenBadges: [] } };
+    download.resolves({ ok: true, value: JSON.stringify(FullBackup_build(parts, now - 1000)) });
+    const result = sinon.spy();
+    await run(Thunk_cloudRestore("latest", result));
+    expect(result.firstCall.args[0]).to.deep.equal({ ok: true, value: false });
+    expect(replaceFood.callCount).to.equal(2);
+    expect(replaceFood.lastCall.args[0]).to.equal(localFood);
+    expect(bear).to.equal(before);
+    expect(dispatch.calledWithMatch({ type: "UpdateState" })).to.equal(false);
   });
 
   it("makes a restored weekday copy the cloud backup after saving the replaced one", async () => {

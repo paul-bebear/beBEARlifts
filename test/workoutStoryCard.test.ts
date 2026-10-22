@@ -273,8 +273,9 @@ describe("WorkoutStoryCard share data", () => {
 
   it("says how far the next tier is, in the user's units", () => {
     const tier = BearTier_progress(0, 24420);
-    expect(WorkoutStoryCard_toNext(tier, settings)).to.equal("580 kg to Sun bear");
-    expect(WorkoutStoryCard_toNext(BearTier_progress(0, 9e6), settings)).to.equal("Top of the food chain");
+    expect(WorkoutStoryCard_toNext(tier, settings)).to.equal("580 kg to Level 4 · Rookie");
+    expect(WorkoutStoryCard_toNext(tier, { ...settings, units: "lb" })).to.equal("1,279 lb to Level 4 · Rookie");
+    expect(WorkoutStoryCard_toNext(BearTier_progress(0, 9e6), settings, 9e6)).to.equal("9,000,000 kg lifetime");
   });
 
   it("draws between 1 and 24 icons", () => {
@@ -284,7 +285,21 @@ describe("WorkoutStoryCard share data", () => {
   it("builds the rank from the lifetime totals around this workout", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
     const data = WorkoutStoryCard_build({ record, settings, prs, achievements, seed: 1 });
-    expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Sun bear", true]);
+    expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 4 · Rookie", true]);
     expect(data.equivalent).to.not.equal(undefined);
+  });
+
+  it("renders a numbered level name on the shared rank card", () => {
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 10000, afterKg: 11980 }]]), badges: [] };
+    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, seed: 1 });
+    const html = renderToStaticMarkup(createElement(WorkoutSharePage, { page: "rank", data }));
+    expect(html).to.contain("LEVEL 3 · AMATEUR");
+  });
+
+  it("shows the lifetime total when the final level has no countdown", () => {
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 5998020, afterKg: 6000000 }]]), badges: [] };
+    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, seed: 1 });
+    expect(data.tier.next).to.equal(undefined);
+    expect(data.toNext).to.equal("6,000,000 kg lifetime");
   });
 });

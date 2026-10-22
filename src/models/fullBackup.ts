@@ -9,6 +9,7 @@ import { IRunLog, RunLog_parse } from "./runLog";
 import { IProgramGoalLog, ProgramGoal_parse } from "./programGoal";
 import { IStepsLog, Steps_parse } from "./steps";
 import { DailyChecklist_parse, IChecklistLog } from "./dailyChecklist";
+import { BearStoreData_empty, BearStoreData_parse, IBearStoreData } from "./bearStoreData";
 
 export const FullBackup_format = "bebearlifts-backup";
 
@@ -27,6 +28,7 @@ const readme = [
   "steps.days: step count per local day (YYYY-MM-DD), from Apple Health or typed by hand. steps.goal: the daily step goal. Progress photos are not in this file.",
   "checklist.checkIns: days (YYYY-MM-DD) with a nutrition check-in. checklist.committedAt: ms when the user tapped I'm Committed on the streak screen.",
   "runs.runs: GPS runs, newest first. startedAt and endedAt are ms; distanceM is metres; movingMs leaves out pauses; elevationGainM is metres climbed. splits: moving ms for each full km. route: simplified [lat, lon] lines, one per stretch between pauses.",
+  "bear: the bebear_bear store. line is male or female. celebratedLevel is the highest level-up shown. seenBadges lists badge ids already shown.",
 ].join("\n");
 
 export interface IFullBackup {
@@ -45,6 +47,7 @@ export interface IFullBackup {
   goal: IProgramGoalLog;
   steps: IStepsLog;
   checklist: IChecklistLog;
+  bear: IBearStoreData;
 }
 
 export interface IFullBackupParts {
@@ -59,6 +62,7 @@ export interface IFullBackupParts {
   goal: IProgramGoalLog;
   steps: IStepsLog;
   checklist: IChecklistLog;
+  bear?: IBearStoreData;
 }
 
 export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBackup {
@@ -79,6 +83,7 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     goal,
     steps,
     checklist,
+    bear: BearStoreData_parse(parts.bear ?? BearStoreData_empty()),
   };
 }
 
@@ -98,6 +103,7 @@ export interface IFullBackupContents {
   goal?: IProgramGoalLog;
   steps?: IStepsLog;
   checklist?: IChecklistLog;
+  bear?: IBearStoreData;
 }
 
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
@@ -118,6 +124,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     goal: r.goal != null ? ProgramGoal_parse(r.goal) : undefined,
     steps: r.steps != null ? Steps_parse(r.steps) : undefined,
     checklist: r.checklist != null ? DailyChecklist_parse(r.checklist) : undefined,
+    bear: r.bear != null ? BearStoreData_parse(r.bear) : undefined,
   };
 }
 
