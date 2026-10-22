@@ -10,6 +10,7 @@ import { OnboardingAnswer_parse } from "../models/onboardingAnswer";
 import { OnboardingProgram_prepare } from "../models/onboardingProgram";
 import {
   OnboardingAnswers_body,
+  OnboardingAnswers_foodTargets,
   OnboardingAnswers_gymEquipment,
   OnboardingAnswers_planInput,
   OnboardingAnswers_programGoal,
@@ -23,7 +24,7 @@ import { AiRequest_post, AiRequest_text } from "./aiRequest";
 import { AiConsent_ensure } from "./aiConsentClient";
 import { UidFactory_generateUid } from "./generator";
 import { FoodLogStore_update } from "./foodLogStore";
-import { FoodLog_setProfile } from "../models/foodLog";
+import { FoodLog_setGoals, FoodLog_setProfile } from "../models/foodLog";
 import { Stats_insertByTimestamp } from "../models/stats";
 import { ImageResize_toJpegDataUrl } from "./imageResize";
 import {
@@ -97,7 +98,13 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         }
         const now = Date.now();
         const body = OnboardingAnswers_body(form.answers, days, new Date(now).getFullYear());
-        await FoodLogStore_update((log) => FoodLog_setProfile(log, { ...log.profile, ...body.profile }));
+        const targets = OnboardingAnswers_foodTargets(form.answers, new Date(now).getFullYear());
+        await FoodLogStore_update((log) =>
+          FoodLog_setProfile(targets == null ? log : FoodLog_setGoals(log, targets.goals), {
+            ...log.profile,
+            ...(targets?.profile ?? body.profile),
+          })
+        );
         await ProgramGoalStore.update((log) =>
           log.current != null
             ? log

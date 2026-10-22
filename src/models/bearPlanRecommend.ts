@@ -6,6 +6,7 @@ export interface IBearPlanInput {
   goal: IBearGoal;
   agile: boolean;
   experience: "new" | "months" | "years";
+  days?: 2 | 3 | 4 | 5 | 6;
   age?: number;
 }
 
@@ -52,7 +53,7 @@ function summaryOf(days: IBearPlanParams["days"], agile: boolean): string {
 
 export function BearPlan_recommend(input: IBearPlanInput): IBearPlanCard[] {
   const youth = input.age != null && input.age < adultAge;
-  const best = daysOfExperience[input.experience];
+  const best = input.days == null ? daysOfExperience[input.experience] : input.days <= 3 ? 3 : input.days === 4 ? 4 : 5;
   const order: IBearPlanParams["days"][] = [best, ...([3, 4, 5] as const).filter((d) => d !== best)];
   const places = BearPlace_resolve(input.picks);
   return order.map((days) => ({

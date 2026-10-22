@@ -14,11 +14,15 @@ import {
   Onboarding_reduce,
 } from "../models/onboarding";
 import { IBearPlacePick } from "../models/bearPlace";
-import { IBearGoal } from "../models/bearPlan";
 import { OnboardingCommand_run } from "../utils/onboardingCommand";
 import { CloudStore } from "../utils/supabaseClient";
 import { InviteClient_current, InviteClient_save, InviteStore } from "../utils/inviteClient";
-import { OnboardingImportedPlan, OnboardingQuestions } from "./onboardingQuestions";
+import {
+  OnboardingFoodQuestions,
+  OnboardingImportedPlan,
+  OnboardingQuestions,
+  OnboardingWantQuestions,
+} from "./onboardingQuestions";
 import { OnboardingWelcome, OnboardingWelcome_field } from "./onboardingWelcome";
 import { OnboardingPlanCards } from "./onboardingPlanCards";
 import { AiConsent_showFeatures } from "../models/aiConsent";
@@ -47,7 +51,7 @@ function IconBars(): JSX.Element {
 const places: { pick: IBearPlacePick; label: string; icon: () => JSX.Element }[] = [
   { pick: "gym", label: "Full gym", icon: () => <IconEquipmentBarbell /> },
   { pick: "dumbbells", label: "Only dumbbells", icon: () => <IconEquipmentDumbbell /> },
-  { pick: "street", label: "Street workout bars", icon: () => <IconBars /> },
+  { pick: "street", label: "Street workout", icon: () => <IconBars /> },
   { pick: "none", label: "No equipment", icon: () => <IconHome /> },
 ];
 
@@ -55,12 +59,6 @@ const experiences: { key: IOnboardingAnswers["experience"]; label: string }[] = 
   { key: "new", label: "New" },
   { key: "months", label: "A few months" },
   { key: "years", label: "Years" },
-];
-
-const goals: { key: IBearGoal; label: string; detail: string }[] = [
-  { key: "size", label: "Size", detail: "Bigger muscles" },
-  { key: "strength", label: "Strength", detail: "Lift heavier" },
-  { key: "both", label: "Both", detail: "Heavy first lift, then muscle work" },
 ];
 
 function PlaceScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element {
@@ -203,46 +201,7 @@ function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
           ))}
         </div>
       </fieldset>
-    </>
-  );
-}
-
-function WantScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element {
-  const { a } = props;
-  return (
-    <>
-      <h1 className="text-3xl font-bold">What do you want?</h1>
-      <div className="space-y-3">
-        {goals.map((g) => (
-          <button
-            key={g.key}
-            className={a.goal === g.key ? chipOn : chipOff}
-            aria-pressed={a.goal === g.key}
-            onClick={() => props.emit({ type: "answers", patch: { goal: g.key } })}
-          >
-            <span className="flex flex-col">
-              <span className="font-bold">{g.label}</span>
-              <span className="text-base text-text-secondary">{g.detail}</span>
-            </span>
-          </button>
-        ))}
-      </div>
-      <button
-        role="switch"
-        aria-checked={a.agile}
-        className={a.agile ? chipOn : chipOff}
-        onClick={() => props.emit({ type: "answers", patch: { agile: !a.agile } })}
-      >
-        <span className="flex flex-col flex-1">
-          <span className="font-bold">More agile</span>
-          <span className="text-base text-text-secondary">Adds jumps and quick feet</span>
-        </span>
-        <span
-          className={`w-12 h-7 rounded-full p-1 flex ${a.agile ? "bg-yellow-500 justify-end" : "bg-gray-300 justify-start"}`}
-        >
-          <span className="w-5 h-5 bg-white rounded-full" />
-        </span>
-      </button>
+      <OnboardingFoodQuestions a={a} emit={props.emit} />
     </>
   );
 }
@@ -305,7 +264,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
           ) : form.step === "about" ? (
             <AboutScreen a={a} emit={emit} />
           ) : form.step === "want" ? (
-            <WantScreen a={a} emit={emit} />
+            <OnboardingWantQuestions a={a} emit={emit} />
           ) : form.step === "import" ? (
             <OnboardingQuestions form={form} emit={emit} />
           ) : form.step === "working" ? (

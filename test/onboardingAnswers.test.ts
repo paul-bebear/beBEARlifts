@@ -3,6 +3,7 @@ import { expect } from "chai";
 import {
   OnboardingAnswers_body,
   OnboardingAnswers_empty,
+  OnboardingAnswers_foodTargets,
   OnboardingAnswers_gymEquipment,
   OnboardingAnswers_isYouth,
   OnboardingAnswers_planInput,
@@ -11,6 +12,7 @@ import {
 } from "../src/models/onboardingAnswers";
 import { Settings_build } from "../src/models/settings";
 import { IEquipment, IEquipmentData } from "../src/types";
+import { FoodTargets_activities, FoodTargets_compute, FoodTargets_goals } from "../src/models/foodTargets";
 
 describe("OnboardingAnswers", () => {
   it("converts supplied body details and leaves skipped fields absent", () => {
@@ -52,6 +54,97 @@ describe("OnboardingAnswers", () => {
     expect(OnboardingAnswers_isYouth({ ...answers, age: "18" })).to.equal(false);
     expect(OnboardingAnswers_isYouth({ ...answers, age: "" })).to.equal(false);
     expect(OnboardingAnswers_planInput({ ...answers, age: "16.4" }).age).to.equal(16);
+  });
+  it("passes available days to the plan input and leaves unanswered days absent", () => {
+    expect(OnboardingAnswers_planInput({ ...OnboardingAnswers_empty(), days: 3, experience: "years" })).to.include({
+      days: 3,
+      experience: "years",
+    });
+    expect(OnboardingAnswers_planInput(OnboardingAnswers_empty()).days).to.equal(undefined);
+  });
+  it("uses the chosen food activity and weight goal independently of the training plan", () => {
+    const answers = { ...OnboardingAnswers_empty(), activity: "sedentary" as const, foodGoal: "lose" as const };
+    expect(OnboardingAnswers_body(answers, 5, 2026).profile).to.include({ activity: "sedentary", goal: "lose" });
+    expect(OnboardingAnswers_programGoal(answers, 1).kind).to.equal("buildMuscle");
+  });
+  const foodAnswers = {
+    ...OnboardingAnswers_empty("fr-FR"),
+    height: "180",
+    weight: "80",
+    age: "30",
+    sex: "male" as const,
+    activity: "moderate" as const,
+    foodGoal: "maintain" as const,
+  };
+  it("calculates food targets and the calculator profile from metric answers", () => {
+    expect(OnboardingAnswers_foodTargets(foodAnswers, 2026)).to.deep.equal({
+      goals: {
+        calories: { min: 2660, max: 2860 },
+        protein: { min: 130, max: 175 },
+        carbs: { min: 365, max: 415 },
+        fat: { min: 50, max: 80 },
+      },
+      profile: {
+        activity: "moderate",
+        goal: "maintain",
+        heightUnit: "cm",
+        heightCm: 180,
+        sex: "male",
+        birthYear: 1996,
+      },
+    });
+  });
+  it("uses the calculator's exact imperial conversion and decimal parsing", () => {
+    const answers = {
+      ...foodAnswers,
+      heightUnit: "ftin" as const,
+      heightFt: "5",
+      heightIn: "10",
+      unit: "lb" as const,
+      weight: "180,5",
+      sex: "female" as const,
+    };
+    const result = OnboardingAnswers_foodTargets(answers, 2026);
+    expect(result?.profile).to.include({ heightCm: 177.8, heightUnit: "ftin", sex: "female" });
+    expect(result?.goals).to.deep.equal(
+      FoodTargets_compute(
+        { weightKg: 180.5 * 0.45359237, heightCm: 177.8, sex: "female", age: 30 },
+        "moderate",
+        "maintain"
+      ).goals
+    );
+  });
+  for (const { key: activity } of FoodTargets_activities) {
+    for (const { key: foodGoal } of FoodTargets_goals) {
+      it(`uses the calculator's ${activity} activity and ${foodGoal} goal`, () => {
+        const result = OnboardingAnswers_foodTargets({ ...foodAnswers, activity, foodGoal }, 2026);
+        expect(result?.goals).to.deep.equal(
+          FoodTargets_compute({ weightKg: 80, heightCm: 180, sex: "male", age: 30 }, activity, foodGoal).goals
+        );
+        expect(result?.profile).to.include({ activity, goal: foodGoal });
+      });
+    }
+  }
+  it("leaves targets unset when food choices or required body details are skipped or invalid", () => {
+    const patches = [
+      { activity: undefined },
+      { foodGoal: undefined },
+      { sex: undefined },
+      { age: "" },
+      { age: "13" },
+      { age: "101" },
+      { height: "" },
+      { height: "999" },
+      { weight: "" },
+      { weight: "NaN" },
+      { weight: "0" },
+    ];
+    for (const patch of patches) {
+      expect(OnboardingAnswers_foodTargets({ ...foodAnswers, ...patch }, 2026), JSON.stringify(patch)).to.equal(
+        undefined
+      );
+    }
+    expect(OnboardingAnswers_foodTargets(OnboardingAnswers_empty(), 2026)).to.equal(undefined);
   });
   it("keeps the place picks as a set and treats no pick as no equipment", () => {
     expect(OnboardingAnswers_togglePlace(["gym"], "street")).to.deep.equal(["gym", "street"]);

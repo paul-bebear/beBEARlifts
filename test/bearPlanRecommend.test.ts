@@ -23,6 +23,32 @@ describe("BearPlanRecommend", () => {
     }
   });
 
+  for (const experience of ["new", "months", "years"] as const) {
+    for (const [days, recommended] of [
+      [2, 3],
+      [3, 3],
+      [4, 4],
+      [5, 5],
+      [6, 5],
+    ] as const) {
+      it(`recommends ${recommended} days for ${days} available days with ${experience} experience`, () => {
+        const cards = BearPlan_recommend({ ...base, experience, days });
+        expect(cards.map((card) => card.days)).to.deep.equal([
+          recommended,
+          ...([3, 4, 5] as const).filter((day) => day !== recommended),
+        ]);
+        expect(cards.map((card) => card.recommended)).to.deep.equal([true, false, false]);
+      });
+    }
+  }
+
+  it("keeps the youth rule on every card when days are supplied", () => {
+    for (const days of [2, 3, 4, 5, 6] as const) {
+      const cards = BearPlan_recommend({ ...base, age: 16, days });
+      expect(cards.every((card) => card.params.youth)).to.equal(true);
+    }
+  });
+
   it("sets youth under 18 only", () => {
     expect(BearPlan_recommend({ ...base, age: 15 })[0].params.youth).to.equal(true);
     expect(BearPlan_recommend({ ...base, age: 17 })[0].params.youth).to.equal(true);
