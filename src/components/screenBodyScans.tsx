@@ -3,6 +3,8 @@ import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodTextInput } from "./foodUi";
 import { Button } from "./button";
+import { BodyScanPhoto } from "./bodyScanPhoto";
+import { BodyScanRead_merge } from "../models/bodyScanRead";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
@@ -70,6 +72,7 @@ export function ScreenBodyScans(): JSX.Element {
   const unit: IBodyScanUnit = state.storage.settings.units === "lb" ? "lb" : "kg";
   const log = useBodyScans();
   const [form, setForm] = useState<IBodyScanForm>({});
+  const [scanning, setScanning] = useState(false);
 
   useNavOptions({ navTitle: "Body composition" });
 
@@ -100,8 +103,13 @@ export function ScreenBodyScans(): JSX.Element {
   return (
     <View className="px-4 pt-2 pb-8" testID="body-scans-screen" data-testid="body-scans-screen">
       <Text className="mb-3 text-sm text-text-secondary">
-        Copy the numbers from your gym scan. Leave out any you don't have.
+        Scan your gym printout or type the numbers. Check each value before saving. Leave out any you don't have.
       </Text>
+      <BodyScanPhoto
+        busy={scanning}
+        onBusyChange={setScanning}
+        onRead={(scan) => setForm((current) => BodyScanRead_merge(current, scan, unit))}
+      />
       <View className="flex-row flex-wrap" style={{ gap: 8 }}>
         {BodyScans_fields.map((field) => (
           <View key={field.key} style={{ width: "48%" }}>
@@ -115,12 +123,13 @@ export function ScreenBodyScans(): JSX.Element {
               onChangeText={(text) => setForm({ ...form, [field.key]: text })}
               keyboardType="decimal-pad"
               inputMode="decimal"
+              editable={!scanning}
             />
           </View>
         ))}
       </View>
       <View className="flex-row mt-4">
-        <Button name="body-scan-save" kind="pill" className="flex-1" onPress={save}>
+        <Button name="body-scan-save" kind="pill" className="flex-1" onPress={save} disabled={scanning}>
           Save scan
         </Button>
       </View>

@@ -16,6 +16,12 @@ function answer(text: string = "A helpful answer", finishReason: string = "stop"
   return new Response(JSON.stringify({ choices: [{ message: { content: text }, finish_reason: finishReason }] }));
 }
 
+function allowance(exhausted = false): Response {
+  return new Response(
+    JSON.stringify({ plan: "free", day: exhausted ? 3 : 0, week: 0, lifetime: exhausted ? 3 : 0, refUsed: exhausted })
+  );
+}
+
 function request(body: unknown, signedIn: boolean = true): Request {
   return new Request("https://app.test/api/ai/test", {
     method: "POST",
@@ -119,6 +125,7 @@ describe("AI routes", () => {
       temperature: 0.4,
     },
     { post: photo, body: { kind: "describe", text: "150 g rice" }, maxTokens: 4000, temperature: 0.2 },
+    { post: photo, body: { kind: "bodyscan", image }, maxTokens: 1500, temperature: 0.2 },
     { post: onboard, body: { answers: { goal: "muscle" }, images: [] }, maxTokens: 12000, temperature: 0.2 },
   ];
 
@@ -148,7 +155,7 @@ describe("AI routes", () => {
     const fetchStub = sinon.stub(globalThis, "fetch");
     for (const route of routes) {
       fetchStub.reset();
-      fetchStub.onFirstCall().resolves(new Response("1"));
+      fetchStub.onFirstCall().resolves(allowance());
       fetchStub.onSecondCall().resolves(answer());
       const response = await route.post(request(route.body));
       expect(response.status).to.equal(200);
@@ -165,7 +172,7 @@ describe("AI routes", () => {
     for (const route of routes) {
       for (const response of [
         new Response(JSON.stringify({ code: "PT429", message: "Daily AI allowance reached" }), { status: 429 }),
-        new Response("61"),
+        allowance(true),
       ]) {
         fetchStub.reset();
         fetchStub.resolves(response);
@@ -180,7 +187,7 @@ describe("AI routes", () => {
     sinon.stub(console, "error");
     for (const route of routes) {
       fetchStub.reset();
-      fetchStub.onFirstCall().resolves(new Response("1"));
+      fetchStub.onFirstCall().resolves(allowance());
       fetchStub
         .onSecondCall()
         .resolves(new Response('[{"error":{"message":"Private provider detail"}}]', { status: 400 }));
@@ -192,11 +199,11 @@ describe("AI routes", () => {
 
   it("limits the report to 800 characters and preserves photo finish reasons", async () => {
     const fetchStub = sinon.stub(globalThis, "fetch");
-    fetchStub.onFirstCall().resolves(new Response("1"));
+    fetchStub.onFirstCall().resolves(allowance());
     fetchStub.onSecondCall().resolves(answer(" " + "x".repeat(900) + " "));
     expect(await (await report(request(routes[0].body))).json()).to.deep.equal({ text: "x".repeat(800) });
     fetchStub.reset();
-    fetchStub.onFirstCall().resolves(new Response("1"));
+    fetchStub.onFirstCall().resolves(allowance());
     fetchStub.onSecondCall().resolves(answer('{"items":[]}', "length"));
     expect(await (await photo(request({ kind: "meal", image }))).json()).to.deep.equal({
       text: '{"items":[]}',
@@ -204,12 +211,46 @@ describe("AI routes", () => {
     });
   });
 
+  it("sends body-scan photos through the capped route with a printout prompt", async () => {
+    const text = '{"weight":80,"waterKg":44,"unit":"kg"}';
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub.onFirstCall().resolves(new Response(JSON.stringify({ plan: "free", day: 1, week: 1 })));
+    fetchStub.onSecondCall().resolves(answer(text));
+    const response = await photo(request({ kind: "bodyscan", image }));
+    expect(response.status).to.equal(200);
+    expect(await response.json()).to.deep.equal({ text, finishReason: "stop" });
+    expect(JSON.parse((fetchStub.firstCall.args[1] as RequestInit).body as string)).to.include({ p_kind: "capped" });
+    const sent = JSON.parse((fetchStub.secondCall.args[1] as RequestInit).body as string);
+    expect(sent.messages[0].content).to.include("body-composition").and.include("Never estimate");
+    expect(sent.messages[1].content[0]).to.deep.equal({ type: "image_url", image_url: { url: image } });
+  });
+
+  it("requires a supported body-scan image and limits its size before charging quota", async () => {
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    for (const body of [{ kind: "bodyscan" }, { kind: "bodyscan", image: "data:image/heic;base64,YWJj" }]) {
+      expect((await photo(request(body))).status).to.equal(400);
+    }
+    expect((await photo(request({ kind: "bodyscan", image: image + "a".repeat(3_000_000) }))).status).to.equal(413);
+    sinon.assert.notCalled(fetchStub);
+  });
+
+  it("rejects body-scan requests when signed out or capped without calling the model", async () => {
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    expect((await photo(request({ kind: "bodyscan", image }, false))).status).to.equal(401);
+    sinon.assert.notCalled(fetchStub);
+    fetchStub.resolves(new Response(JSON.stringify({ plan: "free", day: 3, week: 5 })));
+    const response = await photo(request({ kind: "bodyscan", image }));
+    expect(response.status).to.equal(429);
+    expect(await response.json()).to.include({ reason: "day" });
+    sinon.assert.calledOnce(fetchStub);
+  });
+
   it("treats prototype properties as the default meal task", async () => {
     const fetchStub = sinon.stub(globalThis, "fetch");
     for (const kind of ["constructor", "__proto__", "toString"]) {
       expect((await photo(request({ kind, text: "rice" }))).status).to.equal(400);
       expect(fetchStub.called).to.equal(false);
-      fetchStub.onFirstCall().resolves(new Response("1"));
+      fetchStub.onFirstCall().resolves(allowance());
       fetchStub.onSecondCall().resolves(answer('{"items":[]}'));
       expect((await photo(request({ kind, image }))).status).to.equal(200);
       const sent = JSON.parse((fetchStub.secondCall.args[1] as RequestInit).body as string);
