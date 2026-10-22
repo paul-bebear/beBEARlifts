@@ -3,229 +3,355 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>beBEAR – Gain size the simple way</title>
+<title>beBEAR: gain size the simple way</title>
 <meta name="description" content="A free lift and food tracker for skinny guys and girls who want to bulk. Snap your meal and AI gives you the macros.">
-<meta property="og:title" content="beBEAR – Gain size the simple way">
-<meta property="og:description" content="A free lift and food tracker for skinny guys and girls who want to bulk.">
-<meta name="theme-color" content="#FAF8FF">
+<meta property="og:title" content="beBEAR: gain size the simple way">
+<meta property="og:description" content="A free lift and food tracker for skinny guys and girls who want to bulk. Snap your meal and AI gives you the macros.">
+<meta name="theme-color" content="#12402c">
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Forest brand from the app icon, honey as the one action color. Split hero, 1+2 bento, forest closing band. */
   :root {
-    --bg: #FAF8FF;
-    --card: #FFFFFF;
-    --border: #E2D9F5;
-    --text: #2C1065;
-    --muted: #494457;
-    --button: #8356F6;
-    --button-hover: #783AED;
-    --accent: #FFD820;
-    --error: #ED2E15;
-    --success: #007F5A;
+    --forest: #12402c;
+    --forest-deep: #0b2b1d;
+    --cream: #f3ecd8;
+    --honey: #f5a524;
+    --on-honey: #2b1700;
+    --bg: #fbfaf6;
+    --surface: #ffffff;
+    --tint-honey: #fdf0d3;
+    --tint-sage: #e4ede4;
+    --text: #15241b;
+    --muted: #4c5a51;
+    --line: #dfe3da;
+    --error: #b42318;
+    --success: #0f6b45;
+    --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+    --body: "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --radius: 24px;
+    --radius-sm: 14px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
   }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c1611;
+      --surface: #13211a;
+      --tint-honey: #2a2213;
+      --tint-sage: #172a20;
+      --text: #eef1ea;
+      --muted: #a9b6ad;
+      --line: #24372c;
+      --error: #ff8a7a;
+      --success: #5fd6a2;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c1611;
+    --surface: #13211a;
+    --tint-honey: #2a2213;
+    --tint-sage: #172a20;
+    --text: #eef1ea;
+    --muted: #a9b6ad;
+    --line: #24372c;
+    --error: #ff8a7a;
+    --success: #5fd6a2;
+    color-scheme: dark;
+  }
+
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.5;
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.55;
   }
+  img { max-width: 100%; display: block; }
   .wrap {
-    max-width: 560px;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
   }
-  header {
+  h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: 0.005em; text-wrap: balance; margin: 0; }
+
+  .top {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding-top: 20px;
-    font-weight: 700;
-    font-size: 20px;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: 18px;
   }
-  header img { width: 40px; height: 40px; border-radius: 10px; }
-  .hero { padding: 40px 0 32px; text-align: center; }
-  h1 {
-    margin: 0 0 12px;
-    font-size: 36px;
-    line-height: 1.15;
-    font-weight: 700;
-  }
-  .sub { margin: 0 0 24px; font-size: 17px; color: var(--muted); }
-  form { display: flex; flex-direction: column; gap: 10px; }
-  input[type="email"] {
-    width: 100%;
-    padding: 14px 16px;
-    font: inherit;
-    font-size: 16px;
-    color: var(--text);
-    background: var(--card);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-  }
-  input[type="email"]:focus { outline: none; border-color: var(--button); }
-  button {
-    padding: 14px 20px;
-    font: inherit;
-    font-size: 16px;
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; }
+  .brand img { width: 40px; height: 40px; border-radius: 11px; }
+  .brand span { font-family: var(--display); font-weight: 800; font-size: 28px; line-height: 1; }
+  .top a.jump {
     font-weight: 600;
-    color: #FFFFFF;
-    background: var(--button);
-    border: 0;
-    border-radius: 12px;
-    cursor: pointer;
+    font-size: 15px;
+    color: var(--text);
+    text-decoration: none;
+    padding: 10px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
-  button:hover { background: var(--button-hover); }
-  button:disabled { opacity: 0.6; cursor: default; }
-  .msg { min-height: 1.5em; margin: 6px 0 0; font-size: 14px; color: var(--error); }
+
+  .hero {
+    display: grid;
+    gap: 36px;
+    align-items: center;
+    padding-block: 24px 56px;
+  }
+  .hero h1 {
+    font-size: clamp(46px, 11vw, 92px);
+    line-height: 0.94;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .hero h1 em { font-style: normal; color: var(--forest); }
+  .hero .sub { font-size: 19px; color: var(--muted); max-width: 30ch; margin: 18px 0 28px; }
+
+  form.waitlist { display: grid; gap: 8px; max-width: 460px; }
+  form.waitlist label { font-weight: 600; font-size: 15px; }
+  .row { display: flex; flex-direction: column; gap: 10px; }
+  input[type="email"] {
+    font: inherit;
+    font-size: 17px;
+    min-height: 54px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    width: 100%;
+  }
+  input[type="email"]::placeholder { color: var(--muted); opacity: 0.8; }
+  input[type="email"]:focus-visible { outline: 3px solid var(--honey); outline-offset: 2px; border-color: transparent; }
+  button {
+    font: inherit;
+    font-weight: 700;
+    font-size: 17px;
+    min-height: 54px;
+    padding: 0 26px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--honey);
+    color: var(--on-honey);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.2s var(--ease), background-color 0.2s var(--ease);
+  }
+  button:hover { background: #ffb43d; }
+  button:active { transform: scale(0.97); }
+  button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  button:disabled { opacity: 0.65; cursor: default; }
+  .msg { min-height: 22px; margin: 0; font-size: 14px; color: var(--error); }
   .thanks {
     margin: 0;
-    padding: 16px;
+    max-width: 460px;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     color: var(--success);
-    background: var(--card);
-    border: 2px solid var(--border);
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
   }
-  .benefits { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-  .benefits li {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    padding: 16px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-  }
-  .icon {
-    flex: none;
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    font-size: 22px;
-    background: var(--accent);
-    border-radius: 12px;
-  }
-  .benefits h2 { margin: 0 0 2px; font-size: 17px; font-weight: 600; }
-  .benefits p { margin: 0; font-size: 15px; color: var(--muted); }
-  .picture { margin: 32px 0; text-align: center; }
-  .picture img {
+
+  .scene {
+    position: relative;
     width: 100%;
-    max-width: 320px;
-    height: auto;
-    background: var(--card);
-    border-radius: 24px;
+    max-width: 420px;
+    justify-self: center;
+    aspect-ratio: 2 / 3;
+    border-radius: 28px;
+    overflow: hidden;
+    container-type: inline-size;
+    background: var(--forest);
+    box-shadow: 0 30px 60px -30px rgba(18, 64, 44, 0.55);
   }
-  .cta { padding: 8px 0 40px; text-align: center; }
-  .cta p.nudge { margin: 0 0 16px; font-size: 20px; font-weight: 600; }
-  footer {
-    padding: 24px 0 40px;
+  .scene .gym { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .board {
+    position: absolute;
+    left: 12.5%;
+    right: 19%;
+    top: 11.5%;
+    height: 24.5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    font-size: 14px;
-    color: var(--muted);
-    border-top: 1px solid var(--border);
+    color: var(--forest);
+    font-family: var(--display);
+    font-weight: 800;
+    line-height: 1;
   }
-  footer p { margin: 0 0 6px; }
-  footer a { color: var(--button); }
-  @media (min-width: 480px) {
-    form { flex-direction: row; }
-    form input[type="email"] { flex: 1; }
-    .msg { text-align: left; }
+  .board .small { font-size: 6.2cqw; text-transform: uppercase; letter-spacing: 0.06em; color: #3d5a4a; }
+  .board .big { font-size: 15cqw; text-transform: uppercase; margin: 1.5cqw 0; }
+  .scene .bear {
+    position: absolute;
+    left: 50%;
+    bottom: 3%;
+    height: 66%;
+    width: auto;
+    max-width: none;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.35));
   }
-  @media (min-width: 768px) {
-    .wrap { max-width: 640px; }
-    .hero { padding: 72px 0 48px; }
-    h1 { font-size: 52px; }
-    .sub { font-size: 19px; }
+
+  .features { padding-block: 40px 72px; }
+  .features h2 { font-size: clamp(36px, 7vw, 56px); text-transform: uppercase; line-height: 0.98; max-width: 16ch; margin-bottom: 28px; }
+  .bento { display: grid; gap: 14px; }
+  .cell {
+    position: relative;
+    border-radius: var(--radius);
+    padding: 26px 24px 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: 300px;
   }
+  .cell h3 { font-size: 32px; line-height: 1; text-transform: uppercase; }
+  .cell p { margin: 10px 0 0; max-width: 32ch; }
+  .cell img { align-self: end; justify-self: end; height: 220px; width: auto; margin-top: 12px; }
+  .cell.one { background: var(--forest); color: var(--cream); }
+  .cell.one p { color: #cfd9cf; }
+  .cell.one img.wide { height: auto; width: 100%; max-width: 560px; justify-self: center; }
+  .cell.one img.tall { height: 300px; }
+  .cell.two { background: var(--tint-honey); }
+  .cell.three { background: var(--tint-sage); }
+  .cell.two p, .cell.three p { color: var(--muted); }
+
+  .closing { background: var(--forest); color: var(--cream); }
+  .closing .wrap { display: grid; gap: 24px; align-items: center; padding-block: 56px 0; }
+  .closing h2 { font-size: clamp(42px, 9vw, 76px); text-transform: uppercase; line-height: 0.95; }
+  .closing p.lead { color: #cfd9cf; margin: 14px 0 24px; max-width: 34ch; }
+  .closing label { color: var(--cream); }
+  .closing .msg { color: #ffb4a8; }
+  .closing .thanks { background: var(--forest-deep); color: #8fe3bb; border-color: #24543d; }
+  .closing img { height: 340px; width: auto; justify-self: center; align-self: end; }
+
+  footer { padding-block: 32px 48px; color: var(--muted); font-size: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+  footer a { color: var(--text); font-weight: 600; }
+
+  @media (min-width: 520px) {
+    .row { flex-direction: row; }
+    .row input { flex: 1 1 auto; }
+  }
+  @media (min-width: 860px) {
+    .hero { grid-template-columns: 1.15fr 0.85fr; padding-block: 40px 88px; }
+    .scene { justify-self: end; }
+    .bento { grid-template-columns: 1.25fr 1fr; grid-template-rows: auto auto; }
+    .cell.one { grid-row: span 2; min-height: 620px; }
+    .closing .wrap { grid-template-columns: 1.2fr 0.8fr; padding-block: 72px 0; }
+    .closing img { height: 420px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .scene .bear { animation: rise 0.9s var(--ease) both; }
+    .board { animation: settle 0.6s 0.35s var(--ease) both; }
+  }
+  @keyframes rise { from { transform: translate(-50%, 8%); } to { transform: translate(-50%, 0); } }
+  @keyframes settle { from { transform: scale(0.94); } to { transform: scale(1); } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
+<header class="wrap top">
+  <a class="brand" href="#top" aria-label="beBEAR home">
     <img src="logo.png" alt="" width="40" height="40">
     <span>beBEAR</span>
-  </header>
+  </a>
+  <a class="jump" href="#join">Join the waitlist</a>
+</header>
 
-  <section class="hero">
-    <h1>Gain size the simple way.</h1>
-    <p class="sub">A free lift and food tracker for skinny guys and girls who want to bulk.</p>
-    <form class="waitlist" novalidate>
-      <input type="email" name="email" placeholder="your@email.com" autocomplete="email" aria-label="Email" required>
-      <button type="submit">Join the waitlist</button>
-    </form>
-    <p class="msg" role="alert"></p>
+<main id="top">
+  <section class="wrap hero">
+    <div>
+      <h1>Gain size <em>the simple way.</em></h1>
+      <p class="sub">A free lift and food tracker for skinny guys and girls who want to bulk.</p>
+      <form class="waitlist" novalidate>
+        <label for="email-hero">Your email</label>
+        <div class="row">
+          <input id="email-hero" type="email" name="email" placeholder="you@email.com" autocomplete="email" inputmode="email" required>
+          <button type="submit">Join the waitlist</button>
+        </div>
+        <p class="msg" role="alert" aria-live="polite"></p>
+      </form>
+    </div>
+    <div class="scene">
+      <img class="gym" src="gym.webp" alt="" width="768" height="1152">
+      <div class="board" aria-hidden="true"><span class="small">Chicken rice bowl</span><span class="big">46 g protein</span><span class="small">710 kcal</span></div>
+      <img class="bear" src="hero-bear.webp" alt="The beBEAR bear lifting a barbell in the gym" width="512" height="768">
+    </div>
   </section>
 
-  <ul class="benefits">
-    <li>
-      <span class="icon" aria-hidden="true">📸</span>
-      <div>
-        <h2>Snap your meal, get the macros</h2>
-        <p>Take a photo of your food. AI counts the protein and calories for you.</p>
-      </div>
-    </li>
-    <li>
-      <span class="icon" aria-hidden="true">🏋️</span>
-      <div>
-        <h2>A plan that fits you</h2>
-        <p>Gym, home or street workout. Go for size, strength or both.</p>
-      </div>
-    </li>
-    <li>
-      <span class="icon" aria-hidden="true">✅</span>
-      <div>
-        <h2>Free forever to track</h2>
-        <p>Log every lift and every meal. Simple screens, no clutter.</p>
-      </div>
-    </li>
-  </ul>
-
-  <div class="picture">
-    <img src="bear.webp" alt="The beBEAR bear lifting a barbell over its head" width="1024" height="1536" loading="lazy">
-  </div>
-
-  <section class="cta">
-    <p class="nudge">Stop guessing what to eat. Get beBEAR first.</p>
-    <form class="waitlist" novalidate>
-      <input type="email" name="email" placeholder="your@email.com" autocomplete="email" aria-label="Email" required>
-      <button type="submit">Join the waitlist</button>
-    </form>
-    <p class="msg" role="alert"></p>
+  <section class="wrap features">
+    <h2>Built for bulking. Kept simple.</h2>
+    <div class="bento">
+      <article class="cell one">
+        <div><h3>Snap your meal, get the macros.</h3><p>Take a photo of your food. AI counts the protein and calories for you.</p></div>
+        <img class="tall" src="card-1.webp" alt="The bear holding a big bowl of food" loading="lazy">
+      </article>
+      <article class="cell two">
+        <div><h3>A plan that fits you.</h3><p>Gym, home or street workout. Go for size, strength or both.</p></div>
+        <img src="card-2.webp" alt="The bear lifting a barbell" width="512" height="768" loading="lazy">
+      </article>
+      <article class="cell three">
+        <div><h3>Free forever to track.</h3><p>Log every lift and every meal. Simple screens, no clutter.</p></div>
+        <img src="card-3.webp" alt="The bear flexing" width="512" height="768" loading="lazy">
+      </article>
+    </div>
   </section>
 
-  <footer>
-    <p>Free to track. Coming to iPhone soon.</p>
-    <p><a href="https://lifts.paulbebear.com/privacy.html">Privacy policy</a></p>
-  </footer>
-</div>
+  <section class="closing" id="join">
+    <div class="wrap">
+      <div>
+        <h2>Stop guessing what to eat.</h2>
+        <p class="lead">Get beBEAR first when it lands on iPhone.</p>
+        <form class="waitlist" novalidate>
+          <label for="email-closing">Your email</label>
+          <div class="row">
+            <input id="email-closing" type="email" name="email" placeholder="you@email.com" autocomplete="email" inputmode="email" required>
+            <button type="submit">Join the waitlist</button>
+          </div>
+          <p class="msg" role="alert" aria-live="polite"></p>
+        </form>
+      </div>
+      <img src="closing-bear.webp" alt="" width="512" height="768" loading="lazy">
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>Free to track. Coming to iPhone soon.</span>
+  <a href="https://lifts.paulbebear.com/privacy.html">Privacy policy</a>
+</footer>
 
 <script>
   (function () {
     var VARIANT = "b";
     var ENDPOINT = "https://qvqwvuuwfueccrmzwyct.supabase.co/rest/v1/waitlist";
-    var API_KEY = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
-    var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var PUBLISHABLE_KEY = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
+    var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     var THANKS = "You're on the list. We'll email you when beBEAR is ready.";
-    var FAILED = "That didn't work. Try again.";
-    var INVALID = "Check your email address.";
 
     var srcParam = new URLSearchParams(window.location.search).get("src");
     var source = srcParam ? srcParam.slice(0, 64) : null;
-
     var forms = document.querySelectorAll("form.waitlist");
 
     function showThanks() {
       forms.forEach(function (form) {
         var thanks = document.createElement("p");
         thanks.className = "thanks";
+        thanks.setAttribute("role", "status");
         thanks.textContent = THANKS;
-        form.nextElementSibling.textContent = "";
         form.replaceWith(thanks);
       });
     }
@@ -233,13 +359,13 @@
     forms.forEach(function (form) {
       var input = form.querySelector("input");
       var button = form.querySelector("button");
-      var msg = form.nextElementSibling;
+      var msg = form.querySelector(".msg");
 
       form.addEventListener("submit", function (event) {
         event.preventDefault();
-        var email = input.value.trim();
+        var email = input.value.trim().toLowerCase();
         if (!EMAIL_PATTERN.test(email)) {
-          msg.textContent = INVALID;
+          msg.textContent = "Check your email address.";
           input.focus();
           return;
         }
@@ -247,22 +373,18 @@
         button.disabled = true;
         fetch(ENDPOINT, {
           method: "POST",
-          headers: {
-            apikey: API_KEY,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal"
-          },
+          headers: { apikey: PUBLISHABLE_KEY, "Content-Type": "application/json", Prefer: "return=minimal" },
           body: JSON.stringify({ email: email, variant: VARIANT, source: source })
         })
           .then(function (response) {
             if (response.status === 201 || response.status === 409) {
               showThanks();
             } else {
-              msg.textContent = FAILED;
+              msg.textContent = "That didn't work. Try again.";
             }
           })
           .catch(function () {
-            msg.textContent = FAILED;
+            msg.textContent = "That didn't work. Try again.";
           })
           .then(function () {
             button.disabled = false;
