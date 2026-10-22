@@ -28,7 +28,13 @@ import { PressFeedback_install } from "./utils/pressFeedback";
 import { SpotifyClient_handleRedirect } from "./utils/spotifyClient";
 import { Invite_fromUrl, Invite_surface } from "./models/invite";
 import { InviteGuide } from "./components/inviteGuide";
-import { InviteRequest } from "./components/inviteRequest";
+import { ForkOverlays } from "./components/forkOverlays";
+import {
+  InviteClient_isIos,
+  InviteClient_isStandalone,
+  InviteClient_openHere,
+  InviteClient_rememberOpenHere,
+} from "./utils/inviteClient";
 
 if (OfflineOnly_isEnabled()) {
   OfflineOnly_installFetchGuard(window);
@@ -68,7 +74,7 @@ async function initialize(loadedData: ILocalStorage | undefined): Promise<void> 
     (window as any).queue = queue;
     createRoot(document.getElementById("app")!).render(
       <>
-        {OfflineOnly_isEnabled() && <InviteRequest />}
+        {OfflineOnly_isEnabled() && <ForkOverlays />}
         <AppView
           initialState={initialState}
           client={client}
@@ -87,16 +93,7 @@ async function initialize(loadedData: ILocalStorage | undefined): Promise<void> 
 
 IndexedDBUtils_getAllKeys();
 
-async function main(): Promise<void> {
-  const handle = Invite_fromUrl(window.location.href);
-  const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
-  if (
-    Invite_surface({ offline: OfflineOnly_isEnabled(), standalone, handle, historyCount: 0, programCount: 0 }) ===
-    "guide"
-  ) {
-    createRoot(document.getElementById("app")!).render(<InviteGuide handle={handle!} />);
-    return;
-  }
+async function load(): Promise<void> {
   persistence
     .load(await getIdbKey(userId, !!adminKey))
     .then(initialize)
@@ -104,6 +101,29 @@ async function main(): Promise<void> {
       console.error(e);
       initialize(undefined);
     });
+}
+
+function main(): void {
+  const surface = Invite_surface({
+    offline: OfflineOnly_isEnabled(),
+    standalone: InviteClient_isStandalone(),
+    openHere: InviteClient_openHere(),
+    historyCount: 0,
+    programCount: 0,
+  });
+  if (surface !== "guide") {
+    load();
+    return;
+  }
+  const root = createRoot(document.getElementById("app")!);
+  const openHere = (): void => {
+    InviteClient_rememberOpenHere();
+    root.unmount();
+    load();
+  };
+  root.render(
+    <InviteGuide handle={Invite_fromUrl(window.location.href)} isIos={InviteClient_isIos()} onOpenHere={openHere} />
+  );
 }
 
 main();

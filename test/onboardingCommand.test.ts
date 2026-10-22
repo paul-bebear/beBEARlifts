@@ -2,15 +2,14 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import { OnboardingCommand_run } from "../src/utils/onboardingCommand";
-import { Onboarding_empty, IOnboardingEvent, IOnboardingState } from "../src/models/onboarding";
-import { IDispatch, IThunk } from "../src/ducks/types";
+import { Onboarding_empty, IOnboardingEvent, IOnboardingState, Onboarding_reduce } from "../src/models/onboarding";
+import { IDispatch } from "../src/ducks/types";
 import { IState, IEnv } from "../src/models/state";
 import { Storage_getDefault } from "../src/models/storage";
 import { OnboardingCatalog_programs } from "../src/utils/onboardingCatalog";
 import { FoodLog_empty } from "../src/models/foodLog";
 import * as food from "../src/utils/foodLogStore";
 import * as ai from "../src/utils/aiRequest";
-import { Thunk_importCsvData } from "../src/ducks/thunks";
 import ss1 from "../programdata/programs/builtin/ss1.json";
 import { AiConsent_decide } from "../src/models/aiConsent";
 import { AiConsentStore } from "../src/utils/aiConsentClient";
@@ -109,17 +108,50 @@ describe("Onboarding commands", () => {
     expect(request.callCount).to.equal(1);
     expect(events[0]).to.include({ type: "ready" });
     if (events[0].type === "ready") {
-      expect(events[0].result.answer.note).to.include("No connection");
+      expect(events[0].result.fallbackReason).to.equal("No connection");
+      expect(events[0].result.answer.note).not.to.include("No connection");
     }
   });
+  it("tags every answer with the run that asked for it", async () => {
+    sinon.stub(ai, "AiRequest_post").resolves({ ok: false, error: "No connection" });
+    await run({ ...Onboarding_empty(), command: "prepare", run: 7 });
+    expect(events[0]).to.include({ type: "ready", run: 7 });
+  });
+
+  async function prepareWithHistory(): Promise<IOnboardingState> {
+    sinon
+      .stub(ai, "AiRequest_post")
+      .resolves({ ok: true, body: { text: JSON.stringify({ builtin: "fierce-5", historyCsv: csv }) } });
+    await run({ ...Onboarding_empty(), command: "prepare" });
+    const ready = events[0];
+    events = [];
+    if (ready.type !== "ready") {
+      throw new Error("expected a ready event");
+    }
+    return Onboarding_reduce({ ...Onboarding_empty(), command: "prepare" }, ready);
+  }
+
+  it("reads AI history before Start and shows its count without saving it", async () => {
+    const done = await prepareWithHistory();
+    expect(done.result?.history?.records).to.have.length(1);
+    expect(done.importHistory).to.equal(true);
+    expect(state.storage.history).to.have.length(0);
+  });
   it("applies program, history, units, weight and food profile on Start", async () => {
-    const form = Onboarding_empty();
-    form.answers = { ...form.answers, height: "180", weight: "80", unit: "kg", age: "30", sex: "male", goal: "lose" };
-    form.command = "apply";
-    form.result = {
-      name: "Fierce 5",
-      days: 3,
-      answer: { builtin: "fierce-5", historyCsv: csv, renamed: [], note: "" },
+    const done = await prepareWithHistory();
+    const form: IOnboardingState = {
+      ...done,
+      command: "apply",
+      answers: {
+        ...done.answers,
+        heightUnit: "cm",
+        height: "180",
+        weight: "80",
+        unit: "kg",
+        age: "30",
+        sex: "male",
+        goal: "lose",
+      },
     };
     await run(form);
     expect(events).to.deep.equal([]);
@@ -131,27 +163,24 @@ describe("Onboarding commands", () => {
     expect(state.storage.stats.weight.weight?.[0].value).to.deep.equal({ value: 80, unit: "kg" });
     expect(foodLog.profile).to.include({ heightCm: 180, sex: "male", goal: "lose" });
   });
-  it("does not create a program when history is unreadable or food persistence fails", async () => {
+  it("skips workouts already in history and all workouts when the box is unticked", async () => {
+    const done = await prepareWithHistory();
+    await run({ ...done, command: "apply" });
+    expect(state.storage.history).to.have.length(1);
+    state.storage.programs = [];
+    await run({ ...done, command: "apply" });
+    expect(state.storage.history).to.have.length(1);
+    state.storage.history = [];
+    await run({ ...done, command: "apply", importHistory: false });
+    expect(state.storage.history).to.have.length(0);
+  });
+  it("does not create a program when food persistence fails", async () => {
     const form = Onboarding_empty();
     form.command = "apply";
-    form.result = {
-      name: "Fierce 5",
-      days: 3,
-      answer: { builtin: "fierce-5", historyCsv: "bad", renamed: [], note: "" },
-    };
+    form.result = { name: "Fierce 5", days: 3, answer: { builtin: "fierce-5", renamed: [], note: "" } };
+    (food.FoodLogStore_update as sinon.SinonStub).rejects(new Error("Storage full"));
     await run(form);
     expect(events[0].type).to.equal("failed");
     expect(state.storage.programs).to.have.length(0);
-    form.result.answer.historyCsv = undefined;
-    (food.FoodLogStore_update as sinon.SinonStub).rejects(new Error("Storage full"));
-    await run(form);
-    expect(state.storage.programs).to.have.length(0);
-  });
-  it("imports onboarding history immediately without opening the normal import preview", async () => {
-    const actions = sinon.spy(dispatch);
-    const thunk: IThunk = Thunk_importCsvData(csv, "apply");
-    await thunk(actions, () => state, {} as IEnv);
-    expect(state.storage.history).to.have.length(1);
-    expect(state.importPreview).to.equal(undefined);
   });
 });

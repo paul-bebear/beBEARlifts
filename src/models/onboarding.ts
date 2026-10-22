@@ -1,5 +1,7 @@
 import { IOnboardingAnswers, OnboardingAnswers_empty } from "./onboardingAnswers";
 import { IOnboardingAnswer } from "./onboardingAnswer";
+import { IOnboardingHistory } from "./onboardingHistory";
+import { Friends_normalizeHandle } from "./friends";
 import { IProgram } from "../types";
 
 export interface IOnboardingResult {
@@ -7,6 +9,8 @@ export interface IOnboardingResult {
   name: string;
   days: number;
   program?: IProgram;
+  fallbackReason?: string;
+  history?: IOnboardingHistory;
 }
 
 export interface IOnboardingState {
@@ -16,7 +20,10 @@ export interface IOnboardingState {
   invite: string;
   useAi: boolean;
   command?: "prepare" | "fallback" | "apply";
+  // Each command gets a new run number. A late answer from a run the user abandoned carries the old number.
+  run: number;
   result?: IOnboardingResult;
+  importHistory: boolean;
   error?: string;
   resizing: boolean;
 }
@@ -25,21 +32,47 @@ export type IOnboardingEvent =
   | { type: "answers"; patch: Partial<IOnboardingAnswers> }
   | { type: "invite"; value: string }
   | { type: "auth"; signedIn: boolean }
-  | { type: "next" | "skip" | "back" | "manual" | "start" | "fallback" | "resizing" }
+  | { type: "next" | "skip" | "back" | "manual" | "start" | "fallback" | "resizing" | "toggleHistory" }
   | { type: "images"; images: string[] }
   | { type: "removeImage"; index: number }
-  | { type: "ready"; result: IOnboardingResult }
-  | { type: "failed"; error: string };
+  | { type: "ready"; result: IOnboardingResult; run?: number }
+  | { type: "failed"; error: string; run?: number };
 
 export const Onboarding_maxImageChars = 3_500_000;
 
-export function Onboarding_empty(invite: string = ""): IOnboardingState {
-  return { step: "auth", answers: OnboardingAnswers_empty(), images: [], invite, useAi: false, resizing: false };
+export function Onboarding_empty(
+  invite: string = "",
+  answers: IOnboardingAnswers = OnboardingAnswers_empty()
+): IOnboardingState {
+  return {
+    step: "auth",
+    answers,
+    images: [],
+    invite,
+    useAi: false,
+    run: 0,
+    importHistory: true,
+    resizing: false,
+  };
+}
+
+function command(state: IOnboardingState, next: NonNullable<IOnboardingState["command"]>): IOnboardingState {
+  return { ...state, command: next, run: state.run + 1, error: undefined };
 }
 
 export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEvent): IOnboardingState {
+  if ((event.type === "ready" || event.type === "failed") && event.run != null && event.run !== state.run) {
+    return state;
+  }
   if (event.type === "ready") {
-    return { ...state, step: "done", command: undefined, result: event.result, error: undefined };
+    return {
+      ...state,
+      step: "done",
+      command: undefined,
+      result: event.result,
+      importHistory: (event.result.history?.records.length ?? 0) > 0,
+      error: undefined,
+    };
   }
   if (event.type === "failed") {
     return {
@@ -50,8 +83,14 @@ export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEve
       error: event.error,
     };
   }
+  if (event.type === "fallback" && state.command === "prepare") {
+    return command({ ...state, step: "working" }, "fallback");
+  }
   if (state.command != null) {
     return state;
+  }
+  if (event.type === "toggleHistory") {
+    return { ...state, importHistory: !state.importHistory };
   }
   if (event.type === "images") {
     const images = [...state.images, ...event.images];
@@ -69,7 +108,7 @@ export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEve
     return { ...state, answers: { ...state.answers, ...event.patch }, error: undefined };
   }
   if (event.type === "invite") {
-    return { ...state, invite: event.value };
+    return { ...state, invite: Friends_normalizeHandle(event.value) };
   }
   if (event.type === "manual") {
     return { ...state, step: "manual" };
@@ -78,10 +117,10 @@ export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEve
     return { ...state, step: "goal", useAi: event.signedIn };
   }
   if (event.type === "start" && state.result != null) {
-    return { ...state, command: "apply", error: undefined };
+    return command(state, "apply");
   }
   if (event.type === "fallback") {
-    return { ...state, step: "working", command: "fallback", error: undefined };
+    return command({ ...state, step: "working" }, "fallback");
   }
   if (event.type === "back") {
     const step = state.step === "body" ? "goal" : state.step === "plan" ? "body" : "auth";
@@ -101,17 +140,22 @@ export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEve
               equipment: defaults.equipment,
             }
           : state.step === "body"
-            ? { ...state.answers, height: "", weight: "", age: "", sex: undefined, experience: "new" as const }
+            ? {
+                ...state.answers,
+                height: "",
+                heightFt: "",
+                heightIn: "",
+                weight: "",
+                age: "",
+                sex: undefined,
+                experience: "new" as const,
+              }
             : { ...state.answers, plan: "" };
     if (state.step === "plan") {
-      return {
-        ...state,
-        answers,
-        images: event.type === "skip" ? [] : state.images,
-        step: "working",
-        command: state.useAi ? "prepare" : "fallback",
-        error: undefined,
-      };
+      return command(
+        { ...state, answers, images: event.type === "skip" ? [] : state.images, step: "working" },
+        state.useAi ? "prepare" : "fallback"
+      );
     }
     return { ...state, answers, step: state.step === "goal" ? "body" : "plan", error: undefined };
   }

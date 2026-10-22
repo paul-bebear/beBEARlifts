@@ -1,6 +1,10 @@
 import "mocha";
 import { expect } from "chai";
-import { CloudBackupForm_empty, CloudBackupForm_reduce as reduce } from "../src/models/cloudBackupForm";
+import {
+  CloudBackupForm_empty,
+  CloudBackupForm_parseSentCode,
+  CloudBackupForm_reduce as reduce,
+} from "../src/models/cloudBackupForm";
 
 function emailStep(): ReturnType<typeof CloudBackupForm_empty> {
   return reduce(CloudBackupForm_empty(), { type: "email", value: " paul@example.com " });
@@ -115,5 +119,17 @@ describe("CloudBackupForm", () => {
     expect(reduce(signedOut, { type: "request", operation: "restore" })).to.equal(signedOut);
     const signedIn = reduce(emailStep(), { type: "session", email: "paul@example.com" });
     expect(reduce(signedIn, { type: "request", operation: "sendCode" })).to.equal(signedIn);
+  });
+
+  it("reopens the code step after a restart when the code is under 10 minutes old", () => {
+    const sentAt = 1_000_000;
+    const sent = CloudBackupForm_parseSentCode({ email: "paul@example.com", sentAt });
+    const resumed = reduce(CloudBackupForm_empty(), { type: "resume", sent, now: sentAt + 9 * 60 * 1000 });
+    expect(resumed).to.include({ step: "code", email: "paul@example.com", code: "" });
+    const stale = reduce(CloudBackupForm_empty(), { type: "resume", sent, now: sentAt + 11 * 60 * 1000 });
+    expect(stale.step).to.equal("email");
+    const typing = reduce(CloudBackupForm_empty(), { type: "email", value: "other@example.com" });
+    expect(reduce(typing, { type: "resume", sent, now: sentAt })).to.equal(typing);
+    expect(CloudBackupForm_parseSentCode({ email: "x", sentAt: "soon" })).to.deep.equal({});
   });
 });

@@ -38,13 +38,39 @@ export type ICloudBackupEvent =
   | { type: "done"; message?: string }
   | { type: "signedOut" }
   | { type: "failed"; error: string }
-  | { type: "changeEmail" };
+  | { type: "changeEmail" }
+  | { type: "resume"; sent: ISentCode; now: number };
+
+export interface ISentCode {
+  email?: string;
+  sentAt?: number;
+}
+
+export const CloudBackupForm_codeLifetimeMs = 10 * 60 * 1000;
 
 export function CloudBackupForm_empty(): ICloudBackupForm {
   return { step: "email", email: "", code: "", showOlderCopies: false };
 }
 
+export function CloudBackupForm_parseSentCode(raw: unknown): ISentCode {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  return typeof r.email === "string" && typeof r.sentAt === "number" && Number.isFinite(r.sentAt)
+    ? { email: r.email, sentAt: r.sentAt }
+    : {};
+}
+
+function resume(state: ICloudBackupForm, sent: ISentCode, now: number): ICloudBackupForm {
+  const age = sent.sentAt == null ? undefined : now - sent.sentAt;
+  const fresh = age != null && age >= 0 && age < CloudBackupForm_codeLifetimeMs;
+  return fresh && sent.email != null && state.step === "email" && state.command == null && state.email === ""
+    ? { ...state, step: "code", email: sent.email, code: "" }
+    : state;
+}
+
 export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBackupEvent): ICloudBackupForm {
+  if (event.type === "resume") {
+    return resume(state, event.sent, event.now);
+  }
   if (event.type === "session") {
     return event.email != null
       ? { ...state, step: "signedIn", email: event.email }

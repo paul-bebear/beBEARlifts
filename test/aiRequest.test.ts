@@ -1,7 +1,12 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { AiRequest_offlineMessage, AiRequest_post, AiRequest_signInMessage } from "../src/utils/aiRequest";
+import {
+  AiRequest_offlineMessage,
+  AiRequest_post,
+  AiRequest_signInMessage,
+  AiRequest_timeoutMessage,
+} from "../src/utils/aiRequest";
 import { CloudStore } from "../src/utils/supabaseClient";
 import { ICloudState } from "../src/models/cloudBackup";
 import { WarmupApi_generate } from "../src/utils/warmupApi";
@@ -110,5 +115,23 @@ describe("AiRequest", () => {
     expect(await ReportApi_summary(report)).to.deep.equal(signIn);
     expect(await FoodApi_describe("2 eggs")).to.deep.equal(signIn);
     expect(fetchStub.called).to.equal(false);
+  });
+
+  it("aborts a request that runs past its time limit and says so", async () => {
+    fetchStub.callsFake(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+        })
+    );
+    expect(await AiRequest_post("/api/ai/onboard", {}, 5)).to.deep.equal({
+      ok: false,
+      error: AiRequest_timeoutMessage,
+    });
+  });
+
+  it("turns a gateway timeout into the same message instead of a status code", async () => {
+    fetchStub.resolves(new Response("", { status: 504 }));
+    expect(await AiRequest_post("/api/ai/onboard", {})).to.deep.equal({ ok: false, error: AiRequest_timeoutMessage });
   });
 });
