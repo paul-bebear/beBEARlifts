@@ -3,7 +3,7 @@ import { IOnboardingAnswer } from "./onboardingAnswer";
 import { IOnboardingHistory } from "./onboardingHistory";
 import { Friends_normalizeHandle } from "./friends";
 import { IProgram } from "../types";
-import { BearPlan_recommend, IBearPlanCard } from "./onboardingPlanStub";
+import { BearPlan_recommend, IBearPlanCard } from "./bearPlanRecommend";
 
 export interface IOnboardingResult {
   answer: IOnboardingAnswer;

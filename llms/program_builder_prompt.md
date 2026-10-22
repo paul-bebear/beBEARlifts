@@ -36,6 +36,7 @@ The app has these built-in programs. Each line gives the name, then days per wee
 
 For new lifters:
 
+- beBEAR 3-Day Full Body (3 days, 45-60 min, muscle): Three full-body days a week for your first months of lifting. Rep ranges, double progression, a short run and a stretch block.
 - Basic Beginner Routine (3 days, 30-45 min, strength): Simple 3-day barbell program to build your first foundation of strength
 - Fierce 5 (3 days, 45-60 min, strength and muscle): Novice full-body program with built-in accessories for balanced muscle development - the aesthetic alternative to Starting Strength
 - Ice Cream Fitness 5x5 (3 days, 90+ min, strength and muscle): Novice strength and muscle-building program - StrongLifts 5x5 with added accessories for more complete development
@@ -51,6 +52,7 @@ For 3 to 12 months of lifting:
 - 5/3/1 For Beginners (3 days, 90+ min, strength): Beginner-friendly 3-day full-body program based on Jim Wendler's 5/3/1 system with FSL supplemental work.
 - Arnold Split (6 days, 60-90 min, muscle): Classic 6-day bodybuilding split pairing chest/back, shoulders/arms, and legs — each trained twice per week with high volume
 - Arnold's Golden Six (3 days, 60-90 min, muscle): Arnold Schwarzenegger’s 3 day beginner hypertrophy program
+- beBEAR 4-Day Upper/Lower (4 days, 45-60 min, muscle): Four days a week, upper and lower body twice each. Rep ranges and double progression, about 45 minutes a session.
 - beBEAR 5-Day Upper/Lower/Push/Pull/Lower (5 days, 45-60 min, muscle): Five days a week. Upper, quad-focused lower, push, pull, glute-focused lower, all in rep ranges with double progression.
 - Barbell Medicine: The Bridge (4 days, 60-90 min, strength): An 8-week post-novice program introducing RPE-based autoregulation across Squat, Bench, Deadlift, and OHP, designed to bridge the gap between linear progression and intermediate training.
 - Bro Split (5 days, 60-90 min, muscle): Classic 5-day bodybuilding split — one muscle group per day for maximum volume and focus

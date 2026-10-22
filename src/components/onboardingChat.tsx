@@ -13,7 +13,8 @@ import {
   Onboarding_mainAction,
   Onboarding_reduce,
 } from "../models/onboarding";
-import { IBearGoal, IBearPlacePick } from "../models/onboardingPlanStub";
+import { IBearPlacePick } from "../models/bearPlace";
+import { IBearGoal } from "../models/bearPlan";
 import { OnboardingCommand_run } from "../utils/onboardingCommand";
 import { CloudStore } from "../utils/supabaseClient";
 import { InviteClient_current, InviteClient_save, InviteStore } from "../utils/inviteClient";

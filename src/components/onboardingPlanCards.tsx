@@ -1,5 +1,6 @@
 import { JSX, useMemo } from "react";
-import { BearPlan_text, IBearPlanCard } from "../models/onboardingPlanStub";
+import { BearPlan_text } from "../models/bearPlan";
+import { IBearPlanCard } from "../models/bearPlanRecommend";
 import { OnboardingProgram_dayNames } from "../models/onboardingProgram";
 
 export function OnboardingPlanCards(props: {

@@ -3,7 +3,9 @@ import { IEquipment, IEquipmentData, IWeight } from "../types";
 import { IProgramGoal, IProgramGoalKind } from "./programGoal";
 import { Equipment_isBuiltIn, Equipment_mergeEquipment } from "./equipment";
 import { Settings_defaultEquipment } from "./settings";
-import { IBearGoal, IBearPlacePick, IBearPlanInput } from "./onboardingPlanStub";
+import { IBearPlacePick } from "./bearPlace";
+import { IBearGoal } from "./bearPlan";
+import { IBearPlanInput } from "./bearPlanRecommend";
 
 export interface IOnboardingAnswers {
   places: IBearPlacePick[];

@@ -14,7 +14,8 @@ import {
   OnboardingAnswers_planInput,
   OnboardingAnswers_programGoal,
 } from "../models/onboardingAnswers";
-import { BearPlace_equipmentKeys, BearPlace_resolve, BearPlan_text } from "../models/onboardingPlanStub";
+import { BearPlace_equipmentKeys, BearPlace_resolve } from "../models/bearPlace";
+import { BearPlan_text } from "../models/bearPlan";
 import { Equipment_getCurrentGym } from "../models/equipment";
 import { ProgramGoal_set } from "../models/programGoal";
 import { ProgramGoalStore } from "./programGoalStore";
