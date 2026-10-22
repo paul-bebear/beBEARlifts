@@ -42,6 +42,7 @@ while IFS= read -r line; do
   PROFILE_SETTINGS+=("$line")
 done < <(TS_NODE_TRANSPILE_ONLY=1 npx ts-node scripts/ios-signing.ts build-settings dev)
 
+npm run build:programs
 NODE_ENV=production npm run build:watch-bundle
 
 DERIVED_DATA="$ROOT/ios/build/DeviceSigned"
