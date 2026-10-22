@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>beBEAR: your bear grows when you do</title>
+    <meta name="description" content="A pocket bear that grows every time you lift. Free lift and food tracking. Coming to iPhone soon." />
+    <meta property="og:title" content="beBEAR: your bear grows when you do" />
+    <meta property="og:description" content="A pocket bear that grows every time you lift. Join the waitlist." />
+    <meta name="theme-color" content="#F5A524" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --honey: #f5a524;
+        --honey-label: #2b1700;
+        --accent: #b76506;
+        --bg: #ffffff;
+        --bg-subtle: #fff8ec;
+        --card: #fff2db;
+        --text: #21242b;
+        --text-muted: #607284;
+        --border: #ffe6b4;
+        --error: #c8220d;
+        --success: #007f5a;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --accent: #f5a524;
+          --bg: #0c0819;
+          --bg-subtle: #252034;
+          --card: #252034;
+          --text: #f4f6f7;
+          --text-muted: #a4b0bc;
+          --border: #393248;
+          --error: #ff8066;
+          --success: #2bdc9b;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+      main { max-width: 640px; margin: 0 auto; padding: 0 20px; }
+      section { padding: 40px 0; }
+      .brand { font-weight: 800; font-size: 20px; letter-spacing: 0.5px; padding-top: 24px; }
+      .brand span { color: var(--accent); }
+      .hero { padding-top: 32px; text-align: center; }
+      h1 { font-size: 40px; line-height: 1.1; font-weight: 800; margin: 0 0 16px; }
+      h1 em { font-style: normal; color: var(--accent); }
+      .sub { font-size: 18px; color: var(--text-muted); margin: 0 auto 28px; max-width: 460px; }
+      form { display: flex; flex-direction: column; gap: 10px; max-width: 440px; margin: 0 auto; }
+      input[type="email"] {
+        font: inherit;
+        font-size: 16px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        width: 100%;
+      }
+      input[type="email"]:focus { outline: none; border-color: var(--honey); }
+      button {
+        font: inherit;
+        font-size: 17px;
+        font-weight: 700;
+        padding: 14px 20px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--honey);
+        color: var(--honey-label);
+        cursor: pointer;
+      }
+      button:disabled { opacity: 0.6; cursor: default; }
+      .msg { min-height: 21px; margin: 0; font-size: 14px; color: var(--error); text-align: center; }
+      .fine { font-size: 13px; color: var(--text-muted); text-align: center; margin: 4px 0 0; }
+      .thanks { font-size: 18px; font-weight: 600; color: var(--success); text-align: center; max-width: 440px; margin: 0 auto; padding: 14px 0; }
+      .benefits { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+      .benefits li { background: var(--card); border-radius: 16px; padding: 18px 20px; }
+      .benefits h2 { font-size: 19px; margin: 0 0 4px; }
+      .benefits p { margin: 0; color: var(--text-muted); }
+      .shot { text-align: center; }
+      .shot img { width: 100%; height: auto; display: block; }
+      .shot figcaption { margin-top: 12px; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+      .again { text-align: center; background: var(--bg-subtle); border-radius: 24px; padding: 36px 20px; margin-bottom: 40px; }
+      .again h2 { font-size: 24px; margin: 0 0 20px; }
+      footer { text-align: center; padding: 24px 20px 40px; font-size: 14px; color: var(--text-muted); }
+      footer p { margin: 0 0 6px; }
+      footer a { color: var(--accent); }
+      @media (min-width: 720px) {
+        h1 { font-size: 56px; }
+        .sub { font-size: 20px; }
+        form { flex-direction: row; flex-wrap: wrap; }
+        form input[type="email"] { flex: 1 1 240px; width: auto; }
+        form button { flex: 0 0 auto; }
+        form .msg { flex-basis: 100%; }
+        .benefits { grid-template-columns: repeat(3, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">be<span>BEAR</span></div>
+
+      <section class="hero">
+        <h1>Your bear grows <em>when you do.</em></h1>
+        <p class="sub">A pocket bear that gets bigger every time you lift. Skip the gym and it gets lazy.</p>
+        <form class="waitlist" novalidate>
+          <input type="email" name="email" placeholder="you@email.com" autocomplete="email" inputmode="email" aria-label="Your email" required />
+          <button type="submit">Get my bear</button>
+          <p class="msg" role="alert"></p>
+        </form>
+        <p class="fine">One email when it's out. No spam.</p>
+      </section>
+
+      <section>
+        <ul class="benefits">
+          <li>
+            <h2>Lift. It grows.</h2>
+            <p>Every workout makes your bear bigger. 12 levels, and levels never drop.</p>
+          </li>
+          <li>
+            <h2>Eat. It's fed.</h2>
+            <p>Log your food to keep it happy. Skip workouts and it gets lazy.</p>
+          </li>
+          <li>
+            <h2>A real tracker inside.</h2>
+            <p>Sets, reps, weights and meals. All free to track.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="shot">
+        <figure style="margin: 0">
+          <img src="bear-levels.webp" width="1200" height="768" alt="The beBEAR bear at level 1, level 6 and level 12" />
+          <figcaption>Level 1 → Level 6 → Level 12</figcaption>
+        </figure>
+      </section>
+
+      <section class="again">
+        <h2>Your bear is waiting. Be the first to get it.</h2>
+        <form class="waitlist" novalidate>
+          <input type="email" name="email" placeholder="you@email.com" autocomplete="email" inputmode="email" aria-label="Your email" required />
+          <button type="submit">Get my bear</button>
+          <p class="msg" role="alert"></p>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <p>Free to track. Coming to iPhone soon.</p>
+      <p><a href="https://lifts.paulbebear.com/privacy.html">Privacy policy</a></p>
+    </footer>
+
+    <script>
+      (function () {
+        var VARIANT = "a";
+        var ENDPOINT = "https://qvqwvuuwfueccrmzwyct.supabase.co/rest/v1/waitlist";
+        var PUBLISHABLE_KEY = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
+        var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+        var srcParam = new URLSearchParams(window.location.search).get("src");
+        var source = srcParam ? srcParam.slice(0, 64) : null;
+
+        function showThanks(form) {
+          var thanks = document.createElement("p");
+          thanks.className = "thanks";
+          thanks.textContent = "You're on the list. Your bear will find you.";
+          form.replaceWith(thanks);
+        }
+
+        document.querySelectorAll("form.waitlist").forEach(function (form) {
+          var input = form.querySelector("input");
+          var button = form.querySelector("button");
+          var msg = form.querySelector(".msg");
+
+          form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            var email = input.value.trim().toLowerCase();
+            if (!EMAIL_PATTERN.test(email)) {
+              msg.textContent = "Check your email address.";
+              input.focus();
+              return;
+            }
+            msg.textContent = "";
+            button.disabled = true;
+            fetch(ENDPOINT, {
+              method: "POST",
+              headers: {
+                apikey: PUBLISHABLE_KEY,
+                "Content-Type": "application/json",
+                Prefer: "return=minimal",
+              },
+              body: JSON.stringify({ email: email, variant: VARIANT, source: source }),
+            })
+              .then(function (response) {
+                if (response.status === 201 || response.status === 409) {
+                  document.querySelectorAll("form.waitlist").forEach(showThanks);
+                } else {
+                  msg.textContent = "That didn't work. Try again.";
+                }
+              })
+              .catch(function () {
+                msg.textContent = "That didn't work. Try again.";
+              })
+              .finally(function () {
+                button.disabled = false;
+              });
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
