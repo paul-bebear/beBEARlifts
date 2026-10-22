@@ -10,6 +10,8 @@ import { IconNotebook } from "./icons/iconNotebook";
 import { IconPlus2 } from "./icons/iconPlus2";
 import { BearMark } from "./shareCards/bearMark";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
+import { GlassBar } from "./primitives/glassBar";
+import { BearThemeColors_honey } from "../models/bearThemeColors";
 import { Tailwind_semantic, Tailwind_colors } from "../utils/tailwindConfig";
 import { navigateToModal } from "../navigation/navigationService";
 
@@ -38,7 +40,7 @@ interface ITabButtonProps {
 }
 
 function TabButton(props: ITabButtonProps): JSX.Element {
-  const color = props.isActive ? T.honey : Tailwind_semantic().icon.neutral;
+  const color = props.isActive ? BearThemeColors_honey : Tailwind_semantic().icon.neutral;
   return (
     <Pressable
       className="items-center justify-center flex-1"
@@ -66,11 +68,7 @@ export function Footer2View(props: IFooterProps): JSX.Element {
   return (
     <View className="w-full bg-background-default" style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
       <View className="flex-row items-center px-4 pt-2" style={{ gap: 12 }}>
-        <View
-          className="flex-row flex-1 border rounded-full bg-background-default border-border-neutral"
-          style={[shadow, { height: pillHeight }]}
-          accessibilityRole="tablist"
-        >
+        <GlassBar className="flex-row flex-1" style={{ height: pillHeight }} accessibilityRole="tablist">
           <TabButton
             name="home"
             text="Home"
@@ -100,14 +98,14 @@ export function Footer2View(props: IFooterProps): JSX.Element {
             icon={(color) => <BearMark size={24} color={color} faceColor={semantic.background.default} />}
             onPress={() => props.dispatch(Thunk_pushScreen("progressDashboard", undefined, { tab: "graphs" }))}
           />
-        </View>
+        </GlassBar>
         <Pressable
           data-testid="footer-plus"
           testID="footer-plus"
           accessibilityRole="button"
           accessibilityLabel="Add"
           className="items-center justify-center rounded-full"
-          style={[shadow, { width: pillHeight, height: pillHeight, backgroundColor: T.honey }]}
+          style={[shadow, { width: pillHeight, height: pillHeight, backgroundColor: BearThemeColors_honey }]}
           onPress={() => navigateToModal("plusSheetModal")}
         >
           <IconPlus2 size={20} color={T.greenDark} />

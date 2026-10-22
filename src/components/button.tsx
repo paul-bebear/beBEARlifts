@@ -3,6 +3,7 @@ import { GestureResponderEvent, Pressable } from "react-native";
 import { Pressable as StickyPressable } from "./primitives/pressable";
 import { Text } from "./primitives/text";
 import { useTrackClick } from "../utils/clickTracking";
+import { IPillButtonKind, PillButtonClasses_for, PillButtonClasses_isPill } from "../models/pillButtonClasses";
 
 function containsString(children: ReactNode): boolean {
   if (typeof children === "string" || typeof children === "number") {
@@ -16,7 +17,7 @@ function containsString(children: ReactNode): boolean {
 
 interface IProps {
   buttonSize?: "xs" | "sm" | "md" | "lg" | "lg2";
-  kind: "orange" | "purple" | "grayv2" | "red" | "transparent-purple" | "lightpurple" | "lightgrayv3";
+  kind: "orange" | "purple" | "grayv2" | "red" | "transparent-purple" | "lightpurple" | "lightgrayv3" | IPillButtonKind;
   name: string;
   onPress?: (e: GestureResponderEvent) => void;
   onClick?: (e: GestureResponderEvent) => void;
@@ -97,6 +98,12 @@ export function Button(props: IProps): JSX.Element {
   } else {
     containerCn += " px-8 py-3";
     textCn += " font-semibold";
+  }
+
+  if (PillButtonClasses_isPill(kind)) {
+    const pill = PillButtonClasses_for(kind, !!disabled);
+    containerCn = pill.container;
+    textCn = pill.text;
   }
 
   if (props.className) {

@@ -3,7 +3,8 @@ import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodLog_formatNumber, IFoodMeal } from "../models/foodLog";
 import { FoodAddFlow_nutrientsFor, FoodAddFlow_parseGrams, IFoodPick } from "../models/foodAddFlow";
-import { FoodChip, FoodMealPicker, FoodNutrientsRow, FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodChip, FoodMealPicker, FoodNutrientsRow, FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   pick: IFoodPick;
@@ -69,14 +70,25 @@ export function FoodAmountPanel(props: IProps): JSX.Element {
         </>
       )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
-        {props.onDelete != null && <FoodPrimaryButton title="Delete" kind="danger" onPress={props.onDelete} />}
-        {props.onBack != null && <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />}
-        <FoodPrimaryButton
-          testID="food-submit"
-          title={props.submitTitle}
+        {props.onDelete != null && (
+          <Button name="food-amount-panel-delete" kind="pill-danger" className="flex-1" onPress={props.onDelete}>
+            Delete
+          </Button>
+        )}
+        {props.onBack != null && (
+          <Button name="food-amount-panel-back" kind="pill-outline" className="flex-1" onPress={props.onBack}>
+            Back
+          </Button>
+        )}
+        <Button
+          name="food-submit"
+          kind="pill"
+          className="flex-1"
           disabled={hasPortion && grams == null}
           onPress={() => props.onSubmit(grams ?? props.initialGrams, meal)}
-        />
+        >
+          {props.submitTitle}
+        </Button>
       </View>
     </View>
   );

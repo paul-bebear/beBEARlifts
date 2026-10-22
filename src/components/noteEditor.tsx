@@ -2,7 +2,8 @@ import { JSX, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 import { SheetScreenContainer } from "../navigation/SheetScreenContainer";
 import { FormSheet } from "../navigation/FormSheet";
 import { INote, Notes_get, Notes_links, Notes_new, Notes_remove, Notes_save } from "../models/notes";
@@ -86,7 +87,9 @@ export function NoteEditorModal(): JSX.Element {
           )}
           <Text className="pt-2 text-xs text-text-secondary">Saved as you type. Only you can see your notes.</Text>
           <View className="pt-4">
-            <FoodPrimaryButton testID="note-done" title="Done" onPress={close} />
+            <Button name="note-done" kind="pill" className="flex-1" onPress={close}>
+              Done
+            </Button>
           </View>
           {isStored && (
             <Pressable testID="note-delete" data-testid="note-delete" onPress={remove} className="items-center py-4">

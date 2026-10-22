@@ -2,7 +2,8 @@ import { JSX, useState } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { IFoodMeal, INutrients } from "../models/foodLog";
-import { FoodMealPicker, FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodMealPicker, FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   meal?: IFoodMeal;
@@ -63,13 +64,18 @@ export function FoodQuickAddPanel(props: IProps): JSX.Element {
         </>
       )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
-        <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />
-        <FoodPrimaryButton
-          testID="food-quick-submit"
-          title="Add"
+        <Button name="food-quick-add-panel-back" kind="pill-outline" className="flex-1" onPress={props.onBack}>
+          Back
+        </Button>
+        <Button
+          name="food-quick-submit"
+          kind="pill"
+          className="flex-1"
           disabled={nutrients.calories <= 0}
           onPress={() => props.onSubmit(name, nutrients, meal)}
-        />
+        >
+          Add
+        </Button>
       </View>
     </View>
   );

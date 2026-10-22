@@ -1,7 +1,7 @@
 import { JSX, useMemo } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { IconFlame } from "./progressIcons";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedState, untrack } from "../navigation/TrackedStateContext";
@@ -35,12 +35,15 @@ export function ScreenStreak(): JSX.Element {
         Complete at least one checklist item a day to keep your streak and stay on track.
       </Text>
       <View className="flex-row w-full">
-        <FoodPrimaryButton
-          testID="streak-commit"
-          title={log.committedAt != null ? "✓ Committed" : "✓ I'm Committed"}
+        <Button
+          name="streak-commit"
+          kind="pill"
+          className="flex-1"
           disabled={log.committedAt != null}
           onPress={() => ChecklistStore.update((l) => DailyChecklist_commit(l, Date.now()))}
-        />
+        >
+          {log.committedAt != null ? "✓ Committed" : "✓ I'm Committed"}
+        </Button>
       </View>
     </View>
   );

@@ -5,7 +5,7 @@ import { IFoodProduct } from "../models/openFoodFacts";
 import { INutritionLabelForm, NutritionLabel_toForm, NutritionLabel_toProduct } from "../models/nutritionLabel";
 import { FoodApi_readLabel } from "../utils/foodApi";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { FoodLabelForm } from "./foodLabelForm";
 import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
@@ -96,20 +96,28 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
         </Pressable>
       )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
-        <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />
+        <Button name="food-label-panel-back" kind="pill-outline" className="flex-1" onPress={props.onBack}>
+          Back
+        </Button>
         {!isReading && showAi && (
-          <FoodPrimaryButton
-            testID="food-label-photo"
-            title={form == null ? "Photo the label" : "New photo"}
-            kind={form == null ? "primary" : "outline"}
+          <Button
+            name="food-label-photo"
+            kind={form == null ? "pill" : "pill-outline"}
+            className="flex-1"
             onPress={async () => {
               if (await AiConsent_ensure()) {
                 inputRef.current?.click();
               }
             }}
-          />
+          >
+            {form == null ? "Photo the label" : "New photo"}
+          </Button>
         )}
-        {form != null && !isReading && <FoodPrimaryButton testID="food-label-save" title="Save" onPress={save} />}
+        {form != null && !isReading && (
+          <Button name="food-label-save" kind="pill" className="flex-1" onPress={save}>
+            Save
+          </Button>
+        )}
       </View>
     </View>
   );

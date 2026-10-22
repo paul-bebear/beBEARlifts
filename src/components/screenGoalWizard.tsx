@@ -2,7 +2,7 @@ import { JSX, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedDispatch, useTrackedState, untrack } from "../navigation/TrackedStateContext";
 import { EditStats_addPercentageStats } from "../models/editStats";
@@ -153,17 +153,22 @@ export function ScreenGoalWizard(props: { mode: IGoalWizardMode }): JSX.Element 
       {wizard.step === "result" && <GoalWizardResultStep wizard={wizard} setWizard={setWizard} preview={preview} />}
       {continueSteps.includes(wizard.step) && (
         <View className="flex-row mt-6">
-          <FoodPrimaryButton
-            testID="goal-wizard-continue"
-            title={wizard.step === "intro" ? "Start" : "Continue"}
+          <Button
+            name="goal-wizard-continue"
+            kind="pill"
+            className="flex-1"
             disabled={!canContinue}
             onPress={() => setWizard(GoalWizard_next(wizard))}
-          />
+          >
+            {wizard.step === "intro" ? "Start" : "Continue"}
+          </Button>
         </View>
       )}
       {wizard.step === "result" && (
         <View className="flex-row mt-6">
-          <FoodPrimaryButton testID="goal-wizard-save" title="Save goal" disabled={!canContinue} onPress={onSave} />
+          <Button name="goal-wizard-save" kind="pill" className="flex-1" disabled={!canContinue} onPress={onSave}>
+            Save goal
+          </Button>
         </View>
       )}
     </View>

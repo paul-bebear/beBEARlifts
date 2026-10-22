@@ -1,7 +1,7 @@
 import { JSX, ReactNode, useMemo, useState } from "react";
 import { Platform, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { JournalMeals } from "./journalMeals";
 import { JournalCheckIn, JournalMindfulness } from "./journalMindfulness";
 import { ProgressCalendarHeader } from "./progressCalendarHeader";
@@ -110,7 +110,11 @@ function WorkoutSection(props: { journal: IJournalDay }): JSX.Element {
         </Card>
       ))}
       {plan?.kind === "rest" && <Text className="text-base text-text-secondary">Rest day. The bear rested too.</Text>}
-      {plan?.kind === "start" && <FoodPrimaryButton testID="journal-start" title={plan.label} onPress={start} />}
+      {plan?.kind === "start" && (
+        <Button name="journal-start" kind="pill" className="flex-1" onPress={start}>
+          {plan.label}
+        </Button>
+      )}
     </Section>
   );
 }
@@ -229,19 +233,25 @@ export function ScreenJournal(): JSX.Element {
               {journal.weight.value} {journal.weight.unit}
             </Text>
           ) : (
-            <FoodPrimaryButton
-              testID="journal-log-weight"
-              kind="outline"
-              title="Log weight"
+            <Button
+              name="journal-log-weight"
+              kind="pill-outline"
+              className="flex-1"
               onPress={() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))}
-            />
+            >
+              Log weight
+            </Button>
           )}
         </Section>
         <NotesSection journal={journal} />
         <View className="px-4 pt-8 pb-10" style={{ gap: 8 }} testID="journal-export">
-          <FoodPrimaryButton testID="journal-export-day" kind="outline" title="Export this day" onPress={exportDay} />
+          <Button name="journal-export-day" kind="pill-outline" className="flex-1" onPress={exportDay}>
+            Export this day
+          </Button>
           {canZip && (
-            <FoodPrimaryButton testID="journal-export-all" kind="outline" title="Export all days" onPress={exportAll} />
+            <Button name="journal-export-all" kind="pill-outline" className="flex-1" onPress={exportAll}>
+              Export all days
+            </Button>
           )}
           <Text className="text-xs text-center text-text-secondary">
             Markdown files, one per day. Your notes stay private.

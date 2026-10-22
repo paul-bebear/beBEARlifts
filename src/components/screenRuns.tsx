@@ -8,7 +8,7 @@ import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 import { RunDraftStore, RunStore } from "../utils/runStore";
 import { RunSensors_isAvailable } from "../utils/runSensors";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { RunRecorder } from "./runRecorder";
 import { RunResult } from "./runResult";
 
@@ -85,12 +85,15 @@ export function ScreenRuns(): JSX.Element {
             Record a run outside. Distance and pace use GPS. Runs stay on this phone and in your backups.
           </Text>
           <View className="flex-row mb-6">
-            <FoodPrimaryButton
-              title={loading ? "Loading…" : "Start run"}
-              testID="run-start"
+            <Button
+              name="run-start"
+              kind="pill"
+              className="flex-1"
               disabled={loading || !RunSensors_isAvailable()}
               onPress={start}
-            />
+            >
+              {loading ? "Loading…" : "Start run"}
+            </Button>
           </View>
           {!RunSensors_isAvailable() && (
             <Text className="mb-4 text-text-error">

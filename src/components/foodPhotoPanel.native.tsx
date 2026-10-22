@@ -5,7 +5,8 @@ import { IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodPhoto_empty, FoodPhoto_reduce } from "../models/foodCapture";
 import { NativeFoodCapture_meal } from "../utils/nativeFoodCapture.native";
 import { FoodChoicesReview } from "./foodChoicesReview";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   initialNote?: string;
@@ -60,23 +61,28 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
       )}
       {!state.busy && (
         <View className="flex-row mt-3" style={{ gap: 8 }}>
-          <FoodPrimaryButton
-            testID="food-photo-camera"
-            title="Take photo"
+          <Button
+            name="food-photo-camera"
+            kind="pill"
+            className="flex-1"
             onPress={async () => {
               emit({ type: "start" });
               emit(await NativeFoodCapture_meal("camera", note));
             }}
-          />
-          <FoodPrimaryButton
-            testID="food-photo-library"
-            title="Choose photo"
-            kind="outline"
+          >
+            Take photo
+          </Button>
+          <Button
+            name="food-photo-library"
+            kind="pill-outline"
+            className="flex-1"
             onPress={async () => {
               emit({ type: "start" });
               emit(await NativeFoodCapture_meal("photo-library", note));
             }}
-          />
+          >
+            Choose photo
+          </Button>
         </View>
       )}
     </View>

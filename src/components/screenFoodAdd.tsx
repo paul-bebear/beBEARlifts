@@ -48,7 +48,8 @@ import { FoodServingPanel } from "./foodServingPanel";
 import { FoodQuickAddPanel } from "./foodQuickAddPanel";
 import { FoodLabelPanel } from "./foodLabelPanel";
 import { FoodSaveGroupPanel } from "./foodSaveGroupPanel";
-import { FoodMealPicker, FoodPrimaryButton } from "./foodUi";
+import { FoodMealPicker } from "./foodUi";
+import { Button } from "./button";
 import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore, AiConsent_ensure } from "../utils/aiConsentClient";
 
@@ -65,11 +66,17 @@ function NotFound(props: {
         {props.error ?? `Barcode ${props.code} is not in Open Food Facts or USDA, or it has no nutrition data.`}
       </Text>
       <View className="mt-4">
-        <FoodPrimaryButton testID="food-not-found-label" title="Photo the nutrition label" onPress={props.onLabel} />
+        <Button name="food-not-found-label" kind="pill" className="flex-1" onPress={props.onLabel}>
+          Photo the nutrition label
+        </Button>
       </View>
       <View className="flex-row mt-2" style={{ gap: 8 }}>
-        <FoodPrimaryButton title="Scan again" kind="outline" onPress={props.onScan} />
-        <FoodPrimaryButton title="Quick Log" kind="outline" onPress={props.onQuick} />
+        <Button name="screen-food-add-scan-again" kind="pill-outline" className="flex-1" onPress={props.onScan}>
+          Scan again
+        </Button>
+        <Button name="screen-food-add-quick-log" kind="pill-outline" className="flex-1" onPress={props.onQuick}>
+          Quick Log
+        </Button>
       </View>
     </View>
   );
@@ -79,11 +86,12 @@ function ReviewBar(props: { basket: IFoodBasketItem[]; onPress: () => void }): J
   const calories = FoodBasket_totals(props.basket).calories;
   return (
     <View className="px-4 pt-2 pb-3 bg-background-default">
-      <FoodPrimaryButton
-        testID="food-review"
-        title={`Review ${props.basket.length} item${props.basket.length === 1 ? "" : "s"} · ${calories} Cal`}
+      <Button
+        name="food-review"
+        kind="pill"
+        className="flex-1"
         onPress={props.onPress}
-      />
+      >{`Review ${props.basket.length} item${props.basket.length === 1 ? "" : "s"} · ${calories} Cal`}</Button>
     </View>
   );
 }

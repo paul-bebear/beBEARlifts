@@ -1,7 +1,8 @@
 import { JSX, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
@@ -119,7 +120,9 @@ export function ScreenBodyScans(): JSX.Element {
         ))}
       </View>
       <View className="flex-row mt-4">
-        <FoodPrimaryButton title="Save scan" testID="body-scan-save" onPress={save} />
+        <Button name="body-scan-save" kind="pill" className="flex-1" onPress={save}>
+          Save scan
+        </Button>
       </View>
       <Text className="mt-8 mb-3 text-base font-semibold">Scans</Text>
       {log.scans.length === 0 && <Text className="text-sm text-text-secondary">No scans yet.</Text>}

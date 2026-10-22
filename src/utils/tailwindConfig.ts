@@ -1,5 +1,6 @@
 import baseColors from "../../tailwind.colors.json";
 import semanticColors from "../../tailwind.semantic.generated.json";
+import { BearThemeColors_apply } from "../models/bearThemeColors";
 
 type IBaseColors = typeof baseColors;
 type ISemanticColors = typeof semanticColors;
@@ -33,6 +34,11 @@ function buildSemanticVars(): ISemanticVars {
 
 const semanticVars: ISemanticVars = buildSemanticVars();
 
+const bearSemantic = {
+  light: BearThemeColors_apply(semanticColors.light, "light"),
+  dark: BearThemeColors_apply(semanticColors.dark, "dark"),
+};
+
 export function Tailwind_semantic(): ISemanticVars {
   if (isPageRenderContext) {
     return semanticVars;
@@ -45,7 +51,8 @@ export function Tailwind_semantic(): ISemanticVars {
     return semanticVars;
   }
   const theme = root.classList.contains("dark") ? "dark" : "light";
-  return semanticColors[theme] as unknown as ISemanticVars;
+  const colors = root.classList.contains("bear") ? bearSemantic : semanticColors;
+  return colors[theme] as unknown as ISemanticVars;
 }
 
 export function Tailwind_isDark(): boolean {
