@@ -1,6 +1,7 @@
 import { IBearMood } from "./bear";
 import { IBearLine } from "./bearStoreData";
 import { BearTier_all, BearTier_byLevel, IBearLevel } from "./bearTier";
+import { BearShop_isOutfit, BearShop_stage } from "./bearShop";
 
 function tierForLevel(level: number): IBearLevel {
   return BearTier_byLevel(level) ?? BearTier_all("male")[0];
@@ -10,6 +11,13 @@ export function BearArt_sprite(line: IBearLine, level: number, mood: IBearMood):
   const tier = tierForLevel(level);
   const name = mood === "normal" ? `level-${String(tier.level).padStart(2, "0")}` : `mood-${tier.size}-${mood}`;
   return `/images/bear/${line}/${name}.webp`;
+}
+
+export function BearArt_wornSprite(line: IBearLine, level: number, mood: IBearMood, equipped?: string): string {
+  const stage = BearShop_stage(level);
+  return mood === "normal" && stage != null && BearShop_isOutfit(equipped)
+    ? `/images/bear/${line}/outfit-${stage}-${equipped}.webp`
+    : BearArt_sprite(line, level, mood);
 }
 
 // The body sizes whose lift-<size>.webp exists for both lines. Sizes missing here show the pumped flex.

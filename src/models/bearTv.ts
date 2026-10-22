@@ -1,4 +1,4 @@
-import { BearArt_sprite } from "./bearArt";
+import { BearArt_wornSprite } from "./bearArt";
 import { BearScene_canvas, IBearBox, IBearRect } from "./bearScene";
 import { Feed_ago, IFeedItem } from "./feed";
 import { IPostBear, WorkoutPost_feedLine } from "./workoutPost";
@@ -25,7 +25,7 @@ export function BearTv_box(sceneWidth: number): IBearBox {
 
 // A friend whose posts predate version 2 shows as a cub, the same bear every new account starts with.
 export function BearTv_sprite(bear: IPostBear | undefined): string {
-  return BearArt_sprite(bear?.line ?? "male", bear?.level ?? 1, bear?.mood ?? "normal");
+  return BearArt_wornSprite(bear?.line ?? "male", bear?.level ?? 1, bear?.mood ?? "normal", bear?.equipped);
 }
 
 export function BearTv_screen(input: {

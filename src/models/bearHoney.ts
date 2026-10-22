@@ -2,6 +2,7 @@ import { IHistoryRecord, IStats } from "../types";
 import { IBearCountedWorkout } from "./bearGrowth";
 import { DailyChecklist_doneDays } from "./dailyChecklist";
 import type { IFeedState } from "./feed";
+import { IBearSharedPost, IBearStoreData } from "./bearStoreData";
 import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_entriesFor, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 
 export type IHoneyReason = "workout" | "weighIn" | "protein" | "carbs" | "fat" | "shared" | "streak";
@@ -135,14 +136,56 @@ export function BearHoney_earned(sources: IHoneySources, now: number): IHoneyEar
   return { total: days.reduce((sum, day) => sum + day.total, 0), days };
 }
 
-// The feed cache holds friends' posts too, so only rows by the cache owner count.
-export function BearHoney_sharedAt(feed: IFeedState): number[] {
+export function BearHoney_share(
+  kind: "workout" | "meal",
+  userId: string,
+  id: string | number,
+  at: number
+): IBearSharedPost {
+  return { id: `${userId}:${kind}:${id}`, day: dayOf(at) };
+}
+
+export function BearHoney_sharedPosts(feed: IFeedState): IBearSharedPost[] {
   if (feed.userId == null) {
     return [];
   }
-  const mine = <T extends { userId: string; postedAt: number }>(posts: T[]): number[] =>
-    posts.filter((post) => post.userId === feed.userId).map((post) => post.postedAt);
-  return [...mine(feed.posts), ...mine(feed.meals)];
+  return [
+    ...feed.posts
+      .filter((post) => post.userId === feed.userId)
+      .map((post) => BearHoney_share("workout", post.userId, post.workoutId, post.postedAt)),
+    ...feed.meals
+      .filter((post) => post.userId === feed.userId)
+      .map((post) => BearHoney_share("meal", post.userId, post.id, post.postedAt)),
+  ];
+}
+
+export function BearHoney_recordShares(state: IBearStoreData, posts: readonly IBearSharedPost[]): IBearStoreData {
+  const saved = new Map((state.sharedPosts ?? []).map((post) => [post.id, post]));
+  const before = saved.size;
+  for (const post of posts) {
+    if (!saved.has(post.id)) {
+      saved.set(post.id, post);
+    }
+  }
+  return saved.size === before ? state : { ...state, sharedPosts: [...saved.values()] };
+}
+
+export function BearHoney_sharedAt(feed: IFeedState, saved: readonly IBearSharedPost[] = []): number[] {
+  const times = new Map<string, number>();
+  for (const post of feed.posts) {
+    if (feed.userId != null && post.userId === feed.userId) {
+      times.set(BearHoney_share("workout", post.userId, post.workoutId, post.postedAt).id, post.postedAt);
+    }
+  }
+  for (const post of feed.meals) {
+    if (feed.userId != null && post.userId === feed.userId) {
+      times.set(BearHoney_share("meal", post.userId, post.id, post.postedAt).id, post.postedAt);
+    }
+  }
+  for (const post of saved) {
+    times.set(post.id, new Date(`${post.day}T12:00:00`).getTime());
+  }
+  return [...times.values()];
 }
 
 export function BearHoney_day(earned: IHoneyEarned, day: string): IHoneyDay | undefined {

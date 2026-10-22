@@ -36,7 +36,7 @@ const readme = [
   "notes.notes: the user's Journal notes, one per entry, with day (YYYY-MM-DD), title and a Markdown body. kind checkIn is the day's check-in: energy, soreness and mood from 1 (sad face) to 5 (happy face), and the reflection as the body.",
   "journal: one Markdown file per day, keyed by path journal/YYYY-MM-DD.md, written from the workouts, food, music, weigh-ins and notes above. It is a readable copy; restore reads the parts above.",
   "runs.runs: GPS runs, newest first. startedAt and endedAt are ms; distanceM is metres; movingMs leaves out pauses; elevationGainM is metres climbed. splits: moving ms for each full km. route: simplified [lat, lon] lines, one per stretch between pauses.",
-  "bear: the bebear_bear store. line is male or female. celebratedLevel is the highest level-up shown. seenBadges lists badge ids already shown. spent is the honey spent in the shop.",
+  "bear: the bebear_bear store. line is male or female. celebratedLevel is the highest level-up shown. seenBadges lists badge ids already shown. spent is honey spent. owned lists bought outfits. equipped is the worn outfit. sharedPosts keeps each own shared post id and day for honey.",
   "schedule: the bebear_schedule store. programs maps a program id to 7 entries, Monday first. Each entry is the position of a program day in its week (0 is the first day), or null for a rest day.",
 ].join("\n");
 

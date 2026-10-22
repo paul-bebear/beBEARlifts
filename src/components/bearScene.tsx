@@ -2,11 +2,12 @@ import { JSX, ReactNode, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, Image, LayoutChangeEvent, Platform, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { IBearState } from "../models/bear";
-import { BearArt_gym, BearArt_sprite } from "../models/bearArt";
+import { BearArt_gym, BearArt_wornSprite } from "../models/bearArt";
 import { IBearBoardTile } from "../models/bearBoard";
 import { BearScene_breathing, BearScene_breathingPivot, BearScene_layout, IBearBox } from "../models/bearScene";
 import { BearTv_box } from "../models/bearTv";
 import { BearImage_uri } from "../utils/bearImage";
+import { BearStore } from "../utils/bearStore";
 
 const maxWidth = 480;
 const markerInk = "#1F3A5F";
@@ -47,7 +48,8 @@ export function BearScene(props: IProps): JSX.Element {
   const scaleY = useRef(new Animated.Value(1)).current;
   const { state } = props;
   const breathing = BearScene_breathing(state.mood);
-  const spritePath = BearArt_sprite(state.line, state.level.tier.level, state.mood);
+  const store = BearStore.use();
+  const spritePath = BearArt_wornSprite(state.line, state.level.tier.level, state.mood, store.equipped);
   const layout = BearScene_layout(width, state.level.tier.level, state.level.fraction, spritePath, breathing.scaleY);
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const onLayout = (e: LayoutChangeEvent): void => setWidth(Math.min(maxWidth, e.nativeEvent.layout.width));

@@ -460,6 +460,29 @@ describe("Feed", () => {
 });
 
 describe("BearTv", () => {
+  it("uses the friend's equipped outfit in feed rows and the TV, with mood and space fallbacks", () => {
+    const bear = { level: 4, mood: "normal" as const, countedKg: 100, line: "female" as const, equipped: "fitted" };
+    expect(BearTv_sprite(bear)).to.equal("/images/bear/female/outfit-mid-fitted.webp");
+    expect(BearTv_sprite({ ...bear, mood: "pumped" })).to.equal("/images/bear/female/mood-medium-pumped.webp");
+    expect(BearTv_sprite({ ...bear, level: 10 })).to.equal("/images/bear/female/level-10.webp");
+    const item = {
+      kind: "workout" as const,
+      isMine: false,
+      bear,
+      author: { userId: "friend", handle: "friend", displayName: "Friend" },
+      post: {
+        userId: "friend",
+        workoutId: t0,
+        postedAt: t0,
+        summary: WorkoutPost_build(record(t0, []), Settings_build(), {}, undefined),
+      },
+    };
+    const screen = BearTv_screen({ signedIn: true, friendCount: 1, items: [item], now: t1 });
+    expect(screen.kind).to.equal("post");
+    if (screen.kind === "post") {
+      expect(screen.sprite).to.equal(BearTv_sprite(bear));
+    }
+  });
   const settings = Settings_build();
   const summary = {
     ...WorkoutPost_build(record(t1, [entry(bench, [set(85, 5)])]), settings, {}, undefined),

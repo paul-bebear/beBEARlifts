@@ -12,6 +12,8 @@ import {
   IFeedReportTarget,
 } from "../models/feed";
 import { IWorkoutPostSummary } from "../models/workoutPost";
+import { BearHoney_recordShares, BearHoney_share, BearHoney_sharedPosts } from "../models/bearHoney";
+import { BearStore } from "./bearStore";
 import {
   IMealPostDraft,
   MealPost_bucket,
@@ -36,6 +38,11 @@ export const FeedStore = JsonStore_create("bebear_feed", Feed_parse, Feed_empty)
 
 const ok: ICloudResult<undefined> = { ok: true, value: undefined };
 const offline = "No connection";
+
+async function recordCachedShares(): Promise<void> {
+  const feed = await FeedStore.load();
+  await BearStore.update((state) => BearHoney_recordShares(state, BearHoney_sharedPosts(feed)));
+}
 
 // The photo goes up first, so a friend never sees a row whose photo is still missing.
 // x-upsert and ignore-duplicates make a retry after a dropped answer land on the same object and row.
@@ -88,6 +95,7 @@ async function flushOnce(): Promise<ICloudResult<undefined>> {
   }
   let failed: ICloudResult<undefined> = ok;
   for (const op of Feed_pendingOps(await FeedStore.load(), userId)) {
+    await recordCachedShares();
     const result = await send(op);
     if (!result.ok && result.error === offline) {
       return result;
@@ -98,7 +106,17 @@ async function flushOnce(): Promise<ICloudResult<undefined>> {
       failed = failed.ok ? result : failed;
       continue;
     }
-    await FeedStore.update((state) => Feed_sent(state, op, Date.now()));
+    const postedAt = Date.now();
+    if (op.type !== "remove") {
+      const share = BearHoney_share(
+        op.type === "meal" ? "meal" : "workout",
+        op.userId,
+        op.type === "meal" ? op.meal.id : op.workoutId,
+        postedAt
+      );
+      await BearStore.update((state) => BearHoney_recordShares(state, [share]));
+    }
+    await FeedStore.update((state) => Feed_sent(state, op, postedAt));
   }
   return failed;
 }
@@ -128,7 +146,9 @@ export async function FeedClient_refresh(): Promise<ICloudResult<undefined>> {
     return result;
   }
   const rows = await SupabaseClient_readJson(result.value.response);
+  await recordCachedShares();
   await FeedStore.update((state) => Feed_withServerPosts(state, result.value.userId, rows, Date.now()));
+  await recordCachedShares();
   await refreshMeals();
   return ok;
 }
@@ -153,7 +173,9 @@ async function refreshMeals(): Promise<void> {
     signed = sign.ok ? await SupabaseClient_readJson(sign.value.response) : [];
   }
   const withUrls = MealPost_withPhotoUrls(meals, Supabase_origin, signed);
+  await recordCachedShares();
   await FeedStore.update((state) => Feed_withServerMeals(state, result.value.userId, withUrls));
+  await recordCachedShares();
 }
 
 export async function FeedClient_setShared(

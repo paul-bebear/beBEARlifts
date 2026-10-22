@@ -2,6 +2,7 @@ import { IHistoryRecord, ISettings, ISet, IUnit, IWeight } from "../types";
 import { IBearMood, IBearState } from "./bear";
 import { IBearLine } from "./bearStoreData";
 import { BearTier_byLevel } from "./bearTier";
+import { BearShop_isOutfit } from "./bearShop";
 import { Exercise_get, Exercise_toKey } from "./exercise";
 import {
   History_getMaxWeightSetFromEntry,
@@ -19,12 +20,12 @@ export interface IPostSet {
 }
 
 // countedKg is what this workout added to the bear, after the anti-cheat rules in bearGrowth.ts.
-// B4 adds `equipped` here. The parser drops fields it does not know, so old apps read new posts.
 export interface IPostBear {
   level: number;
   mood: IBearMood;
   countedKg: number;
   line?: IBearLine;
+  equipped?: string;
 }
 
 export interface IWorkoutPostSummary {
@@ -46,6 +47,7 @@ export interface IWorkoutPostExtras {
   keptSongs?: number;
   songs?: string[];
   bear?: IBearState;
+  equipped?: string;
 }
 
 const maxExercises = 20;
@@ -76,9 +78,15 @@ function prsOf(record: IHistoryRecord, prs: IPersonalRecords, settings: ISetting
   return result;
 }
 
-function postBear(record: IHistoryRecord, bear: IBearState): IPostBear {
+function postBear(record: IHistoryRecord, bear: IBearState, equipped?: string): IPostBear {
   const counted = bear.workouts.find((w) => w.record.id === record.id)?.countedKg ?? 0;
-  return { level: bear.level.tier.level, mood: bear.mood, countedKg: Math.round(counted), line: bear.line };
+  return {
+    level: bear.level.tier.level,
+    mood: bear.mood,
+    countedKg: Math.round(counted),
+    line: bear.line,
+    ...(BearShop_isOutfit(equipped) ? { equipped } : {}),
+  };
 }
 
 export function WorkoutPost_build(
@@ -106,7 +114,7 @@ export function WorkoutPost_build(
     topSets,
     prs: prsOf(record, prs, settings),
     keptSongs: keptSongs != null && keptSongs > 0 ? keptSongs : undefined,
-    bear: extras?.bear != null ? postBear(record, extras.bear) : undefined,
+    bear: extras?.bear != null ? postBear(record, extras.bear, extras.equipped) : undefined,
     songs: songTitles(extras?.songs),
   };
 }
@@ -207,7 +215,13 @@ function parseBear(raw: unknown): IPostBear | undefined {
     return undefined;
   }
   const line = r.line === "male" || r.line === "female" ? r.line : undefined;
-  return { level, mood, countedKg: Math.max(0, Math.round(countedKg)), ...(line != null ? { line } : {}) };
+  return {
+    level,
+    mood,
+    countedKg: Math.max(0, Math.round(countedKg)),
+    ...(line != null ? { line } : {}),
+    ...(BearShop_isOutfit(r.equipped) ? { equipped: r.equipped } : {}),
+  };
 }
 
 function parseWeight(raw: unknown): IWeight | undefined {

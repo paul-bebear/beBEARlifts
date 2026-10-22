@@ -6,9 +6,38 @@ import {
   BearArt_liftingSizes,
   BearArt_scale,
   BearArt_sprite,
+  BearArt_wornSprite,
 } from "../src/models/bearArt";
 
 describe("BearArt", () => {
+  it("wears each outfit at both levels of every body stage on both lines", () => {
+    const stages = ["teen", "teen", "mid", "mid", "fit", "fit", "peak", "peak"];
+    for (const line of ["male", "female"] as const) {
+      for (const outfit of ["gym", "fitted", "baggy"]) {
+        stages.forEach((stage, i) => {
+          expect(BearArt_wornSprite(line, i + 2, "normal", outfit)).to.equal(
+            `/images/bear/${line}/outfit-${stage}-${outfit}.webp`
+          );
+        });
+      }
+    }
+  });
+
+  it("keeps mood poses and uses level art for cubs, space levels and unknown outfits", () => {
+    for (const line of ["male", "female"] as const) {
+      for (let level = 1; level <= 12; level += 1) {
+        for (const mood of ["hungry", "pumped", "tired"] as const) {
+          expect(BearArt_wornSprite(line, level, mood, "gym")).to.equal(BearArt_sprite(line, level, mood));
+        }
+        expect(BearArt_wornSprite(line, level, "normal", "unknown")).to.equal(BearArt_sprite(line, level, "normal"));
+        expect(BearArt_wornSprite(line, level, "normal")).to.equal(BearArt_sprite(line, level, "normal"));
+      }
+      for (const level of [1, 10, 11, 12]) {
+        expect(BearArt_wornSprite(line, level, "normal", "baggy")).to.equal(BearArt_sprite(line, level, "normal"));
+      }
+    }
+  });
+
   for (const line of ["male", "female"] as const) {
     it(`uses numbered level sprites for the ${line} line`, () => {
       for (let level = 1; level <= 12; level += 1) {

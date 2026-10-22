@@ -188,7 +188,10 @@ describe("Bear_state", () => {
   });
 
   it("retains a celebrated level and the female line after history is removed", () => {
-    const state = Bear_state(sources({ bear: { line: "female", celebratedLevel: 7, seenBadges: [], spent: 0 } }), now);
+    const state = Bear_state(
+      sources({ bear: { line: "female", celebratedLevel: 7, seenBadges: [], spent: 0, owned: [] } }),
+      now
+    );
     expect([state.line, state.level.tier.level, state.level.isTierUp]).to.deep.equal(["female", 7, false]);
   });
 
@@ -269,19 +272,20 @@ describe("Bear_state", () => {
 describe("BearStoreData", () => {
   it("parses both lines and copies seen badge ids", () => {
     for (const line of ["male", "female"] as const) {
-      const data = { line, celebratedLevel: 12, seenBadges: ["first", "week"], spent: 0 };
+      const data = { line, celebratedLevel: 12, seenBadges: ["first", "week"], spent: 0, owned: [] };
       expect(BearStoreData_parse(data)).to.deep.equal(data);
       expect(BearStoreData_parse(data).seenBadges).not.to.equal(data.seenBadges);
     }
   });
 
   it("keeps the seeded flag and allows a missing line", () => {
-    const data = { celebratedLevel: 4, seenBadges: [], spent: 0, seeded: true };
+    const data = { celebratedLevel: 4, seenBadges: [], spent: 0, owned: [], seeded: true };
     expect(BearStoreData_parse(data)).to.deep.equal(data);
     expect(BearStoreData_parse({ ...data, seeded: "yes" })).to.deep.equal({
       celebratedLevel: 4,
       seenBadges: [],
       spent: 0,
+      owned: [],
     });
   });
 

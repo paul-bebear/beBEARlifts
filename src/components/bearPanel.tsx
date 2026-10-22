@@ -86,9 +86,7 @@ export function BearPanel(props: IProps): JSX.Element {
           {BearText_honeyLine(props.honey)}
         </Text>
       </Pressable>
-      {isHoneyOpen && (
-        <HoneySheet balance={props.honey} today={props.todayHoney} onClose={() => setIsHoneyOpen(false)} />
-      )}
+      {isHoneyOpen && <HoneySheet onClose={() => setIsHoneyOpen(false)} />}
       <View className="flex-row mt-4" style={{ gap: 16 }}>
         <Meter testID="bear-fullness" label="Fullness" value={state.fullness} color={T.green} />
         <Meter testID="bear-energy" label="Energy" value={state.energy} color={energyColor} />
