@@ -72,7 +72,7 @@ export async function POST(request) {
     return json({ error: "The photo is too large" }, 413);
   }
   const ai = await aiProvider();
-  const denied = await AiAuth_check(request, ai);
+  const denied = await AiAuth_check(request, ai, "capped");
   if (denied != null) {
     return denied;
   }

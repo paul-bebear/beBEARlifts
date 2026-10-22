@@ -4,7 +4,7 @@ import { aiUnavailableMessage } from "./_ai.mjs";
 // Same project and publishable key as src/utils/supabaseClient.ts. The key is public by design.
 export const Supabase_origin = "https://qvqwvuuwfueccrmzwyct.supabase.co";
 export const Supabase_publishableKey = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
-const defaultDailyCap = 60;
+export const AiAuth_onboardRuns = 3;
 
 export const AiAuth_signInMessage = "Sign in to use AI features. Open Settings → Cloud backup.";
 const checkFailedMessage = "The app could not check today's AI allowance. Try again.";
@@ -14,34 +14,104 @@ export function AiAuth_bearerToken(header) {
   return match?.[1];
 }
 
-export function AiAuth_dailyCap(value) {
+export function AiAuth_capValue(value, fallback) {
   const cap = Number(value);
-  return Number.isInteger(cap) && cap > 0 ? cap : defaultDailyCap;
+  return Number.isInteger(cap) && cap > 0 ? cap : fallback;
+}
+
+export function AiAuth_caps(env) {
+  return {
+    day: AiAuth_capValue(env.AI_DAILY_CAP, 3),
+    week: AiAuth_capValue(env.AI_WEEKLY_CAP, 10),
+    plusDay: AiAuth_capValue(env.AI_PLUS_DAILY_CAP, 30),
+    plusWeek: AiAuth_capValue(env.AI_PLUS_WEEKLY_CAP, 150),
+    lifetime: AiAuth_onboardRuns,
+  };
+}
+
+function count(value) {
+  return Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
+function weekWait(freesIn) {
+  return Number.isInteger(freesIn) && freesIn > 1 ? `in ${freesIn} days` : "tomorrow";
+}
+
+// The SQL function counts the call only when the same comparison passes, so an allowed call here was counted there.
+export function AiAuth_decideUsage(answer, kind, caps) {
+  const plan = answer?.plan === "plus" ? "plus" : "free";
+  if (kind === "report") {
+    return answer?.refUsed === true
+      ? { ok: false, status: 429, body: { error: "This workout already has its AI report.", reason: "report" } }
+      : { ok: true };
+  }
+  if (kind === "onboard") {
+    const lifetime = count(answer?.lifetime);
+    if (lifetime == null) {
+      return { ok: false, status: 503, body: { error: checkFailedMessage } };
+    }
+    return lifetime < caps.lifetime
+      ? { ok: true }
+      : {
+          ok: false,
+          status: 429,
+          body: {
+            error: `You used all ${caps.lifetime} AI setups. Pick a beBEAR plan instead.`,
+            reason: "onboard",
+            plan,
+            used: { lifetime },
+            caps: { lifetime: caps.lifetime },
+          },
+        };
+  }
+  const day = count(answer?.day);
+  const week = count(answer?.week);
+  if (day == null || week == null) {
+    return { ok: false, status: 503, body: { error: checkFailedMessage } };
+  }
+  const limits = plan === "plus" ? { day: caps.plusDay, week: caps.plusWeek } : { day: caps.day, week: caps.week };
+  if (day < limits.day && week < limits.week) {
+    return { ok: true };
+  }
+  const reason = week >= limits.week ? "week" : "day";
+  const weekFreesIn = count(answer?.weekFreesIn);
+  return {
+    ok: false,
+    status: 429,
+    body: {
+      error:
+        reason === "week"
+          ? `Your ${limits.week} AI uses for this week are used. More ${weekWait(weekFreesIn)}.`
+          : `Your ${limits.day} AI uses for today are used. More tomorrow.`,
+      reason,
+      plan,
+      used: { day, week },
+      caps: limits,
+      ...(weekFreesIn == null ? {} : { weekFreesIn }),
+    },
+  };
 }
 
 // ai_usage_take answers 401 for a missing or expired token and 403 for an anonymous user.
-export function AiAuth_decide(status, usedToday, cap) {
+export function AiAuth_decide(status, answer, kind, caps) {
   if (status === 401 || status === 403) {
-    return { ok: false, status: 401, error: AiAuth_signInMessage };
+    return { ok: false, status: 401, body: { error: AiAuth_signInMessage } };
   }
   if (status === 429) {
-    return { ok: false, status: 429, error: "The app's daily AI allowance is used up. Try again tomorrow UTC." };
-  }
-  if (status !== 200 || typeof usedToday !== "number") {
-    return { ok: false, status: 503, error: checkFailedMessage };
-  }
-  if (usedToday > cap) {
     return {
       ok: false,
       status: 429,
-      error: `You used all ${cap} AI calls for today. The count starts again at midnight UTC.`,
+      body: { error: "The app's daily AI allowance is used up. Try again tomorrow UTC.", reason: "global" },
     };
   }
-  return { ok: true };
+  if (status !== 200 || answer == null || typeof answer !== "object") {
+    return { ok: false, status: 503, body: { error: checkFailedMessage } };
+  }
+  return AiAuth_decideUsage(answer, kind, caps);
 }
 
 // Supabase checks the token's signature and expiry before it runs ai_usage_take, so one call both signs the user in and counts the call.
-export async function AiAuth_check(request, ai) {
+export async function AiAuth_check(request, ai, kind = "capped", ref) {
   const token = AiAuth_bearerToken(request.headers.get("authorization"));
   if (token == null) {
     return json({ error: AiAuth_signInMessage }, 401);
@@ -49,6 +119,7 @@ export async function AiAuth_check(request, ai) {
   if (ai != null && !ai.token) {
     return json({ error: aiUnavailableMessage }, 503);
   }
+  const caps = AiAuth_caps(process.env);
   let answer;
   try {
     answer = await fetchJson(
@@ -60,13 +131,13 @@ export async function AiAuth_check(request, ai) {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: "{}",
+        body: JSON.stringify({ p_kind: kind, p_ref: ref ?? null, p_caps: caps }),
       },
       5000
     );
   } catch {
     return json({ error: checkFailedMessage }, 503);
   }
-  const decision = AiAuth_decide(answer.status, answer.body, AiAuth_dailyCap(process.env.AI_DAILY_CAP));
-  return decision.ok ? undefined : json({ error: decision.error }, decision.status);
+  const decision = AiAuth_decide(answer.status, answer.body, kind, caps);
+  return decision.ok ? undefined : json(decision.body, decision.status);
 }
