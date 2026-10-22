@@ -19,6 +19,7 @@ const objects: readonly IBearComparison[] = [
   { name: "the ISS", kg: 420000 },
   { name: "Christ the Redeemer", kg: 635000 },
   { name: "a Delta IV Heavy", kg: 733000 },
+  { name: "a P&H 2800XPC mining shovel", kg: 1079000 },
   { name: "a Falcon Heavy", kg: 1420000 },
   { name: "a Saturn V", kg: 2970000 },
   { name: "a full Starship", kg: 5000000 },

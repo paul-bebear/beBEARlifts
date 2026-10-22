@@ -13,7 +13,7 @@ const maleLines = [
   "an empty Airbus A380",
   "the ISS",
   "a Delta IV Heavy",
-  "a Delta IV Heavy",
+  "a P&H 2800XPC mining shovel",
   "a Saturn V",
   "a full Starship",
 ];
@@ -71,6 +71,24 @@ describe("BearComparison", () => {
   it("reads true for each level in both sets", () => {
     expect(BearTier_all("male").map((tier) => BearComparison_for(tier.minKg))).to.deep.equal(maleLines);
     expect(BearTier_all("female").map((tier) => BearComparison_for(tier.minKg))).to.deep.equal(femaleLines);
+  });
+
+  it("gives every level a different comparison within each set", () => {
+    for (const set of ["male", "female"] as const) {
+      const comparisons = BearTier_all(set).map((tier) => BearComparison_for(tier.minKg));
+      expect(new Set(comparisons).size, set).to.equal(comparisons.length);
+      expect(
+        comparisons.slice(1).every((name) => name != null),
+        set
+      ).to.equal(true);
+    }
+  });
+
+  it("uses the mining shovel only once its working weight is reached", () => {
+    expect(BearComparison_for(1078999)).to.equal("a Delta IV Heavy");
+    expect(BearComparison_for(1079000)).to.equal("a P&H 2800XPC mining shovel");
+    expect(BearComparison_for(1419999)).to.equal("a P&H 2800XPC mining shovel");
+    expect(BearComparison_for(1420000)).to.equal("a Falcon Heavy");
   });
 
   it("stays within a factor of 3.5 of the level, so the line is not wildly short", () => {

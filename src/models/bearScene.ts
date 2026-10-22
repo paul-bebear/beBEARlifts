@@ -1,4 +1,5 @@
 import { BearArt_scale } from "./bearArt";
+import { IBearMood } from "./bear";
 
 export type IBearRect = [number, number, number, number];
 
@@ -108,11 +109,28 @@ export function BearScene_heightShare(level: number, fraction: number): number {
   return Math.min(last, first + step * index + inLevelGrowth * grown);
 }
 
-export function BearScene_layout(width: number, level: number, fraction: number, spritePath: string): IBearSceneLayout {
+export function BearScene_breathing(mood: IBearMood): { durationMs: number; scaleY: number } {
+  const durations: Record<IBearMood, number> = { normal: 3500, hungry: 3500, tired: 7000, pumped: 2500 };
+  return { durationMs: durations[mood], scaleY: 1.015 };
+}
+
+export function BearScene_breathingPivot(spritePath: string, height: number): number {
+  const [, , , bottom] = BearScene_visibleBox(spritePath);
+  return height * (bottom / BearScene_canvas.height - 0.5);
+}
+
+export function BearScene_layout(
+  width: number,
+  level: number,
+  fraction: number,
+  spritePath: string,
+  maxScaleY: number = 1
+): IBearSceneLayout {
   const unit = width / BearScene_canvas.width;
   const [x1, y1, x2, y2] = BearScene_dashboardRect;
   const [, boxTop, , boxBottom] = BearScene_visibleBox(spritePath);
-  const scale = (BearScene_heightShare(level, fraction) * BearScene_canvas.height) / Math.max(1, boxBottom - boxTop);
+  const heightShare = Math.min(BearScene_heightShare(level, fraction), BearScene_maxHeightShare() / maxScaleY);
+  const scale = (heightShare * BearScene_canvas.height) / Math.max(1, boxBottom - boxTop);
   return {
     width: round(width),
     height: round(BearScene_canvas.height * unit),
