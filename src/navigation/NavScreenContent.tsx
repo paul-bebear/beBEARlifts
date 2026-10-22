@@ -8,6 +8,7 @@ import { NavScreenScrollContext } from "./NavScreenScrollContext";
 import { useNavScreenScroll } from "./useNavScreenScroll";
 import { usePerfScrollMarkers } from "../utils/usePerfScrollMarkers";
 import { SystemKeyboardSpacer } from "../components/systemKeyboardSpacer";
+import { TabBarLayout_coveredBottom, TabBarLayout_scrollPadding } from "../models/tabBarLayout";
 
 export { NavScreenScrollContext } from "./NavScreenScrollContext";
 export type { INavScreenScrollListener, INavScreenScrollContextValue } from "./NavScreenScrollContext";
@@ -40,7 +41,11 @@ export function NavScreenContent(props: {
     onScroll: onAnimatedScroll,
     onLayout: onScrollViewLayout,
     onContentSizeChange,
-  } = useNavScreenScroll({ footerHeight, stickyHeaderHeight, onScrolledChange });
+  } = useNavScreenScroll({
+    footerHeight: TabBarLayout_coveredBottom({ tabBarHeight, footerHeight: props.footer != null ? footerHeight : 0 }),
+    stickyHeaderHeight,
+    onScrolledChange,
+  });
 
   const onFooterLayout = useCallback((e: LayoutChangeEvent) => {
     setFooterHeight(e.nativeEvent.layout.height);
@@ -71,7 +76,13 @@ export function NavScreenContent(props: {
       data-testid="screen"
       testID="screen"
       className="flex-1 bg-background-default"
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: props.footer != null ? footerHeight : 0 }}
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingBottom: TabBarLayout_scrollPadding({
+          tabBarHeight,
+          footerHeight: props.footer != null ? footerHeight : 0,
+        }),
+      }}
       automaticallyAdjustKeyboardInsets={true}
       keyboardDismissMode={props.keyboardDismissMode}
       onScroll={onAnimatedScroll}
@@ -99,11 +110,16 @@ export function NavScreenContent(props: {
     <NavScreenScrollContext.Provider value={contextValue}>
       {/* Spans exactly the scroll area, and stays even without a footer: measuring whether a child
           is on screen needs this box, because on Android edge-to-edge the window and
-          measureInWindow don't share an origin. */}
+          measureInWindow don't share an origin. In a tab it runs under the floating tab bar. */}
       <View ref={viewportRef} className="flex-1">
         {scrollView}
         {props.footer != null ? (
-          <View onLayout={onFooterLayout} className="absolute bottom-0 left-0 right-0" pointerEvents="box-none">
+          <View
+            onLayout={onFooterLayout}
+            className="absolute left-0 right-0"
+            style={{ bottom: tabBarHeight }}
+            pointerEvents="box-none"
+          >
             {props.footer}
           </View>
         ) : null}

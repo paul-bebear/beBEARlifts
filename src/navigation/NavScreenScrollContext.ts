@@ -20,7 +20,7 @@ export interface INavScreenScrollContextValue {
   // rather than deriving a bottom from window height: on Android edge-to-edge the window and
   // measureInWindow don't share an origin, so the two can't be mixed in one calculation.
   viewportRef: RefObject<INavViewport | null>;
-  // Height of the screen's footer slot (0 when there is none) — what docked chrome occludes.
+  // Height of the screen's footer slot plus the floating tab bar under it — what docked chrome occludes.
   // State, not a ref, so anything positioning against it re-runs when the footer resizes.
   footerHeight: number;
   // How much of the scroll area's top edge the pinned sticky header covers, for content that

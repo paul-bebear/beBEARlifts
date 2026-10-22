@@ -7,6 +7,7 @@ import { IDispatch } from "../ducks/types";
 import { IHistoryRecord, IProgram, ISettings } from "../types";
 import { INavCommon } from "../models/state";
 import { useNavOptions } from "../navigation/useNavOptions";
+import { useTabBarContentPadding } from "../navigation/useTabBarContentPadding";
 import { BuiltinProgramsList } from "./builtinProgramsList";
 import { CustomProgramsList } from "./customProgramsList";
 import { emptyProgramId, IProgramIndexEntry, Program_selectProgramAndGoHome } from "../models/program";
@@ -144,11 +145,12 @@ const FOOTER_SUBTITLE_MAX_SCALE = 1.25;
 
 function Footer(props: IFooterProps): JSX.Element {
   const insets = useSafeAreaInsets();
+  const tabBarPadding = useTabBarContentPadding();
   const remScale = useRemScale();
   return (
     <View
       className="flex-row items-stretch justify-around gap-2 px-2 pt-4 border-t border-border-neutral bg-background-default"
-      style={{ paddingBottom: (props.hasBottomNav ? 0 : insets.bottom) + 16 }}
+      style={{ paddingBottom: props.hasBottomNav ? tabBarPadding : insets.bottom + 16 }}
     >
       <Pressable
         className="items-center justify-center flex-1"

@@ -30,6 +30,7 @@ import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
 import { IconEquipmentBarbell } from "./icons/iconEquipmentBarbell";
 import { IconEquipmentDumbbell } from "./icons/iconEquipmentDumbbell";
 import { IconHome } from "./icons/iconHome";
+import { useTabBarContentPadding } from "../navigation/useTabBarContentPadding";
 
 type IEmit = Dispatch<IOnboardingEvent>;
 
@@ -210,6 +211,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
   const cloud = CloudStore.use();
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
   const pending = InviteStore.use();
+  const tabBarPadding = useTabBarContentPadding();
   const [form, emit] = useReducer(Onboarding_reduce, undefined, () =>
     Onboarding_empty(InviteClient_current(), OnboardingAnswers_empty(navigator.language))
   );
@@ -237,7 +239,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
         ref={screen}
         tabIndex={-1}
         className="flex-1 overflow-y-auto p-5 text-base text-text-primary"
-        style={{ paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: tabBarPadding > 0 ? tabBarPadding : "max(32px, env(safe-area-inset-bottom))" }}
       >
         <div className="flex flex-col max-w-lg min-h-full gap-5 mx-auto">
           {Onboarding_canGoBack(form) && (

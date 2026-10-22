@@ -1,33 +1,28 @@
 import { JSX } from "react";
-import { View, Pressable } from "react-native";
+import { View, Platform, Pressable } from "react-native";
 import { Text } from "./primitives/text";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
 import { ITab } from "../models/screen";
+import { ITabBarLayout } from "../models/tabBarLayout";
 import { IconHome } from "./icons/iconHome";
 import { IconNotebook } from "./icons/iconNotebook";
 import { IconPlus2 } from "./icons/iconPlus2";
 import { BearMark } from "./shareCards/bearMark";
-import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
-import { GlassBar } from "./primitives/glassBar";
-import { BearThemeColors_honey } from "../models/bearThemeColors";
-import { Tailwind_semantic, Tailwind_colors } from "../utils/tailwindConfig";
+import { GlassBar, GlassTabLens } from "./primitives/glassBar";
+import { Tailwind_semantic, Tailwind_isDark } from "../utils/tailwindConfig";
 import { navigateToModal } from "../navigation/navigationService";
 
 interface IFooterProps {
   dispatch: IDispatch;
   currentTab: ITab;
+  layout: ITabBarLayout;
 }
 
-const pillHeight = 60;
-
-function getNativeShadowStyle(semantic: ReturnType<typeof Tailwind_semantic>): Record<string, unknown> {
-  const colors = Tailwind_colors();
-  const isDark = semantic.background.default === colors.black;
-  const shadowColor = isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.2)";
+function getNativeShadowStyle(): Record<string, unknown> {
+  const shadowColor = Tailwind_isDark() ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.22)";
   return {
-    boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 10, spreadDistance: 0, color: shadowColor }],
+    boxShadow: [{ offsetX: 0, offsetY: 6, blurRadius: 16, spreadDistance: -4, color: shadowColor }],
   };
 }
 
@@ -40,7 +35,9 @@ interface ITabButtonProps {
 }
 
 function TabButton(props: ITabButtonProps): JSX.Element {
-  const color = props.isActive ? BearThemeColors_honey : Tailwind_semantic().icon.neutral;
+  const semantic = Tailwind_semantic();
+  const iconColor = props.isActive ? semantic.menu.iconactive : semantic.icon.neutral;
+  const labelColor = props.isActive ? semantic.menu.labelactive : semantic.icon.neutral;
   return (
     <Pressable
       className="items-center justify-center flex-1"
@@ -51,8 +48,9 @@ function TabButton(props: ITabButtonProps): JSX.Element {
       accessibilityState={{ selected: props.isActive }}
       onPress={props.onPress}
     >
-      <View className="items-center justify-center w-scaled-6 h-scaled-6">{props.icon(color)}</View>
-      <Text numberOfLines={1} className="pt-0.5 text-xs font-semibold" style={{ color }}>
+      {props.isActive ? <GlassTabLens /> : null}
+      <View className="items-center justify-center w-scaled-6 h-scaled-6">{props.icon(iconColor)}</View>
+      <Text numberOfLines={1} className="pt-0.5 text-xs font-semibold" style={{ color: labelColor }}>
         {props.text}
       </Text>
     </Pressable>
@@ -61,14 +59,17 @@ function TabButton(props: ITabButtonProps): JSX.Element {
 
 export function Footer2View(props: IFooterProps): JSX.Element {
   const semantic = Tailwind_semantic();
-  const currentTab = props.currentTab;
-  const insets = useSafeAreaInsets();
-  const shadow = getNativeShadowStyle(semantic);
+  const { currentTab, layout } = props;
   const isMyBear = currentTab === "graphs" || currentTab === "me";
   return (
-    <View className="w-full bg-background-default" style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
-      <View className="flex-row items-center px-4 pt-2" style={{ gap: 12 }}>
-        <GlassBar className="flex-row flex-1" style={{ height: pillHeight }} accessibilityRole="tablist">
+    <View className="w-full" pointerEvents="box-none" style={{ paddingBottom: layout.bottomGap }}>
+      <View
+        className="absolute bottom-0 left-0 right-0 tab-bar-fade"
+        pointerEvents="none"
+        style={{ height: layout.bottomGap + layout.pillHeight / 2 }}
+      />
+      <View className="flex-row items-center px-4" style={{ gap: 12 }} pointerEvents="box-none">
+        <GlassBar className="flex-row flex-1" style={{ height: layout.pillHeight }} accessibilityRole="tablist">
           <TabButton
             name="home"
             text="Home"
@@ -104,11 +105,18 @@ export function Footer2View(props: IFooterProps): JSX.Element {
           testID="footer-plus"
           accessibilityRole="button"
           accessibilityLabel="Add"
-          className="items-center justify-center rounded-full"
-          style={[shadow, { width: pillHeight, height: pillHeight, backgroundColor: BearThemeColors_honey }]}
+          className="items-center justify-center rounded-full glass-plus"
+          style={[
+            Platform.OS === "web" ? undefined : getNativeShadowStyle(),
+            {
+              width: layout.pillHeight,
+              height: layout.pillHeight,
+              backgroundColor: semantic.button.primarybackground,
+            },
+          ]}
           onPress={() => navigateToModal("plusSheetModal")}
         >
-          <IconPlus2 size={20} color={T.greenDark} />
+          <IconPlus2 size={20} color={semantic.button.primarylabel} />
         </Pressable>
       </View>
     </View>

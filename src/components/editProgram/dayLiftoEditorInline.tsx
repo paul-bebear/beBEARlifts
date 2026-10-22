@@ -23,6 +23,7 @@ import { Tailwind_semantic } from "../../utils/tailwindConfig";
 import { NavScreenScrollContext } from "../../navigation/NavScreenScrollContext";
 import { useCustomKeyboardHeight } from "../../navigation/CustomKeyboardContext";
 import { useSystemKeyboardHeight, useSystemKeyboardHeightFromScreenBottom } from "../../utils/useSystemKeyboardHeight";
+import { TabBarLayout_keyboardOccluded } from "../../models/tabBarLayout";
 
 // Breathing room between the focused token and whatever is docked below it. Android needs
 // more: its caret drags a drop handle that hangs below the line, and clearing only the line
@@ -270,13 +271,15 @@ export function DayLiftoEditorInline(props: IDayLiftoEditorInlineProps): JSX.Ele
   const systemKeyboardHeight = useSystemKeyboardHeight();
   const systemKeyboardFromScreenBottom = useSystemKeyboardHeightFromScreenBottom();
   const tabBarHeight = useContext(BottomTabBarHeightContext) ?? 0;
-  // How much of the scroll area is covered from the bottom. The viewport already ends at the
-  // tab bar, so only the part of a keyboard standing above the tab bar eats into it — the
-  // same lift the dock itself rides on. The dock is stacked on top of that. Both keyboards
-  // have to be measured from the same edge as the tab bar, which pads for the bottom inset.
+  // Both keyboards have to be measured from the same edge as the tab bar, which pads for the
+  // bottom inset.
   const footerHeight = scrollCtx?.footerHeight ?? 0;
-  const occluded =
-    footerHeight + Math.max(0, keypadHeight - tabBarHeight, systemKeyboardFromScreenBottom - tabBarHeight);
+  const occluded = TabBarLayout_keyboardOccluded({
+    coveredBottom: footerHeight,
+    tabBarHeight,
+    keypadHeight,
+    systemKeyboardHeight: systemKeyboardFromScreenBottom,
+  });
   const occludedRef = useRef(occluded);
   occludedRef.current = occluded;
   // Both boxes are measured in window coordinates so their difference is exact whatever the

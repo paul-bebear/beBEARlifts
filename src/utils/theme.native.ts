@@ -1,4 +1,5 @@
 import { Uniwind, useUniwind } from "uniwind";
+import { Tailwind_applyBearTheme } from "./tailwindConfig.native";
 
 export function Theme_system(): "dark" | "light" {
   return Uniwind.currentTheme === "dark" ? "dark" : "light";
@@ -15,4 +16,8 @@ export function Theme_apply(theme: "dark" | "light" | undefined): void {
     return;
   }
   Uniwind.setTheme(theme ?? "system");
+}
+
+export function Theme_applyMonochrome(isMonochrome: boolean): void {
+  Tailwind_applyBearTheme(isMonochrome);
 }

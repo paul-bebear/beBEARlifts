@@ -186,6 +186,7 @@
     "@aws-sdk/client-sns": "^3.996.0",
     "@aws-sdk/lib-dynamodb": "^3.996.0",
     "@aws-sdk/s3-request-presigner": "^3.996.0",
+    "@callstack/liquid-glass": "^0.8.2",
     "@codemirror/autocomplete": "^6.18.3",
     "@codemirror/commands": "^6.7.1",
     "@codemirror/lang-markdown": "^6.3.1",
