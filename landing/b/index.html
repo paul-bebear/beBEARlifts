@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>beBEAR – Gain size the simple way</title>
+<meta name="description" content="A free lift and food tracker for skinny guys and girls who want to bulk. Snap your meal and AI gives you the macros.">
+<meta property="og:title" content="beBEAR – Gain size the simple way">
+<meta property="og:description" content="A free lift and food tracker for skinny guys and girls who want to bulk.">
+<meta name="theme-color" content="#FAF8FF">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF8FF;
+    --card: #FFFFFF;
+    --border: #E2D9F5;
+    --text: #2C1065;
+    --muted: #494457;
+    --button: #8356F6;
+    --button-hover: #783AED;
+    --accent: #FFD820;
+    --error: #ED2E15;
+    --success: #007F5A;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 20px;
+    font-weight: 700;
+    font-size: 20px;
+  }
+  header img { width: 40px; height: 40px; border-radius: 10px; }
+  .hero { padding: 40px 0 32px; text-align: center; }
+  h1 {
+    margin: 0 0 12px;
+    font-size: 36px;
+    line-height: 1.15;
+    font-weight: 700;
+  }
+  .sub { margin: 0 0 24px; font-size: 17px; color: var(--muted); }
+  form { display: flex; flex-direction: column; gap: 10px; }
+  input[type="email"] {
+    width: 100%;
+    padding: 14px 16px;
+    font: inherit;
+    font-size: 16px;
+    color: var(--text);
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+  }
+  input[type="email"]:focus { outline: none; border-color: var(--button); }
+  button {
+    padding: 14px 20px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: #FFFFFF;
+    background: var(--button);
+    border: 0;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--button-hover); }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .msg { min-height: 1.5em; margin: 6px 0 0; font-size: 14px; color: var(--error); }
+  .thanks {
+    margin: 0;
+    padding: 16px;
+    font-weight: 600;
+    color: var(--success);
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+  }
+  .benefits { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .benefits li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  .icon {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    background: var(--accent);
+    border-radius: 12px;
+  }
+  .benefits h2 { margin: 0 0 2px; font-size: 17px; font-weight: 600; }
+  .benefits p { margin: 0; font-size: 15px; color: var(--muted); }
+  .picture { margin: 32px 0; text-align: center; }
+  .picture img {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    background: var(--card);
+    border-radius: 24px;
+  }
+  .cta { padding: 8px 0 40px; text-align: center; }
+  .cta p.nudge { margin: 0 0 16px; font-size: 20px; font-weight: 600; }
+  footer {
+    padding: 24px 0 40px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  footer p { margin: 0 0 6px; }
+  footer a { color: var(--button); }
+  @media (min-width: 480px) {
+    form { flex-direction: row; }
+    form input[type="email"] { flex: 1; }
+    .msg { text-align: left; }
+  }
+  @media (min-width: 768px) {
+    .wrap { max-width: 640px; }
+    .hero { padding: 72px 0 48px; }
+    h1 { font-size: 52px; }
+    .sub { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="logo.png" alt="" width="40" height="40">
+    <span>beBEAR</span>
+  </header>
+
+  <section class="hero">
+    <h1>Gain size the simple way.</h1>
+    <p class="sub">A free lift and food tracker for skinny guys and girls who want to bulk.</p>
+    <form class="waitlist" novalidate>
+      <input type="email" name="email" placeholder="your@email.com" autocomplete="email" aria-label="Email" required>
+      <button type="submit">Join the waitlist</button>
+    </form>
+    <p class="msg" role="alert"></p>
+  </section>
+
+  <ul class="benefits">
+    <li>
+      <span class="icon" aria-hidden="true">📸</span>
+      <div>
+        <h2>Snap your meal, get the macros</h2>
+        <p>Take a photo of your food. AI counts the protein and calories for you.</p>
+      </div>
+    </li>
+    <li>
+      <span class="icon" aria-hidden="true">🏋️</span>
+      <div>
+        <h2>A plan that fits you</h2>
+        <p>Gym, home or street workout. Go for size, strength or both.</p>
+      </div>
+    </li>
+    <li>
+      <span class="icon" aria-hidden="true">✅</span>
+      <div>
+        <h2>Free forever to track</h2>
+        <p>Log every lift and every meal. Simple screens, no clutter.</p>
+      </div>
+    </li>
+  </ul>
+
+  <div class="picture">
+    <img src="bear.webp" alt="The beBEAR bear lifting a barbell over its head" width="1024" height="1536" loading="lazy">
+  </div>
+
+  <section class="cta">
+    <p class="nudge">Stop guessing what to eat. Get beBEAR first.</p>
+    <form class="waitlist" novalidate>
+      <input type="email" name="email" placeholder="your@email.com" autocomplete="email" aria-label="Email" required>
+      <button type="submit">Join the waitlist</button>
+    </form>
+    <p class="msg" role="alert"></p>
+  </section>
+
+  <footer>
+    <p>Free to track. Coming to iPhone soon.</p>
+    <p><a href="https://lifts.paulbebear.com/privacy.html">Privacy policy</a></p>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var VARIANT = "b";
+    var ENDPOINT = "https://qvqwvuuwfueccrmzwyct.supabase.co/rest/v1/waitlist";
+    var API_KEY = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
+    var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var THANKS = "You're on the list. We'll email you when beBEAR is ready.";
+    var FAILED = "That didn't work. Try again.";
+    var INVALID = "Check your email address.";
+
+    var srcParam = new URLSearchParams(window.location.search).get("src");
+    var source = srcParam ? srcParam.slice(0, 64) : null;
+
+    var forms = document.querySelectorAll("form.waitlist");
+
+    function showThanks() {
+      forms.forEach(function (form) {
+        var thanks = document.createElement("p");
+        thanks.className = "thanks";
+        thanks.textContent = THANKS;
+        form.nextElementSibling.textContent = "";
+        form.replaceWith(thanks);
+      });
+    }
+
+    forms.forEach(function (form) {
+      var input = form.querySelector("input");
+      var button = form.querySelector("button");
+      var msg = form.nextElementSibling;
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var email = input.value.trim();
+        if (!EMAIL_PATTERN.test(email)) {
+          msg.textContent = INVALID;
+          input.focus();
+          return;
+        }
+        msg.textContent = "";
+        button.disabled = true;
+        fetch(ENDPOINT, {
+          method: "POST",
+          headers: {
+            apikey: API_KEY,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal"
+          },
+          body: JSON.stringify({ email: email, variant: VARIANT, source: source })
+        })
+          .then(function (response) {
+            if (response.status === 201 || response.status === 409) {
+              showThanks();
+            } else {
+              msg.textContent = FAILED;
+            }
+          })
+          .catch(function () {
+            msg.textContent = FAILED;
+          })
+          .then(function () {
+            button.disabled = false;
+          });
+      });
+    });
+  })();
+</script>
+</body>
+</html>
