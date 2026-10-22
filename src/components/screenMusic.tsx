@@ -4,7 +4,7 @@ import { Text } from "./primitives/text";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
 import { ListenLink, ListenLinksCard } from "./listenLinksCard";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { IconCheckCircle } from "./icons/iconCheckCircle";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { Dialog_confirm } from "../utils/dialog";
@@ -129,19 +129,24 @@ function SessionCard(props: {
             </View>
           )}
           <View className="flex-row gap-2 mt-3">
-            <FoodPrimaryButton
-              title="Save to Spotify"
-              testID="music-save"
+            <Button
+              name="music-save"
+              kind="pill"
+              className="flex-1"
               disabled={isBusy || uris.length === 0}
               onPress={save}
-            />
-            <FoodPrimaryButton
-              title="Play next workout"
-              kind="outline"
-              testID="music-play"
+            >
+              Save to Spotify
+            </Button>
+            <Button
+              name="music-play"
+              kind="pill-outline"
+              className="flex-1"
               disabled={isBusy || uris.length === 0}
               onPress={play}
-            />
+            >
+              Play next workout
+            </Button>
           </View>
           {status?.kind === "message" && (
             <Text className="mt-3 text-sm" testID="music-status" data-testid="music-status">
@@ -196,7 +201,9 @@ export function ScreenMusic(): JSX.Element {
               other song is a skip. After the workout, save the kept songs as a playlist.
             </Text>
             <View className="flex-row">
-              <FoodPrimaryButton title="Connect Spotify" testID="music-connect" onPress={SpotifyClient_login} />
+              <Button name="music-connect" kind="pill" className="flex-1" onPress={SpotifyClient_login}>
+                Connect Spotify
+              </Button>
             </View>
             <Text className="mt-3 text-sm text-text-secondary">{SpotifyClient_testerLimitMessage}</Text>
           </>
@@ -236,14 +243,16 @@ export function ScreenMusic(): JSX.Element {
       <View className="px-4 pt-6">
         <Text className="mb-3 text-sm text-text-secondary">Export everything in Settings includes this log.</Text>
         <View className="flex-row">
-          <FoodPrimaryButton
-            title="Export music log"
-            kind="outline"
-            testID="music-export"
+          <Button
+            name="music-export"
+            kind="pill-outline"
+            className="flex-1"
             onPress={() =>
               Exporter_toFile(`bebear_music_${new Date().toISOString().slice(0, 10)}.json`, MusicLog_exportJson(log))
             }
-          />
+          >
+            Export music log
+          </Button>
         </View>
       </View>
     </View>

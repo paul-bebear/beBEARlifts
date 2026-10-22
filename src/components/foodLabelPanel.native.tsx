@@ -8,7 +8,7 @@ import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore } from "../utils/aiConsentClient";
 import { NativeFoodCapture_label } from "../utils/nativeFoodCapture.native";
 import { FoodLabelForm } from "./foodLabelForm";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   barcode?: string;
@@ -45,31 +45,39 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
       )}
       {!state.busy && showAi && (
         <View className="flex-row mt-3" style={{ gap: 8 }}>
-          <FoodPrimaryButton
-            testID="food-label-camera"
-            title="Photo the label"
+          <Button
+            name="food-label-camera"
+            kind="pill"
+            className="flex-1"
             onPress={async () => {
               emit({ type: "start" });
               emit(await NativeFoodCapture_label("camera"));
             }}
-          />
-          <FoodPrimaryButton
-            testID="food-label-library"
-            title="Choose photo"
-            kind="outline"
+          >
+            Photo the label
+          </Button>
+          <Button
+            name="food-label-library"
+            kind="pill-outline"
+            className="flex-1"
             onPress={async () => {
               emit({ type: "start" });
               emit(await NativeFoodCapture_label("photo-library"));
             }}
-          />
+          >
+            Choose photo
+          </Button>
         </View>
       )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
-        <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />
+        <Button name="food-label-panel-back" kind="pill-outline" className="flex-1" onPress={props.onBack}>
+          Back
+        </Button>
         {!state.busy && state.form != null && (
-          <FoodPrimaryButton
-            testID="food-label-save"
-            title="Save"
+          <Button
+            name="food-label-save"
+            kind="pill"
+            className="flex-1"
             onPress={() => {
               const result = NutritionLabel_toProduct(state.form!, props.barcode);
               if (result.ok) {
@@ -78,7 +86,9 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
                 emit({ type: "failed", error: result.error });
               }
             }}
-          />
+          >
+            Save
+          </Button>
         )}
       </View>
     </View>

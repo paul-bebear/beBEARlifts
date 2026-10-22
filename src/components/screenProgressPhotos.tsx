@@ -1,7 +1,7 @@
 import { JSX, useState } from "react";
 import { Image, Platform, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { ActionMenu } from "./actionMenu";
 import { useNavOptions } from "../navigation/useNavOptions";
 import {
@@ -68,12 +68,15 @@ export function ScreenProgressPhotos(): JSX.Element {
       </Text>
       {Platform.OS === "web" ? (
         <View className="flex-row mb-4">
-          <FoodPrimaryButton
-            testID="progress-photos-add"
-            title={isBusy ? "Saving…" : "Add photo"}
+          <Button
+            name="progress-photos-add"
+            kind="pill"
+            className="flex-1"
             disabled={isBusy}
             onPress={() => add("photo-library")}
-          />
+          >
+            {isBusy ? "Saving…" : "Add photo"}
+          </Button>
         </View>
       ) : (
         <ActionMenu
@@ -84,12 +87,9 @@ export function ScreenProgressPhotos(): JSX.Element {
           ]}
           renderTrigger={(open) => (
             <View className="flex-row mb-4">
-              <FoodPrimaryButton
-                testID="progress-photos-add"
-                title={isBusy ? "Saving…" : "Add photo"}
-                disabled={isBusy}
-                onPress={open}
-              />
+              <Button name="progress-photos-add" kind="pill" className="flex-1" disabled={isBusy} onPress={open}>
+                {isBusy ? "Saving…" : "Add photo"}
+              </Button>
             </View>
           )}
         />

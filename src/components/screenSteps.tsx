@@ -2,7 +2,8 @@ import { JSX, useEffect, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { Switch } from "./primitives/switch";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 import { StepsChart } from "./stepsChart";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { FoodLog_dayKey, FoodLog_dayLabel, FoodLog_shiftDay } from "../models/foodLog";
@@ -103,7 +104,9 @@ export function ScreenSteps(): JSX.Element {
           style={{ flex: 1 }}
         />
         <View style={{ width: 90 }} className="flex-row">
-          <FoodPrimaryButton testID="steps-manual-save" title="Save" onPress={saveTyped} />
+          <Button name="steps-manual-save" kind="pill" className="flex-1" onPress={saveTyped}>
+            Save
+          </Button>
         </View>
       </View>
       <View className="flex-row items-center p-4 mb-4 rounded-2xl bg-background-subtle">

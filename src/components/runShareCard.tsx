@@ -7,7 +7,7 @@ import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
 import { Dialog_alert } from "../utils/dialog";
 import { ShareCardImage_prepareAhead } from "../utils/shareCardImage";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { RunRouteSvg } from "./runRouteSvg";
 import { ShareCardBrand, ShareCardFrame, ShareCardScrim, ShareCardText } from "./shareCards/cardParts";
 import { ShareCardExportSurface } from "./shareCards/shareCardExportSurface";
@@ -126,28 +126,35 @@ export function RunShareCard(props: { run: IRun }): JSX.Element {
         </View>
       </View>
       <View className="flex-row mt-3" style={{ gap: 8 }}>
-        <FoodPrimaryButton
-          title={photo == null ? "Add photo" : "Change photo"}
-          kind="outline"
-          testID="run-share-photo"
+        <Button
+          name="run-share-photo"
+          kind="pill-outline"
+          className="flex-1"
           disabled={exporter.isBusy}
           onPress={pickPhoto}
-        />
-        <FoodPrimaryButton
-          title="Shuffle"
-          kind="outline"
-          testID="run-share-shuffle"
+        >
+          {photo == null ? "Add photo" : "Change photo"}
+        </Button>
+        <Button
+          name="run-share-shuffle"
+          kind="pill-outline"
+          className="flex-1"
           disabled={exporter.isBusy}
           onPress={() => setSeed((value) => value + 1)}
-        />
+        >
+          Shuffle
+        </Button>
       </View>
       <View className="flex-row mt-3">
-        <FoodPrimaryButton
-          title={exporter.title("Share run")}
+        <Button
+          name="run-share"
+          kind="pill"
+          className="flex-1"
           disabled={exporter.isBusy}
-          testID="run-share"
           onPress={() => exporter.share([page], { seed, photo }, photo)}
-        />
+        >
+          {exporter.title("Share run")}
+        </Button>
       </View>
       {exporter.job.error != null && <Text className="mt-2 text-sm text-text-error">{exporter.job.error}</Text>}
       {frozen != null && exporter.needsSurface && (

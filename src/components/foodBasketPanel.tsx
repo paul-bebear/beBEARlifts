@@ -4,7 +4,8 @@ import { Text } from "./primitives/text";
 import { FoodLog_formatNumber, IFoodMeal } from "../models/foodLog";
 import { FoodAddFlow_parseGrams } from "../models/foodAddFlow";
 import { FoodBasket_hasPortion, FoodBasket_nutrients, FoodBasket_totals, IFoodBasketItem } from "../models/foodBasket";
-import { FoodMealPicker, FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodMealPicker, FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 import { IconClose2 } from "./icons/iconClose2";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
@@ -109,12 +110,13 @@ export function FoodBasketPanel(props: IProps): JSX.Element {
       <Text className="mb-1.5 text-sm font-semibold">Meal</Text>
       <FoodMealPicker meal={props.meal} onChange={props.onMeal} />
       <View className="flex-row mt-4">
-        <FoodPrimaryButton
-          testID="food-basket-log"
-          title={`Log items (${props.basket.length})`}
+        <Button
+          name="food-basket-log"
+          kind="pill"
+          className="flex-1"
           disabled={props.basket.length === 0}
           onPress={props.onLog}
-        />
+        >{`Log items (${props.basket.length})`}</Button>
       </View>
     </View>
   );

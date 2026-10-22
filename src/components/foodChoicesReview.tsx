@@ -3,7 +3,8 @@ import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodLog_sum } from "../models/foodLog";
 import { FoodAddFlow_parseGrams, FoodAddFlow_setPhotoGrams, IFoodPhotoChoice } from "../models/foodAddFlow";
-import { FoodNutrientsRow, FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodNutrientsRow, FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 
 function ChoiceRow(props: {
   choice: IFoodPhotoChoice;
@@ -74,12 +75,13 @@ export function FoodChoicesReview(props: {
         <FoodNutrientsRow nutrients={FoodLog_sum(selected.map((c) => c.nutrients))} />
       </View>
       <View className="flex-row mt-4">
-        <FoodPrimaryButton
-          testID="food-ai-add"
-          title={`Add ${selected.length} item${selected.length === 1 ? "" : "s"}`}
+        <Button
+          name="food-ai-add"
+          kind="pill"
+          className="flex-1"
           disabled={selected.length === 0}
           onPress={() => props.onAdd(selected)}
-        />
+        >{`Add ${selected.length} item${selected.length === 1 ? "" : "s"}`}</Button>
       </View>
     </View>
   );

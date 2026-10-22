@@ -11,7 +11,8 @@ import {
   FoodScanSteps_totals,
   IScanServing,
 } from "../models/foodScanSteps";
-import { FoodMealPicker, FoodNutrientsRow, FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodMealPicker, FoodNutrientsRow, FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   serving: IScanServing;
@@ -126,12 +127,15 @@ export function FoodServingPanel(props: IProps): JSX.Element {
         <Switch value={false} disabled={true} onValueChange={() => undefined} testID="food-serving-share-switch" />
       </View>
       <View className="flex-row mt-5">
-        <FoodPrimaryButton
-          testID="food-serving-add"
-          title="Add"
+        <Button
+          name="food-serving-add"
+          kind="pill"
+          className="flex-1"
           disabled={!FoodScanSteps_canAdd(serving)}
           onPress={props.onAdd}
-        />
+        >
+          Add
+        </Button>
       </View>
     </View>
   );

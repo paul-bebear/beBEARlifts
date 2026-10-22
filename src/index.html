@@ -1,6 +1,6 @@
 <!-- LFTSTART -->
 <!doctype html>
-<html lang="en" class="liftosaur-app">
+<html lang="en" class="liftosaur-app bear">
   <head>
     <meta charset="utf-8" />
     <title>beBEAR</title>
@@ -109,12 +109,71 @@
             sans-serif !important;
         }
       }
+      /* beBEAR theme. src/models/bearThemeColors.ts holds the same values for colours read in JS, and
+         test/bearThemeColors.test.ts fails when the two drift. It sits before html.mono so Monochrome
+         still overrides it at equal specificity. */
+      html.bear {
+        --color-button-primarybackground: #F5A524;
+        --color-button-primarylabel: #2B1700;
+        --color-menu-buttonprimary: #F5A524;
+        --color-menu-iconactive: #F5A524;
+        --color-menu-labelactive: #B76506;
+        --color-icon-purple: #F5A524;
+        --color-text-purple: #B76506;
+        --color-text-link: #B76506;
+        --color-background-subtle: #FFF8EC;
+        --color-bear-fur: #6B3F1D;
+        --color-bear-face: #F2D6B3;
+      }
+      html.bear.dark {
+        --color-button-primarybackground: #F5A524;
+        --color-button-primarylabel: #2B1700;
+        --color-menu-buttonprimary: #F5A524;
+        --color-menu-iconactive: #F5A524;
+        --color-menu-labelactive: #F5A524;
+        --color-icon-purple: #F5A524;
+        --color-text-purple: #F5A524;
+        --color-text-link: #FFD820;
+        --color-background-subtle: #0C0819;
+      }
+      /* The one glass surface on screen: the tab bar. */
+      .glass-bar {
+        background: rgba(255, 255, 255, 0.6);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        backdrop-filter: blur(24px) saturate(180%);
+        border: 0.5px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        border-radius: 999px;
+      }
+      html.dark .glass-bar {
+        background: rgba(28, 28, 30, 0.6);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      /* iOS 17 Safari has only the prefixed property, so the test checks both names. */
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .glass-bar {
+          background: #ffffff;
+        }
+        html.dark .glass-bar {
+          background: #1c1c1e;
+        }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .glass-bar {
+          background: #ffffff;
+        }
+        html.dark .glass-bar {
+          background: #1c1c1e;
+        }
+      }
       /* Monochrome option (Settings → Appearance). The root filter greys colours that components read from
          JS; on the root element it does not break fixed sheets. The variables keep accents black or white
          instead of mid-grey. Idea from yeivier/liftosaur-javier- (AGPL-3.0), commit fd3fe898e. */
       html.mono {
         filter: grayscale(1);
         --color-button-primarybackground: #000000;
+        --color-button-primarylabel: #ffffff;
         --color-menu-buttonprimary: #000000;
         --color-text-purple: #000000;
         --color-icon-purple: #000000;
@@ -124,6 +183,7 @@
       }
       html.mono.dark {
         --color-button-primarybackground: #3a3a3c;
+        --color-button-primarylabel: #ffffff;
         --color-menu-buttonprimary: #3a3a3c;
         --color-text-purple: #ffffff;
         --color-icon-purple: #ffffff;

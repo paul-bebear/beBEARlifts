@@ -6,7 +6,8 @@ import { FoodGoals_parseForm, IFoodGoalsForm, FoodGoals_toForm } from "../models
 import { FoodLogStore_replace, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Exporter_toFile } from "../utils/exporter";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 import { FoodTargetsCalculator } from "./foodTargetsCalculator";
 import { IUnit, IWeight } from "../types";
 
@@ -71,12 +72,14 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
         cm minus 100.
       </Text>
       <View className="flex-row mb-4">
-        <FoodPrimaryButton
-          testID="food-goals-calculate"
-          title="Calculate my targets"
-          kind="outline"
+        <Button
+          name="food-goals-calculate"
+          kind="pill-outline"
+          className="flex-1"
           onPress={() => setView("calculator")}
-        />
+        >
+          Calculate my targets
+        </Button>
       </View>
       {view === "filled" && (
         <Text className="mb-3 text-sm text-text-success">
@@ -111,9 +114,10 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
         <Text className="text-sm text-text-error">Each low number must be at or below its high number.</Text>
       )}
       <View className="flex-row mt-3">
-        <FoodPrimaryButton
-          testID="food-goals-save"
-          title="Save targets"
+        <Button
+          name="food-goals-save"
+          kind="pill"
+          className="flex-1"
           disabled={parsed == null}
           onPress={async () => {
             if (parsed != null) {
@@ -121,22 +125,34 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
               props.onClose();
             }
           }}
-        />
+        >
+          Save targets
+        </Button>
       </View>
       <Text className="mt-8 mb-1 text-base font-semibold">Backup</Text>
       <Text className="mb-3 text-sm text-text-secondary">
         Settings → Export everything includes food. This exports the food log alone.
       </Text>
       <View className="flex-row" style={{ gap: 8 }}>
-        <FoodPrimaryButton
-          title="Export food log"
-          kind="outline"
+        <Button
+          name="food-goals-content-export-food-log"
+          kind="pill-outline"
+          className="flex-1"
           onPress={() =>
             Exporter_toFile(`bebear_foodlog_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(log))
           }
-        />
+        >
+          Export food log
+        </Button>
         {Platform.OS === "web" && (
-          <FoodPrimaryButton title="Import" kind="outline" onPress={() => fileRef.current?.click()} />
+          <Button
+            name="food-goals-content-import"
+            kind="pill-outline"
+            className="flex-1"
+            onPress={() => fileRef.current?.click()}
+          >
+            Import
+          </Button>
         )}
       </View>
       {Platform.OS === "web" && (

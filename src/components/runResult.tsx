@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { IRun, RunLog_date, RunLog_fastestSplit, RunLog_pace, RunLog_splitBars } from "../models/runLog";
 import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPace } from "../models/runTrack";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import { RunRouteSvg } from "./runRouteSvg";
 import { RunShareCard } from "./runShareCard";
 
@@ -42,8 +42,12 @@ export function RunResult(props: { run: IRun; onDelete: () => void; onClose: () 
       ))}
       <RunShareCard run={run} />
       <View className="flex-row mt-4" style={{ gap: 8 }}>
-        <FoodPrimaryButton title="All runs" kind="outline" onPress={props.onClose} />
-        <FoodPrimaryButton title="Delete run" kind="danger" testID="run-delete" onPress={props.onDelete} />
+        <Button name="run-result-all-runs" kind="pill-outline" className="flex-1" onPress={props.onClose}>
+          All runs
+        </Button>
+        <Button name="run-delete" kind="pill-danger" className="flex-1" onPress={props.onDelete}>
+          Delete run
+        </Button>
       </View>
     </View>
   );

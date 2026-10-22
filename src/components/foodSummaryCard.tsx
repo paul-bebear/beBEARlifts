@@ -14,7 +14,7 @@ import {
 import { IconChevronDown } from "./icons/iconFoodUi";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { navigateToModal } from "../navigation/navigationService";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   totals: INutrients;
@@ -85,11 +85,14 @@ function SummaryDetails(props: IProps): JSX.Element {
     return (
       <View className="p-4 mt-2 rounded-2xl bg-background-subtle" testID="food-summary" data-testid="food-summary">
         <Text className="mb-3 text-base text-text-secondary">No targets yet</Text>
-        <FoodPrimaryButton
-          testID="food-set-targets"
-          title="Set your targets"
+        <Button
+          name="food-set-targets"
+          kind="pill"
+          className="flex-1"
           onPress={() => navigateToModal("foodGoalsModal")}
-        />
+        >
+          Set your targets
+        </Button>
         <Text className="mt-3 text-lg font-semibold">{Math.round(props.totals.calories)} cal consumed</Text>
         <View className="flex-row mt-3" style={{ gap: 12 }}>
           {macros.map((m) => (

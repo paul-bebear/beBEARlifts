@@ -4,31 +4,6 @@ import { Text } from "./primitives/text";
 import { FoodLog_formatNumber, FoodLog_mealNames, FoodLog_meals, IFoodMeal, INutrients } from "../models/foodLog";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
-export function FoodPrimaryButton(props: {
-  title: string;
-  onPress: () => void;
-  disabled?: boolean;
-  testID?: string;
-  kind?: "primary" | "outline" | "danger";
-}): JSX.Element {
-  const kind = props.kind ?? "primary";
-  const className =
-    kind === "primary" ? "bg-blue-400" : kind === "danger" ? "border border-red-400" : "border border-blue-400";
-  const textClass = kind === "primary" ? "text-black" : kind === "danger" ? "text-text-error" : "text-text-link";
-  return (
-    <Pressable
-      testID={props.testID}
-      data-testid={props.testID}
-      disabled={props.disabled}
-      onPress={props.onPress}
-      className={`items-center justify-center flex-1 py-3 rounded-full ${className}`}
-      style={{ opacity: props.disabled ? 0.4 : 1 }}
-    >
-      <Text className={`text-base font-semibold ${textClass}`}>{props.title}</Text>
-    </Pressable>
-  );
-}
-
 export function FoodTextInput(props: TextInputProps & { testID?: string }): JSX.Element {
   const semantic = Tailwind_semantic();
   return (
@@ -54,7 +29,7 @@ export function FoodMealPicker(props: { meal: IFoodMeal; onChange: (meal: IFoodM
             data-testid={`food-meal-pick-${meal}`}
             onPress={() => props.onChange(meal)}
             className={`flex-1 items-center py-2 rounded-full border ${
-              isActive ? "border-blue-400 bg-background-subtle" : "border-border-neutral"
+              isActive ? "border-button-primarybackground bg-background-subtle" : "border-border-neutral"
             }`}
           >
             <Text className={`text-sm ${isActive ? "text-text-link font-semibold" : "text-text-secondary"}`}>
@@ -91,7 +66,7 @@ export function FoodChip(props: { title: string; isActive?: boolean; onPress: ()
   return (
     <Pressable
       onPress={props.onPress}
-      className={`px-3 py-1.5 rounded-full border ${props.isActive ? "border-blue-400" : "border-border-neutral"}`}
+      className={`px-3 py-1.5 rounded-full border ${props.isActive ? "border-button-primarybackground" : "border-border-neutral"}`}
     >
       <Text className={`text-sm ${props.isActive ? "text-text-link" : "text-text-secondary"}`}>{props.title}</Text>
     </Pressable>

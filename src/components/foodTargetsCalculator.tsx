@@ -20,7 +20,8 @@ import {
   IFoodTargetsFlow,
 } from "../models/foodTargets";
 import { IUnit, IWeight } from "../types";
-import { FoodChip, FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodChip, FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   profile: IFoodProfile;
@@ -148,12 +149,15 @@ function BodyStep(props: { flow: IFoodTargetsFlow; setFlow: (flow: IFoodTargetsF
       </FieldRow>
       {error != null && <Text className="mb-2 text-sm text-text-secondary">{error}</Text>}
       <View className="flex-row mt-2">
-        <FoodPrimaryButton
-          testID="food-targets-next"
-          title="Next"
+        <Button
+          name="food-targets-next"
+          kind="pill"
+          className="flex-1"
           disabled={error != null}
           onPress={() => props.setFlow(FoodTargets_next(props.flow))}
-        />
+        >
+          Next
+        </Button>
       </View>
     </View>
   );
@@ -184,7 +188,9 @@ function ResultStep(props: { flow: IFoodTargetsFlow; onFill: () => void }): JSX.
         number before you save.
       </Text>
       <View className="flex-row">
-        <FoodPrimaryButton testID="food-targets-fill" title="Use these numbers" onPress={props.onFill} />
+        <Button name="food-targets-fill" kind="pill" className="flex-1" onPress={props.onFill}>
+          Use these numbers
+        </Button>
       </View>
     </View>
   );

@@ -2,7 +2,7 @@ import { JSX, useCallback, useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton } from "./foodUi";
+import { Button } from "./button";
 import {
   IRunRecording,
   RunRecording_addPoint,
@@ -165,9 +165,10 @@ export function RunRecorder(props: {
         </Text>
       )}
       <View className="flex-row" style={{ gap: 8 }}>
-        <FoodPrimaryButton
-          title={recording.status === "paused" ? "Resume" : "Pause"}
-          testID="run-pause-resume"
+        <Button
+          name="run-pause-resume"
+          kind="pill"
+          className="flex-1"
           disabled={busy}
           onPress={() =>
             change(
@@ -176,11 +177,17 @@ export function RunRecorder(props: {
                 : RunRecording_pause(current.current, Date.now())
             )
           }
-        />
-        <FoodPrimaryButton title="Finish" kind="outline" testID="run-finish" disabled={busy} onPress={finish} />
+        >
+          {recording.status === "paused" ? "Resume" : "Pause"}
+        </Button>
+        <Button name="run-finish" kind="pill-outline" className="flex-1" disabled={busy} onPress={finish}>
+          Finish
+        </Button>
       </View>
       <View className="flex-row mt-3">
-        <FoodPrimaryButton title="Lock touches" kind="outline" testID="run-lock" onPress={() => setLocked(true)} />
+        <Button name="run-lock" kind="pill-outline" className="flex-1" onPress={() => setLocked(true)}>
+          Lock touches
+        </Button>
       </View>
       <Modal visible={locked} animationType="fade" onRequestClose={() => {}} presentationStyle="fullScreen">
         <SafeAreaView style={{ flex: 1, backgroundColor: "#0b0716" }}>

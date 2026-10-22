@@ -1,7 +1,8 @@
 import { JSX, useState } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 
 interface IProps {
   kind: "meal" | "recipe";
@@ -42,13 +43,18 @@ export function FoodSaveGroupPanel(props: IProps): JSX.Element {
         </>
       )}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
-        <FoodPrimaryButton title="Back" kind="outline" onPress={props.onBack} />
-        <FoodPrimaryButton
-          testID="food-save-group-submit"
-          title="Save"
+        <Button name="food-save-group-panel-back" kind="pill-outline" className="flex-1" onPress={props.onBack}>
+          Back
+        </Button>
+        <Button
+          name="food-save-group-submit"
+          kind="pill"
+          className="flex-1"
           disabled={!isValid}
           onPress={() => props.onSave(name, servings)}
-        />
+        >
+          Save
+        </Button>
       </View>
     </View>
   );

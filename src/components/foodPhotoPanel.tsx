@@ -4,7 +4,8 @@ import { Text } from "./primitives/text";
 import { FoodAddFlow_photoChoices, IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodApi_estimatePhoto } from "../utils/foodApi";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 import { FoodChoicesReview } from "./foodChoicesReview";
 import { AiConsent_ensure } from "../utils/aiConsentClient";
 import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
@@ -23,11 +24,14 @@ export function FoodAiSignIn(): JSX.Element {
   return (
     <View className="py-3" testID="food-ai-sign-in" data-testid="food-ai-sign-in">
       <Text className="mb-3 text-sm text-text-secondary">Sign in to use AI food estimates.</Text>
-      <FoodPrimaryButton
-        title="Open Settings"
-        testID="food-ai-open-settings"
+      <Button
+        name="food-ai-open-settings"
+        kind="pill"
+        className="flex-1"
         onPress={() => dispatch(Thunk_pushScreen("settings", undefined, { tab: "graphs" }))}
-      />
+      >
+        Open Settings
+      </Button>
     </View>
   );
 }
@@ -123,10 +127,10 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
       )}
       {status.kind !== "analyzing" && (
         <View className="flex-row mt-3">
-          <FoodPrimaryButton
-            testID="food-photo-pick"
-            title={preview == null ? "Take or choose a photo" : "New photo"}
-            kind={choices != null && choices.length > 0 ? "outline" : "primary"}
+          <Button
+            name="food-photo-pick"
+            kind={choices != null && choices.length > 0 ? "pill-outline" : "pill"}
+            className="flex-1"
             onPress={async () => {
               const auth = await SupabaseClient_accessToken();
               setAuthError(auth.ok ? undefined : auth.error);
@@ -137,7 +141,9 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
                 inputRef.current?.click();
               }
             }}
-          />
+          >
+            {preview == null ? "Take or choose a photo" : "New photo"}
+          </Button>
         </View>
       )}
     </View>

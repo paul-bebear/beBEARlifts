@@ -1,7 +1,8 @@
 import { JSX, useEffect, useRef, useState } from "react";
 import { Linking, Platform, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodPrimaryButton, FoodTextInput } from "./foodUi";
+import { FoodTextInput } from "./foodUi";
+import { Button } from "./button";
 import { IDispatch } from "../ducks/types";
 import { ISettings } from "../types";
 import { lb } from "lens-shmens";
@@ -103,10 +104,10 @@ export function ListenLinksCard(props: { settings: ISettings; dispatch: IDispatc
                     autoCapitalize="none"
                   />
                 </View>
-                <FoodPrimaryButton
-                  title="Save"
-                  kind="outline"
-                  testID={`listen-save-${kind}`}
+                <Button
+                  name={`listen-save-${kind}`}
+                  kind="pill-outline"
+                  className="flex-1"
                   onPress={() => {
                     const normalized = ListenLinks_normalize(drafts[kind] ?? "");
                     if (normalized == null) {
@@ -115,7 +116,9 @@ export function ListenLinksCard(props: { settings: ISettings; dispatch: IDispatc
                     }
                     save(props.dispatch, props.settings, kind, normalized);
                   }}
-                />
+                >
+                  Save
+                </Button>
               </View>
             )}
           </View>
