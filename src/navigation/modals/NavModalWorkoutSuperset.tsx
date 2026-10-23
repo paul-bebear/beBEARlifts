@@ -8,6 +8,7 @@ import { IHistoryRecord } from "../../types";
 import { updateProgress } from "../../models/state";
 import { lb } from "lens-shmens";
 import type { IRootStackParamList } from "../types";
+import { WorkoutSupersetPair_join } from "../../models/workoutSupersetPair";
 
 export function NavModalWorkoutSuperset(): JSX.Element {
   const { state, dispatch } = useAppState();
@@ -52,6 +53,17 @@ export function NavModalWorkoutSuperset(): JSX.Element {
           dispatch,
           [lb<IHistoryRecord>().p("entries").findBy("id", exerciseSuperset.id).p("superset").record(selectedEntry)],
           "select-superset-entry"
+        );
+      }}
+      onPair={(partnerId) => {
+        updateProgress(
+          dispatch,
+          [
+            lb<IHistoryRecord>()
+              .p("entries")
+              .recordModify((entries) => WorkoutSupersetPair_join(entries, exerciseSuperset.id, partnerId)),
+          ],
+          "pair-superset-entry"
         );
       }}
       onClose={onClose}

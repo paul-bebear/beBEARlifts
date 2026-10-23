@@ -5,6 +5,7 @@ import {
   WeekSchedule_dayCount,
   WeekSchedule_default,
   WeekSchedule_empty,
+  WeekSchedule_follow,
   WeekSchedule_forProgram,
   WeekSchedule_move,
   WeekSchedule_moveDay,
@@ -29,6 +30,7 @@ const monday = at("2026-10-19");
 const tuesday = at("2026-10-20");
 const wednesday = at("2026-10-21");
 const thursday = at("2026-10-22");
+const friday = at("2026-10-23");
 const sunday = at("2026-10-25");
 
 function program(nextDay: number, ...weeks: string[][]): IScheduleProgram {
@@ -180,5 +182,57 @@ describe("WeekSchedule", () => {
   it("knows a workout happened today by the local day", () => {
     expect(WeekSchedule_workedOutToday([{ startTime: at("2026-10-22", 7) }], thursday)).to.equal(true);
     expect(WeekSchedule_workedOutToday([{ startTime: at("2026-10-21", 23) }], thursday)).to.equal(false);
+  });
+  it("moves the next workout to today's planned day once a day", () => {
+    const p = { ...program(4, ulppl), id: "p" };
+    const fridayIsUpper = WeekSchedule_save(
+      WeekSchedule_empty(),
+      "p",
+      WeekSchedule_move(WeekSchedule_default(5), 4, 0)
+    );
+    const step = WeekSchedule_follow(fridayIsUpper, p, { now: friday, workedOutToday: false, hasProgress: false });
+    expect(step?.nextDay).to.equal(1);
+    expect(step?.log.followedOn).to.deep.equal({ p: "2026-10-23" });
+    expect(
+      WeekSchedule_follow(step!.log, p, { now: at("2026-10-23", 18), workedOutToday: false, hasProgress: false })
+    ).to.equal(undefined);
+    expect(
+      WeekSchedule_follow(step!.log, p, { now: at("2026-10-24"), workedOutToday: false, hasProgress: false })
+    ).to.not.equal(undefined);
+  });
+
+  it("marks the day without moving anything when today already matches, is a rest day, or is done", () => {
+    const p = { ...program(4, ulppl), id: "p" };
+    const matches = WeekSchedule_follow(WeekSchedule_empty(), p, {
+      now: friday,
+      workedOutToday: false,
+      hasProgress: false,
+    });
+    expect(matches).to.deep.equal({ log: { version: 1, programs: {}, followedOn: { p: "2026-10-23" } } });
+    const rest = WeekSchedule_follow(WeekSchedule_empty(), p, {
+      now: sunday,
+      workedOutToday: false,
+      hasProgress: false,
+    });
+    expect(rest?.nextDay).to.equal(undefined);
+    const done = WeekSchedule_follow(WeekSchedule_empty(), p, {
+      now: monday,
+      workedOutToday: true,
+      hasProgress: false,
+    });
+    expect(done?.nextDay).to.equal(undefined);
+  });
+
+  it("waits while a workout is running", () => {
+    const p = { ...program(4, ulppl), id: "p" };
+    expect(
+      WeekSchedule_follow(WeekSchedule_empty(), p, { now: monday, workedOutToday: false, hasProgress: true })
+    ).to.equal(undefined);
+  });
+
+  it("keeps the followed days through a parse and drops bad ones", () => {
+    const log = WeekSchedule_parse({ programs: {}, followedOn: { p: "2026-10-23", q: "yesterday", r: 5 } });
+    expect(log.followedOn).to.deep.equal({ p: "2026-10-23" });
+    expect(WeekSchedule_parse({ programs: {}, followedOn: { q: "x" } })).to.deep.equal(WeekSchedule_empty());
   });
 });
