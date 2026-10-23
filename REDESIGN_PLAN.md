@@ -80,14 +80,15 @@ Today the footer hides itself while the live workout is on top (`isLiveWorkoutSc
 
 ### The flow
 
-Six screens from the invite link to the first workout. Screen 1 only exists in Safari. Screens 2 to 6 replace the chat in `onboardingChat.tsx`, built on batch J's version of it. Every screen has one button at the bottom and chips above it. No text field except the three numbers on screen 4.
+Seven screens from the invite link to the first workout. Screen 1 only exists in Safari. Screens 2 to 7 replace the chat in `onboardingChat.tsx`, built on batch J's version of it. Every screen has one button at the bottom and chips above it. No text field except the three numbers on screen 5.
 
 - Screen 1, Safari, "Add beBEAR to your Home Screen": the existing `InviteGuide` with the three steps, shown whenever the page is not standalone on an iPhone (U4 rule). Nothing else is reachable in the tab.
-- Screen 2, "Meet your bear": the cub, one line ("This is your bear. Train it, feed it, watch it grow."), then Sign in with Apple, Sign in with Google, "Use an email code" as a text link, and "Not now". The owner decided sign-in is built and skippable while testing. With an invite handle present, batch J's handle and name fields sit under the sign-in buttons, with the name prefilled from Apple or Google.
-- Screen 3, "Where do you train?": four chips with an icon each, Full gym, Only dumbbells, Street workout bars, No equipment. Multi-select. Nothing else.
-- Screen 4, "About you": experience as three chips (New, A few months, Years), then age, height and weight with the cm and ft-in chips from `foodTargetsCalculator.tsx` (U11), the unit defaulted from the phone locale, and an optional sex row.
-- Screen 5, "What do you want?": three chips, Size, Strength, Both, single-select, then one toggle row, "More agile". Two buttons: "Recommend a plan" in honey and "Import my own" as a text link. Import opens the existing screenshot and history import from `onboardingQuestions.tsx` and needs sign-in and AI consent; without them it shows one line, "Import needs sign-in", and the Recommend button stays.
-- Screen 6, "Your plan": up to three cards, 3 days, 4 days, 5 days, the recommended one first and marked "Best for you". Each card: name, days, about 45 minutes, one line on what the week looks like. Tap a card, see the days listed, tap Start. Start lands on Home with the cub at stage one and the next-workout card.
+- Screen 2, "Pick your bear": the cards under Pick your bear, below. Added 2026-10-23 by batch P1. Until P1 lands, the flow starts at screen 3 with the brown anthro male bear.
+- Screen 3, "Meet your bear": the picked cub, one line ("This is your bear. Train it, feed it, watch it grow."), then Sign in with Apple, Sign in with Google, "Use an email code" as a text link, and "Not now". The owner decided sign-in is built and skippable while testing. With an invite handle present, batch J's handle and name fields sit under the sign-in buttons, with the name prefilled from Apple or Google.
+- Screen 4, "Where do you train?": four chips with an icon each, Full gym, Only dumbbells, Street workout bars, No equipment. Multi-select. Nothing else.
+- Screen 5, "About you": experience as three chips (New, A few months, Years), then age, height and weight with the cm and ft-in chips from `foodTargetsCalculator.tsx` (U11), the unit defaulted from the phone locale, and an optional sex row.
+- Screen 6, "What do you want?": three chips, Size, Strength, Both, single-select, then one toggle row, "More agile". Two buttons: "Recommend a plan" in honey and "Import my own" as a text link. Import opens the existing screenshot and history import from `onboardingQuestions.tsx` and needs sign-in and AI consent; without them it shows one line, "Import needs sign-in", and the Recommend button stays.
+- Screen 7, "Your plan": up to three cards, 3 days, 4 days, 5 days, the recommended one first and marked "Best for you". Each card: name, days, about 45 minutes, one line on what the week looks like. Tap a card, see the days listed, tap Start. Start lands on Home with the cub at stage one and the next-workout card.
 
 The "days per week" and "minutes" questions go. The three cards are the days question. The minutes are fixed by the family: every session is 6 to 8 exercises, about 45 minutes.
 
@@ -96,7 +97,7 @@ The "days per week" and "minutes" questions go. The three cards are the days que
 Every rule lives in `src/models/onboardingAnswers.ts`, `src/models/bearPlanRecommend.ts` and `src/models/bearPlace.ts`, and in the prompt that `api/ai/onboard.mjs` sends for the import path.
 
 - Where you train: each pick adds an equipment pool. Full gym adds barbell, dumbbell, cable, leverageMachine, smith, ezbar, trapbar and kettlebell. Only dumbbells adds dumbbell. Street workout bars adds the pull-up bar and dip bar exercises (bodyweight equipment, bar-based). No equipment adds floor bodyweight only. Every pick includes floor bodyweight. The picks are a set, and the generator fills each slot from the first pool that has an exercise for it, in the order gym, dumbbells, street, floor. `BearPlace_equipmentKeys(places)` returns the key list, and the apply step keeps only those keys in the current gym's equipment map (`settings.gyms[].equipment`), with the default plate data from `Settings_defaultEquipment` for each kept key. The plan family uses only exercises with those equipments.
-- Experience: sets the recommended day count. New recommends 3 days, A few months 4, Years 5. It also sets the starting weights line on screen 6 ("Start light, the app adds weight when you hit the reps").
+- Experience: sets the recommended day count. New recommends 3 days, A few months 4, Years 5. It also sets the starting weights line on screen 7 ("Start light, the app adds weight when you hit the reps").
 - Size, Strength, Both: picks the set scheme of the family. Size is hypertrophy, Strength is strength, Both runs strength on the first lift of each day and hypertrophy on the rest. The goal card on My bear gets "Build muscle" for Size and Both, "Maintain" for Strength.
 - More agile: adds the agility block to every plan (see the family below).
 - Age: under 18 selects the youth variant of the family: no AMRAP sets, no sets under 5 reps, a 10 percent lighter progression step, and the recommended days capped at 3 for New. Age also sets `birthYear` for food targets, as today.
@@ -156,6 +157,17 @@ What replaces them: one-line tips at the moment of use, from a pure `FirstUseTip
 ## 4. The bear
 
 Every rule below is a pure function over data the app already stores: `storage.history`, the food log, `storage.stats`, the program's planned days, and `now`. No new store holds a stat. The only new store, `bebear_bear`, keeps "already celebrated" flags (stage-ups and badges shown), so a reinstall with a restored backup shows the same bear.
+
+### Pick your bear
+
+Added 2026-10-23. A tester found the human-shaped bear off-putting, so the user picks a bear line on first run. Batch P1 builds it.
+
+- One card per line, in a sideways swipe. Each card shows the level 1 cub on the left and the level 10 bear on the right, with an arrow between them. The card says where the bear starts and where it ends.
+- The first build has three lines: Chonk, a cartoon animal bear on four paws that gets round and muscular; Anthro, male; Anthro, female. Chonk has no gender and wears no clothes. Brown fur only. Black and polar fur arrive together in the next release, free for everyone.
+- More lines come later as more cards. A line ships only when all 10 levels are drawn for it.
+- Tap a card, then "This one". The pick is saved as `style` in `bebear_bear` through `src/utils/bearStore.ts`.
+- My bear gets a "Change bear" row. Changing keeps the level, the honey and the owned accessories. An accessory shows only on a line that has its slot, so Chonk shows no clothing items.
+- Art: B1 draws 30 level SVGs for one line. Each extra line is 30 more, so the first build is 90.
 
 ### Stats
 
@@ -279,6 +291,31 @@ Liftoff sells streak restores. beBEAR's version is the bear sleeping through a m
 - `HibernationPass_settle` returns the next store and the covered days, so running it twice changes nothing. A workout logged later for a covered day keeps the day, and the pass stays spent.
 - The Streak screen shows the passes held and a "Buy a pass, 25 honey" row. The purchase adds to `spent` through `BearHoney_balance`.
 
+### Seasons: bulk in winter, lean out in summer
+
+Added 2026-10-23. The owner wants to bulk as much as possible this winter and finds it hard to eat enough. Batch W3 builds the food side now, and W4 adds the plan side after O1.
+
+- A "Follow the seasons" switch on the Targets screen in `foodTargetsCalculator.tsx`. Off by default. When it is on, the season sets the food goal and the goal step is hidden.
+- `Season_for(date, south)` in a new `src/models/season.ts` returns the season. Northern dates: Bulk from October 1 to March 31, Lean from April 1 to June 30, Summer from July 1 to September 30. A "South of the equator" switch moves every date by six months.
+- Bulk: 15 percent above maintenance at 18 and over, 10 percent under 18. The existing `gain` goal is 10 percent.
+- Lean: the existing `lose` goal, 20 percent below maintenance. Under 18, or with a BMI under 20, Lean uses `maintain`. A skinny teenager never gets a calorie deficit.
+- Summer: `maintain`.
+- On the first open in a new season, Home shows one card: "Bulk season is over. Lean season until June 30. New target: 2,450 kcal." One button, "OK".
+
+Eating help, in Bulk only:
+
+- From 18:00, when the day's kcal are under 70 percent of the target, Home shows a card: "Your bear is still hungry. 900 kcal left."
+- Under that line, up to three foods with a one-tap add, closest to the gap first: a shake (500 ml whole milk, 60 g oats, 2 tbsp peanut butter, a banana, about 850 kcal), 100 g mixed nuts (about 600 kcal), a peanut butter sandwich (about 350 kcal).
+- The card reads the same kcal target as the bear's hunger, so one meal answers both.
+- No push notification in version one. A local notification at 19:00 can come later.
+
+The plan side, after O1:
+
+- Bulk: the Strength scheme on the first lift of each day, as Both does, and the mobility block on the last day of the week.
+- Lean: the Size scheme, and the run block on two days a week.
+- Summer: the user's own goal, and the run block on two days a week.
+- On the first open in a new season, `BearPlan_text` runs again with a `season` parameter. The current weights must carry over to the new text. That is W4's design call.
+
 ### The TV, the friends feed
 
 The TV shows two kinds of post: lifts and meals, plus the songs kept during a workout. Notes never appear on it.
@@ -352,6 +389,27 @@ Sign-up stays open while testing, as the owner decided. The spending guard is th
 - beBEAR+ accounts: higher limits, 30 a day and 150 a week, for anyone the owner gives a code. A new table `pro_codes` (code, created_at, redeemed_by, redeemed_at) and a SQL function `redeem_pro_code(code)` that marks the code used and writes `plan = 'plus'` on the user's row in a new `account_plans` table. The owner makes codes by inserting rows in the Supabase dashboard. The app gets "Enter a code" in Settings → Cloud backup, and a "beBEAR+" line once redeemed.
 - `ai_usage_take` gains a `kind` argument (`capped`, `onboard`, `report`) and a seven-day window. It reads the caps for the user's plan from `account_plans` with the free defaults from `AI_DAILY_CAP`, `AI_WEEKLY_CAP`, `AI_PLUS_DAILY_CAP` and `AI_PLUS_WEEKLY_CAP` in Vercel, and returns both counts so the app can show "2 of 3 today, 7 of 10 this week".
 - A capped call answers 429 with the counts, and every AI button shows "Your 3 AI uses for today are used. More tomorrow." instead of the raw error. Barcode, search and USDA lookups are not AI and stay uncounted.
+
+### The beBEAR+ price ladder
+
+Added 2026-10-23. The prices are a first guess, to be tested. Tracking stays free, and the ladder prices only beBEAR+. Batch L1 builds it.
+
+- One auto-renewing monthly subscription at $7.
+- The counted workouts in one calendar month set the price of the next month. A counted workout follows the Growth rules: at least 10 minutes, one per day. A day covered by a Hibernation pass does not count.
+- The target is 4 workouts a week: `round(4 × days in the month / 7)`. That is 16 in February, 17 in a 30-day month and 18 in a 31-day month.
+- At the target or above, the next month costs $1. One to three workouts short, it costs $3. Otherwise it costs $7.
+- My bear shows the month so far: "14 of 17 workouts. 3 more for a $1 month."
+- On the 1st, a sheet says "You earned a $1 month" with one button, "Claim". Apple starts a promotional offer at the next renewal, and only after the user accepts it in the app. So the claim tap happens every month.
+
+How it works with Apple:
+
+- The $1 and $3 prices are two promotional offers on the $7 subscription in App Store Connect. Each one lasts one month, pay as you go.
+- Apple needs our server to sign each promotional offer. Upstream signs them in `lambda/utils/applePromotionalOfferSigner.ts`. That code moves to a new Vercel route, `api/billing/offer.mjs`.
+- The route signs an offer only after it counts last month's workouts on the server. After each finish, the phone writes one row per day to a new Supabase table `counted_days` (user_id, day, counted_kg). A signed-out user gets no discount.
+- `IIapApplePromoOffer` in `src/utils/iapAdapter.ts` already carries a signed offer into the purchase in `src/utils/iap.native.ts`.
+- App Store Server Notifications go to a new route, `api/billing/apple-notify.mjs`. It sets `plan = 'plus'` in R7's `account_plans` while the subscription is active. Upstream's version is `lambda/utils/appleWebhookHandler.ts`.
+
+Two things block L1. Anton has to reply about the App Store. The Paid Applications Agreement must be signed in App Store Connect. The app is signed with Victor's team (GKY9GR7VHG). The money goes to that team's bank account, unless the app moves to the owner's own developer account.
 
 ### Instagram
 
@@ -595,7 +653,14 @@ Group 5, Winter Arc. Added 2026-10-23. It has a date: W1 must be on the owner's 
 - W2, the Hibernation pass. Codex. 8 hours. The rules under The Hibernation pass. Files: new `src/models/hibernationPass.ts` (`HibernationPass_settle`, `HibernationPass_buy`, the 25 honey price, the hold limit of 2, the 3-day minimum streak) and `test/hibernationPass.test.ts`, `src/models/bearStoreData.ts` (`passes`, `coveredDays` and `pendingWake`, parsed with the same guards as `spent`) and new `test/bearStoreData.test.ts`, `src/models/dailyChecklist.ts` (`DailyChecklist_doneDays` takes covered days) and `test/dailyChecklist.test.ts`, `src/models/bearHoney.ts` (covered days join the 7-day run and earn nothing) and `test/bearHoney.test.ts`, `src/utils/useBear.ts` (settle on open), `src/utils/useBearBadges.ts` and `src/utils/useBearHoney.ts` (covered days in), `src/components/screenStreak.tsx` (covered days on the calendar, passes held, the buy row), new `src/components/hibernationWakeSheet.tsx` mounted from `src/components/programHistory.tsx`, `src/components/screenJournal.tsx` and `src/components/workoutStoryCard.tsx` (covered days in their streak counts). Art: one sleeping bear still per body stage, 5 files. Lands before W1, because both touch the badge hook.
 - W1, The Big Hibernation. Opus. 14 hours. The rules under Winter Arc: The Big Hibernation. Files: new migration `supabase/migrations/<date>_season_events.sql` (the two tables, their policies, `season_event_total`, the 2026 event row), new `src/models/seasonEvent.ts` (the window check, the user's contribution from counted workouts, the day rows to upsert, the reward states, the goal text from `BearComparison_all`) and `test/seasonEvent.test.ts`, new `src/utils/seasonEventClient.ts` (upsert and total), new `src/utils/useSeasonEvent.ts`, new `src/components/seasonEventBanner.tsx`, new `src/components/screenSeasonEvent.tsx`, `src/components/programHistory.tsx` (the banner on Home), `src/components/bearFinishBanner.tsx` (the "+3,100 kg to The Big Hibernation" line), `src/models/bearBadges.ts` (the three event badges) and `test/bearBadges.test.ts`, `src/utils/useBearBadges.ts` (event input), `src/navigation/AppNavigator.tsx` and `.native.tsx` (register the event screen). Art: the banner bear in snow, and three coins plus three item SVGs (beanie, scarf, puffer jacket) under `/images/events/winter-2026/`. Owner action: apply the migration, then set `goal_kg` on 2026-12-05. Design calls: the banner and the event screen. After W2.
 
-Totals: group 1 about 30 hours plus 2 of the owner's, group 2 about 56 hours, group 3 about 24 hours plus 2 of the owner's. Group 4 about 49 hours, group 5 about 22 hours. About 181 hours of code, plus the art.
+Group 6, seasons, the bear picker and the price ladder. Added 2026-10-23. W3 needs nothing, so it can start now. The others wait for the batches named on each.
+
+- W3, seasons, the food side. Codex. 8 hours. The rules under Seasons, apart from the plan side. Files: new `src/models/season.ts` (`Season_for`, the dates, the south shift) and `test/season.test.ts`, `src/models/foodTargets.ts` (`seasons`, `south` and `lastSeason` on `IFoodProfile`, the season factor, the age and BMI rule) and `test/foodTargets.test.ts`, `src/components/foodTargetsCalculator.tsx` (the two switches), new `src/models/seasonNudge.ts` (when each Home card shows, its text, the food picks closest to the gap) and `test/seasonNudge.test.ts`, new `src/components/seasonNudgeCard.tsx` mounted from `src/components/programHistory.tsx`. Runs beside any batch that does not touch `programHistory.tsx`.
+- W4, seasons, the plan side. Opus. 6 hours. After O1 and W3. Files: `src/models/bearPlan.ts` (the `season` parameter), `test/bearPlan.test.ts` and new golden files under `test/fixtures/bearPlan/`, new `src/models/seasonPlanSwap.ts` (the new plan text with the current weights kept) and `test/seasonPlanSwap.test.ts`, `src/components/seasonNudgeCard.tsx` (the season card's OK applies the new plan). Design call: how the weights carry over.
+- P1, the bear picker. Opus. 8 hours, plus the art. After B1 and O2. The rules under Pick your bear. Files: new `src/models/bearStyle.ts` (the lines, the parse with brown anthro male as the fallback, the sprite path for a line and a level) and `test/bearStyle.test.ts`, `src/utils/bearStore.ts` (`style`), `src/components/bearSprite.tsx` (the path from the style), new `src/components/onboardingBearPicker.tsx`, `src/models/onboarding.ts` (the new first step) and `test/onboarding.test.ts`, `src/components/screenMyBear.tsx` (the "Change bear" row), `src/models/bearAnchors.ts` (the slots per line, if B4 has landed). Art: 60 more level SVGs, for Chonk and Anthro female. Design calls: the card and the swipe.
+- L1, the price ladder. Opus. 24 hours if upstream's signer and webhook port without changes, about 32 if the App Store Server API version differs. After R7. Blocked as written under The beBEAR+ price ladder. Files: new `src/models/priceLadder.ts` (the target, the tier, the prices, the progress line) and `test/priceLadder.test.ts`, new migration `supabase/migrations/<date>_counted_days.sql` (the table, owner-only upsert, kg between 0 and 25,000), new `src/utils/countedDaysClient.ts`, new `api/billing/offer.mjs` and `api/billing/apple-notify.mjs`, new `api/_appleOfferSigner.mjs` ported from upstream, `src/utils/iap.native.ts` (the offer on the purchase), new `src/components/priceLadderCard.tsx` on `src/components/screenMyBear.tsx`, new `src/components/claimOfferSheet.tsx`. Owner actions: the subscription and its two offers in App Store Connect, the subscription key, and its id and private key as Vercel variables.
+
+Totals: group 1 about 30 hours plus 2 of the owner's, group 2 about 56 hours, group 3 about 24 hours plus 2 of the owner's. Group 4 about 49 hours, group 5 about 22 hours, group 6 about 46 hours. About 227 hours of code, plus the art.
 
 ## 9. Decisions for the owner
 
@@ -625,6 +690,22 @@ Open for group 5, added 2026-10-23. Each has a default, so W1 and W2 can start w
 - The goal kg. Default: signed-in users times 24,000 kg, set on 2026-12-05.
 - The pass price and limit. Default 25 honey, at most 2 held.
 - The three reward items. Default beanie, scarf and puffer jacket.
+
+Decided 2026-10-23, from the owner's notebook pages.
+
+- First run gets "Pick your bear": one card per line, showing the cub and the level 10 bear. Chonk, Anthro male and Anthro female first, more lines later.
+- Seasons: bulk as much as is healthy over winter, lean out over summer. The owner tries it first, this winter.
+- beBEAR+ costs $1 next month at 4 or more workouts a week, $3 when 1 to 3 workouts short, and $7 otherwise. Prices to be tested.
+- The family version (family feed, tracking children's growth) is parked. Children's data falls under COPPA in the US below 13 and under GDPR in the EU up to 16.
+
+Open for group 6, added 2026-10-23. Each has a default, so the batches can start without an answer.
+
+- Season dates. Default Bulk October to March, Lean April to June, Summer July to September.
+- Seasons on by default. Default off, switched on in Targets.
+- The Bulk surplus. Default 15 percent at 18 and over, 10 percent under 18.
+- The ladder target under 18. A New lifter under 18 is offered at most 3 days a week, so 4 a week puts the $1 month out of reach. Default: under 18, the target is the plan's own days per week.
+- The first month's price. Default $7, and the ladder starts with the second month.
+- One table for counted days. `counted_days` and W1's `season_event_days` hold the same rows. Default: one table, `counted_days`, created by whichever batch lands first, and W1 sums it over the event window.
 
 ## 10. Art prompt for the owner
 
