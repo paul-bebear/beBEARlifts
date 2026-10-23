@@ -100,20 +100,50 @@ describe("JournalDay", () => {
   it("keeps every empty section open", () => {
     const day = JournalDay_build(input());
     for (const section of ["checkIn", "workouts", "meals", "songs", "weight", "notes"] as const) {
-      expect(JournalDay_sectionFold(day, section, false)).to.eql({ summary: undefined, isCollapsed: false });
+      expect(JournalDay_sectionFold(day, section, undefined)).to.eql({
+        summary: undefined,
+        isCollapsed: false,
+        canHide: false,
+      });
     }
   });
 
-  it("folds check-in scores and lets the user reopen them", () => {
+  it("keeps a half-done check-in open until all three faces are picked", () => {
+    let notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", undefined)).to.eql({
+      summary: "Check-in · Energy 4",
+      isCollapsed: false,
+      canHide: true,
+    });
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 2, field: "soreness", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", undefined).isCollapsed).to.equal(
+      false
+    );
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 3, field: "mood", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", undefined).isCollapsed).to.equal(true);
+  });
+
+  it("lets the user hide a half-done check-in", () => {
+    const notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", false).isCollapsed).to.equal(true);
+  });
+
+  it("folds check-in scores and lets the user reopen and hide them again", () => {
     let notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
     notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 2, field: "soreness", value: 4 });
     notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 3, field: "mood", value: 4 });
     const day = JournalDay_build(input({ notes }));
-    expect(JournalDay_sectionFold(day, "checkIn", false)).to.eql({
+    expect(JournalDay_sectionFold(day, "checkIn", undefined)).to.eql({
       summary: "Check-in · Energy 4 · Soreness 4 · Mood 4",
       isCollapsed: true,
+      canHide: false,
     });
-    expect(JournalDay_sectionFold(day, "checkIn", true).isCollapsed).to.equal(false);
+    expect(JournalDay_sectionFold(day, "checkIn", true)).to.eql({
+      summary: "Check-in · Energy 4 · Soreness 4 · Mood 4",
+      isCollapsed: false,
+      canHide: true,
+    });
+    expect(JournalDay_sectionFold(day, "checkIn", false).isCollapsed).to.equal(true);
     expect(JournalDay_sectionSummary(JournalDay_build(input({ day: "2026-10-21", notes })), "checkIn")).to.equal(
       undefined
     );

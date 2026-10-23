@@ -87,16 +87,30 @@ export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSec
   }
 }
 
+// A check-in with one or two faces picked is still being filled in, so it stays open.
+function isSectionDone(day: IJournalDay, section: IJournalSection): boolean {
+  const checkIn = day.checkIn;
+  if (section !== "checkIn" || checkIn == null) {
+    return true;
+  }
+  const picked = Notes_checkInScales.filter(({ field }) => checkIn[field] != null).length;
+  return picked === 0 || picked === Notes_checkInScales.length;
+}
+
+// isOpenByUser is undefined until the user taps the summary or Hide; after that their choice stands.
 export function JournalDay_sectionFold(
   day: IJournalDay,
   section: IJournalSection,
-  isExpanded: boolean
+  isOpenByUser: boolean | undefined
 ): {
   summary?: string;
   isCollapsed: boolean;
+  canHide: boolean;
 } {
   const summary = JournalDay_sectionSummary(day, section);
-  return { summary, isCollapsed: summary != null && !isExpanded };
+  const isOpen = isOpenByUser ?? !isSectionDone(day, section);
+  const isCollapsed = summary != null && !isOpen;
+  return { summary, isCollapsed, canHide: summary != null && !isCollapsed };
 }
 
 // One line a day, in the bear's voice. Each is a thing to do in under five minutes, never a quote.

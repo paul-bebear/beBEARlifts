@@ -11,6 +11,9 @@ import {
   WorkoutPagerScroll_snapOffset,
 } from "../utils/workoutPagerScroll";
 
+// A paging glide moves at most one page, so one still going after this has stalled.
+const momentumStallMs = 900;
+
 interface IWorkoutExercisePagerProps {
   currentEntryIndex: number;
   currentEntryId: string;
@@ -122,10 +125,20 @@ export function WorkoutExercisePager(props: IWorkoutExercisePagerProps): JSX.Ele
     }, 250);
   }, [settle, snapToPage]);
 
+  // iOS can stop a paging glide part-way, for example when a re-render resizes the pager, and then
+  // sends no onMomentumScrollEnd. The page stays half-shown until this timer snaps it.
   const onMomentumScrollBegin = useCallback((): void => {
     isMomentumRef.current = true;
     clearTimeout(fallbackTimerRef.current);
-  }, []);
+    fallbackTimerRef.current = setTimeout(() => {
+      if (isFingerDraggingRef.current || ownSlideTargetRef.current != null) {
+        return;
+      }
+      isMomentumRef.current = false;
+      settle(offsetXRef.current);
+      snapToPage(offsetXRef.current);
+    }, momentumStallMs);
+  }, [settle, snapToPage]);
 
   // RN Android cancels its post-touch runnable only when onTouchEvent sees ACTION_DOWN. A drag that
   // starts on a child and is intercepted keeps the old runnable, which then ends the momentum under

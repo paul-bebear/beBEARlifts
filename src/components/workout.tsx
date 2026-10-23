@@ -61,6 +61,12 @@ import { IconPlus2 } from "./icons/iconPlus2";
 import { History_buildPrevExerciseData, IPrevExerciseData } from "../models/history";
 import { Exercise_get, Exercise_nameWithEquipment, Exercise_toKey } from "../models/exercise";
 import {
+  ExerciseOrderFatigue_lastBefore,
+  ExerciseOrderFatigue_lookup,
+  ExerciseOrderFatigue_notes,
+} from "../models/exerciseOrderFatigue";
+import { WorkoutOrderNoteContext } from "./workoutOrderNoteContext";
+import {
   IWorkoutStripLabelFadeRange,
   WorkoutStripLabel_fadeRange,
   WorkoutStripLabel_shadowRange,
@@ -287,6 +293,15 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
     () => History_buildPrevExerciseData(props.history, props.progress.startTime, sameDay, exerciseKeys),
     [props.history, props.progress.startTime, sameDay, exerciseKeys]
   );
+  const orderLookup = useMemo(() => ExerciseOrderFatigue_lookup(props.settings), [props.settings]);
+  const lastBefore = useMemo(
+    () => ExerciseOrderFatigue_lastBefore(props.history, props.progress.startTime, exerciseKeys, orderLookup),
+    [props.history, props.progress.startTime, exerciseKeys, orderLookup]
+  );
+  const orderNotes = useMemo(
+    () => ExerciseOrderFatigue_notes(progressEntries, lastBefore, orderLookup),
+    [progressEntries, lastBefore, orderLookup]
+  );
   const isCurrentProgress = Progress_isCurrent(props.progress);
   const titleNodeRef = useRef<View | null>(null);
   const [titleLayoutNonce, setTitleLayoutNonce] = useState(0);
@@ -354,53 +369,55 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
             />
             {selectedEntry != null && (
               <View className="mt-2">
-                <PerfProbeSubtree id="workout-list">
-                  <WorkoutExercisePager
-                    currentEntryIndex={currentEntryIndex}
-                    currentEntryId={selectedEntry.id}
-                    entryCount={progressEntries.length}
-                    windowWidth={windowWidth}
-                    forceUpdateEntryIndex={forceUpdateEntryIndex}
-                    onIndexChange={onPagerIndexChange}
-                    onSettledIndex={onPagerSettled}
-                  >
-                    {progressEntries.map((entry, entryIndex) => (
-                      <FirstUseTipContext.Provider
-                        key={entry.id}
-                        value={
-                          isFocused && entryIndex === currentEntryIndex && isCurrentProgress ? tipContext : undefined
-                        }
-                      >
-                        <WorkoutExercisePage
-                          entry={entry}
-                          entryIndex={entryIndex}
-                          isCurrentPage={entryIndex === currentEntryIndex}
-                          tabStopIndex={entryIndex < currentEntryIndex ? -1 : 0}
-                          impressionsSeenRef={impressionsSeenRef}
-                          shouldRender={renderedIndices.has(entryIndex)}
-                          windowWidth={windowWidth}
-                          day={progressDay}
-                          stats={props.stats}
-                          history={props.history}
-                          otherStates={otherStates}
-                          program={props.program}
-                          programDay={props.programDay}
-                          progressId={progressId}
-                          progressStartTime={progressStartTime}
-                          userPromptedStateVars={progressUserPromptedStateVars}
-                          supersetEntry={supersetByEntryId.get(entry.id)}
-                          prevData={prevExerciseData[Exercise_toKey(entry.exercise)]}
-                          isCurrentProgress={isCurrentProgress}
-                          helps={props.helps}
-                          subscription={props.subscription}
-                          settings={props.settings}
-                          dispatch={dispatch}
-                          onTitleLayout={onTitleLayout}
-                        />
-                      </FirstUseTipContext.Provider>
-                    ))}
-                  </WorkoutExercisePager>
-                </PerfProbeSubtree>
+                <WorkoutOrderNoteContext.Provider value={orderNotes}>
+                  <PerfProbeSubtree id="workout-list">
+                    <WorkoutExercisePager
+                      currentEntryIndex={currentEntryIndex}
+                      currentEntryId={selectedEntry.id}
+                      entryCount={progressEntries.length}
+                      windowWidth={windowWidth}
+                      forceUpdateEntryIndex={forceUpdateEntryIndex}
+                      onIndexChange={onPagerIndexChange}
+                      onSettledIndex={onPagerSettled}
+                    >
+                      {progressEntries.map((entry, entryIndex) => (
+                        <FirstUseTipContext.Provider
+                          key={entry.id}
+                          value={
+                            isFocused && entryIndex === currentEntryIndex && isCurrentProgress ? tipContext : undefined
+                          }
+                        >
+                          <WorkoutExercisePage
+                            entry={entry}
+                            entryIndex={entryIndex}
+                            isCurrentPage={entryIndex === currentEntryIndex}
+                            tabStopIndex={entryIndex < currentEntryIndex ? -1 : 0}
+                            impressionsSeenRef={impressionsSeenRef}
+                            shouldRender={renderedIndices.has(entryIndex)}
+                            windowWidth={windowWidth}
+                            day={progressDay}
+                            stats={props.stats}
+                            history={props.history}
+                            otherStates={otherStates}
+                            program={props.program}
+                            programDay={props.programDay}
+                            progressId={progressId}
+                            progressStartTime={progressStartTime}
+                            userPromptedStateVars={progressUserPromptedStateVars}
+                            supersetEntry={supersetByEntryId.get(entry.id)}
+                            prevData={prevExerciseData[Exercise_toKey(entry.exercise)]}
+                            isCurrentProgress={isCurrentProgress}
+                            helps={props.helps}
+                            subscription={props.subscription}
+                            settings={props.settings}
+                            dispatch={dispatch}
+                            onTitleLayout={onTitleLayout}
+                          />
+                        </FirstUseTipContext.Provider>
+                      ))}
+                    </WorkoutExercisePager>
+                  </PerfProbeSubtree>
+                </WorkoutOrderNoteContext.Provider>
               </View>
             )}
           </View>

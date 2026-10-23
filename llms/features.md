@@ -588,8 +588,9 @@ Sets are never locked. You can tap any thumbnail to go to any exercise at any ti
 
 ### Group exercises during a workout
 
-You can build or change groups without touching the program. Tap the exercise name next to **Supersets with:**, or tap the cog on the exercise card and pick **Edit Superset**. The **Select Superset Group** sheet opens with:
+You can build or change groups without touching the program. Tap the exercise name next to **Supersets with:**, or tap the cog on the exercise card and pick **Superset**. The sheet opens with:
 
+- **Superset with**: every other exercise in this workout. Tap one and the two exercises share a group. The group of the tapped exercise is used if it has one, else a new group named `A`, `B` and so on.
 - **None** to take the exercise out of its group.
 - Each existing group in this workout, with the exercises in it.
 - **Create New Group** to name a new group. A name can be any text except the characters `/ { } ( ) # [ ] | !`.

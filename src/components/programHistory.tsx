@@ -20,6 +20,7 @@ import { WeekDots_build } from "../models/weekDots";
 import { TodayPill_dayName, TodayPill_text } from "../models/todayPill";
 import { WeekSchedule_todayFor } from "../models/weekSchedule";
 import { WeekScheduleStore } from "../utils/weekScheduleStore";
+import { useFollowWeekSchedule } from "../utils/useFollowWeekSchedule";
 import { HistoryRecordsNullState } from "./historyRecordsNullState";
 import { Progress_isCurrent } from "../models/progress";
 import { Program_nextHistoryRecord } from "../models/program";
@@ -151,6 +152,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
     [evaluatedProgram]
   );
   const isOngoing = !!(props.progress && Progress_isCurrent(props.progress));
+  useFollowWeekSchedule(evaluatedProgram, props.history, props.progress != null, dispatch);
 
   const flatListRef = useRef<LegendListRef>(null);
   const tabBarPadding = useTabBarContentPadding();

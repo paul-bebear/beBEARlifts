@@ -12,9 +12,11 @@ import {
   PlannerNames_supersetNamePattern,
 } from "../pages/planner/models/plannerNames";
 import { useModal } from "../navigation/ModalStateContext";
+import { WorkoutSupersetPair_isPaired } from "../models/workoutSupersetPair";
 
 export interface IBottomSheetWorkoutSupersetContentProps {
   onSelect: (name: string | undefined) => void;
+  onPair: (partnerId: string) => void;
   progress: IHistoryRecord;
   entry: IHistoryEntry;
   settings: ISettings;
@@ -23,6 +25,7 @@ export interface IBottomSheetWorkoutSupersetContentProps {
 
 export function BottomSheetWorkoutSupersetContent(props: IBottomSheetWorkoutSupersetContentProps): JSX.Element {
   const supersetGroups = Progress_getSupersetGroups(props.progress.entries);
+  const partners = props.progress.entries.filter((e) => e.id !== props.entry.id);
 
   const openTextInput = useModal("textInputModal", (name) => {
     props.onSelect(name);
@@ -31,8 +34,36 @@ export function BottomSheetWorkoutSupersetContent(props: IBottomSheetWorkoutSupe
 
   return (
     <View className="flex-1 bg-background-default">
+      {partners.length > 0 && (
+        <View className="pb-4" testID="superset-partners" data-testid="superset-partners">
+          <Text className="pb-2 text-lg font-semibold text-center">Superset with</Text>
+          {partners.map((partner) => {
+            const isPaired = WorkoutSupersetPair_isPaired(props.entry, partner);
+            const exercise = Exercise_get(partner.exercise, props.settings.exercises);
+            const name = Exercise_fullName(exercise, props.settings);
+            return (
+              <Pressable
+                key={partner.id}
+                data-testid={`superset-partner-${StringUtils_dashcase(name)}`}
+                testID={`superset-partner-${StringUtils_dashcase(name)}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isPaired }}
+                className={`${isPaired ? "bg-background-cardpurple" : ""} flex-row items-center px-4 py-1 border-b border-border-neutral`}
+                style={{ minHeight: 48 }}
+                onPress={() => {
+                  props.onPair(partner.id);
+                  props.onClose();
+                }}
+              >
+                <Text className="flex-1 text-base font-bold">{name}</Text>
+                {isPaired && <Text className="text-sm text-text-secondary">{`Group ${partner.superset}`}</Text>}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
       <View className="pb-2">
-        <Text className="text-lg font-semibold text-center">Select Superset Group</Text>
+        <Text className="text-lg font-semibold text-center">Groups</Text>
       </View>
       <View className="pb-4">
         <Pressable

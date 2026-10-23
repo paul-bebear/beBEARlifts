@@ -1,4 +1,5 @@
-import { JSX, memo, useCallback, useMemo, useRef, useState } from "react";
+import { JSX, memo, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { WorkoutOrderNoteContext } from "./workoutOrderNoteContext";
 import { View, Pressable, Platform } from "react-native";
 import { Text } from "./primitives/text";
 import {
@@ -123,6 +124,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
   );
   const lastHistoryEntry = props.prevData?.lastEntry;
   const lastNote = props.prevData?.lastNote;
+  const orderNote = useContext(WorkoutOrderNoteContext)[props.entry.id];
   const timestamp = props.prevData?.lastNoteTimestamp;
 
   const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
@@ -264,7 +266,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
       actions.push({ action: "edit", label: "Edit Program Exercise" });
     }
     actions.push({ action: "swap", label: "Swap Exercise" });
-    actions.push({ action: "superset", label: "Edit Superset" });
+    actions.push({ action: "superset", label: "Superset" });
     actions.push({ action: "notes", label: showExerciseNotes ? "Hide Exercise Notes" : "Show Exercise Notes" });
     actions.push({ action: "remove", label: "Remove Exercise" });
     return actions;
@@ -511,7 +513,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
                 <DropdownMenuItem data-testid="exercise-superset" testID="exercise-superset" onClick={onKebabSuperset}>
                   <View className="flex-row items-center" style={{ gap: 8 }}>
                     <IconReorder size={18} />
-                    <Text className="whitespace-nowrap">Edit Superset</Text>
+                    <Text className="whitespace-nowrap">Superset</Text>
                   </View>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -550,6 +552,15 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
           <View className="mt-1">
             {!!exerciseNotes && !!description && <GroupHeader name="Program Exercise Description" />}
             <Markdown value={description} />
+          </View>
+        )}
+        {orderNote != null && (
+          <View
+            className="px-3 py-2 my-1 rounded-xl bg-background-subtle"
+            testID="exercise-order-note"
+            data-testid="exercise-order-note"
+          >
+            <Text className="text-sm">{orderNote}</Text>
           </View>
         )}
         {!!lastNote && !!timestamp && (

@@ -149,3 +149,10 @@ Items found while comparing six public forks. Each is left out on purpose for no
 - Fork privacy and terms are present in `src/privacy.html` and `src/terms.html`. Remaining branding gaps include the dinosaur empty-state artwork and upstream release notes relabeled as beBEAR. U29 assigns those fixes to Batch K.
 - EqyMMxpb/liftosaur, commit 0203a735f: Farmers Walk, smith-machine Standing Calf Raise and EZ-bar Upright Row. Not requested. None have images in the bucket.
 - EqyMMxpb/liftosaur, commit d58d490d5: the Chest Press muscle fix is already in upstream.
+
+## Bear-head phone mount for lifetime buyers (idea, 2026-10-23)
+
+- The gift: a phone holder shaped like the beBEAR head, with small suction cups on the back, like the Octobuddy holders. It sticks to a mirror or a wall, so a daily progress photo takes no setup.
+- Who gets it: every lifetime beBEAR+ buyer. It doubles as a mascot people film in gym and mirror videos.
+- App side to pair with it: a mirror-photo mode with a 3-second timer and a faint outline of yesterday's photo, so each photo lines up with the last one. Progress photos already exist (`src/utils/progressPhotoStore.ts`).
+- Not checked yet: the cost per unit and the smallest order for a custom silicone shape, shipping cost per country, and whether the lifetime price covers both. Get two supplier quotes before promising it on the paywall.

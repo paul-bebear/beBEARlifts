@@ -70,20 +70,39 @@ function Section(props: { title: string; testID: string; action?: ReactNode; chi
 }
 
 function FoldableSection(props: { journal: IJournalDay; section: IJournalSection; children: ReactNode }): JSX.Element {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const fold = JournalDay_sectionFold(props.journal, props.section, isExpanded);
-  return fold.isCollapsed ? (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ expanded: false }}
-      onPress={() => setIsExpanded(true)}
-      className="px-4 pt-6"
-      testID={`journal-${props.section}-summary`}
-    >
-      <Text className="text-base font-semibold">{fold.summary}</Text>
-    </Pressable>
-  ) : (
-    <>{props.children}</>
+  const [isOpenByUser, setIsOpenByUser] = useState<boolean>();
+  const fold = JournalDay_sectionFold(props.journal, props.section, isOpenByUser);
+  if (fold.isCollapsed) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: false }}
+        onPress={() => setIsOpenByUser(true)}
+        className="flex-row items-center px-4 pt-6"
+        testID={`journal-${props.section}-summary`}
+        data-testid={`journal-${props.section}-summary`}
+      >
+        <Text className="flex-1 text-base font-semibold">{fold.summary}</Text>
+        <Text className="text-sm text-text-link">Show</Text>
+      </Pressable>
+    );
+  }
+  return (
+    <>
+      {props.children}
+      {fold.canHide && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: true }}
+          onPress={() => setIsOpenByUser(false)}
+          className="items-end px-4 pt-2"
+          testID={`journal-${props.section}-hide`}
+          data-testid={`journal-${props.section}-hide`}
+        >
+          <Text className="text-sm text-text-link">Hide</Text>
+        </Pressable>
+      )}
+    </>
   );
 }
 
