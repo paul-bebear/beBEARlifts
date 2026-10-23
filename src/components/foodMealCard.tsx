@@ -10,7 +10,7 @@ interface IProps {
   entries: IFoodEntry[];
   isExpanded: boolean;
   onToggle: () => void;
-  onAdd: () => void;
+  onAdd?: () => void;
   onEntryPress: (entry: IFoodEntry) => void;
 }
 
@@ -67,15 +67,17 @@ export function FoodMealCard(props: IProps): JSX.Element {
         </Pressable>
         <Pill text={`${totals.calories} Cal`} color={calPillColor} />
         <Pill text={`${Math.round(totals.protein)} P`} color={proteinPillColor} />
-        <Pressable
-          className="pl-3"
-          hitSlop={10}
-          testID={`food-add-${props.meal}`}
-          data-testid={`food-add-${props.meal}`}
-          onPress={props.onAdd}
-        >
-          <IconPlusThin size={22} color={semantic.icon.blue} />
-        </Pressable>
+        {props.onAdd != null && (
+          <Pressable
+            className="pl-3"
+            hitSlop={10}
+            testID={`food-add-${props.meal}`}
+            data-testid={`food-add-${props.meal}`}
+            onPress={props.onAdd}
+          >
+            <IconPlusThin size={22} color={semantic.icon.blue} />
+          </Pressable>
+        )}
       </View>
       {props.isExpanded && props.entries.length > 0 && (
         <View className="pb-1">

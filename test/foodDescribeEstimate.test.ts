@@ -2,7 +2,6 @@ import "mocha";
 import { expect } from "chai";
 import {
   FoodDescribeEstimate_canSend,
-  FoodDescribeEstimate_entries,
   FoodDescribeEstimate_hasChoices,
   FoodDescribeEstimate_initial,
   FoodDescribeEstimate_reduce,
@@ -83,28 +82,5 @@ describe("FoodDescribeEstimate", () => {
       { type: "added" },
     ]);
     expect(state).to.deep.equal(FoodDescribeEstimate_initial());
-  });
-});
-
-describe("FoodDescribeEstimate_entries", () => {
-  const toast = { name: "Toast", grams: 30, nutrients: { calories: 80, protein: 3, carbs: 15, fat: 1 } };
-  const ids = ["a", "b"];
-
-  it("makes one manual entry per ticked choice under the given meal", () => {
-    const choices = [
-      { ...eggs, isSelected: true },
-      { ...toast, isSelected: false },
-      { ...toast, name: "Rye toast", isSelected: true },
-    ];
-    const entries = FoodDescribeEstimate_entries(
-      choices,
-      { day: "2026-10-22", meal: "breakfast" },
-      () => ids.shift() as string,
-      9
-    );
-    expect(entries.map((e) => [e.id, e.name, e.meal, e.source, e.grams, e.nutrients.calories])).to.deep.equal([
-      ["a", "Egg", "breakfast", "manual", 100, 143],
-      ["b", "Rye toast", "breakfast", "manual", 30, 80],
-    ]);
   });
 });

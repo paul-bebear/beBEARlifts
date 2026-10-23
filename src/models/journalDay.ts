@@ -23,7 +23,6 @@ export interface IJournalDayInput {
   music: IMusicLog;
   weights: IStatsWeightValue[];
   notes: INotesLog;
-  isOngoingProgress: boolean;
 }
 
 export interface IJournalWorkout {
@@ -33,8 +32,6 @@ export interface IJournalWorkout {
   prs: string[];
   chip: string;
 }
-
-export type IJournalPlan = { kind: "start"; label: string } | { kind: "rest" };
 
 export interface IJournalSong {
   id: string;
@@ -47,8 +44,10 @@ export interface IJournalDay {
   title: string;
   isToday: boolean;
   workouts: IJournalWorkout[];
-  plan?: IJournalPlan;
+  workoutEmptyLine?: string;
   mealCount: number;
+  canAddFood: boolean;
+  mealsEmptyLine?: string;
   totals: INutrients;
   songs: IJournalSong[];
   weight?: IWeight;
@@ -184,14 +183,15 @@ function weightOf(weights: IStatsWeightValue[], day: string): IWeight | undefine
   return latest?.value;
 }
 
-function planOf(input: IJournalDayInput, hasWorkout: boolean): IJournalPlan | undefined {
+export const JournalDay_noWorkoutToday = "No workout yet. Tap + to start one.";
+export const JournalDay_restDay = "Rest day. The bear rested too.";
+export const JournalDay_noFoodToday = "No food yet. Tap + to feed the bear.";
+
+function workoutEmptyLineOf(input: IJournalDayInput, hasWorkout: boolean): string | undefined {
   if (hasWorkout) {
     return undefined;
   }
-  if (input.day !== input.today) {
-    return { kind: "rest" };
-  }
-  return { kind: "start", label: input.isOngoingProgress ? "Resume workout" : "Start workout" };
+  return input.day === input.today ? JournalDay_noWorkoutToday : JournalDay_restDay;
 }
 
 function mealsChip(count: number): string | undefined {
@@ -211,8 +211,10 @@ export function JournalDay_build(input: IJournalDayInput): IJournalDay {
     title: FoodLog_dayLabel(day, today),
     isToday: day === today,
     workouts,
-    plan: planOf(input, workouts.length > 0),
+    workoutEmptyLine: workoutEmptyLineOf(input, workouts.length > 0),
     mealCount,
+    canAddFood: day < today,
+    mealsEmptyLine: mealCount === 0 && day === today ? JournalDay_noFoodToday : undefined,
     totals: FoodLog_dayTotals(input.food, day),
     songs: songsOf(records, input.music),
     weight: weightOf(input.weights, day),

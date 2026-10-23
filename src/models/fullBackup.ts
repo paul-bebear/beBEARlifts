@@ -90,7 +90,6 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     music,
     weights: storage.stats.weight.weight ?? [],
     notes: notes ?? Notes_empty(),
-    isOngoingProgress: false,
   });
   return {
     format: FullBackup_format,

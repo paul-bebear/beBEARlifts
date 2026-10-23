@@ -49,6 +49,7 @@ export type IScanEvent =
   | { type: "barcodeFound"; pick: IFoodPick }
   | { type: "barcodeMissed"; code: string; error?: string }
   | { type: "photoReviewed"; choices: IFoodPhotoChoice[]; nonce: number; photo?: string }
+  | { type: "describeReviewed"; choices: IFoodPhotoChoice[]; nonce: number }
   | { type: "quickEntered"; name: string; nutrients: INutrients }
   | { type: "gramsChanged"; key: string; grams: number }
   | { type: "itemRemoved"; key: string }
@@ -57,14 +58,17 @@ export type IScanEvent =
   | { type: "back" };
 
 export function FoodScanSteps_modes(hasAi: boolean): IScanMode[] {
-  return hasAi ? ["barcode", "ai"] : ["barcode", "describe"];
+  return hasAi ? ["barcode", "ai", "describe"] : ["barcode", "describe"];
 }
 
 export function FoodScanSteps_initial(entry: IScanEntryMode, hasAi: boolean): IScanStep {
   if (entry === "quick") {
     return { kind: "quick" };
   }
-  if (entry === "photo" || entry === "describe") {
+  if (entry === "describe") {
+    return { kind: "camera", mode: "describe" };
+  }
+  if (entry === "photo") {
     return { kind: "camera", mode: hasAi ? "ai" : "describe" };
   }
   return { kind: "camera", mode: "barcode" };
@@ -161,6 +165,8 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
       );
       return event.photo != null ? mapServing(serving, (s) => ({ ...s, photo: event.photo })) : serving;
     }
+    case "describeReviewed":
+      return servingOf("describe", FoodBasket_putAll([], FoodBasket_fromChoices(event.choices, "manual", event.nonce)));
     case "quickEntered":
       return servingOf("describe", FoodBasket_put([], FoodAddFlow_manualPick(event.name, event.nutrients), 0));
     case "gramsChanged":
