@@ -2,6 +2,7 @@ import UIKit
 import React
 import TikTokOpenSDKCore
 import AppsFlyerLib
+import GoogleSignIn
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
@@ -58,6 +59,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 
   private func handleOpen(url: URL, sourceApplication: String?) {
+    if GIDSignIn.sharedInstance.handle(url) {
+      return
+    }
     var options: [UIApplication.OpenURLOptionsKey: Any] = [:]
     if let sourceApplication {
       options[.sourceApplication] = sourceApplication

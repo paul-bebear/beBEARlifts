@@ -6,6 +6,8 @@
 	<string>$(APP_GROUP_IDENTIFIER)</string>
 	<key>ForkOfflineOnly</key>
 	<true/>
+	<key>BebearGoogleClientID</key>
+	<string>$(GOOGLE_IOS_CLIENT_ID)</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -30,6 +32,12 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
 		<dict>
 			<key>CFBundleURLName</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
