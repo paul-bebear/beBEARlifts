@@ -1,5 +1,5 @@
 import { JSX, useEffect, useReducer, useState } from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import {
   CloudBackupForm_codeHint,
@@ -14,6 +14,8 @@ import { CloudStore, SentCodeStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_loadPlan, CloudBackupCommand_run } from "../utils/cloudBackupCommand";
 import { AiCaps_plusLine } from "../models/aiCaps";
 import { CloudBackup_olderCopies } from "../models/cloudBackup";
+import { StoreBuild_showsProCodes } from "../models/storeBuild";
+import { StoreReceipt_name } from "../utils/storeReceipt";
 import { CloudRestoreChoice } from "./cloudRestoreBanner";
 import { IOAuthProvider } from "../models/oauthFlow";
 import { SupabaseOAuth_start } from "../utils/supabaseOAuth";
@@ -145,27 +147,29 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
               {AiCaps_plusLine()}
             </Text>
           ) : (
-            <View style={{ gap: 8 }}>
-              <Text className="text-sm">Enter a code</Text>
-              <TextInput
-                accessibilityLabel="beBEAR+ code"
-                testID="cloud-pro-code"
-                className="px-4 py-3 text-base border rounded-lg bg-background-default border-border-prominent text-text-primary"
-                value={form.proCode}
-                onChangeText={(value) => emit({ type: "proCode", value })}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                editable={!busy}
-              />
-              <Button
-                name="cloud-redeem-code"
-                kind="lightpurple"
-                disabled={busy}
-                onClick={() => emit({ type: "request", operation: "redeem" })}
-              >
-                Redeem
-              </Button>
-            </View>
+            StoreBuild_showsProCodes(Platform.OS, StoreReceipt_name(), __DEV__) && (
+              <View style={{ gap: 8 }}>
+                <Text className="text-sm">Enter a code</Text>
+                <TextInput
+                  accessibilityLabel="beBEAR+ code"
+                  testID="cloud-pro-code"
+                  className="px-4 py-3 text-base border rounded-lg bg-background-default border-border-prominent text-text-primary"
+                  value={form.proCode}
+                  onChangeText={(value) => emit({ type: "proCode", value })}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  editable={!busy}
+                />
+                <Button
+                  name="cloud-redeem-code"
+                  kind="lightpurple"
+                  disabled={busy}
+                  onClick={() => emit({ type: "request", operation: "redeem" })}
+                >
+                  Redeem
+                </Button>
+              </View>
+            )
           )}
           <Button
             name="cloud-sign-out"

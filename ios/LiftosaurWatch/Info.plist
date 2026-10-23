@@ -7,9 +7,9 @@
 	<key>ForkOfflineOnly</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>App will sync this data with Apple Health.</string>
+	<string>$(APP_DISPLAY_NAME) reads your heart rate and active energy from Apple Health during a workout to show them on the watch.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>App will read this data from Apple Health and add to measurements inside the app.</string>
+	<string>$(APP_DISPLAY_NAME) saves your completed workouts and their active energy to Apple Health.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIBackgroundModes</key>

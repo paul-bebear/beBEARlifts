@@ -3,6 +3,8 @@ import { WatchHost_isAvailable, WatchHost_send } from "./watchHost";
 import { AppAttribution_get } from "./appAttribution";
 import { EventManager_isAvailable, EventManager_log } from "./eventManager";
 import { AdminDebug_isDebugAccountId } from "../models/adminDebug";
+import { ForkServices_plan } from "./forkServices";
+import { OfflineOnly_isEnabled } from "./offlineOnly";
 
 declare let __COMMIT_HASH__: string;
 
@@ -82,6 +84,10 @@ export function lg(
 
   if (EventManager_isAvailable()) {
     EventManager_log(JSON.stringify(event));
+    return;
+  }
+
+  if (!ForkServices_plan(OfflineOnly_isEnabled()).telemetry) {
     return;
   }
 

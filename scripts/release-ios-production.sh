@@ -1,12 +1,13 @@
 #!/bin/bash
+# Archives, signs and uploads the iPhone app with the beBEAR team key in ~/.appstoreconnect/bebear.env.
+# xcodebuild -authenticationKeyPath rejects that key on Xcode 26.6, so signing is manual with the
+# App Store profiles that scripts/ios-signing.ts makes through the App Store Connect API.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PBXPROJ="ios/Liftosaur.xcodeproj/project.pbxproj"
-KEY_ID="F286YBUYZ7"
-KEY_ISSUER_ID="4c82c687-0990-4745-ac91-89ab459a6c5c"
-KEY="$ROOT/lambda/scripts/AuthKey_$KEY_ID.p8"
+ENV_FILE="$HOME/.appstoreconnect/bebear.env"
 branding_setting() {
   awk -F ' = ' -v key="$1" '$1 == key { print $2; exit }' "$ROOT/ios/AppBranding.xcconfig"
 }
@@ -62,12 +63,29 @@ if [[ -z "$TEAM_ID" || -z "$BUNDLE_ID" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$KEY" ]]; then
-  echo "ERROR: App Store Connect API key not found at:" >&2
-  echo "  $KEY" >&2
-  echo "It lives in the private lambda/scripts submodule." >&2
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "ERROR: $ENV_FILE is missing. It sets ASC_KEY_ID and ASC_ISSUER_ID for the team's App Store Connect key." >&2
   exit 1
 fi
+set -a
+. "$ENV_FILE"
+set +a
+KEY="${ASC_KEY_PATH:-$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8}"
+if [[ ! -f "$KEY" ]]; then
+  echo "ERROR: App Store Connect API key not found at $KEY" >&2
+  exit 1
+fi
+
+# Without watchman, Metro lists every file under .claude/worktrees and the bundle step dies with
+# "RangeError: Invalid string length".
+if [[ $SKIP_BUILD -eq 0 ]] && ! command -v watchman >/dev/null; then
+  echo "ERROR: install watchman first: brew install watchman" >&2
+  exit 1
+fi
+
+signing() {
+  (cd "$ROOT" && TS_NODE_TRANSPILE_ONLY=1 npx ts-node scripts/ios-signing.ts "$@")
+}
 
 build_setting_for() {
   awk -v setting="$1 = " -v bid="$2" '
@@ -88,23 +106,33 @@ if [[ -z "$VERSION" || -z "$BUILD_NUMBER" ]]; then
   echo "ERROR: could not read MARKETING_VERSION / CURRENT_PROJECT_VERSION for $BUNDLE_ID from $PBXPROJ" >&2
   exit 1
 fi
+echo "iOS $BUNDLE_ID version $VERSION ($BUILD_NUMBER), team $TEAM_ID, key $ASC_KEY_ID"
 
-git -C "$ROOT" fetch -q origin master || echo "WARN: could not fetch origin/master, comparing against the local ref" >&2
-if git -C "$ROOT" rev-parse --verify -q origin/master >/dev/null; then
-  MASTER_REF="origin/master"
-else
-  MASTER_REF="master"
-fi
-MASTER_VERSION=$(git -C "$ROOT" show "$MASTER_REF:$PBXPROJ" | build_setting_for MARKETING_VERSION "$BUNDLE_ID")
+APP_ID=""
+LAST_BUILD=0
+while IFS='=' read -r name value; do
+  case "$name" in
+    APP_ID) APP_ID="$value" ;;
+    LAST_BUILD) LAST_BUILD="$value" ;;
+  esac
+done < <(signing app "$VERSION")
 
-if [[ "$VERSION" -le "$MASTER_VERSION" ]]; then
-  echo "ERROR: MARKETING_VERSION $VERSION is not higher than $MASTER_REF ($MASTER_VERSION)." >&2
-  echo "Bump MARKETING_VERSION in $PBXPROJ first (all targets)." >&2
+if [[ -z "$APP_ID" ]]; then
+  if [[ $DRY_RUN -eq 0 ]]; then
+    echo "WARN: App Store Connect has no app record for $BUNDLE_ID." >&2
+    echo "      The script builds the signed .ipa and stops before the upload, which needs the record." >&2
+    echo "      Create it in App Store Connect: Apps, +, New App, bundle ID $BUNDLE_ID." >&2
+  fi
+  if [[ $SKIP_BUILD -eq 1 ]]; then
+    exit 1
+  fi
+elif [[ $DRY_RUN -eq 0 && $SKIP_BUILD -eq 0 && "$BUILD_NUMBER" -le "$LAST_BUILD" ]]; then
+  echo "ERROR: build $LAST_BUILD of version $VERSION is already uploaded." >&2
+  echo "Raise CURRENT_PROJECT_VERSION above $LAST_BUILD in $PBXPROJ (all targets)." >&2
   exit 1
 fi
-echo "iOS version $VERSION ($BUILD_NUMBER), App Store version $VERSION (> $MASTER_REF: $MASTER_VERSION)"
 
-if [[ $TESTFLIGHT -eq 0 ]]; then
+if [[ $TESTFLIGHT -eq 0 && $DRY_RUN -eq 0 ]]; then
 if [[ -z "${EDITOR:-}" ]]; then
   echo "ERROR: \$EDITOR is not set, cannot ask for release notes." >&2
   exit 1
@@ -153,13 +181,6 @@ echo "----------------------------------------"
 echo
 fi
 
-AUTH_FLAGS=(
-  -allowProvisioningUpdates
-  -authenticationKeyPath "$KEY"
-  -authenticationKeyID "$KEY_ID"
-  -authenticationKeyIssuerID "$KEY_ISSUER_ID"
-)
-
 run_xcodebuild() {
   local log="$1"
   shift
@@ -172,64 +193,64 @@ run_xcodebuild() {
 
 if [[ $SKIP_BUILD -eq 0 ]]; then
   cd "$ROOT"
-  echo "Building the production watch bundle..."
-  NODE_ENV=production npm run build:watch-bundle > "$ROOT/ios/build/watch-bundle.log" 2>&1 || {
-    tail -30 "$ROOT/ios/build/watch-bundle.log" >&2
-    exit 1
-  }
-
   rm -rf "$ARCHIVE_DIR"
   mkdir -p "$ARCHIVE_DIR"
 
-  echo "Archiving Liftosaur $VERSION ($BUILD_NUMBER), log: ios/build/archive/archive.log ..."
+  echo "Making App Store provisioning profiles..."
+  signing profiles appstore
+  PROFILE_SETTINGS=()
+  while IFS= read -r line; do
+    PROFILE_SETTINGS+=("$line")
+  done < <(signing build-settings appstore)
+
+  echo "Building the production watch bundle and programs..."
+  # build:watch-bundle runs build:markdown, which writes src/generated/whatsnew that build:programs imports.
+  NODE_ENV=production npm run build:watch-bundle > "$ARCHIVE_DIR/watch-bundle.log" 2>&1 || {
+    tail -30 "$ARCHIVE_DIR/watch-bundle.log" >&2
+    exit 1
+  }
+  npm run build:programs > "$ARCHIVE_DIR/programs.log" 2>&1 || {
+    tail -30 "$ARCHIVE_DIR/programs.log" >&2
+    exit 1
+  }
+
+  echo "Archiving $VERSION ($BUILD_NUMBER), log: ios/build/archive/archive.log ..."
+  # A plain PROVISIONING_PROFILE_SPECIFIER on the command line reaches every pod target, and they refuse it.
+  # Each app target looks up its own BEBEAR_PROFILE_<target>; pod targets resolve to empty.
   run_xcodebuild "$ARCHIVE_DIR/archive.log" \
     -workspace ios/Liftosaur.xcworkspace \
     -scheme Liftosaur \
     -configuration Release \
     -destination "generic/platform=iOS" \
     -archivePath "$ARCHIVE_PATH" \
-    "${AUTH_FLAGS[@]}" \
+    CODE_SIGN_STYLE=Manual \
+    CODE_SIGN_IDENTITY="Apple Distribution" \
+    'PROVISIONING_PROFILE_SPECIFIER=$(BEBEAR_PROFILE_$(TARGET_NAME))' \
+    "${PROFILE_SETTINGS[@]}" \
     archive
 
-  if [[ $DRY_RUN -eq 1 ]]; then
-    DESTINATION="export"
-  else
-    DESTINATION="upload"
-  fi
-  cat > "$EXPORT_OPTIONS" <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>method</key>
-  <string>app-store-connect</string>
-  <key>destination</key>
-  <string>$DESTINATION</string>
-  <key>signingStyle</key>
-  <string>automatic</string>
-  <key>teamID</key>
-  <string>$TEAM_ID</string>
-  <key>uploadSymbols</key>
-  <true/>
-  <key>manageAppVersionAndBuildNumber</key>
-  <false/>
-</dict>
-</plist>
-EOF
-
-  echo "Exporting with destination=$DESTINATION, log: ios/build/archive/export.log ..."
+  signing export-options export > "$EXPORT_OPTIONS"
+  echo "Exporting the signed .ipa, log: ios/build/archive/export.log ..."
   run_xcodebuild "$ARCHIVE_DIR/export.log" \
     -exportArchive \
     -archivePath "$ARCHIVE_PATH" \
     -exportOptionsPlist "$EXPORT_OPTIONS" \
-    -exportPath "$EXPORT_PATH" \
-    "${AUTH_FLAGS[@]}"
+    -exportPath "$EXPORT_PATH"
+  IPA=$(ls "$EXPORT_PATH"/*.ipa)
+  echo "Signed .ipa: $IPA"
 
   if [[ $DRY_RUN -eq 1 ]]; then
-    echo "Dry run: signed .ipa exported, nothing uploaded, App Store Connect untouched."
-    ls -la "$EXPORT_PATH"/*.ipa
+    echo "Dry run: nothing uploaded, App Store Connect untouched."
     exit 0
   fi
+  if [[ -z "$APP_ID" ]]; then
+    echo "ERROR: stopped before the upload. App Store Connect has no app record for $BUNDLE_ID." >&2
+    echo "Create it (Apps, +, New App), then run this script again." >&2
+    exit 1
+  fi
+
+  echo "Uploading to App Store Connect..."
+  xcrun altool --upload-package "$IPA" --api-key "$ASC_KEY_ID" --api-issuer "$ASC_ISSUER_ID" --p8-file-path "$KEY"
   echo "Uploaded $VERSION ($BUILD_NUMBER) to App Store Connect."
   if [[ $TESTFLIGHT -eq 1 ]]; then
     echo "TestFlight only: App Store Connect processes the build in a few minutes, then it shows under TestFlight. Nothing submitted for review."

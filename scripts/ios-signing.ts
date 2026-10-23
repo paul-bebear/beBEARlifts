@@ -151,6 +151,52 @@ function buildSettings(kind: IProfileKind): void {
   }
 }
 
+function exportOptions(destination: string): void {
+  const profiles = targets
+    .map((target) => `${bundlePrefix()}${target.suffix}`)
+    .map((bundleId) => `    <key>${bundleId}</key>\n    <string>${profileName(bundleId, "appstore")}</string>`)
+    .join("\n");
+  console.log(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store-connect</string>
+  <key>destination</key>
+  <string>${destination}</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>signingCertificate</key>
+  <string>Apple Distribution</string>
+  <key>teamID</key>
+  <string>${brandingSetting("APP_DEVELOPMENT_TEAM")}</string>
+  <key>provisioningProfiles</key>
+  <dict>
+${profiles}
+  </dict>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>manageAppVersionAndBuildNumber</key>
+  <false/>
+</dict>
+</plist>`);
+}
+
+async function appRecord(version: string): Promise<void> {
+  const [app] = await ids(`/v1/apps?filter[bundleId]=${encodeURIComponent(bundlePrefix())}`);
+  if (!app) {
+    console.log("APP_ID=");
+    return;
+  }
+  const builds = await api(
+    "GET",
+    `/v1/builds?filter[app]=${app.id}&filter[preReleaseVersion.version]=${encodeURIComponent(version)}&limit=200`
+  );
+  const numbers: number[] = builds.data.map((b: { attributes: { version: string } }) => Number(b.attributes.version));
+  console.log(`APP_ID=${app.id}`);
+  console.log(`LAST_BUILD=${numbers.length > 0 ? Math.max(...numbers) : 0}`);
+}
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
   if (command === "device" && args.length === 2) {
@@ -159,9 +205,14 @@ async function main(): Promise<void> {
     await makeProfiles(args[0]);
   } else if (command === "build-settings" && (args[0] === "dev" || args[0] === "appstore")) {
     buildSettings(args[0]);
+  } else if (command === "export-options" && args.length === 1) {
+    exportOptions(args[0]);
+  } else if (command === "app" && args.length === 1) {
+    await appRecord(args[0]);
   } else {
     console.error(
-      "usage: ios-signing.ts device <udid> <name> | profiles <dev|appstore> | build-settings <dev|appstore>"
+      "usage: ios-signing.ts device <udid> <name> | profiles <dev|appstore> | build-settings <dev|appstore>" +
+        " | export-options <export|upload> | app <marketing-version>"
     );
     process.exit(1);
   }

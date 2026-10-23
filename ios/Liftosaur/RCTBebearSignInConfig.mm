@@ -25,6 +25,7 @@ RCT_EXPORT_MODULE(BebearSignInConfig)
   return facebook::react::typedConstants<JS::NativeBebearSignInConfig::Constants>({
     .googleIosClientId = clientId ?: @"",
     .urlSchemes = urlSchemes,
+    .receiptName = bundle.appStoreReceiptURL.lastPathComponent ?: @"",
   });
 }
 
