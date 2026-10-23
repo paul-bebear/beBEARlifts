@@ -1,7 +1,8 @@
-import { JSX } from "react";
+import { JSX, useState } from "react";
 import { Image, View } from "react-native";
 import { Text } from "./primitives/text";
-import { IBearBadgeInfo } from "../models/bearBadges";
+import { BearBadges_image, IBearBadgeInfo } from "../models/bearBadges";
+import { BearImage_uri } from "../utils/bearImage";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 
 interface IProps {
@@ -9,6 +10,7 @@ interface IProps {
   isEarned: boolean;
   size: number;
   testID?: string;
+  onImageLoad?: (uri: string) => void;
 }
 
 const lockedFill = "#D9D6CF";
@@ -18,8 +20,26 @@ const honeyInner = "#F7C46A";
 
 export function BadgeCoin(props: IProps): JSX.Element {
   const { info, isEarned, size } = props;
+  const [failedImage, setFailedImage] = useState<string>();
+  const image = BearBadges_image(info, isEarned);
   const inner = size * 0.78;
   const art = inner * 0.62;
+  if (image != null && image !== failedImage) {
+    return (
+      <Image
+        testID={props.testID}
+        data-testid={props.testID}
+        source={{ uri: BearImage_uri(image) }}
+        style={{ width: size, height: size, opacity: isEarned ? 1 : 0.55 }}
+        resizeMode="contain"
+        onLoad={() => props.onImageLoad?.(image)}
+        onError={() => {
+          setFailedImage(image);
+          props.onImageLoad?.(image);
+        }}
+      />
+    );
+  }
   return (
     <View
       testID={props.testID}
@@ -44,15 +64,7 @@ export function BadgeCoin(props: IProps): JSX.Element {
           opacity: isEarned ? 1 : 0.55,
         }}
       >
-        {info.image != null ? (
-          <Image
-            source={{ uri: info.image }}
-            style={{ width: art, height: art, opacity: isEarned ? 1 : 0.35 }}
-            resizeMode="contain"
-          />
-        ) : (
-          <Text style={{ fontSize: art * 0.8, lineHeight: art, opacity: isEarned ? 1 : 0.35 }}>{info.emoji}</Text>
-        )}
+        <Text style={{ fontSize: art * 0.8, lineHeight: art, opacity: isEarned ? 1 : 0.35 }}>{info.emoji}</Text>
       </View>
     </View>
   );
