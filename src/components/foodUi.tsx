@@ -62,10 +62,19 @@ export function FoodNutrientsRow(props: { nutrients: INutrients }): JSX.Element 
   );
 }
 
-export function FoodChip(props: { title: string; isActive?: boolean; onPress: () => void }): JSX.Element {
+export function FoodChip(props: {
+  title: string;
+  isActive?: boolean;
+  onPress: () => void;
+  testID?: string;
+}): JSX.Element {
   return (
     <Pressable
       onPress={props.onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!props.isActive }}
+      testID={props.testID}
+      data-testid={props.testID}
       className={`px-3 py-1.5 rounded-full border ${props.isActive ? "border-button-primarybackground" : "border-border-neutral"}`}
     >
       <Text className={`text-sm ${props.isActive ? "text-text-link" : "text-text-secondary"}`}>{props.title}</Text>
