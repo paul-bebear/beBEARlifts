@@ -1,10 +1,12 @@
-import { JSX } from "react";
+import { JSX, useState } from "react";
 import { View } from "react-native";
 import { lb } from "lens-shmens";
 import { Text } from "./primitives/text";
 import { MenuItemWrapper } from "./menuItem";
 import { MenuItemEditable } from "./menuItemEditable";
 import { CloudBackupCard } from "./cloudBackupCard";
+import { JournalExportSheet } from "./journalExportSheet";
+import { useJournalSources } from "../utils/useJournalSources";
 import { Thunk_exportEverything } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
 import { EffortRating_isEnabled } from "../models/effortRating";
@@ -42,6 +44,26 @@ export function SettingsBackupRows(props: { dispatch: IDispatch }): JSX.Element 
           </Text>
         </View>
       </MenuItemWrapper>
+      <SettingsJournalExport />
+    </>
+  );
+}
+
+function SettingsJournalExportSheet(props: { onClose: () => void }): JSX.Element {
+  return <JournalExportSheet sources={useJournalSources()} onClose={props.onClose} />;
+}
+
+function SettingsJournalExport(): JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <MenuItemWrapper name="Export journal" onClick={() => setIsOpen(true)}>
+        <View className="py-3">
+          <Text className="text-base text-text-primary">Export journal</Text>
+          <Text className="text-xs text-text-secondary">A day, a week or every day, as Markdown or CSV.</Text>
+        </View>
+      </MenuItemWrapper>
+      {isOpen && <SettingsJournalExportSheet onClose={() => setIsOpen(false)} />}
     </>
   );
 }
