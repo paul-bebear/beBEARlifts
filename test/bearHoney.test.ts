@@ -7,6 +7,7 @@ import {
   BearHoney_forWorkout,
   BearHoney_sharedAt,
   IHoneySources,
+  IHoneyDay,
 } from "../src/models/bearHoney";
 import { IBearCountedWorkout } from "../src/models/bearGrowth";
 import { Feed_empty } from "../src/models/feed";
@@ -84,11 +85,28 @@ function sources(
 
 const now = at(22, 20);
 
-function dayOf(s: IHoneySources, date: number) {
+function dayOf(s: IHoneySources, date: number): IHoneyDay | undefined {
   return BearHoney_day(BearHoney_earned(s, now), dayKey(date));
 }
 
 describe("BearHoney", () => {
+  it("earns no honey for a covered day alone", () => {
+    expect(BearHoney_earned(sources({ coveredDays: [dayKey(20)] }), now)).to.deep.equal({ total: 0, days: [] });
+  });
+
+  it("pays the seven-day bonus on a covered seventh day", () => {
+    const s = sources({ workouts: [1, 2, 3, 4, 5, 6].map((d) => counted(d, d)), coveredDays: [dayKey(7)] });
+    expect(dayOf(s, 7)?.items).to.deep.equal([{ reason: "streak", label: "7-day streak", amount: 5 }]);
+    expect(BearHoney_earned(s, now).total).to.equal(35);
+  });
+
+  it("counts a covered day inside a seven-day run and preserves later activity rewards", () => {
+    const s = sources({ workouts: [1, 2, 3, 5, 6, 7].map((d) => counted(d, d)), coveredDays: [dayKey(4)] });
+    expect(dayOf(s, 4)).to.equal(undefined);
+    expect(dayOf(s, 7)?.total).to.equal(10);
+    expect(dayOf(sources({ ...s, workouts: [...s.workouts, counted(4, 4)] }), 4)?.total).to.equal(5);
+  });
+
   it("earns nothing without history", () => {
     expect(BearHoney_earned(sources(), now)).to.deep.equal({ total: 0, days: [] });
   });
@@ -302,7 +320,13 @@ describe("BearStoreData spent", () => {
 
   it("reads an old store with no spent field as 0", () => {
     const parsed = BearStoreData_parse({ line: "male", celebratedLevel: 3, seenBadges: ["a"] });
-    expect(parsed).to.deep.equal({ line: "male", celebratedLevel: 3, seenBadges: ["a"], spent: 0 });
+    expect(parsed).to.deep.equal({
+      ...BearStoreData_empty(),
+      line: "male",
+      celebratedLevel: 3,
+      seenBadges: ["a"],
+      spent: 0,
+    });
   });
 
   it("keeps a valid spent and resets a bad one", () => {

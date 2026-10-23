@@ -26,8 +26,14 @@ export function useBearHoney(): IBearHoneyView {
   const feed = FeedStore.use();
   const { state, store } = useBear();
   const sources = useMemo<IHoneySources>(
-    () => ({ workouts: state.workouts, stats, foodLog, sharedAt: BearHoney_sharedAt(feed) }),
-    [state.workouts, stats, foodLog, feed]
+    () => ({
+      workouts: state.workouts,
+      stats,
+      foodLog,
+      sharedAt: BearHoney_sharedAt(feed),
+      coveredDays: store.coveredDays,
+    }),
+    [state.workouts, stats, foodLog, feed, store.coveredDays]
   );
   return useMemo(() => {
     const now = Date.now();

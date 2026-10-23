@@ -15,6 +15,10 @@ import { Text } from "./primitives/text";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { BearAvatar } from "./bearAvatar";
 import { useBear } from "../utils/useBear";
+import { BearStore } from "../utils/bearStore";
+import { HibernationPass_dismiss } from "../models/hibernationPass";
+import { HibernationWakeSheet } from "./hibernationWakeSheet";
+import { useIsFocused } from "@react-navigation/native";
 import { useFoodLog } from "../utils/foodLogStore";
 import { WeekDots_build } from "../models/weekDots";
 import { TodayPill_dayName, TodayPill_text } from "../models/todayPill";
@@ -64,6 +68,8 @@ function HomeHeader(props: {
 }): JSX.Element {
   const foodLog = useFoodLog();
   const bear = useBear();
+  const isFocused = useIsFocused();
+  const pendingWake = bear.store.pendingWake;
   const schedule = WeekScheduleStore.use();
   const now = Date.now();
   const dayName = TodayPill_dayName(WeekSchedule_todayFor(schedule, props.program, now), props.nextDayName);
@@ -76,6 +82,16 @@ function HomeHeader(props: {
   const pill = TodayPill_text({ dayName, history: props.history, now });
   return (
     <View className="px-4 pt-2 pb-1" testID="home-header" data-testid="home-header">
+      {isFocused && pendingWake != null && (
+        <HibernationWakeSheet
+          state={bear.state}
+          pendingWake={pendingWake}
+          passesLeft={bear.store.passes}
+          onClose={() =>
+            BearStore.update((saved) => HibernationPass_dismiss(saved, pendingWake)).catch(() => undefined)
+          }
+        />
+      )}
       <View className="flex-row items-center">
         <Pressable
           testID="home-bear-head"

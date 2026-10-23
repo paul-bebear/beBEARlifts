@@ -29,6 +29,7 @@ export interface IChecklistDay {
 export interface IStreakSources {
   foodLog: IFoodLog;
   workouts: readonly IBearCountedWorkout[];
+  coveredDays?: readonly string[];
 }
 
 export interface IChecklistDayInput {
@@ -150,7 +151,7 @@ export function DailyChecklist_build(input: IChecklistDayInput): IChecklistDay {
 }
 
 export function DailyChecklist_doneDays(sources: IStreakSources): Set<string> {
-  const days = new Set<string>();
+  const days = new Set<string>(sources.coveredDays);
   for (const { record } of sources.workouts) {
     days.add(dayOf(record.endTime ?? record.startTime));
   }

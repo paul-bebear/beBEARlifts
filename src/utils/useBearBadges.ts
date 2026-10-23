@@ -22,6 +22,7 @@ export interface IBearBadgesView {
   badges: IBearBadge[];
   grid: IBearBadgeGrid;
   doneDays: Set<string>;
+  coveredDays: Set<string>;
   streak: number;
   today: string;
   countedKg: number;
@@ -32,20 +33,21 @@ export function useBearBadges(): IBearBadgesView {
   const tracked = useTrackedState();
   const history = untrack(tracked.storage.history);
   const foodLog = useFoodLog();
-  const { state } = useBear();
+  const { state, store } = useBear();
   const today = FoodLog_dayKey(new Date());
   const prs = useMemo(() => History_getPersonalRecords(history), [history]);
   const doneDays = useMemo(
-    () => DailyChecklist_doneDays({ foodLog, workouts: state.workouts }),
-    [foodLog, state.workouts]
+    () => DailyChecklist_doneDays({ foodLog, workouts: state.workouts, coveredDays: store.coveredDays }),
+    [foodLog, state.workouts, store.coveredDays]
   );
+  const coveredDays = useMemo(() => new Set(store.coveredDays), [store.coveredDays]);
   const badges = useMemo(
     () => BearBadges_compute({ history, prs, doneDays, foodLog, workouts: state.workouts, tierSet: state.tierSet }),
     [history, prs, doneDays, foodLog, state.workouts, state.tierSet]
   );
   const grid = useMemo(() => BearBadges_grid(badges), [badges]);
   const streak = useMemo(() => DailyChecklist_streak(doneDays, today), [doneDays, today]);
-  return { badges, grid, doneDays, streak, today, countedKg: state.countedKg, tierSet: state.tierSet };
+  return { badges, grid, doneDays, coveredDays, streak, today, countedKg: state.countedKg, tierSet: state.tierSet };
 }
 
 export interface IBadgeCelebration {
