@@ -1,6 +1,11 @@
 import "mocha";
 import { expect } from "chai";
-import { IProgressHubInput, ProgressHub_build, ProgressHub_plannedPerWeek } from "../src/models/progressHub";
+import {
+  IProgressHubInput,
+  ProgressHub_build,
+  ProgressHub_goal,
+  ProgressHub_plannedPerWeek,
+} from "../src/models/progressHub";
 import { Settings_build } from "../src/models/settings";
 import { FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
 import { ProgramGoal_empty } from "../src/models/programGoal";
@@ -46,6 +51,10 @@ describe("ProgressHub", () => {
   it("averages the program's days per week, with 3 as the fallback", () => {
     expect(ProgressHub_plannedPerWeek(undefined)).to.equal(3);
     expect(ProgressHub_plannedPerWeek([{ days: [1, 2, 3, 4] }, { days: [1, 2, 3] }, { days: [] }])).to.equal(4);
+  });
+
+  it("describes no goal before one is set, for My bear's goal card", () => {
+    expect(ProgressHub_goal(ProgramGoal_empty(), settings, now)).to.equal(undefined);
   });
 
   it("describes the current goal", () => {

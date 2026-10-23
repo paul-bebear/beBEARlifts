@@ -1,7 +1,6 @@
 import { JSX, useEffect } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRoute } from "@react-navigation/native";
 import { useTrackedState, useTrackedDispatch, untrack } from "../TrackedStateContext";
 import { buildNavCommon } from "../utils";
 import { ProgramHistoryView } from "../../components/programHistory";
@@ -26,7 +25,6 @@ export function NavScreenMain(): JSX.Element {
     }
   }, []);
   const navCommon = untrack(buildNavCommon(state));
-  const route = useRoute<{ key: string; name: "main"; params?: { historyRecordId?: number } }>();
   const ongoingProgress = untrack(state.storage.progress?.[0]);
   const currentProgram = untrack(
     state.storage.currentProgramId != null ? Program_getProgram(state, state.storage.currentProgramId) : undefined
@@ -70,7 +68,6 @@ export function NavScreenMain(): JSX.Element {
         history={untrack(state.storage.history)}
         subscription={untrack(state.storage.subscription)}
         dispatch={dispatch}
-        initialHistoryRecordId={route.params?.historyRecordId}
       />
     </View>
   );

@@ -3,12 +3,15 @@ import { expect } from "chai";
 import { ReportsHub_rows } from "../src/models/reportsHub";
 
 describe("ReportsHub", () => {
-  it("holds the four report rows in the offline build with run sensors", () => {
+  it("holds every stats row in the offline build with run sensors", () => {
     expect(ReportsHub_rows({ isOffline: true, hasRunSensors: true }).map((r) => r.screen)).to.deep.equal([
       "runs",
       "graphsList",
       "reports",
       "exercises",
+      "measurements",
+      "bodyScans",
+      "music",
     ]);
   });
 
@@ -17,10 +20,15 @@ describe("ReportsHub", () => {
       "graphs",
       "reports",
       "exercise-stats",
+      "measurements",
+      "body-scans",
+      "music",
     ]);
     expect(ReportsHub_rows({ isOffline: false, hasRunSensors: true }).map((r) => r.id)).to.deep.equal([
       "graphs",
       "exercise-stats",
+      "measurements",
+      "body-scans",
     ]);
   });
 });

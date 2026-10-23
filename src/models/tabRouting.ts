@@ -41,5 +41,8 @@ export function TabRouting_resetRoutes(
   if (offline && tab === "graphs" && TabRouting_isProgramScreen(screen)) {
     return [{ name: "progressDashboard" }, { name: screen, params }];
   }
+  if (tab === "food" && screen === "history") {
+    return [{ name: "food" }, { name: screen, params }];
+  }
   return [{ name: screen, params }];
 }

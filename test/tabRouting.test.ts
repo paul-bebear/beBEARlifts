@@ -88,4 +88,18 @@ describe("TabRouting", () => {
       { name: "editProgram", params: { programId: "p1" } },
     ]);
   });
+
+  it("stacks History on Journal so it has a back arrow, online and offline", () => {
+    for (const offline of [true, false]) {
+      expect(TabRouting_resetRoutes("food", "history", undefined, offline)).to.deep.equal([
+        { name: "food" },
+        { name: "history", params: undefined },
+      ]);
+    }
+  });
+
+  it("opens a workout record on the Journal tab when Journal or History opens it", () => {
+    expect(TabRouting_shouldReset("progress", undefined, false, true)).to.equal(false);
+    expect(TabRouting_tabForScreen("progress", "food", true)).to.equal("food");
+  });
 });

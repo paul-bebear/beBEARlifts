@@ -3,9 +3,9 @@ import { expect } from "chai";
 import { QuickActions_inProgressLine, QuickActions_list } from "../src/models/quickActions";
 
 describe("QuickActions", () => {
-  it("lists Food, Measurement, Friend and Note in that order", () => {
+  it("lists Food, Weight, Friend and Note in that order", () => {
     const list = QuickActions_list({ isOngoingProgress: false, canRun: false });
-    expect(list.squares.map((s) => s.label)).to.eql(["Food", "Measurement", "Friend", "Note"]);
+    expect(list.squares.map((s) => s.label)).to.eql(["Food", "Weight", "Friend", "Note"]);
   });
 
   it("marks no square as coming soon now that the note editor exists", () => {

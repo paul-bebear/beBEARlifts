@@ -1,16 +1,16 @@
-import { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { JSX, useMemo, useState } from "react";
 import { useTimedMemo } from "../utils/useTimedMemo";
-import { usePerfScrollMarkers } from "../utils/usePerfScrollMarkers";
-import { Pressable, View } from "react-native";
-import { LegendList, LegendListRef } from "@legendapp/list";
+import { Pressable, ScrollView, View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { IProgram, IHistoryRecord, ISettings, ISubscription } from "../types";
-import { INavCommon, IState, updateState } from "../models/state";
+import { INavCommon } from "../models/state";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTabBarContentPadding } from "../navigation/useTabBarContentPadding";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
 import { Thunk_pushScreen } from "../ducks/thunks";
-import { lb } from "lens-shmens";
+import { HomeToday_card, HomeToday_historyLabel } from "../models/homeToday";
+import { IconChevronRight } from "./icons/iconFoodUi";
+import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { Text } from "./primitives/text";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { BearAvatar } from "./bearAvatar";
@@ -24,17 +24,12 @@ import { useFollowWeekSchedule } from "../utils/useFollowWeekSchedule";
 import { HistoryRecordsNullState } from "./historyRecordsNullState";
 import { Progress_isCurrent } from "../models/progress";
 import { Program_nextHistoryRecord } from "../models/program";
-import { useTrackedState } from "../navigation/TrackedStateContext";
 import { HistoryRecordView } from "./historyRecord";
 import { HomeChecklist } from "./homeChecklist";
+import { SeasonNudgeCard } from "./seasonNudgeCard";
 import { navigateToModal } from "../navigation/navigationService";
 import { IEvaluatedProgram, Program_evaluate, Program_getProgramDay } from "../models/program";
-import {
-  HistoryCollapse_expand,
-  HistoryCollapse_isExpanded,
-  HistoryCollapse_toggle,
-  IExpandedHistoryIds,
-} from "../models/historyCollapse";
+import { HistoryCollapse_isExpanded, HistoryCollapse_toggle, IExpandedHistoryIds } from "../models/historyCollapse";
 
 interface IProps {
   program: IProgram;
@@ -44,7 +39,6 @@ interface IProps {
   subscription: ISubscription;
   navCommon: INavCommon;
   dispatch: IDispatch;
-  initialHistoryRecordId?: number;
 }
 
 export function getWeekHistory(
@@ -125,22 +119,18 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
   );
   const { sortedHistoryDesc, prs } = aggregates;
 
-  const sortedHistory = useTimedMemo(
-    "programHistory.sortedHistory",
-    () => {
-      if (!props.progress && (!props.program || sortedHistoryDesc.length === 0)) {
-        return sortedHistoryDesc;
-      }
-      const arr = sortedHistoryDesc.slice();
-      if (props.progress) {
-        arr.unshift(props.progress);
-      } else if (props.program) {
-        arr.unshift(Program_nextHistoryRecord(props.program, props.settings, props.navCommon.stats));
-      }
-      return arr;
-    },
-    [sortedHistoryDesc, props.progress, props.program, props.settings, props.navCommon.stats]
+  const card = HomeToday_card({ hasProgress: props.progress != null, historyCount: sortedHistoryDesc.length });
+  const todayRecord = useTimedMemo(
+    "programHistory.todayRecord",
+    () =>
+      card === "ongoing"
+        ? props.progress
+        : card === "next"
+          ? Program_nextHistoryRecord(props.program, props.settings, props.navCommon.stats)
+          : undefined,
+    [card, props.progress, props.program, props.settings, props.navCommon.stats]
   );
+  const historyLabel = HomeToday_historyLabel(sortedHistoryDesc.length);
 
   const evaluatedProgram = useTimedMemo(
     "programHistory.evaluatedProgram",
@@ -154,66 +144,12 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
   const isOngoing = !!(props.progress && Progress_isCurrent(props.progress));
   useFollowWeekSchedule(evaluatedProgram, props.history, props.progress != null, dispatch);
 
-  const flatListRef = useRef<LegendListRef>(null);
   const tabBarPadding = useTabBarContentPadding();
-
-  const initialHistoryRecordId = props.initialHistoryRecordId;
-
-  const [initialScrollIndex, setInitialScrollIndex] = useState(() => {
-    if (initialHistoryRecordId == null) {
-      return 0;
-    }
-    const idx = sortedHistory.findIndex((record) => record.id === initialHistoryRecordId);
-    return idx >= 0 ? idx : 0;
-  });
-  const [listRemountKey, setListRemountKey] = useState(0);
-  const [expandedIds, setExpandedIds] = useState<IExpandedHistoryIds>(() =>
-    HistoryCollapse_expand({}, initialHistoryRecordId)
-  );
-  const onToggleExpanded = useCallback((recordId: number) => {
-    setExpandedIds((ids) => HistoryCollapse_toggle(ids, recordId));
-  }, []);
-
-  const trackedState = useTrackedState();
-  const scrollToRecordId = trackedState.scrollToHistoryRecordId;
-  useEffect(() => {
-    if (scrollToRecordId != null) {
-      updateState(props.dispatch, [lb<IState>().p("scrollToHistoryRecordId").record(undefined)], "Clear scroll target");
-      const index = sortedHistory.findIndex((record) => record.id === scrollToRecordId);
-      if (index >= 0) {
-        setExpandedIds((ids) => HistoryCollapse_expand(ids, scrollToRecordId));
-        setInitialScrollIndex(index);
-        setListRemountKey((k) => k + 1);
-      }
-    }
-  }, [scrollToRecordId]);
+  const [expandedIds, setExpandedIds] = useState<IExpandedHistoryIds>({});
 
   useNavOptions({ navHidden: true });
 
-  const renderItem = useCallback(
-    ({ item }: { item: IHistoryRecord }) => (
-      <View key={item.id} className="mx-4 mb-6">
-        <HistoryRecordView
-          isOngoing={isOngoing}
-          showTitle={true}
-          programDay={programDay}
-          prs={prs}
-          settings={props.settings}
-          historyRecord={item}
-          dispatch={dispatch}
-          isExpanded={HistoryCollapse_isExpanded(item, expandedIds, isOngoing)}
-          onToggleExpanded={onToggleExpanded}
-        />
-      </View>
-    ),
-    [isOngoing, programDay, prs, props.settings, dispatch, expandedIds, onToggleExpanded]
-  );
-
-  const keyExtractor = useCallback((item: IHistoryRecord) => String(item.id), []);
-
-  const scrollMarkers = usePerfScrollMarkers("ProgramHistoryView");
-
-  const stickyHeader = (
+  const header = (
     <HomeHeader
       history={props.history}
       settings={props.settings}
@@ -234,13 +170,14 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         onTrain={() => navigateToModal("nextWorkoutModal")}
         startWeekFromMonday={props.settings.startWeekFromMonday}
       />
+      <SeasonNudgeCard stats={props.navCommon.stats} />
     </View>
   );
 
-  if (sortedHistory.length === 0) {
+  if (todayRecord == null) {
     return (
       <View className="flex-1" style={{ paddingBottom: tabBarPadding }}>
-        {stickyHeader}
+        {header}
         {checklist}
         <HistoryRecordsNullState />
       </View>
@@ -249,23 +186,35 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
 
   return (
     <View className="flex-1">
-      {stickyHeader}
-      <LegendList
-        key={listRemountKey}
-        ref={flatListRef}
-        data={sortedHistory}
-        ListHeaderComponent={checklist}
-        renderItem={renderItem}
-        extraData={expandedIds}
-        keyExtractor={keyExtractor}
-        estimatedItemSize={300}
-        contentContainerStyle={{ paddingBottom: tabBarPadding }}
-        initialScrollIndex={initialScrollIndex}
-        waitForInitialLayout={true}
-        onScrollBeginDrag={scrollMarkers.onScrollBeginDrag}
-        onScrollEndDrag={scrollMarkers.onScrollEndDrag}
-        onMomentumScrollEnd={scrollMarkers.onMomentumScrollEnd}
-      />
+      {header}
+      <ScrollView contentContainerStyle={{ paddingBottom: tabBarPadding }}>
+        {checklist}
+        <View className="mx-4">
+          <HistoryRecordView
+            isOngoing={isOngoing}
+            showTitle={true}
+            programDay={programDay}
+            prs={prs}
+            settings={props.settings}
+            historyRecord={todayRecord}
+            dispatch={dispatch}
+            isExpanded={HistoryCollapse_isExpanded(todayRecord, expandedIds, isOngoing)}
+            onToggleExpanded={(id) => setExpandedIds((ids) => HistoryCollapse_toggle(ids, id))}
+          />
+        </View>
+        {historyLabel != null && (
+          <Pressable
+            testID="home-history"
+            data-testid="home-history"
+            accessibilityRole="link"
+            onPress={() => dispatch(Thunk_pushScreen("history", undefined, { tab: "food" }))}
+            className="flex-row items-center px-4 py-3.5 mx-4 mt-4 rounded-2xl bg-background-subtle"
+          >
+            <Text className="flex-1 text-base">{historyLabel}</Text>
+            <IconChevronRight size={16} color={Tailwind_semantic().icon.neutral} />
+          </Pressable>
+        )}
+      </ScrollView>
     </View>
   );
 }

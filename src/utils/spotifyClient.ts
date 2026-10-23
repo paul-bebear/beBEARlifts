@@ -1,12 +1,11 @@
 import {
+  ISpotifyRedirect,
   ISpotifyTokens,
   SpotifyAuth_authorizeUrl,
-  SpotifyAuth_base64Url,
   SpotifyAuth_cleanUrl,
   SpotifyAuth_codeBody,
   SpotifyAuth_needsRefresh,
   SpotifyAuth_parseTokens,
-  SpotifyAuth_randomString,
   SpotifyAuth_readRedirect,
   SpotifyAuth_refreshBody,
 } from "../models/spotifyAuth";
@@ -27,11 +26,18 @@ import {
 } from "../models/spotifyPlaylist";
 import { MusicLog_disconnect } from "../models/musicLog";
 import { MusicStore_load, MusicStore_update } from "./musicStore";
+import {
+  SpotifyLoginPlatform_authorize,
+  SpotifyLoginPlatform_clearPkce,
+  SpotifyLoginPlatform_pkce,
+  SpotifyLoginPlatform_readPkce,
+  SpotifyLoginPlatform_redirectUri,
+  SpotifyLoginPlatform_saveError,
+  SpotifyLoginPlatform_takeError,
+} from "./spotifyLoginPlatform";
 
 // PKCE has no client secret, so the client ID is public by design.
 const clientId = "3eaf01f171e440139aa2774df77e5f6f";
-const pkceKey = "bebear_spotify_pkce";
-const errorKey = "bebear_spotify_error";
 const tokenUrl = "https://accounts.spotify.com/api/token";
 const apiBase = "https://api.spotify.com/v1";
 
@@ -40,40 +46,23 @@ export const SpotifyClient_testerLimitMessage =
 
 export type ISpotifyResult<T> = { ok: true; value: T } | { ok: false; message: string };
 
-function redirectUri(): string {
-  return `${window.location.origin}/app/`;
-}
-
+// The web leaves the page here. The iPhone app returns after the login sheet closes, with the tokens saved.
 export async function SpotifyClient_login(): Promise<void> {
-  const verifier = SpotifyAuth_randomString(crypto.getRandomValues(new Uint8Array(64)));
-  const state = SpotifyAuth_randomString(crypto.getRandomValues(new Uint8Array(24)));
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
-  localStorage.setItem(pkceKey, JSON.stringify({ verifier, state }));
-  window.location.href = SpotifyAuth_authorizeUrl({
-    clientId,
-    redirectUri: redirectUri(),
-    state,
-    codeChallenge: SpotifyAuth_base64Url(new Uint8Array(digest)),
-  });
-}
-
-function readPkce(): { verifier?: string; state?: string } {
-  try {
-    const raw = JSON.parse(localStorage.getItem(pkceKey) ?? "{}");
-    return raw != null && typeof raw === "object" ? raw : {};
-  } catch {
-    return {};
-  }
+  const pkce = await SpotifyLoginPlatform_pkce();
+  const redirect = await SpotifyLoginPlatform_authorize(
+    SpotifyAuth_authorizeUrl({
+      clientId,
+      redirectUri: SpotifyLoginPlatform_redirectUri(),
+      state: pkce.state,
+      codeChallenge: pkce.codeChallenge,
+    }),
+    pkce
+  );
+  await finishLogin(redirect, pkce.verifier);
 }
 
 export function SpotifyClient_takeError(): string | undefined {
-  const storage = globalThis.localStorage;
-  if (storage == null) {
-    return undefined;
-  }
-  const message = storage.getItem(errorKey) ?? undefined;
-  storage.removeItem(errorKey);
-  return message;
+  return SpotifyLoginPlatform_takeError();
 }
 
 let cameBackFromLogin = false;
@@ -85,17 +74,25 @@ export function SpotifyClient_takeCameBackFromLogin(): boolean {
 }
 
 export async function SpotifyClient_handleRedirect(): Promise<boolean> {
-  const pkce = readPkce();
+  const pkce = SpotifyLoginPlatform_readPkce();
   const redirect = SpotifyAuth_readRedirect(window.location.href, pkce.state);
   if (redirect.kind === "none") {
     return false;
   }
   cameBackFromLogin = true;
   window.history.replaceState(window.history.state, "", SpotifyAuth_cleanUrl(window.location.href));
-  localStorage.removeItem(pkceKey);
+  SpotifyLoginPlatform_clearPkce();
+  await finishLogin(redirect, pkce.verifier ?? "");
+  return true;
+}
+
+async function finishLogin(redirect: ISpotifyRedirect, verifier: string): Promise<void> {
+  if (redirect.kind === "none") {
+    return;
+  }
   if (redirect.kind === "error") {
-    localStorage.setItem(errorKey, redirect.message);
-    return true;
+    SpotifyLoginPlatform_saveError(redirect.message);
+    return;
   }
   try {
     const response = await fetch(tokenUrl, {
@@ -103,15 +100,15 @@ export async function SpotifyClient_handleRedirect(): Promise<boolean> {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: SpotifyAuth_codeBody({
         clientId,
-        redirectUri: redirectUri(),
+        redirectUri: SpotifyLoginPlatform_redirectUri(),
         code: redirect.code,
-        verifier: pkce.verifier ?? "",
+        verifier,
       }),
     });
     const tokens = SpotifyAuth_parseTokens(await response.json(), Date.now());
     if (!response.ok || tokens == null) {
-      localStorage.setItem(errorKey, `Spotify login failed (error ${response.status}).`);
-      return true;
+      SpotifyLoginPlatform_saveError(`Spotify login failed (error ${response.status}).`);
+      return;
     }
     await MusicStore_update((log) => ({ ...log, tokens }));
     const profile = await SpotifyClient_profile();
@@ -119,9 +116,8 @@ export async function SpotifyClient_handleRedirect(): Promise<boolean> {
       await MusicStore_update((log) => ({ ...log, displayName: profile.displayName }));
     }
   } catch {
-    localStorage.setItem(errorKey, "Could not reach Spotify. Check the connection and try again.");
+    SpotifyLoginPlatform_saveError("Could not reach Spotify. Check the connection and try again.");
   }
-  return true;
 }
 
 let refreshing: Promise<ISpotifyTokens | undefined> | undefined;
@@ -192,7 +188,7 @@ async function json(response: Response | undefined): Promise<unknown> {
 async function SpotifyClient_profile(): Promise<ISpotifyProfile | undefined> {
   const response = await SpotifyClient_api("/me");
   if (response?.status === 403) {
-    localStorage.setItem(errorKey, SpotifyClient_testerLimitMessage);
+    SpotifyLoginPlatform_saveError(SpotifyClient_testerLimitMessage);
     await MusicStore_update(MusicLog_disconnect);
     return undefined;
   }

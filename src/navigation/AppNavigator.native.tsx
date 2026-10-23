@@ -42,6 +42,7 @@ import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
 import { ScreenMyBear } from "../components/screenMyBear";
 import { ScreenReportsHub } from "../components/screenReportsHub";
 import { ScreenJournal } from "../components/screenJournal";
+import { ScreenHistory } from "../components/screenHistory";
 import { NavModalFoodEdit } from "./modals/NavModalFoodEdit";
 import { NavModalFoodGoals } from "./modals/NavModalFoodGoals";
 import { NavScreenMusic } from "./screens/NavScreenMusic";
@@ -368,6 +369,18 @@ function FoodStackScreen(): JSX.Element {
     <FoodStack.Navigator screenOptions={navHeaderScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
       <FoodStack.Screen name="food" component={ScreenJournal} />
       <FoodStack.Screen name="foodAdd" component={NavScreenFoodAdd} />
+      <FoodStack.Screen name="history" component={ScreenHistory} />
+      <FoodStack.Screen
+        name="progress"
+        component={NavScreenProgress}
+        getId={({ params }) => String(params?.id ?? 0)}
+        options={{ headerShown: true, header: NavHeader }}
+      />
+      <FoodStack.Screen
+        name="exerciseStats"
+        component={NavScreenExerciseStats}
+        options={{ headerShown: true, header: NavHeader }}
+      />
     </FoodStack.Navigator>
   );
 }

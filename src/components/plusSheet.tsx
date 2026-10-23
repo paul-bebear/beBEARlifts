@@ -30,7 +30,7 @@ function SquareIcon(props: { id: IQuickActionId; color: string }): JSX.Element {
   switch (props.id) {
     case "food":
       return <IconFood size={28} color={props.color} />;
-    case "measurement":
+    case "weight":
       return <IconStats size={28} color={props.color} />;
     case "friend":
       return <IconFriends size={28} color={props.color} />;
@@ -82,7 +82,7 @@ export function PlusSheetModal(): JSX.Element {
         Thunk_pushScreen("foodAdd", { day: FoodLog_dayKey(now), meal: FoodMealForTime_pick(now) }, { tab: "food" })
       );
     }),
-    measurement: closeThen(() => dispatch(Thunk_pushScreen("bodyScans", undefined, { tab: "graphs" }))),
+    weight: closeThen(() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))),
     friend: closeThen(() => navigateToModal("addFriendModal")),
     note: closeThen(() => {
       navigateToModal("noteEditorModal", { day: FoodLog_dayKey(new Date()) });
