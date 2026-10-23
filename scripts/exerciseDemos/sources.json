@@ -1,0 +1,120 @@
+{
+  "library": {
+    "name": "1.300 Animações de Treinos",
+    "archive": "1.300 Animações de Treinos-20261023T122552Z-1-001.zip",
+    "backup": "~/Downloads/CODEX Purchase Backup 2026-10-23",
+    "permission": "Paul confirmed full reuse permission for the exercise animations on 2026-10-23.",
+    "inventory": [
+      "The seven muscle folders hold 762 GIF files, 727 of them unique by SHA-1. Each GIF is a named, single-lift loop of 12 frames at 360, 720 or 1080 px square.",
+      "'+400 Animações musculação e funcional - VERSÃO ATUALIZADA' holds 406 MP4 files with the same SHA-1 set as ' 1.000 Exercise GIF Library/1° BIBLIOTECA - GIFs PREMIUM DE EJERCICIOS'. They are 345 unique videos.",
+      "Each MP4 is a 720x1280, about 23 second reel that shows several lifts in a row, each first done wrong (red cross) and then right (green tick). The file names are generic ('Treinos (273).mp4'). No MP4 is used: one file never shows one lift alone."
+    ]
+  },
+  "picks": {
+    "squat_barbell": {
+      "source": "INFERIORES/Membros Inferiores (54)/Agachamento livre com barra (1).gif",
+      "review": "Barbell back squat from a rack, bar on the upper back, thighs below parallel."
+    },
+    "benchpress_barbell": {
+      "source": "PEITORAL/PEITORAL (1)/Supino barra (1).gif",
+      "review": "Flat barbell bench press, medium overhand grip, bar to the lower chest."
+    },
+    "deadlift_barbell": {
+      "source": "INFERIORES/Membros Inferiores (54)/levantamento terra com barra (1).gif",
+      "review": "Conventional barbell deadlift from the floor, seen from behind at an angle."
+    },
+    "romaniandeadlift_barbell": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/barbell-romanian-deadlift-movement (1).gif",
+      "review": "Barbell Romanian deadlift. Hip hinge from standing until the bar passes the knees."
+    },
+    "overheadpress_barbell": {
+      "source": "OMBROS/DELTÓIDES (1)/military-press (1).gif",
+      "review": "Standing barbell overhead press from the front of the shoulders."
+    },
+    "bentoverrow_barbell": {
+      "source": "COSTAS e TRAPÉZIO/Costas (55)/remada com barra (1).gif",
+      "review": "Bent over barbell row, overhand grip, torso about 45 degrees."
+    },
+    "pullup_bodyweight": {
+      "source": "COSTAS e TRAPÉZIO/Costas (55)/barra livre pegada pronada (1).gif",
+      "review": "Pull-up on a fixed bar, overhand (pronated) grip."
+    },
+    "latpulldown_cable": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/wide-grip-lat-pulldown (1).gif",
+      "review": "Seated wide-grip cable lat pulldown, bar to the upper chest."
+    },
+    "inclinebenchpress_dumbbell": {
+      "source": "PEITORAL/Peito (40)/Supino inclinado com halteres (1).gif",
+      "review": "Incline dumbbell bench press."
+    },
+    "seatedrow_cable": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/cable-seated-row (1).gif",
+      "review": "Seated cable row with a close-grip handle, feet on the platform."
+    },
+    "chestfly_cable": {
+      "source": "PEITORAL/Peito (40)/crucifixo no cross banco reto (1).gif",
+      "review": "Cable fly lying on a flat bench between two low pulleys. Same setup as the reviewed photo Flat_Bench_Cable_Flyes."
+    },
+    "lateralraise_cable": {
+      "source": "OMBROS/DELTÓIDES (1)/Elevação lateral uni no cabo (1).gif",
+      "review": "Standing one-arm lateral raise from a low pulley. The reviewed photo Cable_Seated_Lateral_Raise is seated. The arm movement is the same."
+    },
+    "lunge_dumbbell": {
+      "source": "INFERIORES/Membros Inferiores (54)/passada a frente com halteres (1).gif",
+      "review": "Forward lunge with a dumbbell in each hand."
+    },
+    "legextension_leveragemachine": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Cadeira extensora (1).gif",
+      "review": "Seated leg extension machine."
+    },
+    "calfpressonlegpress_leveragemachine": {
+      "source": "INFERIORES/PANTURRILHA (1)/leg-press-calf-raise (1).gif",
+      "review": "Calf press with the balls of the feet on a 45 degree leg press."
+    },
+    "cablecrunch_cable": {
+      "source": "ABDOMEN/ABDOMEN CORE (1)/ABS polia alta 2 (1).gif",
+      "review": "Kneeling cable crunch with a rope from a high pulley. The standing version in 'ABS polia alta' was rejected."
+    },
+    "tricepspushdown_cable": {
+      "source": "BRAÇOS COMPLETO/TRÍCEPS (1)/Triceps pulley (1).gif",
+      "review": "Standing cable triceps pushdown with a straight bar."
+    },
+    "tricepsextension_dumbbell": {
+      "source": "BRAÇOS COMPLETO/TRÍCEPS (1)/Triceps frances sentado (1).gif",
+      "review": "Seated overhead triceps extension, one dumbbell in both hands. The reviewed photo Standing_Dumbbell_Triceps_Extension is standing. The arm movement is the same."
+    },
+    "reversefly_leveragemachine": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/reverse-pec-dec-machine (1).gif",
+      "review": "Reverse fly on a pec deck machine, seated facing the pad."
+    },
+    "preachercurl_dumbbell": {
+      "source": "BRAÇOS COMPLETO/BÍCEPS e ANTEBRAÇO (1)/dumbbell-preacher-curl (1).gif",
+      "review": "One-arm dumbbell preacher curl. Matches the reviewed photo One_Arm_Dumbbell_Preacher_Curl."
+    },
+    "hammercurl_dumbbell": {
+      "source": "BRAÇOS COMPLETO/BÍCEPS e ANTEBRAÇO (1)/dumbbell-hammer-curl (1).gif",
+      "review": "Standing dumbbell hammer curl, neutral grip."
+    },
+    "standingrowreardeltwithrope_cable": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/Facepull (1).gif",
+      "review": "Standing rope row to the face from a shoulder-height pulley, elbows high. Matches the reviewed photo Cable_Rope_Rear-Delt_Rows."
+    },
+    "bulgariansplitsquat_dumbbell": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Bulgaro com halteres (1).gif",
+      "review": "Bulgarian split squat, rear foot on a bench, a dumbbell in each hand."
+    },
+    "hipthrust_barbell": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/barbell-hip-thrust (1).gif",
+      "review": "Barbell hip thrust, upper back on a bench."
+    },
+    "seatedlegcurl_leveragemachine": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Cadeira flexora (1).gif",
+      "review": "Seated leg curl machine."
+    },
+    "hipabductor_leveragemachine": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Cadeira abdutora (1).gif",
+      "review": "Seated hip abductor machine."
+    }
+  },
+  "missing": {}
+}

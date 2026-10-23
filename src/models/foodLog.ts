@@ -373,6 +373,21 @@ export function FoodLog_remove(log: IFoodLog, id: string): IFoodLog {
   return { ...log, entries: log.entries.filter((e) => e.id !== id) };
 }
 
+export function FoodLog_sameDayCopies(log: IFoodLog, id: string): string[] {
+  const entry = log.entries.find((e) => e.id === id);
+  if (entry == null) {
+    return [];
+  }
+  return log.entries
+    .filter((e) => e.day === entry.day && e.name === entry.name && e.brand === entry.brand && e.grams === entry.grams)
+    .map((e) => e.id);
+}
+
+export function FoodLog_removeAll(log: IFoodLog, ids: string[]): IFoodLog {
+  const remove = new Set(ids);
+  return { ...log, entries: log.entries.filter((e) => !remove.has(e.id)) };
+}
+
 export function FoodLog_setGrams(log: IFoodLog, id: string, grams: number): IFoodLog {
   return {
     ...log,

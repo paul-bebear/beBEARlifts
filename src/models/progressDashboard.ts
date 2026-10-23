@@ -2,6 +2,7 @@ import { IHistoryRecord, ISettings, IStats, IWeight } from "../types";
 import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import { History_totalRecordWeight } from "./history";
 import { Weight_add, Weight_build, Weight_convertTo } from "./weight";
+import { LocalDay_between, LocalDay_ms, LocalDay_start } from "./localDay";
 
 export const ProgressDashboard_days = 7;
 
@@ -17,18 +18,6 @@ export interface IProgressDashboard {
   workouts: { count: number; volume: IWeight; weekStreak: number };
 }
 
-const dayMs = 24 * 60 * 60 * 1000;
-
-function startOfDay(timestamp: number): number {
-  const date = new Date(timestamp);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
-}
-
-function daysBetween(earlier: number, later: number): number {
-  return Math.round((startOfDay(later) - startOfDay(earlier)) / dayMs);
-}
-
 function latestWeight(stats: IStats, settings: ISettings, now: number): IProgressDashboard["weight"] {
   const values = stats.weight.weight ?? [];
   const latest = values.reduce<(typeof values)[number] | undefined>(
@@ -40,7 +29,7 @@ function latestWeight(stats: IStats, settings: ISettings, now: number): IProgres
   }
   return {
     value: Weight_convertTo(latest.value, settings.units),
-    daysAgo: Math.max(0, daysBetween(latest.timestamp, now)),
+    daysAgo: Math.max(0, LocalDay_between(latest.timestamp, now)),
   };
 }
 
@@ -63,8 +52,8 @@ function caloriesStatus(log: IFoodLog, today: string): IProgressCaloriesStatus {
 function weekStreak(workoutTimes: number[], now: number): number {
   let streak = 0;
   for (let week = 0; ; week += 1) {
-    const end = startOfDay(now) + dayMs - week * ProgressDashboard_days * dayMs;
-    const start = end - ProgressDashboard_days * dayMs;
+    const end = LocalDay_start(now) + LocalDay_ms - week * ProgressDashboard_days * LocalDay_ms;
+    const start = end - ProgressDashboard_days * LocalDay_ms;
     if (!workoutTimes.some((t) => t >= start && t < end)) {
       return streak;
     }
@@ -110,7 +99,7 @@ export function ProgressDashboard_build(input: {
   const today = FoodLog_dayKey(new Date(now));
   const lastDays = Array.from({ length: ProgressDashboard_days }, (_, i) => FoodLog_shiftDay(today, -i));
   const loggedDays = new Set(foodLog.entries.map((e) => e.day));
-  const windowStart = startOfDay(now) - (ProgressDashboard_days - 1) * dayMs;
+  const windowStart = LocalDay_start(now) - (ProgressDashboard_days - 1) * LocalDay_ms;
   const recent = history.filter((r) => r.startTime >= windowStart && r.startTime <= now);
   return {
     weight: latestWeight(stats, settings, now),

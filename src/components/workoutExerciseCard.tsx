@@ -69,6 +69,7 @@ import { Dialog_confirm } from "../utils/dialog";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { usePerfWhyRender } from "../utils/usePerfWhyRender";
 import { SetClips_workoutId } from "../models/setClips";
+import { ExerciseHowToSheet } from "./exerciseHowToSheet";
 
 interface IWorkoutExerciseCardProps {
   entry: IHistoryEntry;
@@ -89,6 +90,7 @@ interface IWorkoutExerciseCardProps {
   showHelp?: boolean;
   helps: string[];
   otherStates?: IByExercise<IProgramState>;
+  orderNote?: string;
   onTitleLayout?: (title: View) => void;
 }
 
@@ -123,6 +125,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
   );
   const lastHistoryEntry = props.prevData?.lastEntry;
   const lastNote = props.prevData?.lastNote;
+  const orderNote = props.orderNote;
   const timestamp = props.prevData?.lastNoteTimestamp;
 
   const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
@@ -264,7 +267,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
       actions.push({ action: "edit", label: "Edit Program Exercise" });
     }
     actions.push({ action: "swap", label: "Swap Exercise" });
-    actions.push({ action: "superset", label: "Edit Superset" });
+    actions.push({ action: "superset", label: "Superset" });
     actions.push({ action: "notes", label: showExerciseNotes ? "Hide Exercise Notes" : "Show Exercise Notes" });
     actions.push({ action: "remove", label: "Remove Exercise" });
     return actions;
@@ -387,6 +390,10 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
     [dispatch, entryIndex]
   );
 
+  const [isHowToOpen, setIsHowToOpen] = useState(false);
+  const onOpenHowTo = useCallback(() => setIsHowToOpen(true), []);
+  const onCloseHowTo = useCallback(() => setIsHowToOpen(false), []);
+
   const onCloseKebabMenu = useCallback(() => setIsKebabMenuOpen(false), []);
   const onKebabEdit = useCallback(() => runKebabAction("edit"), [runKebabAction]);
   const onKebabSwap = useCallback(() => runKebabAction("swap"), [runKebabAction]);
@@ -468,6 +475,11 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
                 </LinkButton>
               </View>
             )}
+            <View className="flex-row mt-1">
+              <LinkButton name="exercise-how-to" testID="exercise-how-to" onClick={onOpenHowTo} className="text-sm">
+                How to
+              </LinkButton>
+            </View>
           </View>
           <View className="relative">
             <Pressable
@@ -511,7 +523,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
                 <DropdownMenuItem data-testid="exercise-superset" testID="exercise-superset" onClick={onKebabSuperset}>
                   <View className="flex-row items-center" style={{ gap: 8 }}>
                     <IconReorder size={18} />
-                    <Text className="whitespace-nowrap">Edit Superset</Text>
+                    <Text className="whitespace-nowrap">Superset</Text>
                   </View>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -550,6 +562,15 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
           <View className="mt-1">
             {!!exerciseNotes && !!description && <GroupHeader name="Program Exercise Description" />}
             <Markdown value={description} />
+          </View>
+        )}
+        {orderNote != null && (
+          <View
+            className="px-3 py-2 my-1 rounded-xl bg-background-subtle"
+            testID="exercise-order-note"
+            data-testid="exercise-order-note"
+          >
+            <Text className="text-sm">{orderNote}</Text>
           </View>
         )}
         {!!lastNote && !!timestamp && (
@@ -605,6 +626,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
           subscription={props.subscription}
         />
       </View>
+      {isHowToOpen && <ExerciseHowToSheet exerciseType={exerciseType} settings={settings} onClose={onCloseHowTo} />}
     </View>
   );
 }

@@ -1,9 +1,10 @@
-import { JSX, useReducer, useState } from "react";
+import { JSX, useReducer, useRef, useState } from "react";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./primitives/text";
 import {
   FoodLog_addAll,
+  FoodLog_dayTotals,
   FoodLog_mealNames,
   FoodLog_removeMeal,
   FoodLog_removeRecipe,
@@ -48,6 +49,14 @@ import { FoodServingPanel } from "./foodServingPanel";
 import { FoodQuickAddPanel } from "./foodQuickAddPanel";
 import { FoodLabelPanel } from "./foodLabelPanel";
 import { FoodSaveGroupPanel } from "./foodSaveGroupPanel";
+import { RecipeDetailPanel } from "./recipeDetailPanel";
+import {
+  RecipeCatalog_basketKey,
+  RecipeCatalog_find,
+  RecipeCatalog_isSaved,
+  RecipeCatalog_servingPick,
+  RecipeCatalog_toUserRecipe,
+} from "../models/recipeCatalog";
 import { FoodMealPicker } from "./foodUi";
 import { Button } from "./button";
 import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
@@ -57,6 +66,7 @@ import { Friends_forUser } from "../models/friends";
 import { FeedClient_shareMeal } from "../utils/feedClient";
 import { FriendsStore } from "../utils/friendsClient";
 import { CloudStore } from "../utils/supabaseClient";
+import { RandomBytes_get } from "../utils/randomBytes";
 
 function NotFound(props: {
   code: string;
@@ -103,6 +113,7 @@ function ReviewBar(props: { basket: IFoodBasketItem[]; onPress: () => void }): J
 
 export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Element {
   const navigation = useNavigation();
+  const isLoggingRef = useRef(false);
   const log = useFoodLog();
   const hasAi = AiConsent_showFeatures(AiConsentStore.use());
   const [step, send] = useReducer(FoodScanSteps_reduce, undefined, () =>
@@ -114,6 +125,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   const [browseTab, setBrowseTab] = useState<IFoodBrowseTab>("food");
   const browse = (): void => send({ type: "browseOpened" });
   const stepTitle = FoodScanSteps_title(step);
+  const catalogRecipe = step.kind === "catalogRecipe" ? RecipeCatalog_find(step.recipeId) : undefined;
   const userId = CloudStore.use().session?.userId;
   const me = Friends_forUser(FriendsStore.use(), userId).me;
   const share = MealPost_shareSwitch(
@@ -164,19 +176,27 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   };
 
   const logBasket = async (): Promise<void> => {
+    if (isLoggingRef.current) {
+      return;
+    }
+    isLoggingRef.current = true;
     const entries = FoodBasket_entries(basket, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
     await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
     navigation.goBack();
   };
 
   const logServing = async (serving: IScanServing): Promise<void> => {
+    if (isLoggingRef.current) {
+      return;
+    }
+    isLoggingRef.current = true;
     const entries = FoodScanSteps_entries(serving, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
     await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
-    const post = MealPost_fromServing(serving, share, MealPost_newId(crypto.getRandomValues(new Uint8Array(16))));
+    navigation.goBack();
+    const post = MealPost_fromServing(serving, share, () => MealPost_newId(RandomBytes_get(16)));
     if (post != null) {
       await FeedClient_shareMeal(post, serving.photo);
     }
-    navigation.goBack();
   };
 
   const onTile = async (tile: IFoodTile): Promise<void> => {
@@ -213,6 +233,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             onMode={(mode) => send({ type: "modePicked", mode })}
             onBarcode={onBarcode}
             onPhotoReviewed={(choices, photo) => send({ type: "photoReviewed", choices, nonce: Date.now(), photo })}
+            onDescribed={(choices) => send({ type: "describeReviewed", choices, nonce: Date.now() })}
             onQuick={(name, nutrients) => send({ type: "quickEntered", name, nutrients })}
             onSearch={browse}
             onCopied={() => navigation.goBack()}
@@ -259,6 +280,9 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             }}
             onSaveMeal={() => send({ type: "saveOpened", group: "meal" })}
             onSaveRecipe={() => send({ type: "saveOpened", group: "recipe" })}
+            dayConsumed={FoodLog_dayTotals(log, props.params.day)}
+            goals={log.goals}
+            onOpenCatalogRecipe={(recipe) => send({ type: "catalogRecipeOpened", recipeId: recipe.id })}
             tab={browseTab}
             onTab={setBrowseTab}
           />
@@ -323,6 +347,19 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
               setBasket(FoodBasket_put(basket, FoodAddFlow_manualPick(name, nutrients), 0, `quick|${Date.now()}`));
               send({ type: "basketOpened" });
             }}
+          />
+        )}
+        {catalogRecipe != null && (
+          <RecipeDetailPanel
+            recipe={catalogRecipe}
+            isSaved={RecipeCatalog_isSaved(log.recipes, catalogRecipe)}
+            onSave={() => FoodLogStore_update((l) => FoodLog_saveRecipe(l, RecipeCatalog_toUserRecipe(catalogRecipe)))}
+            onLog={(servings) => {
+              const pick = RecipeCatalog_servingPick(catalogRecipe, servings);
+              setBasket(FoodBasket_put(basket, pick, 0, RecipeCatalog_basketKey(catalogRecipe)));
+              send({ type: "basketOpened" });
+            }}
+            onBack={browse}
           />
         )}
         {step.kind === "save" && (

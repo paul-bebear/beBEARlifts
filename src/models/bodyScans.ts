@@ -14,10 +14,18 @@ export type IBodyScanKey =
 
 export type IBodyScanValues = Partial<Record<IBodyScanKey, number>>;
 
+export type IBodyScanShareKey = "muscleMass" | "boneMass";
+
+export const BodyScans_shareKeys: IBodyScanShareKey[] = ["muscleMass", "boneMass"];
+
 export interface IBodyScan extends IBodyScanValues {
   id: number;
   timestamp: number;
   unit: IBodyScanUnit;
+  // Masses are always stored in `unit`. These record which ones the user typed as a percent of body weight.
+  percentEntered?: IBodyScanShareKey[];
+  // The body weight a percent was converted with, kept only when the scan has no weight of its own.
+  basisWeight?: number;
 }
 
 export interface IBodyScanLog {
@@ -71,6 +79,15 @@ function parseScan(raw: unknown): IBodyScan | undefined {
     if (typeof value === "number" && isValid(field.kind, value)) {
       scan[field.key] = value;
     }
+  }
+  if (Array.isArray(r.percentEntered)) {
+    const keys = BodyScans_shareKeys.filter((k) => (r.percentEntered as unknown[]).includes(k) && scan[k] != null);
+    if (keys.length > 0) {
+      scan.percentEntered = keys;
+    }
+  }
+  if (typeof r.basisWeight === "number" && isValid("mass", r.basisWeight)) {
+    scan.basisWeight = r.basisWeight;
   }
   return scan;
 }
@@ -143,7 +160,7 @@ export function BodyScans_remove(log: IBodyScanLog, id: number): IBodyScanLog {
 
 const lbPerKg = 2.20462;
 
-function massIn(value: number, from: IBodyScanUnit, to: IBodyScanUnit): number {
+export function BodyScans_massIn(value: number, from: IBodyScanUnit, to: IBodyScanUnit): number {
   if (from === to) {
     return value;
   }
@@ -168,7 +185,7 @@ export function BodyScans_change(
   if (a == null || raw == null || older == null) {
     return undefined;
   }
-  const b = field.kind === "mass" ? massIn(raw, older.unit, newer.unit) : raw;
+  const b = field.kind === "mass" ? BodyScans_massIn(raw, older.unit, newer.unit) : raw;
   const delta = Math.round((a - b) * 10) / 10;
   if (delta === 0 || field.higherIsBetter == null) {
     return { delta, trend: "neutral" };

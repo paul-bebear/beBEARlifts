@@ -2,14 +2,15 @@ import { IHistoryRecord, IStats, IUnit } from "../types";
 import { IBearCountedWorkout } from "./bearGrowth";
 import { BearText_kg } from "./bearText";
 import { CheckInTrend_build } from "./checkInTrend";
-import { FoodLog_dayKey } from "./foodLog";
+import { FeatureLayer_isFront, IFeature } from "./featureLayer";
+import { FoodLog_dayKey, FoodLog_dayTotals, IFoodLog } from "./foodLog";
 import { INotesLog } from "./notes";
 import { Weight_convertTo } from "./weight";
 
 export type IBearBoardTarget = "streak" | "stats" | "reportsHub" | "journal";
 
 export interface IBearBoardTile {
-  id: "week" | "weight" | "perWorkout" | "energy";
+  id: "week" | "weight" | "food" | "perWorkout" | "energy";
   value: string;
   label: string;
   target: IBearBoardTarget;
@@ -20,6 +21,7 @@ export interface IBearBoardInput {
   workouts: readonly IBearCountedWorkout[];
   stats: IStats;
   notes: INotesLog;
+  foodLog: IFoodLog;
   units: IUnit;
   plannedPerWeek: number;
   weekStart: number;
@@ -90,6 +92,45 @@ function energyTile(input: IBearBoardInput): IBearBoardTile {
     : { id: "energy", value: `${oneDecimal(average)} / 5`, label: "energy, 7 d", target: "journal" };
 }
 
+function formatCount(value: number): string {
+  return Math.round(value).toLocaleString("en-US");
+}
+
+function proteinLabel(eaten: number, target: number): string {
+  return `${formatCount(eaten)} of ${formatCount(target)} g protein today`;
+}
+
+function foodTile(input: IBearBoardInput): IBearBoardTile {
+  const { goals } = input.foodLog;
+  const totals = FoodLog_dayTotals(input.foodLog, FoodLog_dayKey(new Date(input.now)));
+  const eaten = formatCount(totals.calories);
+  const hasProteinTarget = goals.protein.max > 0;
+  if (goals.calories.max <= 0) {
+    return hasProteinTarget
+      ? {
+          id: "food",
+          value: `${eaten} kcal`,
+          label: proteinLabel(totals.protein, goals.protein.max),
+          target: "journal",
+        }
+      : { id: "food", value: eaten, label: "kcal today", target: "journal" };
+  }
+  return {
+    id: "food",
+    value: `${eaten} / ${formatCount(goals.calories.max)} kcal`,
+    label: hasProteinTarget ? proteinLabel(totals.protein, goals.protein.max) : "kcal today",
+    target: "journal",
+  };
+}
+
+const candidates: { feature: IFeature; build: (input: IBearBoardInput) => IBearBoardTile }[] = [
+  { feature: "workout", build: weekTile },
+  { feature: "weight", build: weightTile },
+  { feature: "food", build: foodTile },
+  { feature: "volume", build: perWorkoutTile },
+  { feature: "checkIn", build: energyTile },
+];
+
 export function BearBoard_tiles(input: IBearBoardInput): IBearBoardTile[] {
-  return [weekTile(input), weightTile(input), perWorkoutTile(input), energyTile(input)];
+  return candidates.filter((c) => FeatureLayer_isFront(c.feature)).map((c) => c.build(input));
 }

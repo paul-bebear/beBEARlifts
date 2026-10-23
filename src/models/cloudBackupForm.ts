@@ -60,8 +60,8 @@ export interface ISentCode {
 }
 
 // Supabase's default "Email OTP expiration" is 3600 s. The dashboard value was not read.
-export const CloudBackupForm_codeLifetimeMs = 60 * 60 * 1000;
-export const CloudBackupForm_resendWaitMs = 3 * 60 * 1000;
+const CloudBackupForm_codeLifetimeMs = 60 * 60 * 1000;
+const CloudBackupForm_resendWaitMs = 3 * 60 * 1000;
 export const CloudBackupForm_codeHint = "The code can take a few minutes. Check Junk too.";
 export const CloudBackupForm_resendNote = "A new code cancels the last one.";
 

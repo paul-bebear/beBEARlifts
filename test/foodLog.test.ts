@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   FoodLog_add,
+  FoodLog_addAll,
   FoodLog_copyDay,
   FoodLog_dayLabel,
   FoodLog_dayTotals,
@@ -14,6 +15,8 @@ import {
   FoodLog_parse,
   FoodLog_progress,
   FoodLog_remove,
+  FoodLog_removeAll,
+  FoodLog_sameDayCopies,
   FoodLog_scale,
   FoodLog_setGrams,
   FoodLog_setGoals,
@@ -94,6 +97,19 @@ describe("FoodLog totals", () => {
   it("removes an entry", () => {
     const log = FoodLog_remove(FoodLog_add(FoodLog_empty(), entry({})), "a");
     expect(log.entries).to.have.length(0);
+  });
+
+  it("finds the same food at the same amount across the day's meals, and removes them together", () => {
+    const log = FoodLog_addAll(FoodLog_empty(), [
+      entry({ id: "a", meal: "lunch" }),
+      entry({ id: "b", meal: "dinner" }),
+      entry({ id: "c", grams: 50 }),
+      entry({ id: "d", day: "2026-10-20" }),
+      entry({ id: "e", name: "Milk" }),
+    ]);
+    expect(FoodLog_sameDayCopies(log, "a")).to.deep.equal(["a", "b"]);
+    expect(FoodLog_sameDayCopies(log, "missing")).to.deep.equal([]);
+    expect(FoodLog_removeAll(log, ["a", "b"]).entries.map((e) => e.id)).to.deep.equal(["c", "d", "e"]);
   });
 });
 

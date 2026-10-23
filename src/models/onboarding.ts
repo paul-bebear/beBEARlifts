@@ -45,7 +45,7 @@ export type IOnboardingEvent =
   | { type: "ready"; result: IOnboardingResult; run?: number }
   | { type: "failed"; error: string; run?: number };
 
-export const Onboarding_maxImageChars = 3_500_000;
+const Onboarding_maxImageChars = 3_500_000;
 
 const backSteps: Partial<Record<IOnboardingStep, IOnboardingStep>> = {
   place: "welcome",
@@ -74,7 +74,7 @@ export function Onboarding_empty(
   };
 }
 
-export function Onboarding_canContinue(state: IOnboardingState): boolean {
+function Onboarding_canContinue(state: IOnboardingState): boolean {
   return state.step !== "place" || state.answers.places.length > 0;
 }
 

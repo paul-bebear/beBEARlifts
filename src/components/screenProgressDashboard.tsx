@@ -1,4 +1,6 @@
-import { JSX, ReactNode, useMemo } from "react";
+import { JSX, ReactNode, useMemo, useState } from "react";
+import { FoodLog_dayKey, FoodLog_dayTotals, IFoodProgressMode } from "../models/foodLog";
+import { FoodSummaryCard } from "./foodSummaryCard";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
@@ -11,21 +13,15 @@ import {
   ProgressDashboard_days,
   ProgressDashboard_workoutsLine,
 } from "../models/progressDashboard";
-import { ProgressHub_build, ProgressHub_plannedPerWeek } from "../models/progressHub";
+import { ProgressHub_build, ProgressHub_goal, ProgressHub_plannedPerWeek } from "../models/progressHub";
+import { ReportsHub_title } from "../models/reportsHub";
 import { Program_evaluate, Program_isEmpty } from "../models/program";
 import { ProgramGoalStore } from "../utils/programGoalStore";
 import { StepsStore } from "../utils/stepsStore";
 import { useStepsHealthSync } from "../utils/useStepsHealthSync";
 import { useIsFocused } from "@react-navigation/native";
 import { ProgressPhotoStore } from "../utils/progressPhotoStore";
-import {
-  ProgressDetailLine,
-  ProgressDetailLink,
-  ProgressExpandRow,
-  ProgressGoalCard,
-  ProgressPhotosCard,
-  ProgressStepsCard,
-} from "./progressHubCards";
+import { ProgressDetailLine, ProgressDetailLink, ProgressExpandRow, ProgressGoalCard } from "./progressHubCards";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
 import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 import { WeekInsights } from "./weekInsights";
@@ -36,7 +32,6 @@ import { IconFood } from "./icons/iconFood";
 import { IconBarbell2 } from "./icons/iconBarbell2";
 import { IconGraphs } from "./icons/iconGraphs";
 import { IconChevronRight } from "./icons/iconFoodUi";
-import { IconSpeaker } from "./icons/iconSpeaker";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { CloudRestoreBanner } from "./cloudRestoreBanner";
 
@@ -88,7 +83,67 @@ function LinkRow(props: { testID: string; icon: ReactNode; title: string; onPres
   );
 }
 
-export function ProgressSections(): JSX.Element {
+export function ProgramCardSection(): JSX.Element {
+  const state = useTrackedState();
+  const dispatch = useTrackedDispatch();
+  const settings = untrack(state.storage.settings);
+  const currentProgramId = state.storage.currentProgramId;
+  const program = untrack(
+    currentProgramId != null ? state.storage.programs.find((p) => p.id === currentProgramId) : undefined
+  );
+  const programCard = useMemo(() => ProgramCard_build(program, settings), [program, settings]);
+  return <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />;
+}
+
+function TodayMacros(): JSX.Element {
+  const dispatch = useTrackedDispatch();
+  const foodLog = useFoodLog();
+  const [mode, setMode] = useState<IFoodProgressMode>("consumed");
+  const today = FoodLog_dayKey(new Date());
+  return (
+    <View testID="my-bear-macros" data-testid="my-bear-macros">
+      <Pressable
+        className="flex-row items-center px-4 pb-1"
+        onPress={() => dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
+      >
+        <Text className="flex-1 text-xl font-bold">Today's food</Text>
+        <Text className="text-sm text-text-link">Journal</Text>
+      </Pressable>
+      <FoodSummaryCard
+        totals={FoodLog_dayTotals(foodLog, today)}
+        goals={foodLog.goals}
+        mode={mode}
+        onModeChange={setMode}
+      />
+    </View>
+  );
+}
+
+export function MyBearSections(): JSX.Element {
+  const state = useTrackedState();
+  const dispatch = useTrackedDispatch();
+  const settings = untrack(state.storage.settings);
+  const goal = ProgressHub_goal(ProgramGoalStore.use(), settings, Date.now());
+  return (
+    <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
+      {OfflineOnly_isEnabled() && <CloudRestoreBanner dispatch={dispatch} />}
+      <TodayMacros />
+      <ProgressGoalCard
+        goal={goal}
+        onChangeGoal={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "goal" }))}
+        onChangePace={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "pace" }))}
+      />
+      <LinkRow
+        testID="progress-all-stats"
+        icon={<IconGraphs color={Tailwind_semantic().icon.neutral} />}
+        title={ReportsHub_title}
+        onPress={() => dispatch(Thunk_pushScreen("reportsHub"))}
+      />
+    </View>
+  );
+}
+
+export function StatsSections(): JSX.Element {
   const state = useTrackedState();
   const dispatch = useTrackedDispatch();
   const history = untrack(state.storage.history);
@@ -104,7 +159,6 @@ export function ProgressSections(): JSX.Element {
   const program = untrack(
     currentProgramId != null ? state.storage.programs.find((p) => p.id === currentProgramId) : undefined
   );
-  const programCard = useMemo(() => ProgramCard_build(program, settings), [program, settings]);
   const goalLog = ProgramGoalStore.use();
   const steps = StepsStore.use();
   const photos = ProgressPhotoStore.use();
@@ -141,21 +195,10 @@ export function ProgressSections(): JSX.Element {
   }, [history, settings.startWeekFromMonday, isFocused]);
 
   useStepsHealthSync(steps.syncHealth, isFocused);
-  const semantic = Tailwind_semantic();
-  const iconColor = semantic.icon.neutral;
-  const blue = semantic.icon.blue;
+  const blue = Tailwind_semantic().icon.blue;
 
   return (
-    <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
-      {OfflineOnly_isEnabled() && <CloudRestoreBanner dispatch={dispatch} />}
-      {OfflineOnly_isEnabled() && (
-        <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />
-      )}
-      <ProgressGoalCard
-        goal={hub.goal}
-        onChangeGoal={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "goal" }))}
-        onChangePace={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "pace" }))}
-      />
+    <View className="pt-2" testID="all-stats" data-testid="all-stats">
       <ProgressExpandRow
         testID="progress-weight"
         icon={<IconStats size={24} color={blue} />}
@@ -199,7 +242,7 @@ export function ProgressSections(): JSX.Element {
         <ProgressDetailLink
           testID="progress-workouts-open"
           title="Open workout history"
-          onPress={() => dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
+          onPress={() => dispatch(Thunk_pushScreen("history", undefined, { tab: "food" }))}
         />
       </ProgressExpandRow>
       <View className="mx-4 mb-3">
@@ -213,38 +256,6 @@ export function ProgressSections(): JSX.Element {
           subscription={subscription}
         />
       </View>
-      <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">
-        Bonus tracking
-      </Text>
-      <ProgressStepsCard steps={hub.steps} onPress={() => dispatch(Thunk_pushScreen("steps"))} />
-      <ProgressPhotosCard photos={hub.photos} onPress={() => dispatch(Thunk_pushScreen("progressPhotos"))} />
-      <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">More</Text>
-      <LinkRow
-        testID="progress-reports-hub"
-        icon={<IconGraphs color={iconColor} />}
-        title="Reports"
-        onPress={() => dispatch(Thunk_pushScreen("reportsHub"))}
-      />
-      <LinkRow
-        testID="progress-measurements"
-        icon={<IconStats size={20} color={iconColor} />}
-        title="Body measurements"
-        onPress={() => dispatch(Thunk_pushScreen("measurements"))}
-      />
-      <LinkRow
-        testID="progress-body-scans"
-        icon={<IconStats size={20} color={iconColor} />}
-        title="Body composition"
-        onPress={() => dispatch(Thunk_pushScreen("bodyScans"))}
-      />
-      {OfflineOnly_isEnabled() && (
-        <LinkRow
-          testID="progress-music"
-          icon={<IconSpeaker size={20} color={iconColor} />}
-          title="Workout music"
-          onPress={() => dispatch(Thunk_pushScreen("music"))}
-        />
-      )}
     </View>
   );
 }

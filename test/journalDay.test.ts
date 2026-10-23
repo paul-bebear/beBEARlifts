@@ -9,8 +9,8 @@ import { Notes_empty, Notes_new, Notes_save, Notes_updateCheckIn } from "../src/
 import {
   IJournalDayInput,
   JournalDay_build,
-  JournalDay_mindfulness,
-  JournalDay_mindfulnessLines,
+  JournalDay_emptyRow,
+  JournalDay_hints,
   JournalDay_sectionFold,
   JournalDay_sectionSummary,
 } from "../src/models/journalDay";
@@ -91,29 +91,88 @@ function input(extra: Partial<IJournalDayInput> = {}): IJournalDayInput {
     music: MusicLog_empty(),
     weights: [],
     notes: Notes_empty(),
-    isOngoingProgress: false,
     ...extra,
   };
 }
 
 describe("JournalDay", () => {
-  it("keeps every empty section open", () => {
+  it("shows empty front sections as one row", () => {
     const day = JournalDay_build(input());
-    for (const section of ["checkIn", "workouts", "meals", "songs", "weight", "notes"] as const) {
-      expect(JournalDay_sectionFold(day, section, false)).to.eql({ summary: undefined, isCollapsed: false });
+    for (const section of ["workouts", "meals", "weight"] as const) {
+      const fold = JournalDay_sectionFold(day, section, undefined);
+      expect(fold.empty, section).to.not.equal(undefined);
+      expect(fold.isCollapsed).to.equal(false);
+      expect(fold.isHidden).to.not.equal(true);
     }
   });
 
-  it("folds check-in scores and lets the user reopen them", () => {
+  it("hides empty check-in, songs and notes even after the user opened them", () => {
+    for (const selectedDay of [today, "2026-10-21"]) {
+      const day = JournalDay_build(input({ day: selectedDay }));
+      for (const section of ["checkIn", "songs", "notes"] as const) {
+        for (const isOpen of [undefined, false, true]) {
+          expect(JournalDay_sectionFold(day, section, isOpen), section).to.eql({
+            isHidden: true,
+            isCollapsed: false,
+            canHide: false,
+          });
+        }
+        expect(JournalDay_emptyRow(day, section), section).to.equal(undefined);
+      }
+    }
+  });
+
+  it("shows check-in, songs and notes when they have content", () => {
+    const notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    const day = {
+      ...JournalDay_build(input({ notes: Notes_save(notes, { ...Notes_new("n", today, 1), body: "Hello" }, 1) })),
+      songs: [{ id: "s", name: "Song", artists: "Artist" }],
+    };
+    for (const section of ["checkIn", "songs", "notes"] as const) {
+      const fold = JournalDay_sectionFold(day, section, undefined);
+      expect(fold.isHidden, section).to.not.equal(true);
+      expect(fold.summary, section).to.be.a("string");
+      expect(fold.empty, section).to.equal(undefined);
+      expect(JournalDay_sectionFold(day, section, true).canHide, section).to.equal(true);
+    }
+  });
+
+  it("keeps a half-done check-in open until all three faces are picked", () => {
+    let notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", undefined)).to.eql({
+      summary: "Check-in · Energy 4",
+      isCollapsed: false,
+      canHide: true,
+    });
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 2, field: "soreness", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", undefined).isCollapsed).to.equal(
+      false
+    );
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 3, field: "mood", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", undefined).isCollapsed).to.equal(true);
+  });
+
+  it("lets the user hide a half-done check-in", () => {
+    const notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", false).isCollapsed).to.equal(true);
+  });
+
+  it("folds check-in scores and lets the user reopen and hide them again", () => {
     let notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
     notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 2, field: "soreness", value: 4 });
     notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 3, field: "mood", value: 4 });
     const day = JournalDay_build(input({ notes }));
-    expect(JournalDay_sectionFold(day, "checkIn", false)).to.eql({
+    expect(JournalDay_sectionFold(day, "checkIn", undefined)).to.eql({
       summary: "Check-in · Energy 4 · Soreness 4 · Mood 4",
       isCollapsed: true,
+      canHide: false,
     });
-    expect(JournalDay_sectionFold(day, "checkIn", true).isCollapsed).to.equal(false);
+    expect(JournalDay_sectionFold(day, "checkIn", true)).to.eql({
+      summary: "Check-in · Energy 4 · Soreness 4 · Mood 4",
+      isCollapsed: false,
+      canHide: true,
+    });
+    expect(JournalDay_sectionFold(day, "checkIn", false).isCollapsed).to.equal(true);
     expect(JournalDay_sectionSummary(JournalDay_build(input({ day: "2026-10-21", notes })), "checkIn")).to.equal(
       undefined
     );
@@ -121,6 +180,10 @@ describe("JournalDay", () => {
 
   it("summarizes reflection-only check-ins and ignores blank ones", () => {
     const checkIn = { ...Notes_new("c", today, 1), kind: "checkIn" as const };
+    expect(
+      JournalDay_sectionFold(JournalDay_build(input({ notes: { version: 1, notes: [checkIn] } })), "checkIn", true)
+        .isHidden
+    ).to.equal(true);
     expect(
       JournalDay_sectionSummary(JournalDay_build(input({ notes: { version: 1, notes: [checkIn] } })), "checkIn")
     ).to.equal(undefined);
@@ -148,27 +211,58 @@ describe("JournalDay", () => {
     ).to.equal("Songs · 1 logged");
   });
 
-  it("shows today's empty day with a Start button and the day's mindfulness line", () => {
+  it("points today's empty sections at the +", () => {
     const day = JournalDay_build(input());
     expect(day.title).to.equal("Today, Oct 22");
     expect(day.isToday).to.equal(true);
     expect(day.workouts).to.eql([]);
-    expect(day.plan).to.eql({ kind: "start", label: "Start workout" });
     expect(day.mealCount).to.equal(0);
+    expect(day.canAddFood).to.equal(false);
+    expect(day.canEditCheckIn).to.equal(true);
     expect(day.notes).to.eql([]);
     expect(day.chips).to.eql([]);
-    expect(day.mindfulness).to.equal(JournalDay_mindfulness(today));
+    expect(JournalDay_emptyRow(day, "workouts")?.hint).to.equal(JournalDay_hints.noWorkoutToday);
+    expect(JournalDay_emptyRow(day, "meals")?.hint).to.equal(JournalDay_hints.noFoodToday);
   });
 
-  it("reads Resume when a workout is running today", () => {
-    expect(JournalDay_build(input({ isOngoingProgress: true })).plan).to.eql({
-      kind: "start",
-      label: "Resume workout",
-    });
+  it("calls a past day without a workout a rest day and lets food be added to it", () => {
+    const day = JournalDay_build(input({ day: "2026-10-21" }));
+    expect(JournalDay_emptyRow(day, "workouts")?.hint).to.equal(JournalDay_hints.restDay);
+    expect(JournalDay_emptyRow(day, "meals")?.hint).to.equal(JournalDay_hints.nothingLogged);
+    expect(day.canAddFood).to.equal(true);
   });
 
-  it("calls a past day without a workout a rest day", () => {
-    expect(JournalDay_build(input({ day: "2026-10-21" })).plan).to.eql({ kind: "rest" });
+  it("shows no empty check-in row today or on a past day", () => {
+    expect(JournalDay_emptyRow(JournalDay_build(input()), "checkIn")).to.equal(undefined);
+    expect(JournalDay_emptyRow(JournalDay_build(input({ day: "2026-10-21" })), "checkIn")).to.equal(undefined);
+  });
+
+  it("keeps empty front sections as one row after a tap", () => {
+    const day = JournalDay_build(input());
+    for (const section of ["workouts", "meals", "weight"] as const) {
+      expect(JournalDay_sectionFold(day, section, true).empty, section).to.not.equal(undefined);
+    }
+  });
+
+  it("drops the empty row once the section has something in it", () => {
+    const notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    const day = JournalDay_build(
+      input({
+        notes: Notes_save(notes, { ...Notes_new("n", today, 1), body: "Hello" }, 1),
+        weights: [{ vtype: "stat", value: { value: 74, unit: "kg" }, timestamp: at(today, 7) }],
+        food: { ...FoodLog_empty(), entries: [food("a", today, 500, 20)] },
+        history: [workout(at(today, 18), "Legs", [set(100, 5)])],
+      })
+    );
+    for (const section of ["checkIn", "workouts", "meals", "songs", "weight", "notes"] as const) {
+      expect(JournalDay_emptyRow(day, section), section).to.equal(undefined);
+    }
+  });
+
+  it("adds food only to past days, never today or a future day", () => {
+    expect(JournalDay_build(input({ day: "2026-10-01" })).canAddFood).to.equal(true);
+    expect(JournalDay_build(input({ day: today })).canAddFood).to.equal(false);
+    expect(JournalDay_build(input({ day: "2026-10-23" })).canAddFood).to.equal(false);
   });
 
   it("shows the day's finished workouts in order, with stats, records and a chip", () => {
@@ -178,7 +272,7 @@ describe("JournalDay", () => {
       workout(at(today, 7), "Arms", [set(20, 10)], 30),
     ];
     const day = JournalDay_build(input({ history }));
-    expect(day.plan).to.equal(undefined);
+    expect(JournalDay_emptyRow(day, "workouts")).to.equal(undefined);
     expect(day.workouts.map((w) => w.dayName)).to.eql(["Arms", "Legs"]);
     expect(day.workouts[1].statsLine).to.equal("48 min · 1,000 kg · 2 sets");
     expect(day.workouts[1].prs).to.eql(["Squat 100 kg × 5"]);
@@ -236,12 +330,5 @@ describe("JournalDay", () => {
     const day = JournalDay_build(input({ notes }));
     expect(day.checkIn?.energy).to.equal(3);
     expect(day.notes.map((n) => n.title)).to.eql(["Night", "Morning"]);
-  });
-
-  it("picks a mindfulness line by day, the same all day, a new one the next day", () => {
-    expect(JournalDay_mindfulness("2026-10-22")).to.equal(JournalDay_mindfulness("2026-10-22"));
-    expect(JournalDay_mindfulness("2026-10-22")).to.not.equal(JournalDay_mindfulness("2026-10-23"));
-    const days = JournalDay_mindfulnessLines.map((_, i) => `2026-11-${`${i + 1}`.padStart(2, "0")}`);
-    expect(new Set(days.map(JournalDay_mindfulness)).size).to.equal(JournalDay_mindfulnessLines.length);
   });
 });

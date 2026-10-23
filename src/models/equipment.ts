@@ -77,6 +77,20 @@ export function Equipment_getEquipmentIdForExerciseType(
   return exerciseEquipment[currentGym.id];
 }
 
+const exactWeightEquipment = ["dumbbell", "cable"];
+
+export function Equipment_exactWeightStep(settings: ISettings, exerciseType?: IExerciseType): number | undefined {
+  const equipment = Equipment_getEquipmentIdForExerciseType(settings, exerciseType);
+  if (exerciseType == null || equipment == null || !exactWeightEquipment.includes(equipment)) {
+    return undefined;
+  }
+  if (Equipment_getEquipmentDataForExerciseType(settings, exerciseType)?.isFixed === true) {
+    return undefined;
+  }
+  const rounding = settings.exerciseData[Exercise_toKey(exerciseType)]?.rounding;
+  return rounding ?? (Equipment_getUnitOrDefaultForExerciseType(settings, exerciseType) === "kg" ? 1 : 2.5);
+}
+
 export function Equipment_getEquipmentNameForExerciseType(
   settings: ISettings,
   exerciseType?: IExerciseType

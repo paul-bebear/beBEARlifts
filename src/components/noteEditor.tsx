@@ -10,7 +10,7 @@ import { INote, Notes_get, Notes_links, Notes_new, Notes_remove, Notes_save } fr
 import { JournalExport_dateTitle } from "../models/journalExport";
 import { NotesStore, NotesStore_newId } from "../utils/notesStore";
 import { Dialog_confirm } from "../utils/dialog";
-import { useJournalDay } from "./screenJournal";
+import { useJournalDay } from "../utils/useJournalSources";
 import type { IRootStackParamList } from "../navigation/types";
 
 type INoteEditorParams = IRootStackParamList["noteEditorModal"];

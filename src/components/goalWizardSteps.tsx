@@ -26,7 +26,7 @@ interface IStepProps {
   setWizard: (wizard: IGoalWizard) => void;
 }
 
-export function GoalWizardChoice(props: {
+function GoalWizardChoice(props: {
   testID: string;
   label: string;
   detail?: string;

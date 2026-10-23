@@ -12,7 +12,7 @@ export interface IProgressPhotoLog {
 export const ProgressPhotos_maxSide = 1080;
 export const ProgressPhotos_maxPhotos = 200;
 // A 1080 px JPEG at quality 0.8 is 100 to 250 KB. The cap stops one bad file from filling IndexedDB.
-export const ProgressPhotos_maxDataUrlLength = 1024 * 1024;
+const ProgressPhotos_maxDataUrlLength = 1024 * 1024;
 
 const dataUrlPattern = /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/;
 
@@ -20,7 +20,7 @@ export function ProgressPhotos_empty(): IProgressPhotoLog {
   return { version: 1, photos: [] };
 }
 
-export function ProgressPhotos_isValidDataUrl(value: unknown): value is string {
+function ProgressPhotos_isValidDataUrl(value: unknown): value is string {
   return typeof value === "string" && value.length <= ProgressPhotos_maxDataUrlLength && dataUrlPattern.test(value);
 }
 

@@ -11,13 +11,13 @@ export type IOAuthReturn = { kind: "none" } | { kind: "code"; code: string } | {
 export type IOAuthStep = { kind: "exchange"; code: string; verifier: string } | { kind: "error"; message: string };
 
 // The Spotify login also returns to /app/?code=. Only a return carrying this marker belongs to Supabase.
-export const OAuthFlow_marker = "supabase";
+const OAuthFlow_marker = "supabase";
 export const OAuthFlow_cleanPath = "/app/";
 
 const pendingLifetimeMs = 10 * 60 * 1000;
 const providerNames: Record<IOAuthProvider, string> = { apple: "Apple", google: "Google" };
 
-export function OAuthFlow_providerName(provider: IOAuthProvider): string {
+function OAuthFlow_providerName(provider: IOAuthProvider): string {
   return providerNames[provider];
 }
 

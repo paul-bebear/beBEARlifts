@@ -28,8 +28,8 @@ export interface IRunRecording {
   pausedByScreen?: boolean;
 }
 
-export const RunRecording_saveEveryMs = 10 * 1000;
-export const RunRecording_fixStaleMs = 15 * 1000;
+const RunRecording_saveEveryMs = 10 * 1000;
+const RunRecording_fixStaleMs = 15 * 1000;
 
 const geolocationPermissionDenied = 1;
 const geolocationPositionUnavailable = 2;

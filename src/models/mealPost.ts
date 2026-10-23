@@ -22,7 +22,7 @@ export interface IMealPost extends IMealPostDraft {
 }
 
 export const MealPost_bucket = "meal-photos";
-export const MealPost_maxDescription = 200;
+const MealPost_maxDescription = 200;
 export const MealPost_photoUrlSeconds = 6 * 3600;
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -47,7 +47,7 @@ function macro(value: unknown): number | undefined {
     : undefined;
 }
 
-export function MealPost_macros(nutrients: INutrients): IMealMacros {
+function MealPost_macros(nutrients: INutrients): IMealMacros {
   return {
     kcal: macro(nutrients.calories) ?? 0,
     protein: macro(nutrients.protein) ?? 0,
@@ -82,10 +82,10 @@ export function MealPost_shareSwitch(signedIn: boolean, hasHandle: boolean, isSh
 export function MealPost_fromServing(
   serving: IScanServing,
   shareSwitch: IMealShareSwitch,
-  id: string
+  newId: () => string
 ): IMealPostDraft | undefined {
   return serving.isShared === true && shareSwitch.enabled
-    ? MealPost_build(id, FoodScanSteps_description(serving), FoodScanSteps_totals(serving))
+    ? MealPost_build(newId(), FoodScanSteps_description(serving), FoodScanSteps_totals(serving))
     : undefined;
 }
 

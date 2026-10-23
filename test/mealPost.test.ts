@@ -150,9 +150,12 @@ describe("Serving step share switch", () => {
     const on = FoodScanSteps_reduce(first, { type: "shareToggled", isShared: true });
     const serving = (step: IScanStep): IScanServing => (step.kind === "serving" ? step.serving : ({} as IScanServing));
     const allowed = MealPost_shareSwitch(true, true, true);
-    expect(MealPost_fromServing(serving(first), allowed, id)).to.equal(undefined);
-    expect(MealPost_fromServing(serving(on), MealPost_shareSwitch(false, true, true), id)).to.equal(undefined);
-    expect(MealPost_fromServing(serving(on), allowed, id)).to.deep.equal({
+    const noId = (): string => {
+      throw new Error("an unshared meal needs no id");
+    };
+    expect(MealPost_fromServing(serving(first), allowed, noId)).to.equal(undefined);
+    expect(MealPost_fromServing(serving(on), MealPost_shareSwitch(false, true, true), noId)).to.equal(undefined);
+    expect(MealPost_fromServing(serving(on), allowed, () => id)).to.deep.equal({
       id,
       description: "Rice",
       macros: { kcal: 260, protein: 5, carbs: 56, fat: 1 },

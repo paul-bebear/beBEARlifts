@@ -1,6 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import { BearBoard_tiles, IBearBoardInput } from "../src/models/bearBoard";
+import { FoodLog_dayKey, FoodLog_empty, IFoodEntry, IFoodLog } from "../src/models/foodLog";
 import { Notes_empty, INote } from "../src/models/notes";
 import { Weight_build } from "../src/models/weight";
 import { IHistoryRecord, IStatsWeightValue } from "../src/types";
@@ -42,12 +43,39 @@ function checkIn(day: string, energy: 1 | 2 | 3 | 4 | 5): INote {
   };
 }
 
+function entry(day: string, calories: number, protein: number): IFoodEntry {
+  return {
+    id: `${day}-${calories}`,
+    day,
+    meal: "lunch",
+    name: "Food",
+    source: "manual",
+    nutrients: { calories, protein, carbs: 0, fat: 0 },
+    createdAt: now,
+  };
+}
+
+function foodLog(goals: { calories?: number; protein?: number }): IFoodLog {
+  const today = FoodLog_dayKey(new Date(now));
+  const base = FoodLog_empty();
+  return {
+    ...base,
+    entries: [entry(today, 840, 50), entry(today, 400, 34), entry(FoodLog_dayKey(new Date(now - dayMs)), 2000, 100)],
+    goals: {
+      ...base.goals,
+      calories: { min: 0, max: goals.calories ?? 0 },
+      protein: { min: 0, max: goals.protein ?? 0 },
+    },
+  };
+}
+
 function input(overrides: Partial<IBearBoardInput> = {}): IBearBoardInput {
   return {
     history: [],
     workouts: [],
     stats: { weight: {}, length: {}, percentage: {} },
     notes: Notes_empty(),
+    foodLog: FoodLog_empty(),
     units: "kg",
     plannedPerWeek: 3,
     weekStart,
@@ -57,13 +85,43 @@ function input(overrides: Partial<IBearBoardInput> = {}): IBearBoardInput {
 }
 
 describe("BearBoard", () => {
-  it("shows four tiles with empty values for a new user", () => {
+  it("shows week, weight and food tiles for a new user", () => {
     expect(BearBoard_tiles(input()).map((t) => [t.id, t.value, t.label, t.target])).to.deep.equal([
       ["week", "0 of 3", "workouts this week", "streak"],
       ["weight", "–", "log your weight", "stats"],
-      ["perWorkout", "–", "per workout, 30 d", "reportsHub"],
-      ["energy", "–", "check in today", "journal"],
+      ["food", "0", "kcal today", "journal"],
     ]);
+  });
+
+  it("leaves out the per workout and energy tiles, which are layer 3", () => {
+    const notes = { ...Notes_empty(), notes: [checkIn("2026-10-22", 5)] };
+    const workouts = [{ record: record(now - dayMs), countedKg: 4000 }];
+    const ids = BearBoard_tiles(input({ notes, workouts })).map((t) => t.id);
+    expect(ids).to.deep.equal(["week", "weight", "food"]);
+  });
+
+  it("shows today's kcal and protein against the targets", () => {
+    const tile = BearBoard_tiles(input({ foodLog: foodLog({ calories: 2800, protein: 140 }) }))[2];
+    expect([tile.value, tile.label, tile.target]).to.deep.equal([
+      "1,240 / 2,800 kcal",
+      "84 of 140 g protein today",
+      "journal",
+    ]);
+  });
+
+  it("shows only the kcal eaten today when no target is set", () => {
+    const tile = BearBoard_tiles(input({ foodLog: foodLog({}) }))[2];
+    expect([tile.value, tile.label]).to.deep.equal(["1,240", "kcal today"]);
+  });
+
+  it("keeps the kcal label when only the calorie target is set", () => {
+    const tile = BearBoard_tiles(input({ foodLog: foodLog({ calories: 2800 }) }))[2];
+    expect([tile.value, tile.label]).to.deep.equal(["1,240 / 2,800 kcal", "kcal today"]);
+  });
+
+  it("shows the protein line when only the protein target is set", () => {
+    const tile = BearBoard_tiles(input({ foodLog: foodLog({ protein: 140 }) }))[2];
+    expect([tile.value, tile.label]).to.deep.equal(["1,240 kcal", "84 of 140 g protein today"]);
   });
 
   it("counts only this week's finished workouts", () => {
@@ -91,24 +149,5 @@ describe("BearBoard", () => {
   it("shows a single weight without a change", () => {
     const stats = { weight: { weight: [weight(now - dayMs, 64)] }, length: {}, percentage: {} };
     expect(BearBoard_tiles(input({ stats }))[1].label).to.equal("weight");
-  });
-
-  it("averages counted kg over workouts in the last 30 days that added kg", () => {
-    const workouts = [
-      { record: record(now - 40 * dayMs), countedKg: 9000 },
-      { record: record(now - 5 * dayMs), countedKg: 3000 },
-      { record: record(now - 3 * dayMs), countedKg: 0 },
-      { record: record(now - dayMs), countedKg: 4000 },
-    ];
-    expect(BearBoard_tiles(input({ workouts }))[2].value).to.equal("3,500 kg");
-  });
-
-  it("averages energy check-ins over the last 7 days", () => {
-    const notes = {
-      ...Notes_empty(),
-      notes: [checkIn("2026-10-22", 5), checkIn("2026-10-20", 4), checkIn("2026-10-01", 1)],
-    };
-    const tile = BearBoard_tiles(input({ notes }))[3];
-    expect([tile.value, tile.label]).to.deep.equal(["4.5 / 5", "energy, 7 d"]);
   });
 });

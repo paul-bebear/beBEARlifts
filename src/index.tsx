@@ -26,15 +26,8 @@ import {
 } from "./utils/offlineOnly";
 import { PressFeedback_install } from "./utils/pressFeedback";
 import { SpotifyClient_handleRedirect } from "./utils/spotifyClient";
-import { Invite_fromUrl, Invite_surface } from "./models/invite";
-import { InviteGuide } from "./components/inviteGuide";
 import { ForkOverlays } from "./components/forkOverlays";
-import {
-  InviteClient_isIos,
-  InviteClient_isStandalone,
-  InviteClient_openHere,
-  InviteClient_rememberOpenHere,
-} from "./utils/inviteClient";
+import { InviteBoot_start } from "./components/inviteBoot";
 import { SupabaseOAuth_finishReturn, SupabaseOAuth_takeReturn } from "./utils/supabaseOAuth";
 
 const signInReturn = SupabaseOAuth_takeReturn();
@@ -96,7 +89,7 @@ async function initialize(loadedData: ILocalStorage | undefined): Promise<void> 
 
 IndexedDBUtils_getAllKeys();
 
-async function load(): Promise<void> {
+async function main(): Promise<void> {
   persistence
     .load(await getIdbKey(userId, !!adminKey))
     .then(initialize)
@@ -106,30 +99,7 @@ async function load(): Promise<void> {
     });
 }
 
-function main(): void {
-  const surface = Invite_surface({
-    offline: OfflineOnly_isEnabled(),
-    standalone: InviteClient_isStandalone(),
-    openHere: InviteClient_openHere(),
-    historyCount: 0,
-    programCount: 0,
-  });
-  if (surface !== "guide") {
-    load();
-    return;
-  }
-  const root = createRoot(document.getElementById("app")!);
-  const openHere = (): void => {
-    InviteClient_rememberOpenHere();
-    root.unmount();
-    load();
-  };
-  root.render(
-    <InviteGuide handle={Invite_fromUrl(window.location.href)} isIos={InviteClient_isIos()} onOpenHere={openHere} />
-  );
-}
-
-SupabaseOAuth_finishReturn(signInReturn).then(main);
+SupabaseOAuth_finishReturn(signInReturn).then(() => InviteBoot_start(main));
 
 setTimeout(() => {
   const appEl = document.getElementById("app");

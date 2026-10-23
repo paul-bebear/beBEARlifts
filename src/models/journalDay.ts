@@ -10,8 +10,17 @@ import {
 } from "./foodLog";
 import { IMusicLog, MusicLog_sessionForWorkout } from "./musicLog";
 import { MusicSession_keptTracks } from "./musicSession";
-import { INote, INotesLog, Notes_checkIn, Notes_checkInScales, Notes_forDay, Notes_isBlank } from "./notes";
+import {
+  INote,
+  INotesLog,
+  Notes_canEditCheckIn,
+  Notes_checkIn,
+  Notes_checkInScales,
+  Notes_forDay,
+  Notes_isBlank,
+} from "./notes";
 import { WorkoutPost_build, WorkoutPost_statsLine } from "./workoutPost";
+import { FeatureLayer_isFront, IFeature } from "./featureLayer";
 
 export interface IJournalDayInput {
   day: string;
@@ -23,7 +32,6 @@ export interface IJournalDayInput {
   music: IMusicLog;
   weights: IStatsWeightValue[];
   notes: INotesLog;
-  isOngoingProgress: boolean;
 }
 
 export interface IJournalWorkout {
@@ -33,8 +41,6 @@ export interface IJournalWorkout {
   prs: string[];
   chip: string;
 }
-
-export type IJournalPlan = { kind: "start"; label: string } | { kind: "rest" };
 
 export interface IJournalSong {
   id: string;
@@ -47,20 +53,27 @@ export interface IJournalDay {
   title: string;
   isToday: boolean;
   workouts: IJournalWorkout[];
-  plan?: IJournalPlan;
   mealCount: number;
+  canAddFood: boolean;
+  canEditCheckIn: boolean;
   totals: INutrients;
   songs: IJournalSong[];
   weight?: IWeight;
   checkIn?: INote;
   notes: INote[];
   chips: string[];
-  mindfulness: string;
 }
 
-export const journalDayRest = "Rest day";
-
 export type IJournalSection = "checkIn" | "workouts" | "meals" | "songs" | "weight" | "notes";
+
+const sectionFeatures: Record<IJournalSection, IFeature> = {
+  checkIn: "checkIn",
+  workouts: "workout",
+  meals: "food",
+  songs: "music",
+  weight: "weight",
+  notes: "notes",
+};
 
 export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSection): string | undefined {
   switch (section) {
@@ -89,44 +102,82 @@ export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSec
   }
 }
 
+// A check-in with one or two faces picked is still being filled in, so it stays open.
+function isSectionDone(day: IJournalDay, section: IJournalSection): boolean {
+  const checkIn = day.checkIn;
+  if (section !== "checkIn" || checkIn == null) {
+    return true;
+  }
+  const picked = Notes_checkInScales.filter(({ field }) => checkIn[field] != null).length;
+  return picked === 0 || picked === Notes_checkInScales.length;
+}
+
+export interface IJournalEmptyRow {
+  title: string;
+  hint: string;
+}
+
+export const JournalDay_hints = {
+  checkIn: "How are you today?",
+  noWorkoutToday: "Tap + to start one",
+  restDay: "Rest day",
+  noFoodToday: "Tap + to feed the bear",
+  nothingLogged: "Nothing logged",
+  noWeight: "Not logged",
+  noNotes: "None yet",
+};
+
+export function JournalDay_emptyRow(day: IJournalDay, section: IJournalSection): IJournalEmptyRow | undefined {
+  if (!FeatureLayer_isFront(sectionFeatures[section]) && JournalDay_sectionSummary(day, section) == null) {
+    return undefined;
+  }
+  const hints = JournalDay_hints;
+  switch (section) {
+    case "checkIn":
+      return day.canEditCheckIn && (day.checkIn == null || Notes_isBlank(day.checkIn))
+        ? { title: "Check-in", hint: hints.checkIn }
+        : undefined;
+    case "workouts":
+      return day.workouts.length === 0
+        ? { title: "Workout", hint: day.isToday ? hints.noWorkoutToday : hints.restDay }
+        : undefined;
+    case "meals":
+      return day.mealCount === 0
+        ? { title: "Meals", hint: day.isToday ? hints.noFoodToday : hints.nothingLogged }
+        : undefined;
+    case "songs":
+      return undefined;
+    case "weight":
+      return day.weight == null ? { title: "Weigh-in", hint: hints.noWeight } : undefined;
+    case "notes":
+      return day.notes.length === 0 ? { title: "Notes", hint: hints.noNotes } : undefined;
+  }
+}
+
+export interface IJournalSectionFold {
+  isHidden?: boolean;
+  summary?: string;
+  isCollapsed: boolean;
+  canHide: boolean;
+  empty?: IJournalEmptyRow;
+}
+
 export function JournalDay_sectionFold(
   day: IJournalDay,
   section: IJournalSection,
-  isExpanded: boolean
-): {
-  summary?: string;
-  isCollapsed: boolean;
-} {
+  isOpenByUser: boolean | undefined
+): IJournalSectionFold {
   const summary = JournalDay_sectionSummary(day, section);
-  return { summary, isCollapsed: summary != null && !isExpanded };
-}
-
-// One line a day, in the bear's voice. Each is a thing to do in under five minutes, never a quote.
-export const JournalDay_mindfulnessLines = [
-  "Breathe in for 4 seconds, out for 6. Do it three times.",
-  "Drink a full glass of water before your next meal.",
-  "Name one thing your body did well today.",
-  "Muscle grows while you sleep. Aim for 8 hours tonight.",
-  "Put the phone down for 5 minutes and stretch your back.",
-  "Eat one meal today with no screen in front of you.",
-  "Walk outside for 10 minutes. Look at the sky once.",
-  "Write down one small win from today.",
-  "Roll your shoulders back 10 times. Sit up tall.",
-  "Text a friend who makes you laugh.",
-  "Rest days build muscle too. Be proud of them.",
-  "Slow down your next bite. Taste it.",
-  "Close your eyes for 30 seconds. Listen to what you hear.",
-  "Compare yourself to last month's you, nobody else.",
-];
-
-function dayNumber(day: string): number {
-  const [year, month, date] = day.split("-").map(Number);
-  return Math.round(Date.UTC(year, month - 1, date) / 86400000);
-}
-
-export function JournalDay_mindfulness(day: string): string {
-  const lines = JournalDay_mindfulnessLines;
-  return lines[((dayNumber(day) % lines.length) + lines.length) % lines.length];
+  if (!FeatureLayer_isFront(sectionFeatures[section]) && summary == null) {
+    return { isHidden: true, isCollapsed: false, canHide: false };
+  }
+  const empty = JournalDay_emptyRow(day, section);
+  if (empty != null && !(section === "checkIn" && isOpenByUser === true)) {
+    return { isCollapsed: false, canHide: false, empty };
+  }
+  const isOpen = isOpenByUser ?? !isSectionDone(day, section);
+  const isCollapsed = summary != null && !isOpen;
+  return { summary, isCollapsed, canHide: summary != null && !isCollapsed };
 }
 
 function dayOf(timestamp: number): string {
@@ -172,16 +223,6 @@ function weightOf(weights: IStatsWeightValue[], day: string): IWeight | undefine
   return latest?.value;
 }
 
-function planOf(input: IJournalDayInput, hasWorkout: boolean): IJournalPlan | undefined {
-  if (hasWorkout) {
-    return undefined;
-  }
-  if (input.day !== input.today) {
-    return { kind: "rest" };
-  }
-  return { kind: "start", label: input.isOngoingProgress ? "Resume workout" : "Start workout" };
-}
-
 function mealsChip(count: number): string | undefined {
   return count === 0 ? undefined : `${count} ${count === 1 ? "food" : "foods"} logged`;
 }
@@ -199,14 +240,14 @@ export function JournalDay_build(input: IJournalDayInput): IJournalDay {
     title: FoodLog_dayLabel(day, today),
     isToday: day === today,
     workouts,
-    plan: planOf(input, workouts.length > 0),
     mealCount,
+    canAddFood: day < today,
+    canEditCheckIn: Notes_canEditCheckIn(day, today),
     totals: FoodLog_dayTotals(input.food, day),
     songs: songsOf(records, input.music),
     weight: weightOf(input.weights, day),
     checkIn: Notes_checkIn(input.notes, day),
     notes: Notes_forDay(input.notes, day),
     chips,
-    mindfulness: JournalDay_mindfulness(day),
   };
 }

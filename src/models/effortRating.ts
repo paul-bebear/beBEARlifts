@@ -23,11 +23,11 @@ export function EffortRating_isEnabled(settings: ISettings): boolean {
 }
 
 // Timed sets have no reps in reserve, and a program's own logRpe already asks for a number.
-export function EffortRating_canRate(set: ISet): boolean {
+function EffortRating_canRate(set: ISet): boolean {
   return !!set.isCompleted && set.setTimer == null && !set.logRpe;
 }
 
-export function EffortRating_lastTickedSetIndex(sets: ISet[]): number | undefined {
+function EffortRating_lastTickedSetIndex(sets: ISet[]): number | undefined {
   let latest: number | undefined;
   sets.forEach((set, index) => {
     if (set.isCompleted && (latest == null || (set.timestamp ?? 0) >= (sets[latest].timestamp ?? 0))) {

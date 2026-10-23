@@ -11,7 +11,7 @@ export interface IRouteDrawing {
   end?: IXY;
 }
 
-export const RunRoute_pointLimit = 300;
+const RunRoute_pointLimit = 300;
 
 const metresPerDegree = (6371000 * Math.PI) / 180;
 const startToleranceM = 1;

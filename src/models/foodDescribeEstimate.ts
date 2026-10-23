@@ -1,6 +1,4 @@
 import { FoodAddFlow_photoChoices, IFoodPhotoChoice } from "./foodAddFlow";
-import { FoodBasket_entries, FoodBasket_fromChoices, FoodBasket_putAll } from "./foodBasket";
-import { IFoodEntry, IFoodMeal } from "./foodLog";
 import { IFoodPhotoEstimate } from "./foodPhotoEstimate";
 
 export interface IFoodDescribeState {
@@ -56,14 +54,4 @@ export function FoodDescribeEstimate_reduce(state: IFoodDescribeState, event: IF
     case "added":
       return FoodDescribeEstimate_initial();
   }
-}
-
-export function FoodDescribeEstimate_entries(
-  choices: IFoodPhotoChoice[],
-  where: { day: string; meal: IFoodMeal },
-  newId: () => string,
-  now: number
-): IFoodEntry[] {
-  const basket = FoodBasket_putAll([], FoodBasket_fromChoices(choices, "manual", now));
-  return FoodBasket_entries(basket, where, newId, now);
 }

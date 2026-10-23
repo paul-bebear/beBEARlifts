@@ -4,11 +4,15 @@ import { Text } from "./primitives/text";
 import {
   FoodLog_formatNumber,
   FoodLog_mealNames,
+  IFoodGoals,
   IFoodMeal,
   IFoodRecent,
   IFoodRecipe,
   IFoodSavedMeal,
+  INutrients,
 } from "../models/foodLog";
+import { ICatalogRecipe } from "../models/recipeCatalog";
+import { RecipeCatalogSection } from "./recipeCatalogSection";
 import { IFoodProduct, OpenFoodFacts_isBarcode } from "../models/openFoodFacts";
 import { FoodAddFlow_pickFromProduct, FoodAddFlow_pickFromRecent, IFoodPick } from "../models/foodAddFlow";
 import { FoodBasket_has, IFoodBasketItem } from "../models/foodBasket";
@@ -45,6 +49,9 @@ interface IProps {
   onDeleteRecipe: (recipe: IFoodRecipe) => void;
   onSaveMeal: () => void;
   onSaveRecipe: () => void;
+  dayConsumed: INutrients;
+  goals: IFoodGoals;
+  onOpenCatalogRecipe: (recipe: ICatalogRecipe) => void;
   tab: IFoodBrowseTab;
   onTab: (tab: IFoodBrowseTab) => void;
 }
@@ -289,6 +296,12 @@ function RecipesTab(props: IProps): JSX.Element {
           />
         );
       })}
+      <RecipeCatalogSection
+        meal={props.meal}
+        consumed={props.dayConsumed}
+        goals={props.goals}
+        onOpen={props.onOpenCatalogRecipe}
+      />
     </View>
   );
 }

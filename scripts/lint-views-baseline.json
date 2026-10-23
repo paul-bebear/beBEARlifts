@@ -83,6 +83,9 @@
   "src/components/foodBrowsePanel.tsx": {
     "decision-in-view:useEffect#1": "The debounce timer and its stale-result guard. Barcode vs text routing lives in FoodApi_find."
   },
+  "src/components/foodPhotoPanel.tsx": {
+    "decision-in-view:onFile": "Runs the sign-in check, the photo resize and the estimate call in order, and sets view state after each. The item choices come from FoodAddFlow_photoChoices."
+  },
   "src/components/graphExercise.tsx": {
     "decision-in-view:useMemo#1": "predates the rule"
   },
@@ -96,7 +99,6 @@
   "src/components/inputNumber2.native.tsx": {
     "decision-in-view:useCallback#1": "predates the rule",
     "decision-in-view:useCallback#2": "predates the rule",
-    "decision-in-view:useCallback#3": "predates the rule",
     "long-view": "predates the rule"
   },
   "src/components/inputNumber2.tsx": {
@@ -146,9 +148,6 @@
   "src/components/modalDayFromAdhoc.tsx": {
     "decision-in-view:anonymous#1": "predates the rule"
   },
-  "src/components/modalExercise.tsx": {
-    "long-view": "predates the rule"
-  },
   "src/components/preview/programPreviewPlayground.tsx": {
     "long-view": "predates the rule"
   },
@@ -174,9 +173,6 @@
   "src/components/screenEquipment.tsx": {
     "decision-in-view:useEffect#1": "predates the rule"
   },
-  "src/components/screenFinishDay.tsx": {
-    "long-view": "one workout completion screen and its platform share views; cloud uploads live in CloudBackupAfterWorkout and Thunk_cloudBackup"
-  },
   "src/components/screenGraphs.tsx": {
     "decision-in-view:useTimedMemo#1": "predates the rule",
     "decision-in-view:useTimedMemo#2": "predates the rule"
@@ -186,10 +182,9 @@
     "decision-in-view:anonymous#2": "predates the rule"
   },
   "src/components/screenSettings.tsx": {
-    "long-view": "one settings menu; cloud backup controls render in cloudBackupCard and its state machine lives in cloudBackupForm"
+    "long-view": "Upstream's settings menu, 594 lines before the fork. The fork's rows render from settingsForkRows.tsx and appStoreSettings.tsx."
   },
   "src/components/screenStats.tsx": {
-    "decision-in-view:save": "predates the rule",
     "long-view": "predates the rule"
   },
   "src/components/screenSubscription.tsx": {
@@ -204,11 +199,19 @@
   "src/components/selectLink.tsx": {
     "decision-in-view:onPress": "predates the rule"
   },
-  "src/components/workout.tsx": {
+  "src/components/swipeableRow.tsx": {
     "decision-in-view:useCallback#1": "predates the rule",
     "decision-in-view:useCallback#2": "predates the rule",
+    "decision-in-view:useEffect#1": "predates the rule"
+  },
+  "src/components/workout.tsx": {
     "decision-in-view:useAnimatedStyle#1": "UI-thread worklet placing one tile; the slot and shift math is in workoutStripReorder.ts",
+    "decision-in-view:useCallback#1": "predates the rule",
+    "decision-in-view:useCallback#2": "predates the rule",
     "long-view": "predates the rule"
+  },
+  "src/components/workoutCenterExpandedRow.tsx": {
+    "decision-in-view:useEffect#1": "predates the rule"
   },
   "src/components/workoutExerciseCard.tsx": {
     "decision-in-view:useCallback#1": "predates the rule",
@@ -228,6 +231,9 @@
     "long-view": "predates the rule"
   },
   "src/navigation/CustomKeyboardContext.tsx": {
+    "decision-in-view:useEffect#1": "predates the rule"
+  },
+  "src/navigation/SheetBackdropContext.tsx": {
     "decision-in-view:useEffect#1": "predates the rule"
   },
   "src/navigation/modals/DayLiftoEditorSheet.native.tsx": {
@@ -250,7 +256,6 @@
     "decision-in-view:anonymous#1": "predates the rule"
   },
   "src/navigation/modals/NavModalEditProgramExercisePicker.tsx": {
-    "decision-in-view:useCallback#1": "predates the rule",
     "decision-in-view:useMemo#1": "predates the rule"
   },
   "src/navigation/modals/NavModalEditTarget.tsx": {
@@ -288,14 +293,6 @@
   "src/navigation/modals/NavModalPlaygroundEditExercise.tsx": {
     "decision-in-view:anonymous#1": "predates the rule"
   },
-  "src/navigation/screens/NavScreenProgram.native.tsx": {
-    "decision-in-view:React.useEffect#1": "predates the rule",
-    "decision-in-view:React.useLayoutEffect#1": "predates the rule"
-  },
-  "src/navigation/screens/NavScreenProgram.tsx": {
-    "decision-in-view:useEffect#1": "predates the rule",
-    "decision-in-view:useLayoutEffect#1": "predates the rule"
-  },
   "src/pages/exercise/exerciseContent.tsx": {
     "decision-in-view:useEffect#1": "predates the rule",
     "long-view": "predates the rule"
@@ -307,6 +304,9 @@
     "decision-in-view:groupedData.map#1": "predates the rule",
     "long-view": "predates the rule"
   },
+  "src/pages/planner/components/modalPlannerExercisePicker.tsx": {
+    "decision-in-view:anonymous#1": "onChoose only calls ProgramExercisePickerChange_apply and dispatches its result; the length is the argument object"
+  },
   "src/pages/planner/components/modalPlannerPictureExport.tsx": {
     "decision-in-view:save": "predates the rule"
   },
@@ -314,20 +314,9 @@
     "decision-in-view:useCallback#1": "predates the rule",
     "long-view": "predates the rule"
   },
-  "src/pages/planner/components/plannerExerciseStats.tsx": {
-    "decision-in-view:anonymous#1": "predates the rule"
-  },
-  "src/pages/planner/components/plannerExerciseStatsFull.tsx": {
-    "decision-in-view:anonymous#1": "predates the rule"
-  },
   "src/pages/planner/plannerContent.tsx": {
     "decision-in-view:anonymous#1": "predates the rule",
-    "decision-in-view:anonymous#2": "predates the rule",
-    "decision-in-view:anonymous#3": "predates the rule",
     "long-view": "predates the rule"
-  },
-  "src/pages/planner/components/modalPlannerExercisePicker.tsx": {
-    "decision-in-view:anonymous#1": "onChoose only calls ProgramExercisePickerChange_apply and dispatches its result; the length is the argument object"
   },
   "src/pages/program/programContentList.tsx": {
     "decision-in-view:anonymous#1": "predates the rule"

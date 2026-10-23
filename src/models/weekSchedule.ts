@@ -6,6 +6,8 @@ export type IWeekSlots = (number | null)[];
 export interface IWeekScheduleLog {
   version: 1;
   programs: Record<string, IWeekSlots>;
+  // Program id to the YYYY-MM-DD day when the next workout last moved to the weekday's planned day.
+  followedOn?: Record<string, string>;
 }
 
 export interface IScheduleProgram {
@@ -22,6 +24,8 @@ export type IStartChoice =
   | { kind: "today"; day: number; todayName: string; nextName: string }
   | { kind: "rest"; nextName: string }
   | { kind: "next" };
+
+const dayKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
 
 export const WeekSchedule_weekdayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -59,7 +63,15 @@ export function WeekSchedule_parse(raw: unknown): IWeekScheduleLog {
       }
     }
   }
-  return { version: 1, programs };
+  const followedOn: Record<string, string> = {};
+  if (r.followedOn != null && typeof r.followedOn === "object") {
+    for (const [id, value] of Object.entries(r.followedOn as Record<string, unknown>)) {
+      if (typeof value === "string" && dayKeyPattern.test(value)) {
+        followedOn[id] = value;
+      }
+    }
+  }
+  return Object.keys(followedOn).length > 0 ? { version: 1, programs, followedOn } : { version: 1, programs };
 }
 
 export function WeekSchedule_default(dayCount: number): IWeekSlots {
@@ -152,7 +164,7 @@ function weekIndexOf(program: IScheduleProgram, day: number): number {
   return 0;
 }
 
-export function WeekSchedule_dayName(program: IScheduleProgram, day: number): string {
+function WeekSchedule_dayName(program: IScheduleProgram, day: number): string {
   let left = day;
   for (const week of program.weeks) {
     if (left <= week.days.length) {
@@ -210,6 +222,23 @@ export function WeekSchedule_startChoice(
     return { kind: "today", day: today.day, todayName: today.name, nextName };
   }
   return { kind: "next" };
+}
+
+// On the first look of the day the next workout moves to the weekday's planned day, so Home, the
+// Workout tab and the watch all show it. A day picked by hand after that stands until tomorrow.
+// A running workout waits: the move happens after it is finished or dropped.
+export function WeekSchedule_follow(
+  log: IWeekScheduleLog,
+  program: IScheduleProgram & { id: string },
+  opts: { now: number; workedOutToday: boolean; hasProgress: boolean }
+): { log: IWeekScheduleLog; nextDay?: number } | undefined {
+  const today = FoodLog_dayKey(new Date(opts.now));
+  if (opts.hasProgress || log.followedOn?.[program.id] === today) {
+    return undefined;
+  }
+  const followed: IWeekScheduleLog = { ...log, followedOn: { ...log.followedOn, [program.id]: today } };
+  const choice = WeekSchedule_startChoice(program, WeekSchedule_todayFor(log, program, opts.now), opts);
+  return choice.kind === "today" ? { log: followed, nextDay: choice.day } : { log: followed };
 }
 
 // The day the Plan tab tags as Next: the one the start sheet offers first.

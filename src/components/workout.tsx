@@ -44,7 +44,7 @@ import {
   IFirstUseEvent,
   IFirstUseTipsState,
 } from "../models/firstUseTips";
-import { FirstUseTipContext } from "./workoutExerciseSetFields";
+import { FirstUseTipContext } from "./firstUseTipContext";
 import { TipBar } from "./tipBar";
 import { IEvaluatedProgram, IEvaluatedProgramDay, Program_isEmpty } from "../models/program";
 import { lb } from "lens-shmens";
@@ -60,6 +60,11 @@ import {
 import { IconPlus2 } from "./icons/iconPlus2";
 import { History_buildPrevExerciseData, IPrevExerciseData } from "../models/history";
 import { Exercise_get, Exercise_nameWithEquipment, Exercise_toKey } from "../models/exercise";
+import {
+  ExerciseOrderFatigue_lastBefore,
+  ExerciseOrderFatigue_lookup,
+  ExerciseOrderFatigue_notes,
+} from "../models/exerciseOrderFatigue";
 import {
   IWorkoutStripLabelFadeRange,
   WorkoutStripLabel_fadeRange,
@@ -112,6 +117,7 @@ interface IWorkoutViewProps {
   settings: ISettings;
   dispatch: IDispatch;
   renderHeaderMenu?: (onOpenChange: (isOpen: boolean) => void) => ReactNode;
+  onCancel?: () => void;
 }
 
 export function useFirstUseTip(
@@ -287,6 +293,15 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
     () => History_buildPrevExerciseData(props.history, props.progress.startTime, sameDay, exerciseKeys),
     [props.history, props.progress.startTime, sameDay, exerciseKeys]
   );
+  const orderLookup = useMemo(() => ExerciseOrderFatigue_lookup(props.settings), [props.settings]);
+  const lastBefore = useMemo(
+    () => ExerciseOrderFatigue_lastBefore(props.history, props.progress.startTime, exerciseKeys, orderLookup),
+    [props.history, props.progress.startTime, exerciseKeys, orderLookup]
+  );
+  const orderNotes = useMemo(
+    () => ExerciseOrderFatigue_notes(progressEntries, lastBefore, orderLookup),
+    [progressEntries, lastBefore, orderLookup]
+  );
   const isCurrentProgress = Progress_isCurrent(props.progress);
   const titleNodeRef = useRef<View | null>(null);
   const [titleLayoutNonce, setTitleLayoutNonce] = useState(0);
@@ -390,6 +405,7 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
                           userPromptedStateVars={progressUserPromptedStateVars}
                           supersetEntry={supersetByEntryId.get(entry.id)}
                           prevData={prevExerciseData[Exercise_toKey(entry.exercise)]}
+                          orderNote={orderNotes[entry.id]}
                           isCurrentProgress={isCurrentProgress}
                           helps={props.helps}
                           subscription={props.subscription}
@@ -402,6 +418,17 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
                   </WorkoutExercisePager>
                 </PerfProbeSubtree>
               </View>
+            )}
+            {props.onCancel != null && (
+              <StickyPressable
+                testID="workout-cancel"
+                data-testid="workout-cancel"
+                accessibilityRole="button"
+                className="items-center py-4 mt-6"
+                onPress={props.onCancel}
+              >
+                <Text className="text-base font-semibold text-text-error">Cancel workout</Text>
+              </StickyPressable>
             )}
           </View>
         </NavScreenContent>
@@ -431,6 +458,7 @@ interface IWorkoutExercisePageProps {
   userPromptedStateVars?: Partial<Record<string, IProgramState>>;
   supersetEntry?: IHistoryEntry;
   prevData?: IPrevExerciseData;
+  orderNote?: string;
   isCurrentProgress: boolean;
   helps: string[];
   subscription: ISubscription;
@@ -471,6 +499,7 @@ function WorkoutExercisePageInner(props: IWorkoutExercisePageProps): JSX.Element
               userPromptedStateVars={props.userPromptedStateVars}
               supersetEntry={props.supersetEntry}
               prevData={props.prevData}
+              orderNote={props.orderNote}
               isCurrentProgress={props.isCurrentProgress}
               showHelp={true}
               helps={props.helps}

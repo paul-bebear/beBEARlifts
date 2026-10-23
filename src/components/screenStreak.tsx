@@ -4,12 +4,8 @@ import { Text } from "./primitives/text";
 import { IconFlame } from "./progressIcons";
 import { BadgeGrid } from "./badgeGrid";
 import { useNavOptions } from "../navigation/useNavOptions";
-import {
-  MonthCalendar_build,
-  MonthCalendar_monthOf,
-  MonthCalendar_shift,
-  MonthCalendar_weekdayLabels,
-} from "../models/monthCalendar";
+import { MonthCalendar_build, MonthCalendar_monthOf, MonthCalendar_shift } from "../models/monthCalendar";
+import { useTrackedState } from "../navigation/TrackedStateContext";
 import { useBearBadges } from "../utils/useBearBadges";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
@@ -17,14 +13,15 @@ import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 interface IStreakCalendarProps {
   today: string;
   doneDays: Set<string>;
+  startsMonday: boolean;
 }
 
 function StreakCalendar(props: IStreakCalendarProps): JSX.Element {
-  const { today, doneDays } = props;
+  const { today, doneDays, startsMonday } = props;
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const calendar = useMemo(
-    () => MonthCalendar_build({ month, today, selected: today, workoutDays: doneDays }),
-    [month, today, doneDays]
+    () => MonthCalendar_build({ month, today, selected: today, workoutDays: doneDays, startsMonday }),
+    [month, today, doneDays, startsMonday]
   );
   const isCurrentMonth = month >= MonthCalendar_monthOf(today);
   return (
@@ -53,7 +50,7 @@ function StreakCalendar(props: IStreakCalendarProps): JSX.Element {
         </Pressable>
       </View>
       <View className="flex-row mb-1">
-        {MonthCalendar_weekdayLabels.map((label, i) => (
+        {calendar.weekdayLabels.map((label, i) => (
           <Text key={i} className="text-xs text-center text-text-secondary" style={{ width: "14.285%" }}>
             {label}
           </Text>
@@ -94,6 +91,7 @@ function StreakCalendar(props: IStreakCalendarProps): JSX.Element {
 
 export function ScreenStreak(): JSX.Element {
   const { streak, doneDays, today, grid } = useBearBadges();
+  const startsMonday = !!useTrackedState().storage.settings.startWeekFromMonday;
 
   useNavOptions({ navTitle: "Streak" });
 
@@ -107,7 +105,7 @@ export function ScreenStreak(): JSX.Element {
       <Text className="mb-8 text-sm text-center text-text-secondary">
         Train or log one meal a day to keep it going.
       </Text>
-      <StreakCalendar today={today} doneDays={doneDays} />
+      <StreakCalendar today={today} doneDays={doneDays} startsMonday={startsMonday} />
       <BadgeGrid grid={grid} />
     </View>
   );

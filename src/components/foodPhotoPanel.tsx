@@ -9,8 +9,7 @@ import { Button } from "./button";
 import { FoodChoicesReview } from "./foodChoicesReview";
 import { AiConsent_ensure } from "../utils/aiConsentClient";
 import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
-import { useTrackedDispatch } from "../navigation/TrackedStateContext";
-import { Thunk_pushScreen } from "../ducks/thunks";
+import { FoodAiSignIn } from "./foodAiSignIn";
 
 interface IProps {
   initialNote?: string;
@@ -18,23 +17,6 @@ interface IProps {
 }
 
 type IStatus = { kind: "idle" } | { kind: "analyzing" } | { kind: "error"; message: string };
-
-export function FoodAiSignIn(): JSX.Element {
-  const dispatch = useTrackedDispatch();
-  return (
-    <View className="py-3" testID="food-ai-sign-in" data-testid="food-ai-sign-in">
-      <Text className="mb-3 text-sm text-text-secondary">Sign in to use AI food estimates.</Text>
-      <Button
-        name="food-ai-open-settings"
-        kind="pill"
-        className="flex-1"
-        onPress={() => dispatch(Thunk_pushScreen("settings", undefined, { tab: "graphs" }))}
-      >
-        Open Settings
-      </Button>
-    </View>
-  );
-}
 
 export function FoodPhotoPanel(props: IProps): JSX.Element {
   const session = CloudStore.use().session;

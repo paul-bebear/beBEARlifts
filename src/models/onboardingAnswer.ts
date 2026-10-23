@@ -1,3 +1,5 @@
+import { JsonInText_extract } from "./jsonInText";
+
 export interface IOnboardingAnswer {
   builtin?: string;
   liftoscript?: string;
@@ -11,7 +13,10 @@ export function OnboardingAnswer_parse(raw: unknown, builtinIds: string[]): IOnb
     if (raw.length > 600_000) {
       throw new Error("The AI answer is too large.");
     }
-    raw = JSON.parse(raw);
+    raw = JsonInText_extract(raw);
+    if (raw === undefined) {
+      throw new Error("The AI answer is not JSON.");
+    }
   }
   if (raw == null || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("The AI did not send a program.");

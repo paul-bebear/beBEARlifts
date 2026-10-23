@@ -1,5 +1,4 @@
-import { WorkoutReportCard } from "./workoutReportCard";
-import { JSX, useCallback } from "react";
+import { Fragment, JSX, useCallback, useEffect } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { IDispatch } from "../ducks/types";
@@ -31,6 +30,15 @@ import { WorkoutStoryCardSection } from "./workoutStoryCard";
 import { CloudBackupAfterWorkout } from "./cloudBackupAfterWorkout";
 import { FeedShareToggle } from "./feedShareToggle";
 import { BearFinishBanner } from "./bearFinishBanner";
+import {
+  FinishDayActions_hasFriends,
+  FinishDayActions_list,
+  FinishDayActions_saveReport,
+  IFinishDayAction,
+} from "../models/finishDayActions";
+import { FriendsClient_load, FriendsStore } from "../utils/friendsClient";
+import { CloudStore } from "../utils/supabaseClient";
+import { ReportStore } from "../utils/reportStore";
 
 interface IProps {
   history: IHistoryRecord[];
@@ -44,9 +52,22 @@ interface IProps {
 }
 
 export function ScreenFinishDay(props: IProps): JSX.Element {
+  const userId = CloudStore.use().session?.userId;
+  const friends = FriendsStore.use();
+  const isOfflineBuild = OfflineOnly_isEnabled();
+  useEffect(() => {
+    if (isOfflineBuild && userId != null) {
+      FriendsClient_load().catch(() => undefined);
+    }
+  }, [isOfflineBuild, userId]);
   const recordById =
     props.historyRecordId != null ? props.history.find((h) => h.id === props.historyRecordId) : undefined;
   const record = recordById ?? props.history[0];
+  useEffect(() => {
+    ReportStore.update((log) =>
+      FinishDayActions_saveReport(log, record, props.history, props.settings, isOfflineBuild)
+    ).catch(() => undefined);
+  }, [record?.id, isOfflineBuild]);
 
   const { dispatch } = props;
   const onClose = useCallback((): boolean => {
@@ -83,103 +104,100 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
   }, []);
   muscleGroups.sort((a, b) => b[1] - a[1]);
   const muscleGroupsGrouped = CollectionUtils_splitIntoNGroups(muscleGroups, 2);
+  const actions = FinishDayActions_list({
+    hasFriends: FinishDayActions_hasFriends(friends, userId),
+    isOfflineBuild,
+    exportAvailable: true,
+    hasExercises: startedEntries.length > 0,
+  });
+
+  const blocks: Record<IFinishDayAction, JSX.Element> = {
+    cloudBackup: <CloudBackupAfterWorkout dispatch={props.dispatch} />,
+    bear: <BearFinishBanner record={record} />,
+    workout: (
+      <View className="items-center px-gutter pb-2">
+        <Text className="text-sm text-text-secondary">{record.programName}</Text>
+        <Text className="text-base">{record.dayName}</Text>
+      </View>
+    ),
+    share: (
+      <WorkoutStoryCardSection record={record} history={props.history} settings={props.settings} stats={props.stats} />
+    ),
+    feedShare: <FeedShareToggle record={record} history={props.history} settings={props.settings} />,
+    totals: (
+      <View className="px-4 pt-2 pb-3 rounded-lg bg-background-purpledark" testID="totals-summary">
+        <GroupHeader name="Totals" />
+        <View className="flex-row gap-2">
+          <View className="flex-1">
+            <Text className="text-sm">
+              <Text className="mr-1">🕐</Text> Time:{" "}
+              <Text className="font-bold">{TimeUtils_formatHHMM(History_workoutTime(record))} h</Text>
+            </Text>
+            <Text className="text-sm">
+              <Text className="mr-1">🏋</Text> Volume: <Text className="font-bold">{Weight_display(totalWeight)}</Text>
+            </Text>
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm">
+              <Text className="mr-1">💪</Text> Sets: <Text className="font-bold">{totalSets}</Text>
+            </Text>
+            <Text className="text-sm">
+              <Text className="mr-1">🔄</Text> Reps: <Text className="font-bold">{totalReps}</Text>
+            </Text>
+          </View>
+        </View>
+      </View>
+    ),
+    exercises: (
+      <View className="px-4 py-2 mt-2 rounded-lg bg-background-purpledark" testID="completed-exercises">
+        <GroupHeader name="Exercises" />
+        {startedEntries.map((entry, i) => {
+          return (
+            <HistoryEntryView
+              key={`${entry.exercise.id}_${entry.exercise.equipment}`}
+              showNotes={false}
+              entry={entry}
+              isNext={false}
+              isLast={i === startedEntries.length - 1}
+              settings={props.settings}
+            />
+          );
+        })}
+      </View>
+    ),
+    muscleGroups: (
+      <View className="px-4 py-2 mt-2 rounded-lg bg-background-purpledark" testID="sets-per-muscle-group">
+        <GroupHeader name="Sets per muscle group" />
+        <View className="flex-row gap-4">
+          {muscleGroupsGrouped.map((group, gi) => {
+            return (
+              <View key={gi} className="flex-1">
+                {group.map(([mg, value]) => {
+                  return (
+                    <Text key={mg} className="text-sm">
+                      {Muscle_getMuscleGroupName(mg, props.settings)}: <Text className="font-bold">{n(value)}</Text>
+                    </Text>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    ),
+    personalRecords: (
+      <View className="px-gutter py-4 mt-4">
+        <PersonalRecords prs={allPrs} historyRecords={[record]} settings={props.settings} />
+      </View>
+    ),
+  };
 
   return (
     <>
-      {OfflineOnly_isEnabled() && <CloudBackupAfterWorkout dispatch={props.dispatch} />}
       <View className="px-gutter pb-6">
-        <BearFinishBanner record={record} />
-        <View className="items-center px-gutter pb-2">
-          <Text className="text-sm text-text-secondary">{record.programName}</Text>
-          <Text className="text-base">{record.dayName}</Text>
-        </View>
-        {OfflineOnly_isEnabled() && (
-          <WorkoutStoryCardSection
-            record={record}
-            history={props.history}
-            settings={props.settings}
-            stats={props.stats}
-            musicEnabled={true}
-            onMusic={() => props.dispatch(Thunk_pushScreen("music"))}
-          />
-        )}
-        {OfflineOnly_isEnabled() && (
-          <FeedShareToggle record={record} history={props.history} settings={props.settings} />
-        )}
-        <View className="h-2" />
-        <View className="px-4 pt-2 pb-3 rounded-lg bg-background-purpledark" testID="totals-summary">
-          <GroupHeader name="Totals" />
-          <View className="flex-row gap-2">
-            <View className="flex-1">
-              <Text className="text-sm">
-                <Text className="mr-1">🕐</Text> Time:{" "}
-                <Text className="font-bold">{TimeUtils_formatHHMM(History_workoutTime(record))} h</Text>
-              </Text>
-              <Text className="text-sm">
-                <Text className="mr-1">🏋</Text> Volume:{" "}
-                <Text className="font-bold">{Weight_display(totalWeight)}</Text>
-              </Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-sm">
-                <Text className="mr-1">💪</Text> Sets: <Text className="font-bold">{totalSets}</Text>
-              </Text>
-              <Text className="text-sm">
-                <Text className="mr-1">🔄</Text> Reps: <Text className="font-bold">{totalReps}</Text>
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {startedEntries.length > 0 && (
-          <View className="px-4 py-2 mt-2 rounded-lg bg-background-purpledark" testID="completed-exercises">
-            <GroupHeader name="Exercises" />
-            {startedEntries.map((entry, i) => {
-              return (
-                <HistoryEntryView
-                  key={`${entry.exercise.id}_${entry.exercise.equipment}`}
-                  showNotes={false}
-                  entry={entry}
-                  isNext={false}
-                  isLast={i === startedEntries.length - 1}
-                  settings={props.settings}
-                />
-              );
-            })}
-          </View>
-        )}
-
-        <View className="px-4 py-2 mt-2 rounded-lg bg-background-purpledark" testID="sets-per-muscle-group">
-          <GroupHeader name="Sets per muscle group" />
-          <View className="flex-row gap-4">
-            {muscleGroupsGrouped.map((group, gi) => {
-              return (
-                <View key={gi} className="flex-1">
-                  {group.map(([mg, value]) => {
-                    return (
-                      <Text key={mg} className="text-sm">
-                        {Muscle_getMuscleGroupName(mg, props.settings)}: <Text className="font-bold">{n(value)}</Text>
-                      </Text>
-                    );
-                  })}
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        <View className="px-gutter py-4 mt-4">
-          <PersonalRecords prs={allPrs} historyRecords={[record]} settings={props.settings} />
-        </View>
-
-        {OfflineOnly_isEnabled() && (
-          <WorkoutReportCard
-            record={record}
-            history={props.history}
-            settings={props.settings}
-            dispatch={props.dispatch}
-          />
-        )}
+        {actions.map((action) => (
+          <Fragment key={action}>{blocks[action]}</Fragment>
+        ))}
       </View>
       <Confetti />
     </>

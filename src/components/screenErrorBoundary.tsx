@@ -18,13 +18,14 @@ interface IProps {
 
 interface IState {
   hasError: boolean;
+  message?: string;
 }
 
 export class ScreenErrorBoundary extends Component<IProps, IState> {
   public state: IState = { hasError: false };
 
-  public static getDerivedStateFromError(): IState {
-    return { hasError: true };
+  public static getDerivedStateFromError(error: unknown): IState {
+    return { hasError: true, message: error instanceof Error ? error.message : String(error) };
   }
 
   public componentDidCatch(error: Error, info: ErrorInfo): void {
@@ -89,6 +90,11 @@ export class ScreenErrorBoundary extends Component<IProps, IState> {
               </Pressable>
             )}
           </View>
+          {this.state.message != null && (
+            <Text selectable testID="screen-error-message" className="pt-6 text-xs text-center text-text-secondary">
+              {this.props.screenName}: {this.state.message}
+            </Text>
+          )}
         </View>
       );
     }

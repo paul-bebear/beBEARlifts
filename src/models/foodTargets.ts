@@ -1,9 +1,11 @@
 import type { IFoodGoals, IFoodRange } from "./foodLog";
 import type { IUnit, IWeight } from "../types";
+import { ISeason, Season_for, Season_lastDay, Season_names, Season_parse } from "./season";
 
 export type IFoodSex = "male" | "female";
 export type IFoodActivity = "sedentary" | "light" | "moderate" | "active" | "veryActive";
 export type IFoodGoalKind = "lose" | "maintain" | "gain";
+export type IFoodAim = IFoodGoalKind | ISeason;
 export type IFoodHeightUnit = "cm" | "ftin";
 export type IFoodTargetsStep = "body" | "activity" | "goal" | "result";
 
@@ -14,6 +16,9 @@ export interface IFoodProfile {
   birthYear?: number;
   activity: IFoodActivity;
   goal: IFoodGoalKind;
+  seasons?: boolean;
+  south?: boolean;
+  lastSeason?: ISeason;
 }
 
 export interface IFoodTargetsForm {
@@ -27,6 +32,8 @@ export interface IFoodTargetsForm {
   age: string;
   activity: IFoodActivity;
   goal: IFoodGoalKind;
+  seasons?: boolean;
+  south?: boolean;
 }
 
 export interface IFoodTargetsFlow {
@@ -43,7 +50,9 @@ export interface IFoodBody {
 
 export interface IFoodTargetsResult {
   maintenance: number;
+  target: number;
   isFloored: boolean;
+  isDeficitBlocked: boolean;
   goals: IFoodGoals;
 }
 
@@ -63,7 +72,20 @@ export const FoodTargets_goals: { key: IFoodGoalKind; label: string; detail: str
   { key: "gain", label: "Gain weight", detail: "About 10% above maintenance, a lean bulk", factor: 1.1 },
 ];
 
+const aimGoals: Record<IFoodAim, IFoodGoalKind> = {
+  lose: "lose",
+  maintain: "maintain",
+  gain: "gain",
+  bulk: "gain",
+  lean: "lose",
+  summer: "maintain",
+};
+const bulkFactor = { adult: 1.15, teen: 1.1 };
+const adultAge = 18;
+const minDietBmi = 20;
+
 const steps: IFoodTargetsStep[] = ["body", "activity", "goal", "result"];
+const seasonSteps: IFoodTargetsStep[] = ["body", "activity", "result"];
 const kgPerLb = 0.45359237;
 const cmPerInch = 2.54;
 const calorieSpread = 100;
@@ -118,6 +140,16 @@ export function FoodTargets_parseProfile(raw: unknown): IFoodProfile {
   if (birthYear != null) {
     profile.birthYear = Math.round(birthYear);
   }
+  if (r.seasons === true) {
+    profile.seasons = true;
+  }
+  if (r.south === true) {
+    profile.south = true;
+  }
+  const lastSeason = Season_parse(r.lastSeason);
+  if (lastSeason != null) {
+    profile.lastSeason = lastSeason;
+  }
   return profile;
 }
 
@@ -153,6 +185,8 @@ export function FoodTargets_start(
       age: profile.birthYear == null ? "" : `${year - profile.birthYear}`,
       activity: profile.activity,
       goal: profile.goal,
+      seasons: !!profile.seasons,
+      south: !!profile.south,
     },
   };
 }
@@ -218,16 +252,22 @@ export function FoodTargets_setForm(flow: IFoodTargetsFlow, patch: Partial<IFood
   return { ...flow, form: { ...flow.form, ...patch } };
 }
 
+function stepsFor(form: IFoodTargetsForm): IFoodTargetsStep[] {
+  return form.seasons ? seasonSteps : steps;
+}
+
 export function FoodTargets_next(flow: IFoodTargetsFlow): IFoodTargetsFlow {
   if (flow.step === "body" && FoodTargets_parseBody(flow.form) == null) {
     return flow;
   }
-  return { ...flow, step: steps[Math.min(steps.indexOf(flow.step) + 1, steps.length - 1)] };
+  const order = stepsFor(flow.form);
+  return { ...flow, step: order[Math.min(order.indexOf(flow.step) + 1, order.length - 1)] };
 }
 
 export function FoodTargets_back(flow: IFoodTargetsFlow): IFoodTargetsFlow | undefined {
-  const index = steps.indexOf(flow.step);
-  return index === 0 ? undefined : { ...flow, step: steps[index - 1] };
+  const order = stepsFor(flow.form);
+  const index = order.indexOf(flow.step);
+  return index <= 0 ? undefined : { ...flow, step: order[index - 1] };
 }
 
 export function FoodTargets_pickActivity(flow: IFoodTargetsFlow, activity: IFoodActivity): IFoodTargetsFlow {
@@ -239,7 +279,29 @@ export function FoodTargets_pickGoal(flow: IFoodTargetsFlow, goal: IFoodGoalKind
 }
 
 export function FoodTargets_stepNumber(flow: IFoodTargetsFlow): { index: number; count: number } {
-  return { index: steps.indexOf(flow.step) + 1, count: steps.length };
+  const order = stepsFor(flow.form);
+  return { index: order.indexOf(flow.step) + 1, count: order.length };
+}
+
+export function FoodTargets_bmi(body: IFoodBody): number {
+  return body.weightKg / (body.heightCm / 100) ** 2;
+}
+
+export function FoodTargets_mayDiet(body: IFoodBody): boolean {
+  return body.age >= adultAge && FoodTargets_bmi(body) >= minDietBmi;
+}
+
+export function FoodTargets_aim(form: IFoodTargetsForm, today: Date): IFoodAim {
+  return form.seasons ? Season_for(today, !!form.south) : form.goal;
+}
+
+export function FoodTargets_factor(body: IFoodBody, aim: IFoodAim): { factor: number; isDeficitBlocked: boolean } {
+  if (aim === "bulk") {
+    return { factor: body.age >= adultAge ? bulkFactor.adult : bulkFactor.teen, isDeficitBlocked: false };
+  }
+  const factor = FoodTargets_goals.find((g) => g.key === aimGoals[aim])?.factor ?? 1;
+  const isDeficitBlocked = factor < 1 && !FoodTargets_mayDiet(body);
+  return { factor: isDeficitBlocked ? 1 : factor, isDeficitBlocked };
 }
 
 export function FoodTargets_maintenance(body: IFoodBody, activity: IFoodActivity): number {
@@ -252,10 +314,10 @@ function gramsRange(weightKg: number, perKg: { min: number; max: number }): IFoo
   return { min: roundTo(weightKg * perKg.min, 5), max: roundTo(weightKg * perKg.max, 5) };
 }
 
-export function FoodTargets_compute(body: IFoodBody, activity: IFoodActivity, goal: IFoodGoalKind): IFoodTargetsResult {
+export function FoodTargets_compute(body: IFoodBody, activity: IFoodActivity, aim: IFoodAim): IFoodTargetsResult {
   const maintenance = FoodTargets_maintenance(body, activity);
-  const factor = FoodTargets_goals.find((g) => g.key === goal)?.factor ?? 1;
-  return FoodTargets_fromCalories(body, maintenance, maintenance * factor);
+  const { factor, isDeficitBlocked } = FoodTargets_factor(body, aim);
+  return { ...FoodTargets_fromCalories(body, maintenance, maintenance * factor), isDeficitBlocked };
 }
 
 export function FoodTargets_fromCalories(
@@ -275,21 +337,45 @@ export function FoodTargets_fromCalories(
     min: Math.max(0, roundTo((calories.min - otherCalories) / 4, 5)),
     max: Math.max(0, roundTo((calories.max - otherCalories) / 4, 5)),
   };
-  return { maintenance: roundTo(maintenance, 10), isFloored: raw < floor, goals: { calories, protein, carbs, fat } };
+  return {
+    maintenance: roundTo(maintenance, 10),
+    target,
+    isFloored: raw < floor,
+    isDeficitBlocked: false,
+    goals: { calories, protein, carbs, fat },
+  };
 }
 
-export function FoodTargets_result(form: IFoodTargetsForm): IFoodTargetsResult | undefined {
+export function FoodTargets_result(form: IFoodTargetsForm, today: Date): IFoodTargetsResult | undefined {
   const body = FoodTargets_parseBody(form);
-  return body == null ? undefined : FoodTargets_compute(body, form.activity, form.goal);
+  return body == null ? undefined : FoodTargets_compute(body, form.activity, FoodTargets_aim(form, today));
 }
 
-export function FoodTargets_toProfile(form: IFoodTargetsForm, year: number): IFoodProfile {
+export function FoodTargets_resultNotes(form: IFoodTargetsForm, result: IFoodTargetsResult, today: Date): string[] {
+  const notes = [`Your maintenance is about ${result.maintenance} cal a day.`];
+  if (form.seasons) {
+    const season = Season_for(today, !!form.south);
+    notes.push(`${Season_names[season]} season until ${Season_lastDay(season, !!form.south)}.`);
+  }
+  if (result.isDeficitBlocked) {
+    notes.push("Under 18 or with a BMI under 20, the target stays at maintenance.");
+  }
+  if (result.isFloored) {
+    notes.push("The target stays at the usual minimum of 1200 cal for women and 1500 for men.");
+  }
+  return notes;
+}
+
+export function FoodTargets_toProfile(form: IFoodTargetsForm, today: Date): IFoodProfile {
   const body = FoodTargets_parseBody(form);
+  const year = today.getFullYear();
   return {
     activity: form.activity,
     goal: form.goal,
     heightUnit: form.heightUnit,
     ...(form.sex == null ? {} : { sex: form.sex }),
     ...(body == null ? {} : { heightCm: Math.round(body.heightCm * 10) / 10, birthYear: year - Math.round(body.age) }),
+    ...(form.seasons ? { seasons: true, lastSeason: Season_for(today, !!form.south) } : {}),
+    ...(form.south ? { south: true } : {}),
   };
 }

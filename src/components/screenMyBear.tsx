@@ -7,15 +7,11 @@ import { Thunk_pushScreen } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { IconCog2 } from "./icons/iconCog2";
-import { ProgressSections } from "./screenProgressDashboard";
-import { CheckInChart } from "./checkInChart";
+import { MyBearSections } from "./screenProgressDashboard";
 import { BearScene } from "./bearScene";
-import { BearTv } from "./bearTv";
 import { BearPanel } from "./bearPanel";
 import { useBear } from "../utils/useBear";
-import { useBearHoney } from "../utils/useBearHoney";
-import { useBadgeCelebration } from "../utils/useBearBadges";
-import { BadgeUnlockedSheet } from "./badgeUnlockedSheet";
+import { useFoodLog } from "../utils/foodLogStore";
 import { BearStore } from "../utils/bearStore";
 import { NotesStore } from "../utils/notesStore";
 import { BearBoard_tiles, IBearBoardTarget } from "../models/bearBoard";
@@ -25,15 +21,13 @@ import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 
 interface IMyBearLayoutProps {
   head: ReactNode;
-  checkIns?: ReactNode;
   children: ReactNode;
 }
 
-export function MyBearLayout(props: IMyBearLayoutProps): JSX.Element {
+function MyBearLayout(props: IMyBearLayoutProps): JSX.Element {
   return (
     <View testID="my-bear" data-testid="my-bear">
       {props.head}
-      {props.checkIns}
       {props.children}
     </View>
   );
@@ -59,7 +53,7 @@ function MyBearHead(): JSX.Element {
   const settings = untrack(tracked.storage.settings);
   const notes = NotesStore.use();
   const { state, plannedPerWeek } = useBear();
-  const honey = useBearHoney();
+  const foodLog = useFoodLog();
   const now = Date.now();
   const tiles = useMemo(
     () =>
@@ -68,22 +62,18 @@ function MyBearHead(): JSX.Element {
         workouts: state.workouts,
         stats,
         notes,
+        foodLog,
         units: settings.units,
         plannedPerWeek,
         weekStart: DateUtils_firstDayOfWeekTimestamp(now, settings.startWeekFromMonday),
         now,
       }),
-    [history, state, stats, notes, settings, plannedPerWeek]
+    [history, state, stats, notes, foodLog, settings, plannedPerWeek]
   );
   return (
     <View testID="my-bear-head" data-testid="my-bear-head" className="pt-2">
-      <BearScene
-        state={state}
-        tiles={tiles}
-        onTile={(tile) => openBoardTarget(dispatch, tile.target)}
-        tv={(box) => <BearTv box={box} />}
-      />
-      <BearPanel state={state} now={now} honey={honey.balance} todayHoney={honey.today} onLine={setLine} />
+      <BearScene state={state} tiles={tiles} onTile={(tile) => openBoardTarget(dispatch, tile.target)} />
+      <BearPanel state={state} now={now} onLine={setLine} />
     </View>
   );
 }
@@ -104,22 +94,11 @@ export function ScreenMyBear(): JSX.Element {
       </Pressable>,
     ],
   });
-  const celebration = useBadgeCelebration();
   return (
     <NavScreenContent>
-      <MyBearLayout head={<MyBearHead />} checkIns={<CheckInChart />}>
-        <ProgressSections />
+      <MyBearLayout head={<MyBearHead />}>
+        <MyBearSections />
       </MyBearLayout>
-      {celebration.badge != null && (
-        <BadgeUnlockedSheet
-          badge={celebration.badge}
-          onClose={() => celebration.dismiss(true)}
-          onViewAll={() => {
-            celebration.dismiss(false);
-            dispatch(Thunk_pushScreen("streak"));
-          }}
-        />
-      )}
     </NavScreenContent>
   );
 }

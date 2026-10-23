@@ -13,6 +13,8 @@ export function ForkServices_plan(
   universalLinks: boolean;
   ota: boolean;
   upstreamLogin: boolean;
+  appleSignIn: boolean;
+  googleSignIn: boolean;
 } {
   return {
     rollbar: !offline,
@@ -24,6 +26,8 @@ export function ForkServices_plan(
     universalLinks: !offline,
     ota: !offline,
     upstreamLogin: !offline,
+    appleSignIn: true,
+    googleSignIn: true,
   };
 }
 

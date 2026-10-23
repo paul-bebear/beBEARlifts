@@ -1,3 +1,5 @@
+import { Sha256_digest } from "./sha256";
+
 export interface ISpotifyTokens {
   accessToken: string;
   refreshToken: string;
@@ -6,7 +8,14 @@ export interface ISpotifyTokens {
 
 export type ISpotifyRedirect = { kind: "none" } | { kind: "code"; code: string } | { kind: "error"; message: string };
 
-export const SpotifyAuth_scopes = [
+export interface ISpotifyAuthSessionResult {
+  type: string;
+  url?: string;
+}
+
+export const SpotifyAuth_nativeRedirectUri = "bebear://spotify-callback";
+
+const SpotifyAuth_scopes = [
   "user-read-currently-playing",
   "user-read-playback-state",
   "user-read-recently-played",
@@ -63,6 +72,24 @@ export function SpotifyAuth_readRedirect(href: string, expectedState: string | u
     };
   }
   return { kind: "code", code: code! };
+}
+
+// Closing the login sheet is the user's choice, so it shows no error.
+export function SpotifyAuth_readAuthSession(
+  result: ISpotifyAuthSessionResult,
+  expectedState: string
+): ISpotifyRedirect {
+  if (result.type !== "success" || result.url == null) {
+    return { kind: "none" };
+  }
+  const redirect = SpotifyAuth_readRedirect(result.url, expectedState);
+  return redirect.kind === "none"
+    ? { kind: "error", message: "Spotify login came back without a code. Try again." }
+    : redirect;
+}
+
+export function SpotifyAuth_codeChallenge(verifier: string): string {
+  return SpotifyAuth_base64Url(Sha256_digest(new TextEncoder().encode(verifier)));
 }
 
 export function SpotifyAuth_cleanUrl(href: string): string {

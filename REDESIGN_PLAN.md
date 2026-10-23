@@ -10,6 +10,8 @@ The owner's addendum makes onboarding the first batch. The old first run asks tw
 
 The owner's sketch of 2026-10-22 (`IMG_4307.HEIC`) and answers set the tabs as Home, Journal and My bear, with the "+" at the right, put the friends feed behind a TV in the My bear tab, and fold Progress into My bear. The decided answers are listed at the top of Decisions for the owner.
 
+Release split, 2026-10-23: every batch is tagged V1 or V2. Release split: V1 and V2 holds the rule, the V1 total, the bug list and the watch notes.
+
 ## 1. Product frame
 
 - Who: lifters aged 16 to 23, skinny, who want muscle and weight the healthy way. No steroid look.
@@ -80,14 +82,15 @@ Today the footer hides itself while the live workout is on top (`isLiveWorkoutSc
 
 ### The flow
 
-Six screens from the invite link to the first workout. Screen 1 only exists in Safari. Screens 2 to 6 replace the chat in `onboardingChat.tsx`, built on batch J's version of it. Every screen has one button at the bottom and chips above it. No text field except the three numbers on screen 4.
+Seven screens from the invite link to the first workout. Screen 1 only exists in Safari. Screens 2 to 7 replace the chat in `onboardingChat.tsx`, built on batch J's version of it. Every screen has one button at the bottom and chips above it. No text field except the three numbers on screen 5.
 
 - Screen 1, Safari, "Add beBEAR to your Home Screen": the existing `InviteGuide` with the three steps, shown whenever the page is not standalone on an iPhone (U4 rule). Nothing else is reachable in the tab.
-- Screen 2, "Meet your bear": the cub, one line ("This is your bear. Train it, feed it, watch it grow."), then Sign in with Apple, Sign in with Google, "Use an email code" as a text link, and "Not now". The owner decided sign-in is built and skippable while testing. With an invite handle present, batch J's handle and name fields sit under the sign-in buttons, with the name prefilled from Apple or Google.
-- Screen 3, "Where do you train?": four chips with an icon each, Full gym, Only dumbbells, Street workout bars, No equipment. Multi-select. Nothing else.
-- Screen 4, "About you": experience as three chips (New, A few months, Years), then age, height and weight with the cm and ft-in chips from `foodTargetsCalculator.tsx` (U11), the unit defaulted from the phone locale, and an optional sex row.
-- Screen 5, "What do you want?": three chips, Size, Strength, Both, single-select, then one toggle row, "More agile". Two buttons: "Recommend a plan" in honey and "Import my own" as a text link. Import opens the existing screenshot and history import from `onboardingQuestions.tsx` and needs sign-in and AI consent; without them it shows one line, "Import needs sign-in", and the Recommend button stays.
-- Screen 6, "Your plan": up to three cards, 3 days, 4 days, 5 days, the recommended one first and marked "Best for you". Each card: name, days, about 45 minutes, one line on what the week looks like. Tap a card, see the days listed, tap Start. Start lands on Home with the cub at stage one and the next-workout card.
+- Screen 2, "Pick your bear": the cards under Pick your bear, below. Added 2026-10-23 by batch P1. Until P1 lands, the flow starts at screen 3 with the brown anthro male bear.
+- Screen 3, "Meet your bear": the picked cub, one line ("This is your bear. Train it, feed it, watch it grow."), then Sign in with Apple, Sign in with Google, "Use an email code" as a text link, and "Not now". The owner decided sign-in is built and skippable while testing. With an invite handle present, batch J's handle and name fields sit under the sign-in buttons, with the name prefilled from Apple or Google.
+- Screen 4, "Where do you train?": four chips with an icon each, Full gym, Only dumbbells, Street workout bars, No equipment. Multi-select. Nothing else.
+- Screen 5, "About you": experience as three chips (New, A few months, Years), then age, height and weight with the cm and ft-in chips from `foodTargetsCalculator.tsx` (U11), the unit defaulted from the phone locale, and an optional sex row.
+- Screen 6, "What do you want?": three chips, Size, Strength, Both, single-select, then one toggle row, "More agile". Two buttons: "Recommend a plan" in honey and "Import my own" as a text link. Import opens the existing screenshot and history import from `onboardingQuestions.tsx` and needs sign-in and AI consent; without them it shows one line, "Import needs sign-in", and the Recommend button stays.
+- Screen 7, "Your plan": up to three cards, 3 days, 4 days, 5 days, the recommended one first and marked "Best for you". Each card: name, days, about 45 minutes, one line on what the week looks like. Tap a card, see the days listed, tap Start. Start lands on Home with the cub at stage one and the next-workout card.
 
 The "days per week" and "minutes" questions go. The three cards are the days question. The minutes are fixed by the family: every session is 6 to 8 exercises, about 45 minutes.
 
@@ -96,7 +99,7 @@ The "days per week" and "minutes" questions go. The three cards are the days que
 Every rule lives in `src/models/onboardingAnswers.ts`, `src/models/bearPlanRecommend.ts` and `src/models/bearPlace.ts`, and in the prompt that `api/ai/onboard.mjs` sends for the import path.
 
 - Where you train: each pick adds an equipment pool. Full gym adds barbell, dumbbell, cable, leverageMachine, smith, ezbar, trapbar and kettlebell. Only dumbbells adds dumbbell. Street workout bars adds the pull-up bar and dip bar exercises (bodyweight equipment, bar-based). No equipment adds floor bodyweight only. Every pick includes floor bodyweight. The picks are a set, and the generator fills each slot from the first pool that has an exercise for it, in the order gym, dumbbells, street, floor. `BearPlace_equipmentKeys(places)` returns the key list, and the apply step keeps only those keys in the current gym's equipment map (`settings.gyms[].equipment`), with the default plate data from `Settings_defaultEquipment` for each kept key. The plan family uses only exercises with those equipments.
-- Experience: sets the recommended day count. New recommends 3 days, A few months 4, Years 5. It also sets the starting weights line on screen 6 ("Start light, the app adds weight when you hit the reps").
+- Experience: sets the recommended day count. New recommends 3 days, A few months 4, Years 5. It also sets the starting weights line on screen 7 ("Start light, the app adds weight when you hit the reps").
 - Size, Strength, Both: picks the set scheme of the family. Size is hypertrophy, Strength is strength, Both runs strength on the first lift of each day and hypertrophy on the rest. The goal card on My bear gets "Build muscle" for Size and Both, "Maintain" for Strength.
 - More agile: adds the agility block to every plan (see the family below).
 - Age: under 18 selects the youth variant of the family: no AMRAP sets, no sets under 5 reps, a 10 percent lighter progression step, and the recommended days capped at 3 for New. Age also sets `birthYear` for food targets, as today.
@@ -156,6 +159,17 @@ What replaces them: one-line tips at the moment of use, from a pure `FirstUseTip
 ## 4. The bear
 
 Every rule below is a pure function over data the app already stores: `storage.history`, the food log, `storage.stats`, the program's planned days, and `now`. No new store holds a stat. The only new store, `bebear_bear`, keeps "already celebrated" flags (stage-ups and badges shown), so a reinstall with a restored backup shows the same bear.
+
+### Pick your bear
+
+Added 2026-10-23. A tester found the human-shaped bear off-putting, so the user picks a bear line on first run. Batch P1 builds it.
+
+- One card per line, in a sideways swipe. Each card shows the level 1 cub on the left and the level 10 bear on the right, with an arrow between them. The card says where the bear starts and where it ends.
+- The first build has three lines: Chonk, a cartoon animal bear on four paws that gets round and muscular; Anthro, male; Anthro, female. Chonk has no gender and wears no clothes. Brown fur only. Black and polar fur arrive together in the next release, free for everyone.
+- More lines come later as more cards. A line ships only when all 10 levels are drawn for it.
+- Tap a card, then "This one". The pick is saved as `style` in `bebear_bear` through `src/utils/bearStore.ts`.
+- My bear gets a "Change bear" row. Changing keeps the level, the honey and the owned accessories. An accessory shows only on a line that has its slot, so Chonk shows no clothing items.
+- Art: B1 draws 30 level SVGs for one line. Each extra line is 30 more, so the first build is 90.
 
 ### Stats
 
@@ -250,6 +264,60 @@ Every gym day earns honey, and honey buys things the bear wears. The rules live 
 - A new badge opens a full-screen sheet with confetti (`Confetti` exists), the coin, "Badge unlocked", the name, Share your badge, View all badges, as in `6899eec2-7100-49c8-860c-c1ca863b8771.JPG`. Share reuses `shareCardExport.ts`.
 - `BadgeCelebration_next(badges, seen)` in a new `src/models/badgeCelebration.ts` picks which badge to show now, so the sheet never shows twice.
 
+### Winter Arc: The Big Hibernation
+
+Added 2026-10-23, from the Liftoff teardown in `docs/research/liftoff-in-app.md`. Liftoff's "Night of the Lifting Dead" had every user add to one counter for 9 days. beBEAR's version runs once, before the bears sleep for winter. Batch W1 builds it.
+
+- Window: 10 days, 2026-12-12 to 2026-12-21, ending on the winter solstice. Both days count, in the user's local time.
+- One counter for all users: the sum of counted kg from `BearGrowth_countedKg`, so the anti-cheat caps under Growth apply. One counted workout per day means at most 25,000 kg per user per day.
+- The goal is one thing from `src/models/bearComparison.ts`, shown as "Lift 8 blue whales together". The owner sets the goal kg a week before the start: signed-in users times 24,000 kg, which is 4 workouts of 6,000 kg each. With 50 users that is 1,200,000 kg.
+- Signed-out users see the counter and "Sign in to add your kg". Their workouts still grow their own bear.
+- Rewards, given at the end from local history and the final total: 1 counted workout in the window earns the "Winter Arc 2026" badge and a beanie, 3 counted workouts add a scarf, and a reached goal adds a puffer jacket for everyone who joined. Until B4's shop renders accessories, the three items show as coins in the badge grid.
+- Home shows a banner during the window: the bear in snow, the counter bar, "6 days left". A tap opens the event screen with the counter, the user's part ("You added 18,400 kg in 3 workouts"), the three rewards with their state, and the days left.
+- The finish screen adds one line in the window: "+3,100 kg to The Big Hibernation".
+- Server: a new table `season_events` (id, title, starts_on, ends_on, goal_kg) and `season_event_days` (event_id, user_id, day, counted_kg), one row per user per day, written by its owner with an upsert. Inserts check that `day` sits in the event window and that `counted_kg` is between 0 and 25,000. A `security definer` function `season_event_total(event_id)` returns the total kg and the number of users, callable by `anon` and `authenticated`. Nobody reads another user's rows.
+- The client upserts the day's row after each finish and again on app open in the window, so a workout logged offline still counts once the phone is online.
+- The event row lives in the database, so the goal and dates change without an app release. The app ships the same values as a fallback for offline display.
+- A later "Glute Week" for the female line can reuse the tables with a filter on hip thrusts, squats and RDLs. It needs a per-exercise count from `bearGrowth.ts`, which W1 does not add.
+
+### The Hibernation pass
+
+Liftoff sells streak restores. beBEAR's version is the bear sleeping through a missed day. It is bought with honey only, never with money. Batch W2 builds it.
+
+- Price: 25 honey, about a week of earning for a three-day lifter who logs food. A user holds at most 2 passes.
+- The pass is used without a tap. On app open, `HibernationPass_settle(store, doneDays, today)` looks at the days between the last streak day and today. Today is still open, so it never counts as missed.
+- When the user holds at least as many passes as missed days, each missed day becomes a covered day and one pass is spent per day. When there are more missed days than passes, nothing is spent and the streak breaks.
+- A pass is spent only on a streak of 3 days or more. A 1-day streak is not worth a week of honey.
+- A covered day counts as a streak day in `DailyChecklist_streak`, in the streak badges, and in the 7-day honey bonus run. It earns no honey of its own.
+- On the next open, a sheet shows the bear waking up: "Your bear hibernated yesterday. Streak saved: 12 days. 1 pass left." The Journal day shows the bear asleep.
+- `HibernationPass_settle` returns the next store and the covered days, so running it twice changes nothing. A workout logged later for a covered day keeps the day, and the pass stays spent.
+- The Streak screen shows the passes held and a "Buy a pass, 25 honey" row. The purchase adds to `spent` through `BearHoney_balance`.
+
+### Seasons: bulk in winter, lean out in summer
+
+Added 2026-10-23. The owner wants to bulk as much as possible this winter and finds it hard to eat enough. Batch W3 builds the food side now, and W4 adds the plan side after O1.
+
+- A "Follow the seasons" switch on the Targets screen in `foodTargetsCalculator.tsx`. Off by default. When it is on, the season sets the food goal and the goal step is hidden.
+- `Season_for(date, south)` in a new `src/models/season.ts` returns the season. Northern dates: Bulk from October 1 to March 31, Lean from April 1 to June 30, Summer from July 1 to September 30. A "South of the equator" switch moves every date by six months.
+- Bulk: 15 percent above maintenance at 18 and over, 10 percent under 18. The existing `gain` goal is 10 percent.
+- Lean: the existing `lose` goal, 20 percent below maintenance. Under 18, or with a BMI under 20, Lean uses `maintain`. A skinny teenager never gets a calorie deficit.
+- Summer: `maintain`.
+- On the first open in a new season, Home shows one card: "Bulk season is over. Lean season until June 30. New target: 2,450 kcal." One button, "OK".
+
+Eating help, in Bulk only:
+
+- From 18:00, when the day's kcal are under 70 percent of the target, Home shows a card: "Your bear is still hungry. 900 kcal left."
+- Under that line, up to three foods with a one-tap add, closest to the gap first: a shake (500 ml whole milk, 60 g oats, 2 tbsp peanut butter, a banana, about 850 kcal), 100 g mixed nuts (about 600 kcal), a peanut butter sandwich (about 350 kcal).
+- The card reads the same kcal target as the bear's hunger, so one meal answers both.
+- No push notification in version one. A local notification at 19:00 can come later.
+
+The plan side, after O1:
+
+- Bulk: the Strength scheme on the first lift of each day, as Both does, and the mobility block on the last day of the week.
+- Lean: the Size scheme, and the run block on two days a week.
+- Summer: the user's own goal, and the run block on two days a week.
+- On the first open in a new season, `BearPlan_text` runs again with a `season` parameter. The current weights must carry over to the new text. That is W4's design call.
+
 ### The TV, the friends feed
 
 The TV shows two kinds of post: lifts and meals, plus the songs kept during a workout. Notes never appear on it.
@@ -323,6 +391,27 @@ Sign-up stays open while testing, as the owner decided. The spending guard is th
 - beBEAR+ accounts: higher limits, 30 a day and 150 a week, for anyone the owner gives a code. A new table `pro_codes` (code, created_at, redeemed_by, redeemed_at) and a SQL function `redeem_pro_code(code)` that marks the code used and writes `plan = 'plus'` on the user's row in a new `account_plans` table. The owner makes codes by inserting rows in the Supabase dashboard. The app gets "Enter a code" in Settings → Cloud backup, and a "beBEAR+" line once redeemed.
 - `ai_usage_take` gains a `kind` argument (`capped`, `onboard`, `report`) and a seven-day window. It reads the caps for the user's plan from `account_plans` with the free defaults from `AI_DAILY_CAP`, `AI_WEEKLY_CAP`, `AI_PLUS_DAILY_CAP` and `AI_PLUS_WEEKLY_CAP` in Vercel, and returns both counts so the app can show "2 of 3 today, 7 of 10 this week".
 - A capped call answers 429 with the counts, and every AI button shows "Your 3 AI uses for today are used. More tomorrow." instead of the raw error. Barcode, search and USDA lookups are not AI and stay uncounted.
+
+### The beBEAR+ price ladder
+
+Added 2026-10-23. The prices are a first guess, to be tested. Tracking stays free, and the ladder prices only beBEAR+. Batch L1 builds it.
+
+- One auto-renewing monthly subscription at $7.
+- The counted workouts in one calendar month set the price of the next month. A counted workout follows the Growth rules: at least 10 minutes, one per day. A day covered by a Hibernation pass does not count.
+- The target is 4 workouts a week: `round(4 × days in the month / 7)`. That is 16 in February, 17 in a 30-day month and 18 in a 31-day month.
+- At the target or above, the next month costs $1. One to three workouts short, it costs $3. Otherwise it costs $7.
+- My bear shows the month so far: "14 of 17 workouts. 3 more for a $1 month."
+- On the 1st, a sheet says "You earned a $1 month" with one button, "Claim". Apple starts a promotional offer at the next renewal, and only after the user accepts it in the app. So the claim tap happens every month.
+
+How it works with Apple:
+
+- The $1 and $3 prices are two promotional offers on the $7 subscription in App Store Connect. Each one lasts one month, pay as you go.
+- Apple needs our server to sign each promotional offer. Upstream signs them in `lambda/utils/applePromotionalOfferSigner.ts`. That code moves to a new Vercel route, `api/billing/offer.mjs`.
+- The route signs an offer only after it counts last month's workouts on the server. After each finish, the phone writes one row per day to a new Supabase table `counted_days` (user_id, day, counted_kg). A signed-out user gets no discount.
+- `IIapApplePromoOffer` in `src/utils/iapAdapter.ts` already carries a signed offer into the purchase in `src/utils/iap.native.ts`.
+- App Store Server Notifications go to a new route, `api/billing/apple-notify.mjs`. It sets `plan = 'plus'` in R7's `account_plans` while the subscription is active. Upstream's version is `lambda/utils/appleWebhookHandler.ts`.
+
+Two things block L1. Anton has to reply about the App Store. The Paid Applications Agreement must be signed in App Store Connect. The app is signed with Victor's team (GKY9GR7VHG). The money goes to that team's bank account, unless the app moves to the owner's own developer account.
 
 ### Instagram
 
@@ -529,41 +618,218 @@ After. Friends management splits in two.
 
 Removed: the Friends tab, "You are victor @victor" as a line of prose, the three-button rows. With no friends yet, the Friends row on My bear reads "Add your first friend" and opens the "+" Friend sheet (U28).
 
-## 8. Build batches
+## 8. Release split: V1 and V2
+
+Decided 2026-10-23. The owner wants a polished V1 with a core set of features first, then V2.
+
+The rule.
+
+- V1 is five flows: log a workout, log food, the bear growing, sign-in, and simple onboarding.
+- A batch goes in V1 only when it fixes a bug or finishes one of those five flows.
+- Every other batch is V2. A new idea is V2 unless it passes the same test.
+- A batch already merged to master stays in V1, because its code is on the owner's iPhone today. In V1 it gets bug fixes only. New work on it waits for V2.
+- V1 ships when the bug list below is empty and S2 and T1 are built.
+
+Status is from master at cdcc2725 and the open pull requests on 2026-10-23.
+
+### The three layers
+
+Decided 2026-10-23, after testers said the app shows "way too much". The owner calls it fractal features. A new user sees three things. A curious user finds the rest by looking deeper.
+
+- Layer 1, the front: train, eat, the bear. Home, the "+" sheet, the workout screen, the finish screen, the Journal day and the top of My bear.
+- Layer 2, one tap in: the details of those three. Past workouts, macros per meal, the bear's level and the countdown to the next one, the program editor, weight history.
+- Layer 3, More: everything else, behind one "More" row on My bear.
+
+The rules.
+
+- A layer 1 screen shows no layer 3 feature. No tile, no row, no sheet, no badge pop-up, no red dot.
+- Layer 3 is hidden, never deleted. Its code and data stay, and honey and badges keep counting. V2 decides what comes back to the front, one feature at a time.
+- A layer 3 feature the user turns on may add one line to layer 1. In V1 only the bulk season does this, with the evening "your bear is still hungry" card.
+- Precision is a layer 1 rule. Every number on a layer 1 screen is right, or the user fixes it in one tap. A tester said food and workout apps "are not precise". Wrong plate maths, unwanted warm-ups and a food guess with no quick fix are V1 bugs.
+
+What moves behind More, screen by screen, checked against master at cdcc2725.
+
+The "+" sheet. `QuickActions_list` in `src/models/quickActions.ts` returns four squares and the workout bar.
+
+- Stays: Food, Weight, and the wide Start workout bar.
+- Moves: Note, to More → Notes. A day that has notes still shows them in the Journal.
+- Moves: Friend, to More → Friends.
+- Moves: the Run button inside the workout bar, to More → Runs.
+
+My bear. `screenMyBear.tsx` renders `BearScene` with the whiteboard tiles and the TV, then `BearPanel`, the goal card and the All stats row.
+
+- Stays: the bear, its status line, the level bar with the countdown to the next level, the goal card.
+- Moves: the TV, which is the friends feed, to More → Friends.
+- Moves: the honey pill in `BearPanel` and its `HoneySheet`, to More → Honey and badges.
+- Moves: `BadgeUnlockedSheet`, the pop-up when a badge unlocks. Badges still unlock, and More → Honey and badges lists them. The level-up card on the finish screen stays, because levels are the bear.
+- Changes: the whiteboard tiles from `BearBoard_tiles` in `src/models/bearBoard.ts`. "Workouts this week" and "weight" stay. "Per workout, 30 d" and "energy, 7 d" move to More. A new tile shows today's kcal and protein against the target and opens the Journal.
+- Renamed: the "All stats" row becomes "More".
+
+The Journal day. `screenJournal.tsx` renders check-in, workouts, meals, songs, weight and notes. Since S4 an empty section shows as one row.
+
+- Stays: workouts, meals, weight.
+- Hidden when empty: check-in, songs, notes. A day with a note shows its Notes section. A day without one shows no Notes row. The rule goes in `JournalDay_sectionFold` in `src/models/journalDay.ts`.
+
+The finish screen. `screenFinishDay.tsx` renders the bear banner, the story card pager, the share-with-friends toggle, totals, exercises, sets per muscle group, personal records and the AI report card.
+
+- Stays: the bear banner with the kg added and the level-up card, totals, exercises, sets per muscle group, personal records.
+- Moves: the honey part of `BearText_finishLine`. The line keeps the kg and the level.
+- Changes: the story card pager, `WorkoutStoryCardSection`, becomes one Share button that shares the first card. The music button on the cards goes. More → Workout music keeps the songs.
+- Moves: `FeedShareToggle`. It shows only when the user has at least one friend.
+- Moves: `WorkoutReportCard`, the AI report. It opens from the workout record in the Journal and from More → Workout reports.
+
+Home and the workout screen. Both are layer 1 already. S2 left Home with the bear head, the week dots, the three checklist chips, today's workout card and the History link. Neither changes in T1.
+
+More. `ReportsHub_rows` in `src/models/reportsHub.ts` builds it, in two groups.
+
+- Your numbers, layer 2: weight, nutrition, workout consistency with week insights, graphs, exercise stats.
+- Extras, layer 3: Friends (the feed, the list, Add a friend), Honey and badges, Notes, Check-ins with the chart, Workout music, Runs, Workout reports, Body measurements, Body composition, Steps, Progress photos, and Seasons once PR 117 merges.
+
+Settings stays behind the gear on My bear.
+
+T1, three layers. V1. 11 hours. Codex can build it from this section.
+
+- A new `src/models/featureLayer.ts` with `FeatureLayer_of`, which returns 1, 2 or 3 for each feature. V2 moves a feature to the front by changing one line there. 1 hour.
+- `src/models/quickActions.ts`: two squares and the workout bar, no Run. 1 hour.
+- `src/models/bearBoard.ts`: the tile set and the new food tile. `screenMyBear.tsx` and `bearPanel.tsx` drop the TV, the honey pill and the badge sheet. 3 hours.
+- `src/models/journalDay.ts`: hide empty check-in, songs and notes. 1 hour.
+- `src/models/reportsHub.ts`: the two groups and the new rows. 3 hours.
+- `src/models/finishDayActions.ts`: the finish screen list, with the friend check for the share toggle. 2 hours.
+- Each module has its test in `test/`, and all but `featureLayer.ts` have one today.
+- T1 shares no file with PR 121, the gym-session bug fixes, so the two run side by side.
+
+### V1
+
+Built and merged.
+
+- J, invite, onboarding and friends: PR 58. 20 hours, the estimate in `REVIEW-2026-10.md`.
+- K, code health and styling: PRs 92, 93 and 96. 30 hours, the estimate in `REVIEW-2026-10.md`.
+- O1, the plan family: PR 63. 16 hours.
+- O2, the first-run screens: PR 61. 14 hours.
+- R1, the finish screen cut: PR 65. 3 hours.
+- R2, the tab bar, the "+" sheet and the workout exit: PR 69. 14 hours.
+- R3, Home, and Progress folded into My bear: PR 66. 7 hours.
+- R4, camera-first Food: PR 67. 10 hours.
+- R5, dinosaurs out: PR 71. 3 hours.
+- R6, the Journal: PR 74. 16 hours. The meals section lives in the Journal day, so logging food needs it.
+- R7, AI caps: PR 68. 6 hours. The caps keep AI food logging safe while sign-up stays open.
+- S1, Sign in with Apple and Google on the web: PR 70. 10 hours.
+- S3, the theme and Liquid Glass: PR 75. 8 hours.
+- B1, the bear core: PRs 73 and 80. 22 hours. Its "Name your bear" sheet and the Journal day bear wait in PR 103.
+- B2, streaks and badges: PR 83. 8 hours.
+- B3, the TV feed: PR 84. 10 hours. Friends sit outside the five flows, so V1 fixes its bugs and adds nothing.
+- B4, honey: PR 85 built the earning rules and the balance. All 9 hours count here. The shop half is V2.
+
+Built, waiting to merge.
+
+- W3, seasons, the food side: PR 117. 8 hours. Seasons are a new feature, but W3 also fixes a bug for the target users. Before it, the manual "Lose weight" goal gave a calorie deficit to anyone. W3 stops any deficit under 18 or with a BMI under 20. The owner also bulks this winter, and the switch stays off for everyone else.
+- B1's last part: PR 103, "Name your bear" and the small bear on the Journal day.
+- Merged outside the batch list: PR 116 fixes the scan Add button on iPhone. PRs 112, 113, 115 and 123 are the simplify passes S1 to S4 in `SIMPLIFY_PLAN.md`. They give food, workouts and weight one way in through the "+" sheet, and fit Home, My bear and the Journal on one screen.
+
+Not built.
+
+- S2, sign-in in the native build. 6 hours. The owner uses only the iPhone app, and Apple and Google sign-in exist only on the web today. The team ID S2 waited for is known: Victor's team, GKY9GR7VHG.
+- T1, the three layers. 11 hours, specified in The three layers.
+- The bugs below.
+
+V1 total: 231 hours of batch estimates. 181 come from this plan and 50 from review batches J and K. 214 hours are built. S2's 6 hours and T1's 11 hours are left, plus the bugs.
+
+### Bugs found 2026-10-23
+
+The owner found these on the iPhone on 2026-10-23. Each is a V1 item.
+
+- The workout card freezes. A fix session started on 2026-10-23 and is looking for the cause. No estimate until the cause is known.
+- Spotify does not connect in the iOS app. A second fix session started on 2026-10-23. The Spotify app registers one redirect URI, `https://lifts.paulbebear.com/app/`, which is a web address. No estimate until that session reports.
+- Add photo opens only the photo library. `src/components/workoutStoryCard.tsx` and `src/components/runShareCard.tsx` call `ProgressPhotoPick_pick("photo-library")`. `src/components/screenProgressPhotos.tsx` already offers Camera and Library. 1 hour if the share cards reuse that choice.
+- The T-bar row has no barbell version and no picture. `tBarRow` in `src/models/exercise.ts` has only `leverageMachine` as its equipment. `src/models/freeExerciseDbImages.ts` maps only `tbarrow_leveragemachine`, to a lying machine row. 1 hour if free-exercise-db has a photo of the standing barbell row.
+- Plate rounding is wrong on dumbbells and cables. Rounding runs through `Weight_round` and `Weight_calculatePlates` in `src/models/weight.ts`, with the equipment data O2 copies from `Settings_defaultEquipment`. The cause is not checked yet. 2 hours if the default dumbbell and cable data are wrong, 4 hours if the rounding code is.
+- Isolation lifts get warm-up sets after a lift that trained the same muscle. The fix is a rule in a pure module with a mocha test. It skips warm-ups when an earlier lift that day shares a target muscle. `src/models/exercise.ts` already lists `targetMuscles` for every exercise. 3 hours if one function builds the warm-up sets.
+
+### V2
+
+- B4's shop half, honey outfits and share rewards: PR 105, built. It merges after V1 ships, with no code hours left.
+- W2, the Hibernation pass: 8 hours. PR 110 holds a build, not reviewed in this plan.
+- W1, The Big Hibernation: 14 hours.
+- W4, seasons, the plan side: 6 hours.
+- P1, the bear picker: 8 hours, plus 60 level drawings for Chonk and Anthro female. V1 ships with the brown anthro male bear.
+- L1, the price ladder: 24 hours, or 32 if the App Store Server API version differs. Blocked on Anton and the Paid Applications Agreement.
+- PR 111, exercise demos for the 5-day plan and cookbook recipe cards.
+- The Apple Watch ideas, below.
+
+V2 total: 60 hours of batch estimates, or 68 with L1 at 32 hours. The watch work has no estimate yet.
+
+### Winter Arc moves to next winter
+
+W1 and W2 move to V2 and to the winter of 2027. They are 22 hours, and W2 already has a build in PR 110. So they would fit before 2026-12-05 by hours. They fail the V1 rule, because a shared event and a streak saver finish none of the five flows. The six weeks to 2026-12-05 go to the bug list and S2 first. The event dates live in the `season_events` row, so next winter needs no new design.
+
+### The Apple Watch, in V2
+
+The owner has three watch ideas, all V2. A heart-rate breakdown per exercise after a workout. Awards for heart-rate recovery. The rest timer on the watch.
+
+What upstream already ships in `ios/LiftosaurWatch`.
+
+- `Views/RestTimerScreen.swift` shows the rest timer on the watch, from a `WatchRestTimer` value.
+- `Views/HeartRateView.swift` shows the live heart rate. `Engine/HealthKitManager.swift` reads it from HealthKit during a workout and saves the workout to Health.
+- `ios/Liftosaur/LiftosaurWorkoutMirroringImpl.swift` mirrors the watch workout to the phone.
+- `ContentView.swift` shows `PremiumRequiredScreen` when `workoutManager.hasSubscription` is false. Nobody has checked whether the fork's build passes that check.
+- `Engine/WatchCacheManager.swift` runs the JS bundle shipped inside the app when it has no newer one. The fork stopped using Liftosaur's servers in ad42f5c5, so no newer bundle arrives from liftosaur.com.
+- `scripts/ios-signing.ts` already signs the `LiftosaurWatch` and `LiftosaurWatchComplication` targets with Victor's team.
+
+What V2 adds.
+
+- The rest timer: the screen exists, so the work is getting the watch app to run in the fork. The first step is one device test.
+- The heart-rate breakdown: each completed set has a `timestamp`. `SongPerSet_match` in `src/models/songPerSet.ts` already matches sets to time windows. The same match gives each set and exercise its heart-rate samples.
+- Recovery awards: how many beats the heart rate drops in the 60 seconds after a set. It reads the same samples, and the awards join `src/models/bearBadges.ts`.
+
+## 9. Build batches
 
 Every batch names its goal, findings, files, pure modules with tests, who builds it, hours, and what it can run beside. "Codex" means the batch is fully specified here. "Opus" means it holds design calls. A batch runs beside another when they share no file. The order follows the owner: onboarding first, then cut buttons and dead ends, then sign-in, then the bear.
 
 Group 1, after batch J lands. Onboarding.
 
-- O1, the plan family. Opus, with `.claude/commands/write-program.md` steps 2 and 3 and `.claude/skills/liftoscript/SKILL.md`. 16 hours of code plus 2 hours of the owner reading the three gym plans. Addendum items "Program choice" and "One family". Files: new `src/models/bearPlan.ts`, new `src/models/bearPlanSlots.ts`, new `src/models/bearPlace.ts`, new `src/models/bearPlanRecommend.ts`, new `scripts/build-bear-plans.ts`, `programs/builtin/bebear-ulppl.md` (regenerated), new `programs/builtin/bebear-3day.md` and `bebear-4day.md`, `package.json` (a `build:bear-plans` script that runs before `build:programs`), new `test/bearPlan.test.ts`, new `test/bearPlace.test.ts`, new `test/bearPlanRecommend.test.ts`, the 27 golden files under `test/fixtures/bearPlan/`. The module contract for O2: `BearPlan_text(params): string`, `BearPlan_recommend(answers): IBearPlanCard[]` with the recommended card first, `BearPlace_resolve(places): "gym" | "home" | "street"`, `BearPlace_equipmentKeys(place): IEquipment[]`. Runs beside O2.
-- O2, the first-run screens. Opus. 14 hours. Addendum items "Equipment" and "Questions", the owner's walkthrough note, U11, U16, U32. Files: `src/components/onboardingChat.tsx` (becomes a six-screen flow), `src/components/onboardingQuestions.tsx` (keeps only the import fields), new `src/components/onboardingWelcome.tsx` with a slot for sign-in buttons, new `src/components/onboardingPlanCards.tsx`, `src/models/onboarding.ts` (steps: welcome, place, about, want, plan), `src/models/onboardingAnswers.ts` (places as a set, goal as size, strength or both, agile flag, youth rule, no days or minutes), `src/utils/onboardingCommand.ts` (recommend path through `BearPlan_text`, equipment apply through `Equipment_mergeEquipment`, goal card fill, delete the `OnboardingPicker_pick` fallback), `src/models/onboardingPicker.ts` (deleted with its test), `src/models/onboardingProgram.ts` (name from the card), `api/ai/onboard.mjs` and `llms/program_builder_prompt.md` (place and goal in the import prompt), `src/components/tour/workoutTourConfig.tsx` and `programTourConfig.tsx` (`shouldStart`), new `src/models/firstUseTips.ts` and `src/components/tipBar.tsx`, tests `test/onboarding.test.ts`, `test/onboardingAnswers.test.ts`, new `test/firstUseTips.test.ts`. Until O1 lands, O2 builds against the contract above with a stub that returns one fixed plan. Design calls: the chip screens, the welcome screen, the plan cards. Runs beside O1.
+- O1, the plan family. V1, built in PR 63. Opus, with `.claude/commands/write-program.md` steps 2 and 3 and `.claude/skills/liftoscript/SKILL.md`. 16 hours of code plus 2 hours of the owner reading the three gym plans. Addendum items "Program choice" and "One family". Files: new `src/models/bearPlan.ts`, new `src/models/bearPlanSlots.ts`, new `src/models/bearPlace.ts`, new `src/models/bearPlanRecommend.ts`, new `scripts/build-bear-plans.ts`, `programs/builtin/bebear-ulppl.md` (regenerated), new `programs/builtin/bebear-3day.md` and `bebear-4day.md`, `package.json` (a `build:bear-plans` script that runs before `build:programs`), new `test/bearPlan.test.ts`, new `test/bearPlace.test.ts`, new `test/bearPlanRecommend.test.ts`, the 27 golden files under `test/fixtures/bearPlan/`. The module contract for O2: `BearPlan_text(params): string`, `BearPlan_recommend(answers): IBearPlanCard[]` with the recommended card first, `BearPlace_resolve(places): "gym" | "home" | "street"`, `BearPlace_equipmentKeys(place): IEquipment[]`. Runs beside O2.
+- O2, the first-run screens. V1, built in PR 61. Opus. 14 hours. Addendum items "Equipment" and "Questions", the owner's walkthrough note, U11, U16, U32. Files: `src/components/onboardingChat.tsx` (becomes a six-screen flow), `src/components/onboardingQuestions.tsx` (keeps only the import fields), new `src/components/onboardingWelcome.tsx` with a slot for sign-in buttons, new `src/components/onboardingPlanCards.tsx`, `src/models/onboarding.ts` (steps: welcome, place, about, want, plan), `src/models/onboardingAnswers.ts` (places as a set, goal as size, strength or both, agile flag, youth rule, no days or minutes), `src/utils/onboardingCommand.ts` (recommend path through `BearPlan_text`, equipment apply through `Equipment_mergeEquipment`, goal card fill, delete the `OnboardingPicker_pick` fallback), `src/models/onboardingPicker.ts` (deleted with its test), `src/models/onboardingProgram.ts` (name from the card), `api/ai/onboard.mjs` and `llms/program_builder_prompt.md` (place and goal in the import prompt), `src/components/tour/workoutTourConfig.tsx` and `programTourConfig.tsx` (`shouldStart`), new `src/models/firstUseTips.ts` and `src/components/tipBar.tsx`, tests `test/onboarding.test.ts`, `test/onboardingAnswers.test.ts`, new `test/firstUseTips.test.ts`. Until O1 lands, O2 builds against the contract above with a stub that returns one fixed plan. Design calls: the chip screens, the welcome screen, the plan cards. Runs beside O1.
 
 Group 2, after group 1. Cut buttons and dead ends.
 
-- R1, finish screen cut. Codex. 3 hours. Owner's finish-screen notes, U15. Files: `src/components/screenFinishDay.tsx`, new `src/models/finishDayActions.ts`, new `test/finishDayActions.test.ts`. Lands after review batch I, which also edits the finish screen, or the builder takes batch I's finish-screen hunks too. Swaps `dinohappy.svg` for a bear placeholder, which R5 leaves alone. Runs beside R2, R3, R4.
-- R2, tab bar, "+" sheet, workout exit. Opus. 14 hours. Owner's sketch, the notes on the middle tab, the "+", and leaving a workout, plus U34. Files: `src/components/footer2.tsx`, new `src/components/plusSheet.tsx`, new `src/components/addFriendSheet.tsx` (the Add a friend part of `friendsPeople.tsx`, moved), new `src/models/quickActions.ts` and `test/quickActions.test.ts`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/components/screenWorkout.tsx` (the nav left button), `src/components/workoutMenu.tsx` and `src/utils/workoutMenuActions.ts` (hide Show Tour offline, rename Delete), `src/navigation/AppNavigator.tsx` and `AppNavigator.native.tsx` (register the sheets as modals, the My bear placeholder on the `friends` stack). Until B1 lands, the My bear tab shows the old Friends screen under the new name. Design calls: the sheet's look, the Resume state. Runs beside R1, R3, R4.
-- R3, Home, and Progress folded into My bear. Codex. 7 hours. Owner's calendar note and sketch, U23, U25. Files: `src/components/screenProgressDashboard.tsx` (drop `ProgressCalendarHeader` and the person icon, add `WeekInsights`, export the body as `ProgressSections` for `screenMyBear.tsx`), new `src/components/screenMyBear.tsx` as a thin shell that renders `ProgressSections` until B1 fills the top, `src/navigation/AppNavigator.tsx` and `.native.tsx` (My bear as the `graphs` root), `src/components/programHistory.tsx` (bear head placeholder, seven dots and day pill in the header, drop `WeekCalendar`, the Run button and `WeekInsights`), new `src/models/weekDots.ts` and `test/weekDots.test.ts`, `src/components/homeChecklist.tsx`, `src/components/dailyChecklistCard.tsx`, `src/models/dailyChecklist.ts` (weekly weigh-in, new titles), new `src/models/todayPill.ts` and `test/todayPill.test.ts` (the "Legs!" text), `test/dailyChecklist.test.ts`. Runs beside R1, R2, R4.
-- R4, Food: camera-first "+" flow and the Ami meals section. Codex. 10 hours. Owner's sketch and food note. Files: `src/components/screenFood.tsx` (becomes `journalMeals.tsx`, a section), `src/components/foodDescribePanel.tsx`, `src/components/screenFoodAdd.tsx` (camera first, the Barcode and AI scan toggle, the serving-size step), `src/components/foodSummaryCard.tsx`, new `src/models/foodDescribeEstimate.ts`, new `src/models/foodScanSteps.ts`, new `src/models/foodMealForTime.ts`, new `test/foodDescribeEstimate.test.ts`, new `test/foodScanSteps.test.ts`, new `test/foodMealForTime.test.ts`. The "Share with friends" switch is drawn but disabled until B3. Lands after review batch F, which edits the same food files. Runs beside R1, R2, R3.
-- R6, the Journal, Notes and the check-in chart. Opus. 16 hours. Owner's Journal and second-brain notes. Files: new `src/components/screenJournal.tsx` (the day, its sections, the week strip moved from `progressCalendarHeader.tsx`), new `src/components/noteEditor.tsx`, new `src/components/journalMindfulness.tsx`, new `src/models/journalDay.ts` (builds one day from history, food log, music log, stats and notes; pure) and `test/journalDay.test.ts`, new `src/models/checkInTrend.ts` (the 30-day and 90-day score lines, pure) and `test/checkInTrend.test.ts`, new `src/components/checkInChart.tsx` (mounted on My bear through a slot R3's shell leaves), new `src/models/notes.ts` (day links, `[[title]]` parsing, the mood field, the Markdown export) and `src/utils/notesStore.ts`, new `src/models/journalExport.ts` and `test/journalExport.test.ts`, `src/utils/exporter.ts` and `src/models/fullBackup.ts` (the `journal/` files), `src/navigation/AppNavigator.tsx` and `.native.tsx` (Journal as the `food` root), new `test/notes.test.ts`. The "+" Note square from R2 opens the editor. Lands after R4, which turns the Food screen into the meals section. Design calls: the day layout, the mindfulness line. Runs beside R1, R5.
-- R7, AI caps and beBEAR+ codes. Codex. 6 hours. Owner's decisions on open sign-up, the 3 a day and 10 a week cap, and pro codes. Files: new migration `supabase/migrations/<date>_ai_caps_and_plans.sql` (`account_plans`, `pro_codes`, `redeem_pro_code`, the new `ai_usage_take` with `kind` and the seven-day window), `api/_auth.mjs` (the `kind` per route, the four cap variables, the 429 body), `api/ai/onboard.mjs` and `api/ai/report.mjs` (their own `kind`), `src/utils/aiRequest.ts` (the cap message), new `src/models/aiCaps.ts` (the message text and the "2 of 3" line, pure) and `test/aiCaps.test.ts`, `src/components/cloudBackupCard.tsx` ("Enter a code", the beBEAR+ line), `src/utils/cloudBackupCommand.ts` (the redeem call), `test/aiAuth.test.ts`. Owner actions: set `AI_DAILY_CAP=3`, `AI_WEEKLY_CAP=10`, `AI_PLUS_DAILY_CAP=30`, `AI_PLUS_WEEKLY_CAP=150` in Vercel, apply the migration, insert the first codes. Runs beside every group 2 batch except R1 and S1's cloud card edits, which it precedes.
-- R5, dinosaurs out. Codex plus the owner's art. 3 hours. U29. Files: `src/utils/imagePreloader.tsx` and `.native.tsx`, `src/utils/bundledImagesSvg.native.ts`, `src/components/historyRecordsNullState.tsx`, `src/components/screenProgramSelect.tsx`, `src/components/statsList.tsx`, `src/models/whatsnewParser.ts` or `screenSettings.tsx` (hide Changelog offline), the eight `dino*` files under `/images/`. The tour, unit, equipment and hear-about-us screens keep their dinosaurs, because the offline build never shows them and O2 gates the tours off. Needs the cub still from the art list under The bear first. Runs beside everything in group 2 except R1.
+- R1, finish screen cut. V1, built in PR 65. Codex. 3 hours. Owner's finish-screen notes, U15. Files: `src/components/screenFinishDay.tsx`, new `src/models/finishDayActions.ts`, new `test/finishDayActions.test.ts`. Lands after review batch I, which also edits the finish screen, or the builder takes batch I's finish-screen hunks too. Swaps `dinohappy.svg` for a bear placeholder, which R5 leaves alone. Runs beside R2, R3, R4.
+- R2, tab bar, "+" sheet, workout exit. V1, built in PR 69. Opus. 14 hours. Owner's sketch, the notes on the middle tab, the "+", and leaving a workout, plus U34. Files: `src/components/footer2.tsx`, new `src/components/plusSheet.tsx`, new `src/components/addFriendSheet.tsx` (the Add a friend part of `friendsPeople.tsx`, moved), new `src/models/quickActions.ts` and `test/quickActions.test.ts`, `src/navigation/screens/NavScreenFooter2.tsx`, `src/components/screenWorkout.tsx` (the nav left button), `src/components/workoutMenu.tsx` and `src/utils/workoutMenuActions.ts` (hide Show Tour offline, rename Delete), `src/navigation/AppNavigator.tsx` and `AppNavigator.native.tsx` (register the sheets as modals, the My bear placeholder on the `friends` stack). Until B1 lands, the My bear tab shows the old Friends screen under the new name. Design calls: the sheet's look, the Resume state. Runs beside R1, R3, R4.
+- R3, Home, and Progress folded into My bear. V1, built in PR 66. Codex. 7 hours. Owner's calendar note and sketch, U23, U25. Files: `src/components/screenProgressDashboard.tsx` (drop `ProgressCalendarHeader` and the person icon, add `WeekInsights`, export the body as `ProgressSections` for `screenMyBear.tsx`), new `src/components/screenMyBear.tsx` as a thin shell that renders `ProgressSections` until B1 fills the top, `src/navigation/AppNavigator.tsx` and `.native.tsx` (My bear as the `graphs` root), `src/components/programHistory.tsx` (bear head placeholder, seven dots and day pill in the header, drop `WeekCalendar`, the Run button and `WeekInsights`), new `src/models/weekDots.ts` and `test/weekDots.test.ts`, `src/components/homeChecklist.tsx`, `src/components/dailyChecklistCard.tsx`, `src/models/dailyChecklist.ts` (weekly weigh-in, new titles), new `src/models/todayPill.ts` and `test/todayPill.test.ts` (the "Legs!" text), `test/dailyChecklist.test.ts`. Runs beside R1, R2, R4.
+- R4, Food: camera-first "+" flow and the Ami meals section. V1, built in PR 67. Codex. 10 hours. Owner's sketch and food note. Files: `src/components/screenFood.tsx` (becomes `journalMeals.tsx`, a section), `src/components/foodDescribePanel.tsx`, `src/components/screenFoodAdd.tsx` (camera first, the Barcode and AI scan toggle, the serving-size step), `src/components/foodSummaryCard.tsx`, new `src/models/foodDescribeEstimate.ts`, new `src/models/foodScanSteps.ts`, new `src/models/foodMealForTime.ts`, new `test/foodDescribeEstimate.test.ts`, new `test/foodScanSteps.test.ts`, new `test/foodMealForTime.test.ts`. The "Share with friends" switch is drawn but disabled until B3. Lands after review batch F, which edits the same food files. Runs beside R1, R2, R3.
+- R6, the Journal, Notes and the check-in chart. V1, built in PR 74. Opus. 16 hours. Owner's Journal and second-brain notes. Files: new `src/components/screenJournal.tsx` (the day, its sections, the week strip moved from `progressCalendarHeader.tsx`), new `src/components/noteEditor.tsx`, new `src/components/journalMindfulness.tsx`, new `src/models/journalDay.ts` (builds one day from history, food log, music log, stats and notes; pure) and `test/journalDay.test.ts`, new `src/models/checkInTrend.ts` (the 30-day and 90-day score lines, pure) and `test/checkInTrend.test.ts`, new `src/components/checkInChart.tsx` (mounted on My bear through a slot R3's shell leaves), new `src/models/notes.ts` (day links, `[[title]]` parsing, the mood field, the Markdown export) and `src/utils/notesStore.ts`, new `src/models/journalExport.ts` and `test/journalExport.test.ts`, `src/utils/exporter.ts` and `src/models/fullBackup.ts` (the `journal/` files), `src/navigation/AppNavigator.tsx` and `.native.tsx` (Journal as the `food` root), new `test/notes.test.ts`. The "+" Note square from R2 opens the editor. Lands after R4, which turns the Food screen into the meals section. Design calls: the day layout, the mindfulness line. Runs beside R1, R5.
+- R7, AI caps and beBEAR+ codes. V1, built in PR 68. Codex. 6 hours. Owner's decisions on open sign-up, the 3 a day and 10 a week cap, and pro codes. Files: new migration `supabase/migrations/<date>_ai_caps_and_plans.sql` (`account_plans`, `pro_codes`, `redeem_pro_code`, the new `ai_usage_take` with `kind` and the seven-day window), `api/_auth.mjs` (the `kind` per route, the four cap variables, the 429 body), `api/ai/onboard.mjs` and `api/ai/report.mjs` (their own `kind`), `src/utils/aiRequest.ts` (the cap message), new `src/models/aiCaps.ts` (the message text and the "2 of 3" line, pure) and `test/aiCaps.test.ts`, `src/components/cloudBackupCard.tsx` ("Enter a code", the beBEAR+ line), `src/utils/cloudBackupCommand.ts` (the redeem call), `test/aiAuth.test.ts`. Owner actions: set `AI_DAILY_CAP=3`, `AI_WEEKLY_CAP=10`, `AI_PLUS_DAILY_CAP=30`, `AI_PLUS_WEEKLY_CAP=150` in Vercel, apply the migration, insert the first codes. Runs beside every group 2 batch except R1 and S1's cloud card edits, which it precedes.
+- R5, dinosaurs out. V1, built in PR 71. Codex plus the owner's art. 3 hours. U29. Files: `src/utils/imagePreloader.tsx` and `.native.tsx`, `src/utils/bundledImagesSvg.native.ts`, `src/components/historyRecordsNullState.tsx`, `src/components/screenProgramSelect.tsx`, `src/components/statsList.tsx`, `src/models/whatsnewParser.ts` or `screenSettings.tsx` (hide Changelog offline), the eight `dino*` files under `/images/`. The tour, unit, equipment and hear-about-us screens keep their dinosaurs, because the offline build never shows them and O2 gates the tours off. Needs the cub still from the art list under The bear first. Runs beside everything in group 2 except R1.
 
 Group 3, after group 2. Sign-in and the look.
 
-- S1, Sign in with Apple and Google on the web. Opus. 10 hours of code, 2 hours of the owner's dashboard work from What the owner sets up. Review S1's sign-up policy. Files: new `src/models/oauthFlow.ts`, new `src/utils/supabaseOAuth.ts`, `src/models/spotifyAuth.ts` (export the PKCE helpers), `src/models/cloudBackup.ts` (parse `pending`), `src/utils/supabaseClient.ts`, `src/components/cloudBackupCard.tsx` (two buttons above the email card), `src/components/onboardingWelcome.tsx` (fill the slot O2 left), `src/index.tsx` (the return branch), tests `test/oauthFlow.test.ts`, `test/cloudBackup.test.ts`. Day-one phone check: Google in the standalone app. Runs beside S3.
-- S2, sign-in in the native build. Codex. 6 hours. Files: new `src/utils/supabaseOAuth.native.ts`, `ios/Liftosaur/Info.plist` (URL scheme), the entitlements file for Sign in with Apple, `src/utils/forkServices.ts` (allow the two SDKs offline), `test/forkServices.test.ts`. Needs the friend's team ID. After S1.
-- S3, theme and Liquid Glass. Opus. 8 hours. U33's colour part. Files: `src/index.html` (`html.bear` variables, `.glass-bar`), `src/utils/tailwindConfig.ts`, new `src/components/primitives/glassBar.tsx` and `glassBar.native.tsx`, `src/components/footer2.tsx` (use `GlassBar`, after R2), `src/components/foodUi.tsx` (`FoodPrimaryButton` becomes a `kind` on `Button`). Runs beside S1.
+- S1, Sign in with Apple and Google on the web. V1, built in PR 70. Opus. 10 hours of code, 2 hours of the owner's dashboard work from What the owner sets up. Review S1's sign-up policy. Files: new `src/models/oauthFlow.ts`, new `src/utils/supabaseOAuth.ts`, `src/models/spotifyAuth.ts` (export the PKCE helpers), `src/models/cloudBackup.ts` (parse `pending`), `src/utils/supabaseClient.ts`, `src/components/cloudBackupCard.tsx` (two buttons above the email card), `src/components/onboardingWelcome.tsx` (fill the slot O2 left), `src/index.tsx` (the return branch), tests `test/oauthFlow.test.ts`, `test/cloudBackup.test.ts`. Day-one phone check: Google in the standalone app. Runs beside S3.
+- S2, sign-in in the native build. V1, not built. Codex. 6 hours. Files: new `src/utils/supabaseOAuth.native.ts`, `ios/Liftosaur/Info.plist` (URL scheme), the entitlements file for Sign in with Apple, `src/utils/forkServices.ts` (allow the two SDKs offline), `test/forkServices.test.ts`. Needs the friend's team ID. After S1.
+- S3, theme and Liquid Glass. V1, built in PR 75. Opus. 8 hours. U33's colour part. Files: `src/index.html` (`html.bear` variables, `.glass-bar`), `src/utils/tailwindConfig.ts`, new `src/components/primitives/glassBar.tsx` and `glassBar.native.tsx`, `src/components/footer2.tsx` (use `GlassBar`, after R2), `src/components/foodUi.tsx` (`FoodPrimaryButton` becomes a `kind` on `Button`). Runs beside S1.
 
 Group 4, after group 3. The bear.
 
-- B1, bear core and the top of My bear. Opus. 22 hours. Owner's bear notes and sketch. Files: new `src/models/bear.ts`, new `src/models/bearGrowth.ts`, `src/models/bearTier.ts` (ten levels), new `src/utils/bearStore.ts` (`bebear_bear`, seen flags, honey spent, through `JsonStore_create`), new `src/components/bearSprite.tsx`, `src/components/screenMyBear.tsx` (the top half above `ProgressSections`, the handle as title), new `src/components/bearTv.tsx`, `src/components/programHistory.tsx` (the head in the header), `src/components/screenJournal.tsx` (the small bear in the day header), `src/components/screenFinishDay.tsx` (the celebration), `src/components/screenFriends.tsx` (cut to the feed), new `src/components/handleSheet.tsx` ("Name your bear"), `src/components/shareCards/bearMark.tsx` (level sprite), the 30 level SVGs, the 10 celebration SVGs and the TV under `/images/bear/`, `src/utils/bundledImagesSvg.native.ts`, `src/navigation/AppNavigator.tsx` and `.native.tsx` (Feed and the friends list on the `friends` stack), tests `test/bear.test.ts`, `test/bearGrowth.test.ts`, `test/bearTier.test.ts`. Design calls: the My bear layout, the TV, the animations. Runs alone, because B2, B3 and B4 read its module.
-- B2, streaks and badges. Codex. 8 hours. U24. Files: `src/components/screenStreak.tsx` (flame, calendar, badge grid as in `08591160-b714-4cff-b6fb-29a6b9daf569.JPG`), new `src/components/badgeGrid.tsx` and `badgeUnlockedSheet.tsx`, `src/models/bearBadges.ts` (streak and stage badges), new `src/models/badgeCelebration.ts`, `src/models/dailyChecklist.ts` (streak day rule), the 21 PNGs under `/images/badges/`, tests `test/bearBadges.test.ts`, new `test/badgeCelebration.test.ts`. The sheet mounts from `screenMyBear.tsx` through a slot B1 leaves, so it does not touch the finish screen. After B1, beside B3 and B4.
-- B3, the TV: lifts and meals in the feed. Codex. 10 hours. U17, U28. Files: `src/models/workoutPost.ts` (summary version 2 with bear, equipped and songs), new `src/models/mealPost.ts`, `src/models/feed.ts` (merge two kinds), `src/utils/feedClient.ts` (the new table and the photo upload), `src/components/friendsFeed.tsx` (two row kinds), `src/components/screenFoodAdd.tsx` (enable the "Share with friends" switch), new migration `supabase/migrations/<date>_meal_posts.sql` (the table, its policies, the `meal-photos` bucket and its policies), tests `test/workoutPost.test.ts`, `test/workoutFeed.test.ts`, new `test/mealPost.test.ts`. After B1, beside B2 and B4.
-- B4, honey and the accessory shop. Codex. 9 hours. Owner's accessories note and honey rates. Files: new `src/models/bearHoney.ts` (the five earning rules and the balance), new `src/models/bearAnchors.ts`, new `src/components/bearShop.tsx`, `src/components/bearSprite.tsx` (overlay layer, through a prop B1 leaves), `src/utils/bearStore.ts` (owned and equipped), the 12 item SVGs under `/images/bear/items/`, `src/components/screenFinishDay.tsx` ("+5 honey" line), tests new `test/bearHoney.test.ts`, new `test/bearAnchors.test.ts`. After B1, beside B2 and B3.
+- B1, bear core and the top of My bear. V1, built in PRs 73 and 80, with PR 103 open. Opus. 22 hours. Owner's bear notes and sketch. Files: new `src/models/bear.ts`, new `src/models/bearGrowth.ts`, `src/models/bearTier.ts` (ten levels), new `src/utils/bearStore.ts` (`bebear_bear`, seen flags, honey spent, through `JsonStore_create`), new `src/components/bearSprite.tsx`, `src/components/screenMyBear.tsx` (the top half above `ProgressSections`, the handle as title), new `src/components/bearTv.tsx`, `src/components/programHistory.tsx` (the head in the header), `src/components/screenJournal.tsx` (the small bear in the day header), `src/components/screenFinishDay.tsx` (the celebration), `src/components/screenFriends.tsx` (cut to the feed), new `src/components/handleSheet.tsx` ("Name your bear"), `src/components/shareCards/bearMark.tsx` (level sprite), the 30 level SVGs, the 10 celebration SVGs and the TV under `/images/bear/`, `src/utils/bundledImagesSvg.native.ts`, `src/navigation/AppNavigator.tsx` and `.native.tsx` (Feed and the friends list on the `friends` stack), tests `test/bear.test.ts`, `test/bearGrowth.test.ts`, `test/bearTier.test.ts`. Design calls: the My bear layout, the TV, the animations. Runs alone, because B2, B3 and B4 read its module.
+- B2, streaks and badges. V1, built in PR 83. Codex. 8 hours. U24. Files: `src/components/screenStreak.tsx` (flame, calendar, badge grid as in `08591160-b714-4cff-b6fb-29a6b9daf569.JPG`), new `src/components/badgeGrid.tsx` and `badgeUnlockedSheet.tsx`, `src/models/bearBadges.ts` (streak and stage badges), new `src/models/badgeCelebration.ts`, `src/models/dailyChecklist.ts` (streak day rule), the 21 PNGs under `/images/badges/`, tests `test/bearBadges.test.ts`, new `test/badgeCelebration.test.ts`. The sheet mounts from `screenMyBear.tsx` through a slot B1 leaves, so it does not touch the finish screen. After B1, beside B3 and B4.
+- B3, the TV: lifts and meals in the feed. V1, built in PR 84. Codex. 10 hours. U17, U28. Files: `src/models/workoutPost.ts` (summary version 2 with bear, equipped and songs), new `src/models/mealPost.ts`, `src/models/feed.ts` (merge two kinds), `src/utils/feedClient.ts` (the new table and the photo upload), `src/components/friendsFeed.tsx` (two row kinds), `src/components/screenFoodAdd.tsx` (enable the "Share with friends" switch), new migration `supabase/migrations/<date>_meal_posts.sql` (the table, its policies, the `meal-photos` bucket and its policies), tests `test/workoutPost.test.ts`, `test/workoutFeed.test.ts`, new `test/mealPost.test.ts`. After B1, beside B2 and B4.
+- B4, honey and the accessory shop. Honey is V1, built in PR 85. The shop is V2, built in PR 105. Codex. 9 hours. Owner's accessories note and honey rates. Files: new `src/models/bearHoney.ts` (the five earning rules and the balance), new `src/models/bearAnchors.ts`, new `src/components/bearShop.tsx`, `src/components/bearSprite.tsx` (overlay layer, through a prop B1 leaves), `src/utils/bearStore.ts` (owned and equipped), the 12 item SVGs under `/images/bear/items/`, `src/components/screenFinishDay.tsx` ("+5 honey" line), tests new `test/bearHoney.test.ts`, new `test/bearAnchors.test.ts`. After B1, beside B2 and B3.
 
-Totals: group 1 about 30 hours plus 2 of the owner's, group 2 about 56 hours, group 3 about 24 hours plus 2 of the owner's, group 4 about 49 hours. About 159 hours of code, plus the art.
+Group 5, Winter Arc. Added 2026-10-23. Moved to V2 and the winter of 2027 on the same day, as written under Winter Arc moves to next winter. The original date: W1 had to be on the owner's iPhone by 2026-12-05, a week before the event. It needs B1 and B2 merged. It runs beside any group 2 to 4 batch that touches none of its files.
 
-## 9. Decisions for the owner
+- W2, the Hibernation pass. V2, a build in PR 110. Codex. 8 hours. The rules under The Hibernation pass. Files: new `src/models/hibernationPass.ts` (`HibernationPass_settle`, `HibernationPass_buy`, the 25 honey price, the hold limit of 2, the 3-day minimum streak) and `test/hibernationPass.test.ts`, `src/models/bearStoreData.ts` (`passes`, `coveredDays` and `pendingWake`, parsed with the same guards as `spent`) and new `test/bearStoreData.test.ts`, `src/models/dailyChecklist.ts` (`DailyChecklist_doneDays` takes covered days) and `test/dailyChecklist.test.ts`, `src/models/bearHoney.ts` (covered days join the 7-day run and earn nothing) and `test/bearHoney.test.ts`, `src/utils/useBear.ts` (settle on open), `src/utils/useBearBadges.ts` and `src/utils/useBearHoney.ts` (covered days in), `src/components/screenStreak.tsx` (covered days on the calendar, passes held, the buy row), new `src/components/hibernationWakeSheet.tsx` mounted from `src/components/programHistory.tsx`, `src/components/screenJournal.tsx` and `src/components/workoutStoryCard.tsx` (covered days in their streak counts). Art: one sleeping bear still per body stage, 5 files. Lands before W1, because both touch the badge hook.
+- W1, The Big Hibernation. V2, not built, moved to the winter of 2027. Opus. 14 hours. The rules under Winter Arc: The Big Hibernation. Files: new migration `supabase/migrations/<date>_season_events.sql` (the two tables, their policies, `season_event_total`, the 2026 event row), new `src/models/seasonEvent.ts` (the window check, the user's contribution from counted workouts, the day rows to upsert, the reward states, the goal text from `BearComparison_all`) and `test/seasonEvent.test.ts`, new `src/utils/seasonEventClient.ts` (upsert and total), new `src/utils/useSeasonEvent.ts`, new `src/components/seasonEventBanner.tsx`, new `src/components/screenSeasonEvent.tsx`, `src/components/programHistory.tsx` (the banner on Home), `src/components/bearFinishBanner.tsx` (the "+3,100 kg to The Big Hibernation" line), `src/models/bearBadges.ts` (the three event badges) and `test/bearBadges.test.ts`, `src/utils/useBearBadges.ts` (event input), `src/navigation/AppNavigator.tsx` and `.native.tsx` (register the event screen). Art: the banner bear in snow, and three coins plus three item SVGs (beanie, scarf, puffer jacket) under `/images/events/winter-2026/`. Owner action: apply the migration, then set `goal_kg` on 2026-12-05. Design calls: the banner and the event screen. After W2.
+
+Group 6, seasons, the bear picker and the price ladder. Added 2026-10-23. W3 needs nothing, so it can start now. The others wait for the batches named on each.
+
+- W3, seasons, the food side. V1, built in PR 117. Codex. 8 hours. The rules under Seasons, apart from the plan side. Files: new `src/models/season.ts` (`Season_for`, the dates, the south shift) and `test/season.test.ts`, `src/models/foodTargets.ts` (`seasons`, `south` and `lastSeason` on `IFoodProfile`, the season factor, the age and BMI rule) and `test/foodTargets.test.ts`, `src/components/foodTargetsCalculator.tsx` (the two switches), new `src/models/seasonNudge.ts` (when each Home card shows, its text, the food picks closest to the gap) and `test/seasonNudge.test.ts`, new `src/components/seasonNudgeCard.tsx` mounted from `src/components/programHistory.tsx`. Runs beside any batch that does not touch `programHistory.tsx`.
+- W4, seasons, the plan side. V2, not built. Opus. 6 hours. After O1 and W3. Files: `src/models/bearPlan.ts` (the `season` parameter), `test/bearPlan.test.ts` and new golden files under `test/fixtures/bearPlan/`, new `src/models/seasonPlanSwap.ts` (the new plan text with the current weights kept) and `test/seasonPlanSwap.test.ts`, `src/components/seasonNudgeCard.tsx` (the season card's OK applies the new plan). Design call: how the weights carry over.
+- P1, the bear picker. V2, not built. Opus. 8 hours, plus the art. After B1 and O2. The rules under Pick your bear. Files: new `src/models/bearStyle.ts` (the lines, the parse with brown anthro male as the fallback, the sprite path for a line and a level) and `test/bearStyle.test.ts`, `src/utils/bearStore.ts` (`style`), `src/components/bearSprite.tsx` (the path from the style), new `src/components/onboardingBearPicker.tsx`, `src/models/onboarding.ts` (the new first step) and `test/onboarding.test.ts`, `src/components/screenMyBear.tsx` (the "Change bear" row), `src/models/bearAnchors.ts` (the slots per line, if B4 has landed). Art: 60 more level SVGs, for Chonk and Anthro female. Design calls: the card and the swipe.
+- L1, the price ladder. V2, not built. Opus. 24 hours if upstream's signer and webhook port without changes, about 32 if the App Store Server API version differs. After R7. Blocked as written under The beBEAR+ price ladder. Files: new `src/models/priceLadder.ts` (the target, the tier, the prices, the progress line) and `test/priceLadder.test.ts`, new migration `supabase/migrations/<date>_counted_days.sql` (the table, owner-only upsert, kg between 0 and 25,000), new `src/utils/countedDaysClient.ts`, new `api/billing/offer.mjs` and `api/billing/apple-notify.mjs`, new `api/_appleOfferSigner.mjs` ported from upstream, `src/utils/iap.native.ts` (the offer on the purchase), new `src/components/priceLadderCard.tsx` on `src/components/screenMyBear.tsx`, new `src/components/claimOfferSheet.tsx`. Owner actions: the subscription and its two offers in App Store Connect, the subscription key, and its id and private key as Vercel variables.
+
+Totals: group 1 about 30 hours plus 2 of the owner's, group 2 about 56 hours, group 3 about 24 hours plus 2 of the owner's. Group 4 about 49 hours, group 5 about 22 hours, group 6 about 46 hours. About 227 hours of code, plus the art.
+
+By release, adding each batch's own hours: V1 is 170 hours, of which 164 are built. V2 is 60 hours, or 68 with L1 at 32. Review batches J and K add 50 built hours to V1.
+
+## 10. Decisions for the owner
 
 Decided on 2026-10-22, from the owner's reply and sketch.
 
@@ -585,9 +851,41 @@ Decided on 2026-10-22, from the owner's reply and sketch.
 - My bear is the bear, how he's doing (the bars and the check-in scores), the dashboard with stats to dive into, and the TV with the feed.
 - In version one the check-in scores never change the bear. A later version makes the bear react to them (stretching, yawning, bouncing), possibly as a 3D model. The rules are kept pure so that swap touches only the renderer.
 
-Nothing is open. Every question in this plan has an answer from the owner.
+Open for group 5, added 2026-10-23. Each has a default, so W1 and W2 can start without an answer.
 
-## 10. Art prompt for the owner
+- Event dates. Default 2026-12-12 to 2026-12-21, ending on the winter solstice. An earlier window catches more of Winter Arc, but W1 then has less time to land.
+- The goal kg. Default: signed-in users times 24,000 kg, set on 2026-12-05.
+- The pass price and limit. Default 25 honey, at most 2 held.
+- The three reward items. Default beanie, scarf and puffer jacket.
+
+Decided 2026-10-23, from the owner's notebook pages.
+
+- First run gets "Pick your bear": one card per line, showing the cub and the level 10 bear. Chonk, Anthro male and Anthro female first, more lines later.
+- Seasons: bulk as much as is healthy over winter, lean out over summer. The owner tries it first, this winter.
+- beBEAR+ costs $1 next month at 4 or more workouts a week, $3 when 1 to 3 workouts short, and $7 otherwise. Prices to be tested.
+- The family version (family feed, tracking children's growth) is parked. Children's data falls under COPPA in the US below 13 and under GDPR in the EU up to 16.
+
+Open for group 6, added 2026-10-23. Each has a default, so the batches can start without an answer.
+
+- Season dates. Default Bulk October to March, Lean April to June, Summer July to September.
+- Seasons on by default. Default off, switched on in Targets.
+- The Bulk surplus. Default 15 percent at 18 and over, 10 percent under 18.
+- The ladder target under 18. A New lifter under 18 is offered at most 3 days a week, so 4 a week puts the $1 month out of reach. Default: under 18, the target is the plan's own days per week.
+- The first month's price. Default $7, and the ladder starts with the second month.
+- One table for counted days. `counted_days` and W1's `season_event_days` hold the same rows. Default: one table, `counted_days`, created by whichever batch lands first, and W1 sums it over the event window.
+
+Decided 2026-10-23, the release split.
+
+- V1 is a polished core: log a workout, log food, the bear growing, sign-in, and simple onboarding. Everything else is V2.
+- The Apple Watch ideas are V2: the heart-rate breakdown per exercise, the recovery awards, the rest timer on the watch.
+
+Open for the release split, added 2026-10-23. Each has a default, so V1 work can go on without an answer.
+
+- Winter Arc this year or next. Default: next winter, with W1 and W2 in V2.
+- The bear picker in V1. Default: V2, and V1 ships with the brown anthro male bear.
+- Built features outside the five flows, such as the TV feed, badges and notes. Default: they stay in V1 and get bug fixes only.
+
+## 11. Art prompt for the owner
 
 Paste this into ChatGPT, with the app icon attached as the reference image. Ask for one image per line of the shot list, same session, so the style holds.
 
@@ -619,4 +917,4 @@ Give every image as a PNG with a transparent background, 1024 by 1024.
 
 What to check in the results before handing them to the builders: the face stays the same across all ten, the outline weight stays the same, the feet sit on the bottom edge, and nothing bleeds off the square. The builders trace the chosen PNGs to SVG, so flat colours matter more than detail.
 
-Next action: commit the uncommitted bear and share-card files on `share-cards-bear`, then hand O1 to Opus with this file and `.claude/commands/write-program.md`.
+Next action: answer "this winter" or "next winter" to the Winter Arc question under Decisions for the owner.

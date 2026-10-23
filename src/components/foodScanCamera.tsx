@@ -9,6 +9,7 @@ import { AiConsentGate } from "./aiConsentGate";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
 import { FoodPhotoPanel } from "./foodPhotoPanel";
 import { FoodQuickAddPanel } from "./foodQuickAddPanel";
+import { FoodDescribePanel } from "./foodDescribePanel";
 import { FoodRepeatList } from "./foodRepeatList";
 
 interface IProps {
@@ -18,6 +19,7 @@ interface IProps {
   onMode: (mode: IScanMode) => void;
   onBarcode: (code: string) => void;
   onPhotoReviewed: (choices: IFoodPhotoChoice[], photo?: string) => void;
+  onDescribed: (choices: IFoodPhotoChoice[]) => void;
   onQuick: (name: string, nutrients: INutrients) => void;
   onSearch: () => void;
   onCopied: () => void;
@@ -69,7 +71,10 @@ export function FoodScanCamera(props: IProps): JSX.Element {
           <FoodPhotoPanel onAdd={props.onPhotoReviewed} />
         </AiConsentGate>
       )}
-      {props.mode === "describe" && (
+      {props.mode === "describe" && props.hasAi && (
+        <FoodDescribePanel onAdd={props.onDescribed} onCamera={() => pickMode("ai")} onPhoto={() => pickMode("ai")} />
+      )}
+      {props.mode === "describe" && !props.hasAi && (
         <FoodQuickAddPanel onBack={() => props.onMode("barcode")} onSubmit={props.onQuick} />
       )}
       <View className="mt-4">

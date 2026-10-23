@@ -18,8 +18,8 @@ export function AiPromptHtml(props: IAiPromptHtmlProps): JSX.Element {
       js={["aiPrompt"]}
       maxWidth={1200}
       isLoggedIn={!!props.account}
-      title="Liftoscript Prompt Generator (retired) | beBEAR"
-      description="The Liftoscript prompt generator is retired - use the beBEAR MCP server to connect Claude, ChatGPT or Gemini directly to your account instead."
+      title="Liftoscript Prompt Generator (retired) | Liftosaur"
+      description="The Liftoscript prompt generator is retired - use the Liftosaur MCP server to connect Claude, ChatGPT or Gemini directly to your account instead."
       canonical="https://www.liftosaur.com/ai/prompt"
       ogUrl="https://www.liftosaur.com/ai/prompt"
       data={{}}

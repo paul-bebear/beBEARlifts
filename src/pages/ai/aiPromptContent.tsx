@@ -13,9 +13,9 @@ export function AiPromptContent(): JSX.Element {
       <p className="mt-4 text-text-secondary">
         The{" "}
         <a className="font-bold underline text-text-link" href="/doc/mcp">
-          beBEAR MCP server
+          Liftosaur MCP server
         </a>{" "}
-        connects Claude, ChatGPT or Gemini directly to beBEAR, so there's no copy-pasting - you just ask, and the
+        connects Claude, ChatGPT or Gemini directly to Liftosaur, so there's no copy-pasting - you just ask, and the
         assistant does the work.
       </p>
       <p className="mt-4 text-text-secondary">
@@ -39,9 +39,9 @@ export function AiPromptContent(): JSX.Element {
         carefully-built prompt to paste elsewhere was the best available option, and it worked well enough for a while.
       </p>
       <p className="mt-4 text-text-secondary">
-        The beBEAR MCP server arrived in March 2026 and made the whole round trip unnecessary. On top of that, the
-        generator could fetch arbitrary URLs on beBEAR's behalf to read your program from a spreadsheet or a webpage -
-        convenient, but not something worth keeping around for a feature that has a better replacement.
+        The Liftosaur MCP server arrived in March 2026 and made the whole round trip unnecessary. On top of that, the
+        generator could fetch arbitrary URLs on Liftosaur's behalf to read your program from a spreadsheet or a webpage
+        - convenient, but not something worth keeping around for a feature that has a better replacement.
       </p>
 
       <p className="mt-8 text-text-secondary">

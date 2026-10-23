@@ -57,7 +57,7 @@ export function McpReference_getLiftohistoryReference(): string {
 
   cachedLiftohistoryReference = `# Liftohistory Format Reference
 
-Liftohistory is a human-readable text format for workout history records in beBEAR.
+Liftohistory is a human-readable text format for workout history records in Liftosaur.
 
 ## Format
 

@@ -1,4 +1,5 @@
 import * as htmlToImage from "html-to-image";
+import { FileShare_download, FileShare_share } from "./fileShare";
 
 const options = { pixelRatio: 3, width: 360, height: 640 };
 
@@ -23,38 +24,19 @@ function toFile(dataUrl: string, name: string): File {
   return new File([bytes], name, { type });
 }
 
-function download(dataUrl: string, name: string): void {
-  const link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = name;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
 export async function ShareCardImage_share(
   files: string[],
   baseName: string
 ): Promise<"shared" | "cancelled" | "refused"> {
-  const names = files.map((_, i) => (files.length === 1 ? `${baseName}.png` : `${baseName}-${i + 1}.png`));
-  const shareFiles = files.map((f, i) => toFile(f, names[i]));
-  if (navigator.canShare == null || !navigator.canShare({ files: shareFiles })) {
-    files.forEach((f, i) => download(f, names[i]));
+  const shareFiles = files.map((f, i) =>
+    toFile(f, files.length === 1 ? `${baseName}.png` : `${baseName}-${i + 1}.png`)
+  );
+  const result = await FileShare_share(shareFiles, navigator);
+  if (result === "unavailable") {
+    shareFiles.forEach(FileShare_download);
     return "shared";
   }
-  try {
-    await navigator.share({ files: shareFiles });
-    return "shared";
-  } catch (e) {
-    const name = (e as { name?: string }).name;
-    if (name === "NotAllowedError") {
-      return "refused";
-    }
-    if (name === "AbortError") {
-      return "cancelled";
-    }
-    throw e;
-  }
+  return result;
 }
 
 export async function ShareCardImage_cleanup(_files: string[]): Promise<void> {}

@@ -6,7 +6,6 @@ import { MenuItem, MenuItemWrapper } from "./menuItem";
 import {
   Thunk_pushScreen,
   Thunk_exportStorage,
-  Thunk_exportEverything,
   Thunk_exportHistoryToCSV,
   Thunk_exportProgramsToText,
 } from "../ducks/thunks";
@@ -37,14 +36,13 @@ import { TextSize_apply } from "../utils/textSize";
 import { useOsFontScale } from "../utils/fontScale";
 import { LinkButton } from "./linkButton";
 import { Features_isEnabled } from "../utils/features";
-import { EffortRating_isEnabled } from "../models/effortRating";
 import { OfflineOnly_isEnabled, OfflineOnly_sourceCodeUrl } from "../utils/offlineOnly";
 import { Support_docsUrl, Support_email, Support_licensesUrl } from "../utils/support";
 import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { ProgramsHost_fork } from "../utils/programsHost";
-import { CloudBackupCard } from "./cloudBackupCard";
 import { AppStoreSettings } from "./appStoreSettings";
+import { SettingsBackupRows, SettingsRateEachSet } from "./settingsForkRows";
 
 interface IProps {
   dispatch: IDispatch;
@@ -223,20 +221,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         shouldShowRightArrow={true}
       />
       <MenuItem name="Timers" onClick={() => props.dispatch(Thunk_pushScreen("timers"))} shouldShowRightArrow={true} />
-      <MenuItemEditable
-        type="boolean"
-        name="Rate each set"
-        value={EffortRating_isEnabled(props.settings) ? "true" : "false"}
-        onChange={(newValue) => {
-          props.dispatch({
-            type: "UpdateSettings",
-            lensRecording: lb<ISettings>()
-              .p("rateEachSet")
-              .record(newValue === "true"),
-            desc: "Toggle rate each set",
-          });
-        }}
-      />
+      <SettingsRateEachSet settings={props.settings} dispatch={props.dispatch} />
       {props.settings.gyms.length > 1 && (
         <MenuItemEditable
           type="select"
@@ -514,15 +499,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         </>
       )}
       <GroupHeader name="Import / Export" topPadding={true} />
-      {OfflineOnly_isEnabled() && <CloudBackupCard dispatch={props.dispatch} />}
-      <MenuItemWrapper name="Export everything" onClick={() => props.dispatch(Thunk_exportEverything())}>
-        <View className="py-3">
-          <Text className="text-base text-text-primary">Export everything</Text>
-          <Text className="text-xs text-text-secondary">
-            Workouts, body stats, food and music in one file. Save it to iCloud, or give it to an AI.
-          </Text>
-        </View>
-      </MenuItemWrapper>
+      <SettingsBackupRows dispatch={props.dispatch} />
       <MenuItemWrapper name="Export data to JSON file" onClick={() => props.dispatch(Thunk_exportStorage())}>
         <View className="py-3">
           <Text className="text-base text-text-primary">Export data to JSON file</Text>

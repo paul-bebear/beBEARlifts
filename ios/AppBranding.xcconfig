@@ -1,4 +1,6 @@
-APP_BUNDLE_PREFIX = com.liftosaur.www
+APP_BUNDLE_PREFIX = com.paulbebear.bebear
 APP_DISPLAY_NAME = beBEAR
-APP_DEVELOPMENT_TEAM =
+APP_DEVELOPMENT_TEAM = GKY9GR7VHG
 APP_GROUP_IDENTIFIER = group.$(APP_BUNDLE_PREFIX).workout
+GOOGLE_IOS_CLIENT_ID = 508810925977-mlssbt4uv6vjf0dnoj8vf4rannnu0v03.apps.googleusercontent.com
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.508810925977-mlssbt4uv6vjf0dnoj8vf4rannnu0v03

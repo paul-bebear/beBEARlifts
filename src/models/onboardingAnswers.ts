@@ -70,7 +70,7 @@ function inRange(text: string, min: number, max: number): number | undefined {
   return text.trim() !== "" && Number.isFinite(n) && n >= min && n <= max ? n : undefined;
 }
 
-export function OnboardingAnswers_age(answers: IOnboardingAnswers): number | undefined {
+function OnboardingAnswers_age(answers: IOnboardingAnswers): number | undefined {
   const age = inRange(answers.age, 13, 100);
   return age == null ? undefined : Math.round(age);
 }
@@ -91,7 +91,7 @@ export function OnboardingAnswers_planInput(answers: IOnboardingAnswers): IBearP
   };
 }
 
-export function OnboardingAnswers_goalKind(goal: IBearGoal): IProgramGoalKind {
+function OnboardingAnswers_goalKind(goal: IBearGoal): IProgramGoalKind {
   return goal === "strength" ? "maintain" : "buildMuscle";
 }
 
@@ -131,7 +131,7 @@ export function OnboardingAnswers_body(
 
 export function OnboardingAnswers_foodTargets(
   answers: IOnboardingAnswers,
-  year: number
+  today: Date
 ): { goals: IFoodGoals; profile: IFoodProfile } | undefined {
   if (answers.activity == null || answers.foodGoal == null) {
     return undefined;
@@ -148,8 +148,8 @@ export function OnboardingAnswers_foodTargets(
     activity: answers.activity,
     goal: answers.foodGoal,
   };
-  const result = FoodTargets_result(form);
-  return result == null ? undefined : { goals: result.goals, profile: FoodTargets_toProfile(form, year) };
+  const result = FoodTargets_result(form, today);
+  return result == null ? undefined : { goals: result.goals, profile: FoodTargets_toProfile(form, today) };
 }
 
 export function OnboardingAnswers_programGoal(

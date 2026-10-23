@@ -195,6 +195,8 @@ import { updateState } from "./models/state";
 import { TourConfigs_findTourId, TourConfigs_imagesForCurrentScreen } from "./components/tour/tourConfigs";
 import { ImagePreloader_preload } from "./utils/imagePreloader";
 import { RestTimer } from "./components/restTimer";
+import { MusicTracker } from "./components/musicTracker";
+import { MusicTracking_workoutOf } from "./models/musicTracking";
 import { IScreen } from "./models/screen";
 import { IEnv, IState } from "./models/state";
 import { StateContext } from "./navigation/StateContext";
@@ -739,6 +741,14 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
                     >
                       <AppNavigator initialScreen={initialScreen} />
                     </NavigationContainer>
+                    {OfflineOnly_isEnabled() && (
+                      <MusicTracker
+                        workoutId={MusicTracking_workoutOf(progress)?.id}
+                        workoutStartTime={MusicTracking_workoutOf(progress)?.startTime}
+                        isNavReady={isNavReady}
+                        dispatch={dispatch}
+                      />
+                    )}
                     {progress && currentScreenName && screensWithoutTimer.indexOf(currentScreenName) === -1 && (
                       <RestTimer
                         progress={progress}

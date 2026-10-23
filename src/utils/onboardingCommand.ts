@@ -116,7 +116,7 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         }
         const now = Date.now();
         const body = OnboardingAnswers_body(form.answers, days, new Date(now).getFullYear());
-        const targets = OnboardingAnswers_foodTargets(form.answers, new Date(now).getFullYear());
+        const targets = OnboardingAnswers_foodTargets(form.answers, new Date(now));
         await FoodLogStore_update((log) =>
           FoodLog_setProfile(targets == null ? log : FoodLog_setGoals(log, targets.goals), {
             ...log.profile,

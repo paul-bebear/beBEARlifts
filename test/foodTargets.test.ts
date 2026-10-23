@@ -1,11 +1,16 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  FoodTargets_aim,
   FoodTargets_back,
+  FoodTargets_bmi,
   FoodTargets_bodyError,
   FoodTargets_compute,
   FoodTargets_defaultProfile,
+  FoodTargets_factor,
+  FoodTargets_mayDiet,
   FoodTargets_next,
+  FoodTargets_stepNumber,
   FoodTargets_parseBody,
   FoodTargets_parseProfile,
   FoodTargets_pickActivity,
@@ -21,6 +26,8 @@ import { FoodLog_parse } from "../src/models/foodLog";
 
 const man: IFoodBody = { weightKg: 80, heightCm: 180, sex: "male", age: 30 };
 const woman: IFoodBody = { weightKg: 60, heightCm: 165, sex: "female", age: 35 };
+const winter = new Date(2026, 9, 23, 12);
+const spring = new Date(2027, 3, 10, 12);
 
 describe("FoodTargets compute", () => {
   it("uses Mifflin-St Jeor times the activity factor for maintenance", () => {
@@ -58,6 +65,25 @@ describe("FoodTargets compute", () => {
     expect(result.isFloored).to.equal(true);
     expect(result.goals.calories).to.deep.equal({ min: 1200, max: 1300 });
     expect(result.goals.carbs).to.deep.equal({ min: 115, max: 140 });
+  });
+
+  it("never goes below 1500 calories for a man", () => {
+    const result = FoodTargets_compute({ weightKg: 50, heightCm: 160, sex: "male", age: 70 }, "sedentary", "lose");
+    expect(result.isFloored).to.equal(true);
+    expect(result.goals.calories).to.deep.equal({ min: 1500, max: 1600 });
+  });
+
+  it("splits the calorie target into macros that add back up to it", () => {
+    const mid = (r: { min: number; max: number }): number => (r.min + r.max) / 2;
+    for (const [body, goal] of [
+      [man, "maintain"],
+      [man, "gain"],
+      [woman, "lose"],
+    ] as const) {
+      const { goals } = FoodTargets_compute(body, "moderate", goal);
+      const macroCalories = mid(goals.protein) * 4 + mid(goals.carbs) * 4 + mid(goals.fat) * 9;
+      expect(macroCalories, `${body.sex} ${goal}`).to.be.closeTo(mid(goals.calories), 10);
+    }
   });
 
   it("caps protein and fat at the height-based weight for a 150 kg person losing weight", () => {
@@ -102,7 +128,7 @@ describe("FoodTargets form", () => {
     const body = FoodTargets_parseBody(form)!;
     expect(body.weightKg).to.be.closeTo(79.83, 0.01);
     expect(body.heightCm).to.be.closeTo(180.34, 0.01);
-    expect(FoodTargets_result(form)?.goals.calories).to.deep.equal({ min: 2660, max: 2860 });
+    expect(FoodTargets_result(form, winter)?.goals.calories).to.deep.equal({ min: 2660, max: 2860 });
   });
 
   it("converts the typed height when the unit changes", () => {
@@ -118,6 +144,21 @@ describe("FoodTargets form", () => {
     const form = FoodTargets_setForm(flow, { heightCm: "180", age: "30" }).form;
     expect(FoodTargets_bodyError(form)).to.equal("Pick male or female. The formula uses it.");
     expect(FoodTargets_bodyError({ ...form, sex: "male" })).to.equal(undefined);
+  });
+
+  it("gives the weight range in pounds and the height range in feet for a pound user", () => {
+    const flow = FoodTargets_start(FoodTargets_defaultProfile, undefined, "lb", 2026);
+    const form = FoodTargets_setForm(flow, {
+      weight: "50",
+      heightFt: "5",
+      heightIn: "11",
+      sex: "male",
+      age: "30",
+    }).form;
+    expect(FoodTargets_bodyError(form)).to.equal("Enter a weight from 66 to 660 lb.");
+    expect(FoodTargets_bodyError({ ...form, weight: "176", heightFt: "3" })).to.equal(
+      "Enter a height from 3 ft 11 in to 7 ft 6 in."
+    );
   });
 });
 
@@ -145,7 +186,7 @@ describe("FoodTargets steps", () => {
       activity: "light",
       goal: "gain",
     }).form;
-    const profile = FoodTargets_toProfile(form, 2026);
+    const profile = FoodTargets_toProfile(form, winter);
     expect(profile).to.deep.equal({
       activity: "light",
       goal: "gain",
@@ -169,6 +210,79 @@ describe("FoodTargets profile parse", () => {
   it("falls back to defaults for an old food log or bad values", () => {
     expect(FoodLog_parse({ entries: [] }).profile).to.deep.equal(FoodTargets_defaultProfile);
     expect(FoodTargets_parseProfile({ activity: "couch", goal: 3, sex: "x", heightCm: -1 })).to.deep.equal(
+      FoodTargets_defaultProfile
+    );
+  });
+});
+
+describe("FoodTargets seasons", () => {
+  const teen: IFoodBody = { weightKg: 60, heightCm: 175, sex: "male", age: 17 };
+  const skinny: IFoodBody = { weightKg: 58, heightCm: 180, sex: "male", age: 22 };
+
+  it("bulks 15% above maintenance from 18 and 10% under 18", () => {
+    const adult = FoodTargets_compute(man, "moderate", "bulk");
+    expect(FoodTargets_factor(man, "bulk").factor).to.equal(1.15);
+    expect(adult.target).to.equal(3170);
+    expect(FoodTargets_factor(teen, "bulk").factor).to.equal(1.1);
+  });
+
+  it("leans out 20% below maintenance and stays at maintenance in summer", () => {
+    expect(FoodTargets_factor(man, "lean")).to.deep.equal({ factor: 0.8, isDeficitBlocked: false });
+    expect(FoodTargets_compute(man, "moderate", "lean").goals).to.deep.equal(
+      FoodTargets_compute(man, "moderate", "lose").goals
+    );
+    expect(FoodTargets_compute(man, "moderate", "summer").goals).to.deep.equal(
+      FoodTargets_compute(man, "moderate", "maintain").goals
+    );
+  });
+
+  it("never gives a deficit under 18 or with a BMI under 20", () => {
+    expect(FoodTargets_bmi(skinny)).to.be.closeTo(17.9, 0.1);
+    for (const body of [teen, skinny]) {
+      for (const aim of ["lean", "lose"] as const) {
+        const result = FoodTargets_compute(body, "moderate", aim);
+        expect(result.isDeficitBlocked, `${body.age} ${aim}`).to.equal(true);
+        expect(result.goals).to.deep.equal(FoodTargets_compute(body, "moderate", "maintain").goals);
+      }
+    }
+    expect(FoodTargets_mayDiet({ ...skinny, weightKg: 65 })).to.equal(true);
+  });
+
+  it("skips the goal step and picks the aim from the date when seasons is on", () => {
+    const flow = FoodTargets_start(FoodTargets_defaultProfile, { value: 80, unit: "kg" }, "kg", 2026);
+    expect(flow.form.seasons).to.equal(false);
+    const body = FoodTargets_setForm(flow, { heightCm: "180", sex: "male", age: "30", seasons: true });
+    const activity = FoodTargets_next(body);
+    expect(FoodTargets_stepNumber(activity)).to.deep.equal({ index: 2, count: 3 });
+    const result = FoodTargets_pickActivity(activity, "moderate");
+    expect(result.step).to.equal("result");
+    expect(FoodTargets_back(result)?.step).to.equal("activity");
+    expect(FoodTargets_aim(result.form, winter)).to.equal("bulk");
+    expect(FoodTargets_aim(result.form, spring)).to.equal("lean");
+    expect(FoodTargets_aim({ ...result.form, south: true }, winter)).to.equal("lean");
+    expect(FoodTargets_result(result.form, winter)?.target).to.equal(3170);
+  });
+
+  it("saves the seasons switches and the current season, and reads them back", () => {
+    const flow = FoodTargets_start(FoodTargets_defaultProfile, { value: 80, unit: "kg" }, "kg", 2026);
+    const form = FoodTargets_setForm(flow, {
+      heightCm: "180",
+      sex: "male",
+      age: "30",
+      seasons: true,
+      south: true,
+    }).form;
+    const profile = FoodTargets_toProfile(form, winter);
+    expect(profile).to.include({ seasons: true, south: true, lastSeason: "lean" });
+    expect(FoodLog_parse({ profile }).profile).to.deep.equal(profile);
+    const next = FoodTargets_start(profile, undefined, "kg", 2026).form;
+    expect([next.seasons, next.south]).to.deep.equal([true, true]);
+    expect(FoodTargets_toProfile({ ...form, seasons: false, south: false }, winter)).to.not.have.any.keys(
+      "seasons",
+      "south",
+      "lastSeason"
+    );
+    expect(FoodTargets_parseProfile({ seasons: "yes", lastSeason: "winter" })).to.deep.equal(
       FoodTargets_defaultProfile
     );
   });

@@ -119,6 +119,7 @@ describe("First-launch navigation", () => {
     const screens: IScreen[] = [
       "food",
       "foodAdd",
+      "history",
       "friends",
       "progressDashboard",
       "settings",
