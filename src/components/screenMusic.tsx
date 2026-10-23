@@ -1,5 +1,5 @@
 import { JSX, useState } from "react";
-import { View, Pressable, Platform } from "react-native";
+import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
@@ -176,7 +176,7 @@ export function ScreenMusic(): JSX.Element {
   const settings = untrack(state.storage.settings);
   const dispatch = useTrackedDispatch();
   const log = useMusicLog();
-  const [error] = useState(() => SpotifyClient_takeError());
+  const [error, setError] = useState(() => SpotifyClient_takeError());
   const sessions = MusicLog_reviewable(log);
   const [expandedId, setExpandedId] = useState<number | undefined>(sessions[0]?.id);
 
@@ -188,21 +188,22 @@ export function ScreenMusic(): JSX.Element {
     }
   };
 
+  const connect = async (): Promise<void> => {
+    await SpotifyClient_login();
+    setError(SpotifyClient_takeError());
+  };
+
   return (
     <View className="pt-2 pb-6" testID="music-screen" data-testid="music-screen">
       <View className="p-4 mx-4 mb-4 rounded-2xl bg-background-subtle">
-        {log.tokens == null && Platform.OS !== "web" ? (
-          <Text className="text-base" testID="music-native-pending" data-testid="music-native-pending">
-            Spotify login is not in the iPhone app yet. Song tracking and playlists work in the web app.
-          </Text>
-        ) : log.tokens == null ? (
+        {log.tokens == null ? (
           <>
             <Text className="mb-3 text-base">
               Connect Spotify. During a workout the app notes each song. A song heard for half its length is kept, any
               other song is a skip. After the workout, save the kept songs as a playlist.
             </Text>
             <View className="flex-row">
-              <Button name="music-connect" kind="pill" className="flex-1" onPress={SpotifyClient_login}>
+              <Button name="music-connect" kind="pill" className="flex-1" onPress={connect}>
                 Connect Spotify
               </Button>
             </View>

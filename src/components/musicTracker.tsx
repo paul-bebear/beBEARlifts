@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import { IMusicWorkout, MusicTracking_finishOthers, MusicTracking_pollMs } from "../models/musicTracking";
 import { IMusicPollEffects, MusicPoll_catchUp, MusicPoll_nowPlaying } from "../models/musicPoll";
 import { MusicStore_load, MusicStore_update } from "../utils/musicStore";
@@ -17,9 +18,10 @@ interface IProps {
   dispatch: IDispatch;
 }
 
-function browserEffects(isStopped: () => boolean): IMusicPollEffects {
+// On the web, react-native-web's AppState reads document.visibilityState and the visibilitychange event.
+function pollEffects(isStopped: () => boolean): IMusicPollEffects {
   return {
-    isVisible: () => document.visibilityState === "visible",
+    isVisible: () => AppState.currentState === "active",
     hasTokens: async () => (await MusicStore_load()).tokens != null,
     nowPlaying: SpotifyClient_nowPlaying,
     history: SpotifyClient_history,
@@ -46,17 +48,17 @@ export function MusicTracker(props: IProps): null {
     }
     const workout: IMusicWorkout = { id: workoutId, startTime: workoutStartTime };
     let isStopped = false;
-    const effects = browserEffects(() => isStopped);
+    const effects = pollEffects(() => isStopped);
     const poll = (): Promise<void> => MusicPoll_nowPlaying(workout, effects);
     const catchUp = (): Promise<void> => MusicPoll_catchUp(workout, effects);
 
     catchUp();
-    const interval = window.setInterval(poll, MusicTracking_pollMs);
-    document.addEventListener("visibilitychange", catchUp);
+    const interval = setInterval(poll, MusicTracking_pollMs);
+    const subscription = AppState.addEventListener("change", catchUp);
     return () => {
       isStopped = true;
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", catchUp);
+      clearInterval(interval);
+      subscription.remove();
     };
   }, [workoutId, workoutStartTime]);
 
