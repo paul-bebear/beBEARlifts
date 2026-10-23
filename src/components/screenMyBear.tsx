@@ -7,8 +7,7 @@ import { Thunk_pushScreen } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { IconCog2 } from "./icons/iconCog2";
-import { ProgressSections } from "./screenProgressDashboard";
-import { CheckInChart } from "./checkInChart";
+import { MyBearSections } from "./screenProgressDashboard";
 import { BearScene } from "./bearScene";
 import { BearTv } from "./bearTv";
 import { BearPanel } from "./bearPanel";
@@ -25,7 +24,6 @@ import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 
 interface IMyBearLayoutProps {
   head: ReactNode;
-  checkIns?: ReactNode;
   children: ReactNode;
 }
 
@@ -33,7 +31,6 @@ function MyBearLayout(props: IMyBearLayoutProps): JSX.Element {
   return (
     <View testID="my-bear" data-testid="my-bear">
       {props.head}
-      {props.checkIns}
       {props.children}
     </View>
   );
@@ -107,8 +104,8 @@ export function ScreenMyBear(): JSX.Element {
   const celebration = useBadgeCelebration();
   return (
     <NavScreenContent>
-      <MyBearLayout head={<MyBearHead />} checkIns={<CheckInChart />}>
-        <ProgressSections />
+      <MyBearLayout head={<MyBearHead />}>
+        <MyBearSections />
       </MyBearLayout>
       {celebration.badge != null && (
         <BadgeUnlockedSheet

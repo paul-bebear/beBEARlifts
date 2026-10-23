@@ -124,22 +124,25 @@ function photosRow(photos: IProgressPhotoLog, now: number): IProgressHub["photos
   };
 }
 
+export function ProgressHub_goal(goalLog: IProgramGoalLog, settings: ISettings, now: number): IProgressHub["goal"] {
+  const goal = goalLog.current;
+  if (goal == null) {
+    return undefined;
+  }
+  return {
+    title: ProgramGoal_kindLabel(goal.kind),
+    pace: ProgramGoal_paceLabel(goal.kind, goal.pace),
+    started: ProgressHub_formatDate(goal.startedAt, now),
+    startWeight: goal.startWeight != null ? ProgramGoal_formatWeight(goal.startWeight, settings.units) : undefined,
+    canChangePace: goal.kind !== "maintain",
+  };
+}
+
 export function ProgressHub_build(input: IProgressHubInput): IProgressHub {
   const { goalLog, steps, photos, settings, now } = input;
-  const goal = goalLog.current;
   const today = Steps_count(steps, FoodLog_dayKey(new Date(now)));
   return {
-    goal:
-      goal == null
-        ? undefined
-        : {
-            title: ProgramGoal_kindLabel(goal.kind),
-            pace: ProgramGoal_paceLabel(goal.kind, goal.pace),
-            started: ProgressHub_formatDate(goal.startedAt, now),
-            startWeight:
-              goal.startWeight != null ? ProgramGoal_formatWeight(goal.startWeight, settings.units) : undefined,
-            canChangePace: goal.kind !== "maintain",
-          },
+    goal: ProgressHub_goal(goalLog, settings, now),
     weight: weightRow(input),
     nutrition: nutritionRow(input),
     consistency: consistencyRow(input),
