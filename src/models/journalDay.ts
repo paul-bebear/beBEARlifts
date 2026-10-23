@@ -10,7 +10,15 @@ import {
 } from "./foodLog";
 import { IMusicLog, MusicLog_sessionForWorkout } from "./musicLog";
 import { MusicSession_keptTracks } from "./musicSession";
-import { INote, INotesLog, Notes_checkIn, Notes_checkInScales, Notes_forDay, Notes_isBlank } from "./notes";
+import {
+  INote,
+  INotesLog,
+  Notes_canEditCheckIn,
+  Notes_checkIn,
+  Notes_checkInScales,
+  Notes_forDay,
+  Notes_isBlank,
+} from "./notes";
 import { WorkoutPost_build, WorkoutPost_statsLine } from "./workoutPost";
 
 export interface IJournalDayInput {
@@ -44,17 +52,15 @@ export interface IJournalDay {
   title: string;
   isToday: boolean;
   workouts: IJournalWorkout[];
-  workoutEmptyLine?: string;
   mealCount: number;
   canAddFood: boolean;
-  mealsEmptyLine?: string;
+  canEditCheckIn: boolean;
   totals: INutrients;
   songs: IJournalSong[];
   weight?: IWeight;
   checkIn?: INote;
   notes: INote[];
   chips: string[];
-  mindfulness: string;
 }
 
 export type IJournalSection = "checkIn" | "workouts" | "meals" | "songs" | "weight" | "notes";
@@ -97,47 +103,67 @@ function isSectionDone(day: IJournalDay, section: IJournalSection): boolean {
 }
 
 // isOpenByUser is undefined until the user taps the summary or Hide; after that their choice stands.
+export interface IJournalEmptyRow {
+  title: string;
+  hint: string;
+}
+
+export const JournalDay_hints = {
+  checkIn: "How are you today?",
+  noWorkoutToday: "Tap + to start one",
+  restDay: "Rest day",
+  noFoodToday: "Tap + to feed the bear",
+  nothingLogged: "Nothing logged",
+  noWeight: "Not logged",
+  noNotes: "None yet",
+};
+
+// A past day's check-in cannot be filled in, so an empty one shows no row at all.
+export function JournalDay_emptyRow(day: IJournalDay, section: IJournalSection): IJournalEmptyRow | undefined {
+  const hints = JournalDay_hints;
+  switch (section) {
+    case "checkIn":
+      return day.canEditCheckIn && (day.checkIn == null || Notes_isBlank(day.checkIn))
+        ? { title: "Check-in", hint: hints.checkIn }
+        : undefined;
+    case "workouts":
+      return day.workouts.length === 0
+        ? { title: "Workout", hint: day.isToday ? hints.noWorkoutToday : hints.restDay }
+        : undefined;
+    case "meals":
+      return day.mealCount === 0
+        ? { title: "Meals", hint: day.isToday ? hints.noFoodToday : hints.nothingLogged }
+        : undefined;
+    case "songs":
+      return undefined;
+    case "weight":
+      return day.weight == null ? { title: "Weigh-in", hint: hints.noWeight } : undefined;
+    case "notes":
+      return day.notes.length === 0 ? { title: "Notes", hint: hints.noNotes } : undefined;
+  }
+}
+
+export interface IJournalSectionFold {
+  summary?: string;
+  isCollapsed: boolean;
+  canHide: boolean;
+  empty?: IJournalEmptyRow;
+}
+
+// Only the check-in row opens, because the others have nothing to show until something is logged.
 export function JournalDay_sectionFold(
   day: IJournalDay,
   section: IJournalSection,
   isOpenByUser: boolean | undefined
-): {
-  summary?: string;
-  isCollapsed: boolean;
-  canHide: boolean;
-} {
+): IJournalSectionFold {
+  const empty = JournalDay_emptyRow(day, section);
+  if (empty != null && !(section === "checkIn" && isOpenByUser === true)) {
+    return { isCollapsed: false, canHide: false, empty };
+  }
   const summary = JournalDay_sectionSummary(day, section);
   const isOpen = isOpenByUser ?? !isSectionDone(day, section);
   const isCollapsed = summary != null && !isOpen;
   return { summary, isCollapsed, canHide: summary != null && !isCollapsed };
-}
-
-// One line a day, in the bear's voice. Each is a thing to do in under five minutes, never a quote.
-export const JournalDay_mindfulnessLines = [
-  "Breathe in for 4 seconds, out for 6. Do it three times.",
-  "Drink a full glass of water before your next meal.",
-  "Name one thing your body did well today.",
-  "Muscle grows while you sleep. Aim for 8 hours tonight.",
-  "Put the phone down for 5 minutes and stretch your back.",
-  "Eat one meal today with no screen in front of you.",
-  "Walk outside for 10 minutes. Look at the sky once.",
-  "Write down one small win from today.",
-  "Roll your shoulders back 10 times. Sit up tall.",
-  "Text a friend who makes you laugh.",
-  "Rest days build muscle too. Be proud of them.",
-  "Slow down your next bite. Taste it.",
-  "Close your eyes for 30 seconds. Listen to what you hear.",
-  "Compare yourself to last month's you, nobody else.",
-];
-
-function dayNumber(day: string): number {
-  const [year, month, date] = day.split("-").map(Number);
-  return Math.round(Date.UTC(year, month - 1, date) / 86400000);
-}
-
-export function JournalDay_mindfulness(day: string): string {
-  const lines = JournalDay_mindfulnessLines;
-  return lines[((dayNumber(day) % lines.length) + lines.length) % lines.length];
 }
 
 function dayOf(timestamp: number): string {
@@ -183,17 +209,6 @@ function weightOf(weights: IStatsWeightValue[], day: string): IWeight | undefine
   return latest?.value;
 }
 
-export const JournalDay_noWorkoutToday = "No workout yet. Tap + to start one.";
-export const JournalDay_restDay = "Rest day. The bear rested too.";
-export const JournalDay_noFoodToday = "No food yet. Tap + to feed the bear.";
-
-function workoutEmptyLineOf(input: IJournalDayInput, hasWorkout: boolean): string | undefined {
-  if (hasWorkout) {
-    return undefined;
-  }
-  return input.day === input.today ? JournalDay_noWorkoutToday : JournalDay_restDay;
-}
-
 function mealsChip(count: number): string | undefined {
   return count === 0 ? undefined : `${count} ${count === 1 ? "food" : "foods"} logged`;
 }
@@ -211,16 +226,14 @@ export function JournalDay_build(input: IJournalDayInput): IJournalDay {
     title: FoodLog_dayLabel(day, today),
     isToday: day === today,
     workouts,
-    workoutEmptyLine: workoutEmptyLineOf(input, workouts.length > 0),
     mealCount,
     canAddFood: day < today,
-    mealsEmptyLine: mealCount === 0 && day === today ? JournalDay_noFoodToday : undefined,
+    canEditCheckIn: Notes_canEditCheckIn(day, today),
     totals: FoodLog_dayTotals(input.food, day),
     songs: songsOf(records, input.music),
     weight: weightOf(input.weights, day),
     checkIn: Notes_checkIn(input.notes, day),
     notes: Notes_forDay(input.notes, day),
     chips,
-    mindfulness: JournalDay_mindfulness(day),
   };
 }

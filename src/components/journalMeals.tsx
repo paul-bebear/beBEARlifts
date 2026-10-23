@@ -1,20 +1,16 @@
 import { JSX, useState } from "react";
 import { View } from "react-native";
-import { Text } from "./primitives/text";
 import { FoodLog_dayTotals, FoodLog_entriesFor, FoodLog_meals, IFoodMeal, IFoodProgressMode } from "../models/foodLog";
-import { FoodMealForTime_pick } from "../models/foodMealForTime";
 import { useFoodLog } from "../utils/foodLogStore";
 import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch } from "../navigation/TrackedStateContext";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodSummaryCard } from "./foodSummaryCard";
 import { FoodMealCard } from "./foodMealCard";
-import { Button } from "./button";
 
 interface IProps {
   day: string;
   canAdd: boolean;
-  emptyLine?: string;
 }
 
 export function JournalMeals(props: IProps): JSX.Element {
@@ -23,30 +19,12 @@ export function JournalMeals(props: IProps): JSX.Element {
   const log = useFoodLog();
   const [mode, setMode] = useState<IFoodProgressMode>("consumed");
   const [collapsed, setCollapsed] = useState<Partial<Record<IFoodMeal, boolean>>>({});
-  const entries = FoodLog_entriesFor(log, day);
-
   const openAdd = (meal: IFoodMeal): void => {
     dispatch(Thunk_pushScreen("foodAdd", { day, meal }));
   };
 
   return (
     <View testID="journal-meals" data-testid="journal-meals">
-      {props.emptyLine != null && (
-        <Text className="px-4 text-base text-text-secondary" testID="journal-meals-empty">
-          {props.emptyLine}
-        </Text>
-      )}
-      {canAdd && entries.length === 0 && (
-        <View className="px-4 pb-2" testID="journal-meals-add">
-          <Button
-            name="journal-add-to-day"
-            kind="pill-outline"
-            onPress={() => openAdd(FoodMealForTime_pick(new Date()))}
-          >
-            Add to this day
-          </Button>
-        </View>
-      )}
       <View className="pt-2">
         {FoodLog_meals.map((meal) => {
           const mealEntries = FoodLog_entriesFor(log, day, meal);

@@ -2,7 +2,6 @@ import { JSX, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodTextInput } from "./foodUi";
-import { BearMark } from "./shareCards/bearMark";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import {
   ICheckInField,
@@ -13,22 +12,6 @@ import {
   Notes_updateCheckIn,
 } from "../models/notes";
 import { NotesStore, NotesStore_newId } from "../utils/notesStore";
-
-export function JournalMindfulness(props: { line: string }): JSX.Element {
-  return (
-    <View
-      className="flex-row items-center p-3 mx-4 mt-3 rounded-2xl"
-      style={{ backgroundColor: T.cream, gap: 10 }}
-      testID="journal-mindfulness"
-      data-testid="journal-mindfulness"
-    >
-      <BearMark size={32} color={T.greenDark} faceColor={T.honey} />
-      <Text className="flex-1 text-base" style={{ color: T.greenDark }}>
-        {props.line}
-      </Text>
-    </View>
-  );
-}
 
 function FaceRow(props: {
   field: ICheckInField;

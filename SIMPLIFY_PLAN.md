@@ -88,10 +88,10 @@ S2. Home fits one screen. Built. Home shows the header, the checklist as three c
 
 S3. My bear fits one screen. Built. My bear shows the bear scene, the bear panel, the goal card and one "All stats" row (plus the program card and restore banner in the offline build). `ScreenReportsHub` is now "All stats": the check-in chart, the weight, nutrition and consistency rows, week insights, steps, photos, then every report and body row. Modules: `ReportsHub_rows` in `src/models/reportsHub.ts`, `ProgressHub_goal` in `src/models/progressHub.ts`.
 
-S4. Journal tidy. Remove the bear-mark title, the mindfulness line and the Export button, and add Export to Settings. Collapse each section to one row when it is empty. Module: `src/models/journalDay.ts`. About 2 hours.
+S4. Journal tidy. Built. The bear mark beside the day title, the mindfulness line and the Export button are gone. The day title stays as plain text. Export is "Export journal" in Settings, under "Export everything". Each empty section is one row: title, a short hint and one action (Check in, All workouts, Add, Log, +). The empty check-in row opens the faces on tap. Module: `JournalDay_emptyRow` and `JournalDay_sectionFold` in `src/models/journalDay.ts`.
 
 ## Needs a decision
 
-History off Home is the one change a long-time Liftosaur user would notice. The alternative is to keep a "History" link on Home below the checklist. That costs one row and keeps Home at one screen.
+History off Home: decided. Home keeps a "History" link, and the list lives in Journal.
 
 The Friend square in the "+" is rare compared with food and weight. It can move to My bear, which frees a square for "Run" or "Photo".
