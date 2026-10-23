@@ -117,6 +117,7 @@ interface IWorkoutViewProps {
   settings: ISettings;
   dispatch: IDispatch;
   renderHeaderMenu?: (onOpenChange: (isOpen: boolean) => void) => ReactNode;
+  onCancel?: () => void;
 }
 
 export function useFirstUseTip(
@@ -417,6 +418,17 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
                   </WorkoutExercisePager>
                 </PerfProbeSubtree>
               </View>
+            )}
+            {props.onCancel != null && (
+              <StickyPressable
+                testID="workout-cancel"
+                data-testid="workout-cancel"
+                accessibilityRole="button"
+                className="items-center py-4 mt-6"
+                onPress={props.onCancel}
+              >
+                <Text className="text-base font-semibold text-text-error">Cancel workout</Text>
+              </StickyPressable>
             )}
           </View>
         </NavScreenContent>
