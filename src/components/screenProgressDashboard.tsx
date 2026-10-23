@@ -19,14 +19,7 @@ import { StepsStore } from "../utils/stepsStore";
 import { useStepsHealthSync } from "../utils/useStepsHealthSync";
 import { useIsFocused } from "@react-navigation/native";
 import { ProgressPhotoStore } from "../utils/progressPhotoStore";
-import {
-  ProgressDetailLine,
-  ProgressDetailLink,
-  ProgressExpandRow,
-  ProgressGoalCard,
-  ProgressPhotosCard,
-  ProgressStepsCard,
-} from "./progressHubCards";
+import { ProgressDetailLine, ProgressDetailLink, ProgressExpandRow, ProgressGoalCard } from "./progressHubCards";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
 import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 import { WeekInsights } from "./weekInsights";
@@ -232,11 +225,6 @@ export function StatsSections(): JSX.Element {
           subscription={subscription}
         />
       </View>
-      <Text className="px-4 pt-4 pb-2 text-xs font-semibold tracking-wide uppercase text-text-secondary">
-        Bonus tracking
-      </Text>
-      <ProgressStepsCard steps={hub.steps} onPress={() => dispatch(Thunk_pushScreen("steps"))} />
-      <ProgressPhotosCard photos={hub.photos} onPress={() => dispatch(Thunk_pushScreen("progressPhotos"))} />
     </View>
   );
 }

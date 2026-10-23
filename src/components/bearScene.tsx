@@ -1,11 +1,10 @@
-import { JSX, ReactNode, useEffect, useRef, useState } from "react";
+import { JSX, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, Image, LayoutChangeEvent, Platform, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { IBearState } from "../models/bear";
 import { BearArt_gym, BearArt_sprite } from "../models/bearArt";
 import { IBearBoardTile } from "../models/bearBoard";
-import { BearScene_breathing, BearScene_breathingPivot, BearScene_layout, IBearBox } from "../models/bearScene";
-import { BearTv_box } from "../models/bearTv";
+import { BearScene_breathing, BearScene_breathingPivot, BearScene_layout } from "../models/bearScene";
 import { BearImage_uri } from "../utils/bearImage";
 
 const maxWidth = 480;
@@ -15,17 +14,21 @@ interface IProps {
   state: IBearState;
   tiles: IBearBoardTile[];
   onTile: (tile: IBearBoardTile) => void;
-  tv?: (box: IBearBox) => ReactNode;
 }
 
-function BoardTile(props: { tile: IBearBoardTile; valueSize: number; onPress: () => void }): JSX.Element {
+function BoardTile(props: {
+  tile: IBearBoardTile;
+  isWide: boolean;
+  valueSize: number;
+  onPress: () => void;
+}): JSX.Element {
   return (
     <Pressable
       testID={`bear-board-${props.tile.id}`}
       data-testid={`bear-board-${props.tile.id}`}
       onPress={props.onPress}
       className="justify-center p-1"
-      style={{ width: "50%", height: "50%" }}
+      style={{ width: props.isWide ? "100%" : "50%", height: "50%" }}
     >
       <Text
         className="font-bold"
@@ -52,7 +55,6 @@ export function BearScene(props: IProps): JSX.Element {
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const onLayout = (e: LayoutChangeEvent): void => setWidth(Math.min(maxWidth, e.nativeEvent.layout.width));
   const pad = layout.board.width * 0.04;
-  const tvBox = BearTv_box(layout.width);
 
   useEffect(() => {
     let active = true;
@@ -123,16 +125,16 @@ export function BearScene(props: IProps): JSX.Element {
               height: layout.board.height - 2 * pad,
             }}
           >
-            {props.tiles.map((tile) => (
+            {props.tiles.map((tile, i) => (
               <BoardTile
                 key={tile.id}
                 tile={tile}
+                isWide={i === props.tiles.length - 1 && props.tiles.length % 2 === 1}
                 valueSize={Math.round(layout.board.height * 0.12)}
                 onPress={() => props.onTile(tile)}
               />
             ))}
           </View>
-          {props.tv != null && <View style={{ position: "absolute", ...tvBox }}>{props.tv(tvBox)}</View>}
           <Animated.Image
             testID="bear-scene-sprite"
             source={{ uri: BearImage_uri(spritePath) }}

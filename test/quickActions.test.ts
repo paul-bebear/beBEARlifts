@@ -3,32 +3,26 @@ import { expect } from "chai";
 import { QuickActions_inProgressLine, QuickActions_list } from "../src/models/quickActions";
 
 describe("QuickActions", () => {
-  it("lists Food, Weight, Friend and Note in that order", () => {
-    const list = QuickActions_list({ isOngoingProgress: false, canRun: false });
-    expect(list.squares.map((s) => s.label)).to.eql(["Food", "Weight", "Friend", "Note"]);
+  it("lists only Food and Weight, the front-layer squares", () => {
+    const list = QuickActions_list({ isOngoingProgress: false });
+    expect(list.squares.map((s) => s.label)).to.eql(["Food", "Weight"]);
   });
 
-  it("marks no square as coming soon now that the note editor exists", () => {
-    const list = QuickActions_list({ isOngoingProgress: false, canRun: false });
+  it("marks no square as coming soon", () => {
+    const list = QuickActions_list({ isOngoingProgress: false });
     expect(list.squares.filter((s) => s.isSoon)).to.eql([]);
   });
 
   it("starts a workout through the picker when none is ongoing", () => {
-    const list = QuickActions_list({ isOngoingProgress: false, canRun: false });
+    const list = QuickActions_list({ isOngoingProgress: false });
     expect(list.workout.label).to.equal("Start workout");
     expect(list.workout.action).to.equal("pick");
   });
 
   it("resumes the ongoing workout", () => {
-    const list = QuickActions_list({ isOngoingProgress: true, canRun: false });
+    const list = QuickActions_list({ isOngoingProgress: true });
     expect(list.workout.label).to.equal("Resume workout");
     expect(list.workout.action).to.equal("resume");
-  });
-
-  it("shows the Run button only when the phone can track a run", () => {
-    expect(QuickActions_list({ isOngoingProgress: false, canRun: true }).workout.showsRun).to.equal(true);
-    expect(QuickActions_list({ isOngoingProgress: true, canRun: true }).workout.showsRun).to.equal(true);
-    expect(QuickActions_list({ isOngoingProgress: false, canRun: false }).workout.showsRun).to.equal(false);
   });
 
   it("writes the in-progress line in whole minutes", () => {

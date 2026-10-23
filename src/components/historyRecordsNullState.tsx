@@ -11,7 +11,7 @@ import { ImagePreloader_dynocoach, ImagePreloader_uri } from "../utils/imagePrel
 export function HistoryRecordsNullState(): JSX.Element {
   const state = useTrackedState();
   const dispatch = useTrackedDispatch();
-  const { workout } = QuickActions_list({ isOngoingProgress: buildNavCommon(state).isOngoingProgress, canRun: false });
+  const { workout } = QuickActions_list({ isOngoingProgress: buildNavCommon(state).isOngoingProgress });
   const start = (): void => {
     if (workout.action === "resume") {
       dispatch(Thunk_startProgramDay());
