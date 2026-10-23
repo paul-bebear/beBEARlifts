@@ -1,6 +1,6 @@
 import type { IStats, IUnit, IWeight } from "../types";
 import { IBearCountedWorkout } from "./bearGrowth";
-import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
+import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog, IFoodRange } from "./foodLog";
 import { MonthCalendar_dayTitle } from "./monthCalendar";
 import { ProgramGoal_formatWeight } from "./programGoal";
 
@@ -126,10 +126,26 @@ function weightItem(input: IChecklistDayInput): IChecklistItem {
   return { key: "weight", title: "Weigh-in", subtitle, isDone };
 }
 
+function goalTarget(range: IFoodRange): number {
+  return range.min > 0 ? range.min : range.max;
+}
+
 function foodItem(input: IChecklistDayInput): IChecklistItem {
   const { foodLog, day, today } = input;
   const count = foodLog.entries.filter((e) => e.day === day).length;
-  const calories = Math.round(FoodLog_dayTotals(foodLog, day).calories);
+  const totals = FoodLog_dayTotals(foodLog, day);
+  const calories = Math.round(totals.calories);
+  const protein = Math.round(totals.protein);
+  const calorieTarget = goalTarget(foodLog.goals.calories);
+  const proteinTarget = goalTarget(foodLog.goals.protein);
+  if (count > 0 && (calorieTarget > 0 || proteinTarget > 0)) {
+    const parts = [
+      calorieTarget > 0 ? `${calories.toLocaleString("en-US")} / ${calorieTarget.toLocaleString("en-US")} Cal` : "",
+      proteinTarget > 0 ? `${protein} / ${proteinTarget} g protein` : "",
+    ].filter((part) => part !== "");
+    const isDone = calories >= calorieTarget && protein >= proteinTarget;
+    return { key: "food", title: "Feed the bear", subtitle: parts.join(" · "), isDone };
+  }
   const subtitle =
     count > 0
       ? `${count} ${count === 1 ? "item" : "items"} · ${calories.toLocaleString("en-US")} Cal`
