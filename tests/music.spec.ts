@@ -111,8 +111,9 @@ test("tracks workout songs from Spotify and saves the kept ones as a playlist", 
   await page.getByRole("button", { name: "Basic Beginner Routine" }).click();
   await page.getByTestId("clone-program").click();
 
-  await page.getByTestId("footer-progress").click();
-  await page.getByTestId("progress-music").click();
+  await page.getByTestId("footer-my-bear").click();
+  await page.getByTestId("progress-all-stats").click();
+  await page.getByTestId("reports-hub-music").click();
   await page.getByTestId("music-connect").click();
 
   await expect(page.getByTestId("music-account")).toContainText("Test Lifter");

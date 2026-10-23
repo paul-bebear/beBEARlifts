@@ -1,4 +1,11 @@
-export type IReportsHubScreen = "runs" | "graphsList" | "reports" | "exercises";
+export type IReportsHubScreen =
+  | "runs"
+  | "graphsList"
+  | "reports"
+  | "exercises"
+  | "measurements"
+  | "bodyScans"
+  | "music";
 
 export interface IReportsHubRow {
   id: string;
@@ -11,6 +18,8 @@ export interface IReportsHubInput {
   isOffline: boolean;
   hasRunSensors: boolean;
 }
+
+export const ReportsHub_title = "All stats";
 
 export function ReportsHub_rows(input: IReportsHubInput): IReportsHubRow[] {
   const rows: IReportsHubRow[] = [];
@@ -27,5 +36,20 @@ export function ReportsHub_rows(input: IReportsHubInput): IReportsHubRow[] {
     subtitle: "History for each exercise",
     screen: "exercises",
   });
+  rows.push({
+    id: "measurements",
+    title: "Body measurements",
+    subtitle: "Waist, arms and more",
+    screen: "measurements",
+  });
+  rows.push({
+    id: "body-scans",
+    title: "Body composition",
+    subtitle: "Body fat and muscle from scans",
+    screen: "bodyScans",
+  });
+  if (input.isOffline) {
+    rows.push({ id: "music", title: "Workout music", subtitle: "Songs from your workouts", screen: "music" });
+  }
   return rows;
 }
