@@ -3718,7 +3718,7 @@ export const metadata: Record<IExerciseId, IMetaExercises> = {
       "Teres Minor",
     ],
     bodyParts: ["Back"],
-    sortedEquipment: ["leverageMachine"],
+    sortedEquipment: ["leverageMachine", "barbell"],
   },
   thruster: {
     targetMuscles: ["Deltoid Anterior", "Gluteus Maximus", "Quadriceps"],

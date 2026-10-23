@@ -4,7 +4,10 @@ import { Settings_build } from "../src/models/settings";
 import {
   Weight_build,
   Weight_calculatePlates,
+  Weight_decrement,
+  Weight_increment,
   Weight_platesWeight,
+  Weight_round,
   Weight_formatOneSide,
   Weight_strictParse,
 } from "../src/models/weight";
@@ -151,6 +154,40 @@ describe("Weight", () => {
         { weight: Weight_build(5, "lb"), num: 2 },
       ]);
       expect(result.totalWeight).to.eql(Weight_build(77, "kg"));
+    });
+  });
+
+  describe("dumbbells and cables", () => {
+    const hammerCurl = { id: "hammerCurl", equipment: "dumbbell" } as const;
+    const cableRow = { id: "seatedRow", equipment: "cable" } as const;
+
+    it("keep the typed weight and step by 1 kg, with no plate math", () => {
+      const settings = Settings_build();
+      settings.units = "kg";
+      settings.gyms[0].equipment.dumbbell!.unit = "kg";
+      settings.gyms[0].equipment.cable!.unit = "kg";
+      const eight = Weight_build(8, "kg");
+      expect(Weight_calculatePlates(eight, settings, "kg", hammerCurl)).to.eql({
+        plates: [],
+        platesWeight: eight,
+        totalWeight: eight,
+      });
+      expect(Weight_round(Weight_build(17, "kg"), settings, "kg", cableRow)).to.eql(Weight_build(17, "kg"));
+      expect(Weight_increment(eight, settings, hammerCurl)).to.eql(Weight_build(9, "kg"));
+      expect(Weight_decrement(eight, settings, hammerCurl)).to.eql(Weight_build(7, "kg"));
+    });
+
+    it("follow the exercise's own rounding, and a fixed dumbbell list still applies", () => {
+      const settings = Settings_build();
+      settings.exerciseData[Exercise_toKey(hammerCurl)] = { rounding: 2 };
+      expect(Weight_increment(Weight_build(8, "kg"), settings, hammerCurl)).to.eql(Weight_build(10, "kg"));
+      settings.exerciseData = {};
+      settings.gyms[0].equipment.dumbbell!.isFixed = true;
+      settings.gyms[0].equipment.dumbbell!.fixed = [Weight_build(10, "kg"), Weight_build(12, "kg")];
+      settings.gyms[0].equipment.dumbbell!.unit = "kg";
+      expect(Weight_calculatePlates(Weight_build(11, "kg"), settings, "kg", hammerCurl).totalWeight).to.eql(
+        Weight_build(10, "kg")
+      );
     });
   });
 

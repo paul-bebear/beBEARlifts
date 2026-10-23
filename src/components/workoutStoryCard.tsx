@@ -1,5 +1,6 @@
 import { JSX, useEffect, useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Platform, Pressable, View } from "react-native";
+import { ActionMenu } from "./actionMenu";
 import { IHistoryRecord, ISettings, IStats } from "../types";
 import {
   IShareCardPage,
@@ -101,9 +102,9 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
     exporter.share(pages, { data, photo }, WorkoutStoryCard_exportImages(data, pages, photo));
   };
 
-  const pickPhoto = async (): Promise<void> => {
+  const pickPhoto = async (source: "camera" | "photo-library"): Promise<void> => {
     try {
-      setPhoto(await ProgressPhotoPick_pick("photo-library"));
+      setPhoto(await ProgressPhotoPick_pick(source));
     } catch {
       Dialog_alert("Couldn't open that photo. Try another one.");
     }
@@ -124,14 +125,32 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
       <View className="flex-row justify-center px-gutter mt-3" style={{ gap: 24 }}>
         {actions.map((action) => {
           if (action === "photo") {
-            return (
+            const photoButton = (onPress: () => void): JSX.Element => (
               <FinishActionButton
                 key={action}
                 testID="workout-story-photo"
                 label={photo == null ? "Add photo" : "Change photo"}
                 icon={<IconCamera size={22} />}
                 disabled={exporter.isBusy}
-                onPress={pickPhoto}
+                onPress={onPress}
+              />
+            );
+            if (Platform.OS === "web") {
+              return photoButton(() => pickPhoto("photo-library"));
+            }
+            return (
+              <ActionMenu
+                key={action}
+                title={photo == null ? "Add a photo" : "Change the photo"}
+                actions={[
+                  { label: "Take photo", onPress: () => pickPhoto("camera"), testID: "workout-story-camera" },
+                  {
+                    label: "Choose from library",
+                    onPress: () => pickPhoto("photo-library"),
+                    testID: "workout-story-library",
+                  },
+                ]}
+                renderTrigger={photoButton}
               />
             );
           }
