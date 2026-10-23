@@ -14,17 +14,61 @@ import {
   BodyScans_change,
   BodyScans_fields,
   BodyScans_formatDelta,
-  BodyScans_formatValue,
-  BodyScans_fromForm,
   BodyScans_put,
   BodyScans_remove,
   BodyScans_toStats,
   IBodyScan,
   IBodyScanForm,
+  IBodyScanShareKey,
   IBodyScanUnit,
 } from "../models/bodyScans";
+import {
+  BodyScanMassShare_afterRead,
+  BodyScanMassShare_bodyWeight,
+  BodyScanMassShare_formatValue,
+  BodyScanMassShare_fromForm,
+  BodyScanMassShare_isShareKey,
+  BodyScanMassShare_modes,
+  BodyScanMassShare_nearestWeight,
+  BodyScanMassShare_switch,
+  IBodyScanShareMode,
+  IBodyScanShareModes,
+} from "../models/bodyScanMassShare";
 
 const trendClass = { better: "text-text-success", worse: "text-text-error", neutral: "text-text-secondary" };
+
+function ShareModePicker(props: {
+  fieldKey: IBodyScanShareKey;
+  unit: IBodyScanUnit;
+  mode: IBodyScanShareMode;
+  onChange: (mode: IBodyScanShareMode) => void;
+}): JSX.Element {
+  const options: { mode: IBodyScanShareMode; label: string }[] = [
+    { mode: "mass", label: props.unit },
+    { mode: "percent", label: "%" },
+  ];
+  return (
+    <View className="flex-row" style={{ gap: 4 }}>
+      {options.map((option) => {
+        const isActive = option.mode === props.mode;
+        const testID = `body-scan-${props.fieldKey}-mode-${option.mode}`;
+        return (
+          <Pressable
+            key={option.mode}
+            testID={testID}
+            data-testid={testID}
+            onPress={() => props.onChange(option.mode)}
+            className={`px-2 py-0.5 rounded-full border ${
+              isActive ? "border-button-primarybackground bg-background-subtle" : "border-border-neutral"
+            }`}
+          >
+            <Text className={`text-xs ${isActive ? "font-semibold" : "text-text-secondary"}`}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 function ScanCard(props: { scan: IBodyScan; previous?: IBodyScan; onDelete: () => void }): JSX.Element {
   const { scan, previous } = props;
@@ -42,7 +86,7 @@ function ScanCard(props: { scan: IBodyScan; previous?: IBodyScan; onDelete: () =
         </Pressable>
       </View>
       {BodyScans_fields.map((field) => {
-        const value = scan[field.key];
+        const value = BodyScanMassShare_formatValue(field, scan);
         if (value == null) {
           return null;
         }
@@ -51,7 +95,7 @@ function ScanCard(props: { scan: IBodyScan; previous?: IBodyScan; onDelete: () =
           <View key={field.key} className="flex-row justify-between py-0.5">
             <Text className="text-sm text-text-secondary">{field.label}</Text>
             <Text className="text-sm">
-              {BodyScans_formatValue(field, value, scan.unit)}
+              {value}
               {change != null && change.delta !== 0 && (
                 <Text className={`text-xs ${trendClass[change.trend]}`}>
                   {"  "}
@@ -72,12 +116,24 @@ export function ScreenBodyScans(): JSX.Element {
   const unit: IBodyScanUnit = state.storage.settings.units === "lb" ? "lb" : "kg";
   const log = useBodyScans();
   const [form, setForm] = useState<IBodyScanForm>({});
+  const [pickedModes, setPickedModes] = useState<IBodyScanShareModes>({});
   const [scanning, setScanning] = useState(false);
+  const modes = { ...BodyScanMassShare_modes(log), ...pickedModes };
+  const nearestWeight = (): number | undefined =>
+    BodyScanMassShare_nearestWeight(state.storage.stats.weight.weight, Date.now(), unit);
 
   useNavOptions({ navTitle: "Body composition" });
 
+  const switchMode = (key: IBodyScanShareKey, mode: IBodyScanShareMode): void => {
+    if (mode === modes[key]) {
+      return;
+    }
+    setForm(BodyScanMassShare_switch(form, key, mode, BodyScanMassShare_bodyWeight(form, nearestWeight())));
+    setPickedModes({ ...pickedModes, [key]: mode });
+  };
+
   const save = async (): Promise<void> => {
-    const result = BodyScans_fromForm(form, unit, Date.now());
+    const result = BodyScanMassShare_fromForm(form, modes, unit, Date.now(), nearestWeight());
     if (result.kind === "error") {
       Dialog_alert(result.message);
       return;
@@ -92,6 +148,7 @@ export function ScreenBodyScans(): JSX.Element {
       EditStats_addPercentageStats(dispatch, { bodyfat: stats.bodyfat }, scan.timestamp);
     }
     setForm({});
+    setPickedModes({});
   };
 
   const remove = async (id: number): Promise<void> => {
@@ -108,25 +165,43 @@ export function ScreenBodyScans(): JSX.Element {
       <BodyScanPhoto
         busy={scanning}
         onBusyChange={setScanning}
-        onRead={(scan) => setForm((current) => BodyScanRead_merge(current, scan, unit))}
+        onRead={(scan) => {
+          setForm((current) => BodyScanRead_merge(current, scan, unit));
+          setPickedModes((current) => BodyScanMassShare_afterRead({ ...modes, ...current }, scan));
+        }}
       />
       <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-        {BodyScans_fields.map((field) => (
-          <View key={field.key} style={{ width: "48%" }}>
-            <Text className="mb-1.5 text-sm font-semibold">
-              {field.label}
-              {field.kind === "mass" ? ` (${unit})` : field.kind === "percent" ? " (%)" : ""}
-            </Text>
-            <FoodTextInput
-              testID={`body-scan-${field.key}`}
-              value={form[field.key] ?? ""}
-              onChangeText={(text) => setForm({ ...form, [field.key]: text })}
-              keyboardType="decimal-pad"
-              inputMode="decimal"
-              editable={!scanning}
-            />
-          </View>
-        ))}
+        {BodyScans_fields.map((field) => {
+          const key = field.key;
+          return (
+            <View key={key} style={{ width: "48%" }}>
+              {BodyScanMassShare_isShareKey(key) ? (
+                <View className="flex-row items-center justify-between mb-1.5">
+                  <Text className="text-sm font-semibold">{field.label}</Text>
+                  <ShareModePicker
+                    fieldKey={key}
+                    unit={unit}
+                    mode={modes[key]}
+                    onChange={(mode) => switchMode(key, mode)}
+                  />
+                </View>
+              ) : (
+                <Text className="mb-1.5 text-sm font-semibold">
+                  {field.label}
+                  {field.kind === "mass" ? ` (${unit})` : field.kind === "percent" ? " (%)" : ""}
+                </Text>
+              )}
+              <FoodTextInput
+                testID={`body-scan-${field.key}`}
+                value={form[field.key] ?? ""}
+                onChangeText={(text) => setForm({ ...form, [field.key]: text })}
+                keyboardType="decimal-pad"
+                inputMode="decimal"
+                editable={!scanning}
+              />
+            </View>
+          );
+        })}
       </View>
       <View className="flex-row mt-4">
         <Button name="body-scan-save" kind="pill" className="flex-1" onPress={save} disabled={scanning}>

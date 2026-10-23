@@ -480,8 +480,6 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="monthCalendarModal" component={NavModalMonthCalendar} />
           <RootStack.Screen name="exerciseLiftoEditorModal" component={NavModalExerciseLiftoEditor} />
           <RootStack.Screen name="dayLiftoEditorModal" component={NavModalDayLiftoEditor} />
-          <RootStack.Screen name="foodEditModal" component={NavModalFoodEdit} />
-          <RootStack.Screen name="foodGoalsModal" component={NavModalFoodGoals} />
           <RootStack.Screen name="programRevisionsModal" component={NavModalProgramRevisions} />
           <RootStack.Screen name="programImageExportModal" component={NavModalProgramImageExport} />
           <RootStack.Screen name="exercisePickerModal" component={NavModalExercisePicker} />
@@ -509,6 +507,8 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           }}
         >
           <RootStack.Screen name="weekInsightsDetailsModal" component={NavModalWeekInsightsDetails} />
+          <RootStack.Screen name="foodEditModal" component={NavModalFoodEdit} />
+          <RootStack.Screen name="foodGoalsModal" component={NavModalFoodGoals} />
           <RootStack.Screen name="setSplitModal" component={NavModalSetSplit} />
           <RootStack.Screen name="plannerSettingsModal" component={NavModalPlannerSettings} />
           <RootStack.Screen name="muscleGroupMusclePickerModal" component={NavModalMuscleGroupMusclePicker} />

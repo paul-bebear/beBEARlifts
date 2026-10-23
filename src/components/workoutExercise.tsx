@@ -55,6 +55,7 @@ interface IWorkoutExerciseProps {
   subscription: ISubscription;
   settings: ISettings;
   dispatch: IDispatch;
+  orderNote?: string;
   onTitleLayout?: (title: View) => void;
 }
 
@@ -184,6 +185,7 @@ function WorkoutExerciseInner(props: IWorkoutExerciseProps): JSX.Element {
           showHelp={props.showHelp}
           helps={props.helps}
           subscription={props.subscription}
+          orderNote={props.orderNote}
           onTitleLayout={props.onTitleLayout}
         />
       </PerfProbeSubtree>

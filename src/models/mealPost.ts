@@ -82,10 +82,10 @@ export function MealPost_shareSwitch(signedIn: boolean, hasHandle: boolean, isSh
 export function MealPost_fromServing(
   serving: IScanServing,
   shareSwitch: IMealShareSwitch,
-  id: string
+  newId: () => string
 ): IMealPostDraft | undefined {
   return serving.isShared === true && shareSwitch.enabled
-    ? MealPost_build(id, FoodScanSteps_description(serving), FoodScanSteps_totals(serving))
+    ? MealPost_build(newId(), FoodScanSteps_description(serving), FoodScanSteps_totals(serving))
     : undefined;
 }
 

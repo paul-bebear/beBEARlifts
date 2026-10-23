@@ -188,6 +188,7 @@ export const FreeExerciseDbImages_byKey: Readonly<Record<string, string>> = {
   stifflegdeadlift_dumbbell: "Stiff-Legged_Dumbbell_Deadlift",
   sumodeadlift_barbell: "Sumo_Deadlift",
   superman_bodyweight: "Superman",
+  tbarrow_barbell: "T-Bar_Row_with_Handle",
   tbarrow_leveragemachine: "Lying_T-Bar_Row",
   trapbardeadlift_trapbar: "Trap_Bar_Deadlift",
   tricepsdip_bodyweight: "Dips_-_Triceps_Version",
