@@ -68,6 +68,9 @@ function FoldableSection(props: {
 }): JSX.Element {
   const [isOpenByUser, setIsOpenByUser] = useState<boolean>();
   const fold = JournalDay_sectionFold(props.journal, props.section, isOpenByUser);
+  if (fold.isHidden) {
+    return <></>;
+  }
   if (fold.empty != null) {
     const canOpen = props.section === "checkIn";
     return (
@@ -268,18 +271,16 @@ export function ScreenJournal(): JSX.Element {
             </View>
           </Section>
         </FoldableSection>
-        {journal.songs.length > 0 && (
-          <FoldableSection key={`${day}-songs`} journal={journal} section="songs">
-            <Section title="Songs" testID="journal-songs">
-              {journal.songs.map((s) => (
-                <Text key={s.id} className="py-1 text-base">
-                  🎵 {s.name}
-                  {s.artists !== "" && <Text className="text-text-secondary"> · {s.artists}</Text>}
-                </Text>
-              ))}
-            </Section>
-          </FoldableSection>
-        )}
+        <FoldableSection key={`${day}-songs`} journal={journal} section="songs">
+          <Section title="Songs" testID="journal-songs">
+            {journal.songs.map((s) => (
+              <Text key={s.id} className="py-1 text-base">
+                🎵 {s.name}
+                {s.artists !== "" && <Text className="text-text-secondary"> · {s.artists}</Text>}
+              </Text>
+            ))}
+          </Section>
+        </FoldableSection>
         <FoldableSection key={`${day}-weight`} journal={journal} section="weight" emptyAction={logWeight}>
           <Section title="Weigh-in" testID="journal-weight">
             {journal.weight != null && (

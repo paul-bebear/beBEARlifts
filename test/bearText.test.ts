@@ -89,13 +89,13 @@ describe("BearText", () => {
     );
   });
 
-  it("puts the honey between the kg and the next level", () => {
+  it("keeps the kg and top level without honey", () => {
     const today = record(2, now);
     const progress = BearTier_progress(0, 12000, "male");
     const workouts = [{ record: today, countedKg: 1840 }];
-    expect(BearText_finishLine(today, workouts, progress, 5)).to.equal("+1,840 kg · +5 honey · Amateur in 13,000 kg");
-    expect(BearText_finishLine(today, workouts, BearTier_progress(0, 7000000, "male"), 10)).to.equal(
-      "+1,840 kg · +10 honey · Top level"
+    expect(BearText_finishLine(today, workouts, progress)).to.equal("+1,840 kg · Amateur in 13,000 kg");
+    expect(BearText_finishLine(today, workouts, BearTier_progress(0, 7000000, "male"))).to.equal(
+      "+1,840 kg · Top level"
     );
   });
 
@@ -103,8 +103,8 @@ describe("BearText", () => {
     const first = record(1, now - hourMs);
     const second = record(2, now);
     const progress = BearTier_progress(0, 0, "male");
-    expect(BearText_finishLine(second, [{ record: first, countedKg: 900 }], progress, 0)).to.not.contain("honey");
-    expect(BearText_finishLine(second, [], progress, 0)).to.not.contain("honey");
+    expect(BearText_finishLine(second, [{ record: first, countedKg: 900 }], progress)).to.not.contain("honey");
+    expect(BearText_finishLine(second, [], progress)).to.not.contain("honey");
   });
 
   it("writes the honey line with a thousands separator", () => {

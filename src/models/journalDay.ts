@@ -20,6 +20,7 @@ import {
   Notes_isBlank,
 } from "./notes";
 import { WorkoutPost_build, WorkoutPost_statsLine } from "./workoutPost";
+import { FeatureLayer_isFront, IFeature } from "./featureLayer";
 
 export interface IJournalDayInput {
   day: string;
@@ -65,6 +66,15 @@ export interface IJournalDay {
 
 export type IJournalSection = "checkIn" | "workouts" | "meals" | "songs" | "weight" | "notes";
 
+const sectionFeatures: Record<IJournalSection, IFeature> = {
+  checkIn: "checkIn",
+  workouts: "workout",
+  meals: "food",
+  songs: "music",
+  weight: "weight",
+  notes: "notes",
+};
+
 export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSection): string | undefined {
   switch (section) {
     case "checkIn": {
@@ -102,7 +112,6 @@ function isSectionDone(day: IJournalDay, section: IJournalSection): boolean {
   return picked === 0 || picked === Notes_checkInScales.length;
 }
 
-// isOpenByUser is undefined until the user taps the summary or Hide; after that their choice stands.
 export interface IJournalEmptyRow {
   title: string;
   hint: string;
@@ -118,8 +127,10 @@ export const JournalDay_hints = {
   noNotes: "None yet",
 };
 
-// A past day's check-in cannot be filled in, so an empty one shows no row at all.
 export function JournalDay_emptyRow(day: IJournalDay, section: IJournalSection): IJournalEmptyRow | undefined {
+  if (!FeatureLayer_isFront(sectionFeatures[section]) && JournalDay_sectionSummary(day, section) == null) {
+    return undefined;
+  }
   const hints = JournalDay_hints;
   switch (section) {
     case "checkIn":
@@ -144,23 +155,26 @@ export function JournalDay_emptyRow(day: IJournalDay, section: IJournalSection):
 }
 
 export interface IJournalSectionFold {
+  isHidden?: boolean;
   summary?: string;
   isCollapsed: boolean;
   canHide: boolean;
   empty?: IJournalEmptyRow;
 }
 
-// Only the check-in row opens, because the others have nothing to show until something is logged.
 export function JournalDay_sectionFold(
   day: IJournalDay,
   section: IJournalSection,
   isOpenByUser: boolean | undefined
 ): IJournalSectionFold {
+  const summary = JournalDay_sectionSummary(day, section);
+  if (!FeatureLayer_isFront(sectionFeatures[section]) && summary == null) {
+    return { isHidden: true, isCollapsed: false, canHide: false };
+  }
   const empty = JournalDay_emptyRow(day, section);
   if (empty != null && !(section === "checkIn" && isOpenByUser === true)) {
     return { isCollapsed: false, canHide: false, empty };
   }
-  const summary = JournalDay_sectionSummary(day, section);
   const isOpen = isOpenByUser ?? !isSectionDone(day, section);
   const isCollapsed = summary != null && !isOpen;
   return { summary, isCollapsed, canHide: summary != null && !isCollapsed };

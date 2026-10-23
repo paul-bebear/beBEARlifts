@@ -71,8 +71,7 @@ export function BearText_honeyBreakdown(day: IHoneyDay | undefined): string {
 export function BearText_finishLine(
   record: IHistoryRecord,
   workouts: readonly IBearCountedWorkout[],
-  progress: IBearTierProgress,
-  honey = 0
+  progress: IBearTierProgress
 ): string {
   const counted = workouts.find((workout) => workout.record.id === record.id);
   if (counted == null) {
@@ -83,8 +82,7 @@ export function BearText_finishLine(
     return sameDay ? "+0 kg · one workout a day grows your bear" : "+0 kg · train 10 minutes or more to grow your bear";
   }
   const next = progress.next == null ? "Top level" : `${progress.next.name} in ${BearText_kg(progress.kgToNext)}`;
-  const earned = honey > 0 ? ` · +${honey.toLocaleString("en-US")} honey` : "";
-  return `+${BearText_kg(counted.countedKg)}${earned} · ${next}`;
+  return `+${BearText_kg(counted.countedKg)} · ${next}`;
 }
 
 export function BearText_levelUp(level: number, set: IBearTierSet): { title: string; subtitle: string } {

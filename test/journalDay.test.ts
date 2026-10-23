@@ -96,18 +96,45 @@ function input(extra: Partial<IJournalDayInput> = {}): IJournalDayInput {
 }
 
 describe("JournalDay", () => {
-  it("shows every empty section as one row, and songs as nothing", () => {
+  it("shows empty front sections as one row", () => {
     const day = JournalDay_build(input());
-    for (const section of ["checkIn", "workouts", "meals", "weight", "notes"] as const) {
+    for (const section of ["workouts", "meals", "weight"] as const) {
       const fold = JournalDay_sectionFold(day, section, undefined);
       expect(fold.empty, section).to.not.equal(undefined);
       expect(fold.isCollapsed).to.equal(false);
+      expect(fold.isHidden).to.not.equal(true);
     }
-    expect(JournalDay_sectionFold(day, "songs", undefined)).to.eql({
-      summary: undefined,
-      isCollapsed: false,
-      canHide: false,
-    });
+  });
+
+  it("hides empty check-in, songs and notes even after the user opened them", () => {
+    for (const selectedDay of [today, "2026-10-21"]) {
+      const day = JournalDay_build(input({ day: selectedDay }));
+      for (const section of ["checkIn", "songs", "notes"] as const) {
+        for (const isOpen of [undefined, false, true]) {
+          expect(JournalDay_sectionFold(day, section, isOpen), section).to.eql({
+            isHidden: true,
+            isCollapsed: false,
+            canHide: false,
+          });
+        }
+        expect(JournalDay_emptyRow(day, section), section).to.equal(undefined);
+      }
+    }
+  });
+
+  it("shows check-in, songs and notes when they have content", () => {
+    const notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    const day = {
+      ...JournalDay_build(input({ notes: Notes_save(notes, { ...Notes_new("n", today, 1), body: "Hello" }, 1) })),
+      songs: [{ id: "s", name: "Song", artists: "Artist" }],
+    };
+    for (const section of ["checkIn", "songs", "notes"] as const) {
+      const fold = JournalDay_sectionFold(day, section, undefined);
+      expect(fold.isHidden, section).to.not.equal(true);
+      expect(fold.summary, section).to.be.a("string");
+      expect(fold.empty, section).to.equal(undefined);
+      expect(JournalDay_sectionFold(day, section, true).canHide, section).to.equal(true);
+    }
   });
 
   it("keeps a half-done check-in open until all three faces are picked", () => {
@@ -153,6 +180,10 @@ describe("JournalDay", () => {
 
   it("summarizes reflection-only check-ins and ignores blank ones", () => {
     const checkIn = { ...Notes_new("c", today, 1), kind: "checkIn" as const };
+    expect(
+      JournalDay_sectionFold(JournalDay_build(input({ notes: { version: 1, notes: [checkIn] } })), "checkIn", true)
+        .isHidden
+    ).to.equal(true);
     expect(
       JournalDay_sectionSummary(JournalDay_build(input({ notes: { version: 1, notes: [checkIn] } })), "checkIn")
     ).to.equal(undefined);
@@ -201,22 +232,16 @@ describe("JournalDay", () => {
     expect(day.canAddFood).to.equal(true);
   });
 
-  it("shows an empty check-in row only on a day that can still be checked in", () => {
-    expect(JournalDay_emptyRow(JournalDay_build(input()), "checkIn")).to.eql({
-      title: "Check-in",
-      hint: JournalDay_hints.checkIn,
-    });
+  it("shows no empty check-in row today or on a past day", () => {
+    expect(JournalDay_emptyRow(JournalDay_build(input()), "checkIn")).to.equal(undefined);
     expect(JournalDay_emptyRow(JournalDay_build(input({ day: "2026-10-21" })), "checkIn")).to.equal(undefined);
   });
 
-  it("opens the empty check-in row on tap, and keeps the other empty rows as one row", () => {
+  it("keeps empty front sections as one row after a tap", () => {
     const day = JournalDay_build(input());
-    expect(JournalDay_sectionFold(day, "checkIn", true)).to.eql({
-      summary: undefined,
-      isCollapsed: false,
-      canHide: false,
-    });
-    expect(JournalDay_sectionFold(day, "weight", true).empty?.title).to.equal("Weigh-in");
+    for (const section of ["workouts", "meals", "weight"] as const) {
+      expect(JournalDay_sectionFold(day, section, true).empty, section).to.not.equal(undefined);
+    }
   });
 
   it("drops the empty row once the section has something in it", () => {
