@@ -5,6 +5,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as htmlToImage from "html-to-image";
 import { ShareCardImage_capture, ShareCardImage_share } from "../src/utils/shareCardImage";
+import * as levelUpImage from "../src/utils/levelUpImage";
 import { WorkoutSharePage } from "../src/components/shareCards/workoutSharePage";
 import {
   ILiftEquivalent,
@@ -21,6 +22,9 @@ import {
   WorkoutStoryCard_iconCount,
   WorkoutStoryCard_muscles,
   WorkoutStoryCard_pages,
+  WorkoutStoryCard_pagesFor,
+  WorkoutStoryCard_pageLabel,
+  WorkoutStoryCard_selectedPage,
   WorkoutStoryCard_prCount,
   WorkoutStoryCard_receipt,
   WorkoutStoryCard_setsText,
@@ -258,6 +262,8 @@ describe("LiftEquivalents_pick", () => {
 });
 
 describe("WorkoutStoryCard share data", () => {
+  afterEach(() => sinon.restore());
+
   const prs: IPersonalRecords = {
     1: {
       benchPress_barbell: { maxWeightSet: set(10, 60), prevMaxWeightSet: set(5, 55) },
@@ -352,5 +358,110 @@ describe("WorkoutStoryCard share data", () => {
     const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
     expect(data.tier.next).to.equal(undefined);
     expect(data.toNext).to.equal("7,000,000 kg lifetime");
+  });
+
+  it("puts the level-up card first and selects it when counted growth crosses a level", () => {
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements: { lifetimeKg: new Map(), badges: [] },
+      tierSet: "male",
+      workouts: [
+        { record: { ...record, id: 2 }, countedKg: 4900 },
+        { record, countedKg: 100 },
+      ],
+      seed: 1,
+    });
+    expect(data.levelUp).to.deep.equal({ image: "/images/bear/male/levelup-02.webp", title: "Level 2 · Teen" });
+    expect(WorkoutStoryCard_pagesFor(data)).to.deep.equal(["levelUp", ...WorkoutStoryCard_pages]);
+    expect(WorkoutStoryCard_selectedPage(data)).to.equal("levelUp");
+    expect(WorkoutStoryCard_selectedPage(data, "receipt")).to.equal("receipt");
+    expect(WorkoutStoryCard_pageLabel("levelUp")).to.equal("Level up");
+    const imageUri = sinon.spy(levelUpImage, "LevelUpImage_uri");
+    const html = renderToStaticMarkup(createElement(WorkoutSharePage, { page: "levelUp", data }));
+    expect(html).to.contain("Level up!").and.contain("Level 2 · Teen").and.contain("beBEAR");
+    expect(imageUri.calledWithExactly(data.levelUp!.image)).to.equal(true);
+  });
+
+  it("uses the chosen bear line and the women's threshold for the celebration", () => {
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements: { lifetimeKg: new Map(), badges: [] },
+      tierSet: "female",
+      line: "male",
+      workouts: [
+        { record: { ...record, id: 2 }, countedKg: 35900 },
+        { record, countedKg: 100 },
+      ],
+      seed: 1,
+    });
+    expect(data.levelUp).to.deep.equal({ image: "/images/bear/male/levelup-04.webp", title: "Level 4 · Rookie" });
+  });
+
+  it("uses the last crossed level and ignores growth from later workouts", () => {
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements: { lifetimeKg: new Map(), badges: [] },
+      tierSet: "male",
+      line: "female",
+      workouts: [
+        { record: { ...record, id: 2 }, countedKg: 4999 },
+        { record, countedKg: 20001 },
+        { record: { ...record, id: 3 }, countedKg: 7000000 },
+      ],
+      seed: 1,
+    });
+    expect(data.levelUp).to.deep.equal({ image: "/images/bear/female/levelup-03.webp", title: "Level 3 · Amateur" });
+  });
+
+  it("keeps the five existing pages when counted growth crosses no level or excludes this workout", () => {
+    for (const workouts of [
+      undefined,
+      [],
+      [{ record, countedKg: 4999 }],
+      [
+        { record: { ...record, id: 2 }, countedKg: 4999 },
+        { record, countedKg: 0 },
+      ],
+      [{ record: { ...record, id: 2 }, countedKg: 5000 }],
+    ]) {
+      const data = WorkoutStoryCard_build({
+        record,
+        settings,
+        prs,
+        achievements: { lifetimeKg: new Map([[record.id, { beforeKg: 4999, afterKg: 6000 }]]), badges: [] },
+        tierSet: "male",
+        workouts,
+        seed: 1,
+      });
+      expect(data.levelUp).to.equal(undefined);
+      expect(WorkoutStoryCard_pagesFor(data)).to.deep.equal(["rank", "receipt", "count", "photo", "collage"]);
+      expect(WorkoutStoryCard_selectedPage(data)).to.equal("rank");
+      expect(WorkoutStoryCard_selectedPage(data, "levelUp")).to.equal("rank");
+    }
+  });
+
+  it("waits only for images drawn on the selected pages, including the celebration picture", () => {
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements: { lifetimeKg: new Map(), badges: [] },
+      tierSet: "male",
+      workouts: [{ record, countedKg: 5000 }],
+      seed: 1,
+    });
+    expect(WorkoutStoryCard_exportImages(data, ["levelUp"], "photo")).to.deep.equal([data.levelUp!.image]);
+    expect(WorkoutStoryCard_exportImages(data, WorkoutStoryCard_pagesFor(data), "photo")).to.deep.equal([
+      data.bear.sprite,
+      data.levelUp!.image,
+      "photo",
+    ]);
+    expect(WorkoutStoryCard_exportImages(data, ["rank"], "photo")).to.deep.equal([data.bear.sprite]);
   });
 });

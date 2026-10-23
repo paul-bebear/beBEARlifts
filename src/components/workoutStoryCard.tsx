@@ -7,7 +7,8 @@ import {
   WorkoutStoryCard_build,
   WorkoutStoryCard_exportImages,
   WorkoutStoryCard_pageLabel,
-  WorkoutStoryCard_pages,
+  WorkoutStoryCard_pagesFor,
+  WorkoutStoryCard_selectedPage,
 } from "../models/workoutStoryCard";
 import { History_getPersonalRecords } from "../models/history";
 import { ShareAchievements_build } from "../models/shareAchievements";
@@ -45,7 +46,7 @@ interface IFrozen {
 }
 
 export function WorkoutStoryCardSection(props: IProps): JSX.Element {
-  const [page, setPage] = useState<IShareCardPage>("rank");
+  const [selectedPage, setPage] = useState<IShareCardPage | undefined>(undefined);
   const [photo, setPhoto] = useState<string | undefined>(undefined);
   const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
@@ -80,25 +81,24 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
         achievements,
         tierSet,
         line,
+        workouts: growth.workouts,
         seed,
       }),
-    [props.record, props.settings, prs, achievements, tierSet, line, seed]
+    [props.record, props.settings, prs, achievements, tierSet, line, seed, growth.workouts]
   );
+  const pages = WorkoutStoryCard_pagesFor(data);
+  const page = WorkoutStoryCard_selectedPage(data, selectedPage);
   const actions = FinishDayActions_list({ musicEnabled: props.musicEnabled, exportAvailable: true });
   const frozen = exporter.job.frozen;
   const dataKey = JSON.stringify(data);
   const { prepare } = exporter;
   useEffect(() => {
     if (ShareCardImage_prepareAhead) {
-      prepare(
-        [...WorkoutStoryCard_pages],
-        { data, photo },
-        WorkoutStoryCard_exportImages(data, WorkoutStoryCard_pages, photo)
-      );
+      prepare([...pages], { data, photo }, WorkoutStoryCard_exportImages(data, pages, photo));
     }
   }, [dataKey, photo]);
-  const share = (pages: IShareCardPage[]): void => {
-    exporter.share(pages, { data, photo }, WorkoutStoryCard_exportImages(data, pages, photo));
+  const share = (selection: IShareCardPage[]): void => {
+    exporter.share(selection, { data, photo }, WorkoutStoryCard_exportImages(data, selection, photo));
   };
 
   const pickPhoto = async (): Promise<void> => {
@@ -115,7 +115,7 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
         <GroupHeader name="Share cards" />
       </View>
       <ShareCardPager
-        pages={WorkoutStoryCard_pages}
+        pages={pages}
         page={page}
         label={(p) => WorkoutStoryCard_pageLabel(p as IShareCardPage)}
         onPageChange={(p) => setPage(p as IShareCardPage)}

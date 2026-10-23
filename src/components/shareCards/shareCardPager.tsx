@@ -1,4 +1,4 @@
-import { JSX, ReactNode, useRef } from "react";
+import { JSX, ReactNode, useEffect, useRef } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -26,10 +26,10 @@ export function ShareCardPager(props: IProps): JSX.Element {
   const cellWidth = T.width * scale;
   const cellHeight = T.height * scale;
   const scrollRef = useRef<ScrollView>(null);
-  const select = (index: number): void => {
-    props.onPageChange(props.pages[index]);
-    scrollRef.current?.scrollTo({ x: index * (cellWidth + gap), animated: true });
-  };
+  const pageIndex = props.pages.indexOf(props.page);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ x: pageIndex * (cellWidth + gap), animated: true });
+  }, [pageIndex, cellWidth]);
   const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>): void => {
     const index = Math.round(e.nativeEvent.contentOffset.x / (cellWidth + gap));
     const page = props.pages[Math.max(0, Math.min(props.pages.length - 1, index))];
@@ -40,11 +40,13 @@ export function ShareCardPager(props: IProps): JSX.Element {
   return (
     <View>
       <View className="flex-row justify-center mb-3" style={{ gap: 6, flexWrap: "wrap" }}>
-        {props.pages.map((page, i) => (
+        {props.pages.map((page) => (
           <Pressable
             key={page}
             testID={`share-card-tab-${page}`}
-            onPress={() => select(i)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: page === props.page }}
+            onPress={() => props.onPageChange(page)}
             className={`px-3 py-1 rounded-full ${page === props.page ? "bg-button-primarybackground" : "bg-background-subtle"}`}
           >
             <Text className={`text-sm ${page === props.page ? "text-text-alwayswhite" : ""}`}>{props.label(page)}</Text>

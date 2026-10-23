@@ -10,6 +10,7 @@ import { RankCard } from "./rankCard";
 import { ReceiptCard } from "./receiptCard";
 import { CountCard } from "./countCard";
 import { PhotoCard } from "./photoCard";
+import { LevelUpCard } from "./levelUpCard";
 import { ShareCardTheme as T } from "./shareCardTheme";
 
 interface IProps {
@@ -56,6 +57,9 @@ function Collage(props: Omit<IProps, "page">): JSX.Element {
   );
 }
 
-export function WorkoutSharePage(props: IProps): JSX.Element {
+export function WorkoutSharePage(props: IProps): JSX.Element | null {
+  if (props.page === "levelUp") {
+    return <LevelUpCard data={props.data} onImageLoad={props.onImageLoad} />;
+  }
   return props.page === "collage" ? <Collage {...props} /> : <Card {...props} page={props.page} />;
 }

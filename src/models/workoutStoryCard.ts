@@ -10,18 +10,22 @@ import { Exercise_get, Exercise_synergistMusclesGroups, Exercise_targetMusclesGr
 import { Weight_convertTo } from "./weight";
 import { BearTier_progress, IBearLevel, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { BearArt_cardSprite } from "./bearArt";
+import { BearLevelUpArt_image } from "./bearLevelUpArt";
+import { BearText_levelUp } from "./bearText";
+import { IBearCountedWorkout } from "./bearGrowth";
 import { IBearLine } from "./bearStoreData";
 import { BearBadges_forRecord, IBearBadgeCard } from "./bearBadges";
 import { IShareAchievements } from "./shareAchievements";
 import { ILiftEquivalent, LiftEquivalents_pick } from "./liftEquivalents";
 
 export type IShareCardStyle = "rank" | "receipt" | "count" | "photo";
-export type IShareCardPage = IShareCardStyle | "collage";
+export type IShareCardPage = IShareCardStyle | "collage" | "levelUp";
 
 export const WorkoutStoryCard_styles: readonly IShareCardStyle[] = ["rank", "receipt", "count", "photo"];
 export const WorkoutStoryCard_pages: readonly IShareCardPage[] = [...WorkoutStoryCard_styles, "collage"];
 
 const pageLabels: Record<IShareCardPage, string> = {
+  levelUp: "Level up",
   rank: "Rank",
   receipt: "Receipt",
   count: "Count",
@@ -50,6 +54,7 @@ export interface IShareCardBear {
 }
 
 export interface IWorkoutShareData {
+  levelUp?: { image: string; title: string };
   stats: IWorkoutStoryStats;
   bear: IShareCardBear;
   tier: IBearTierProgress;
@@ -68,6 +73,7 @@ export interface IWorkoutShareInput {
   achievements: IShareAchievements;
   tierSet: IBearTierSet;
   line?: IBearLine;
+  workouts?: readonly IBearCountedWorkout[];
   seed: number;
 }
 
@@ -172,6 +178,15 @@ export function WorkoutStoryCard_pageLabel(page: IShareCardPage): string {
   return pageLabels[page];
 }
 
+export function WorkoutStoryCard_pagesFor(data: IWorkoutShareData): readonly IShareCardPage[] {
+  return data.levelUp != null ? ["levelUp", ...WorkoutStoryCard_pages] : WorkoutStoryCard_pages;
+}
+
+export function WorkoutStoryCard_selectedPage(data: IWorkoutShareData, selected?: IShareCardPage): IShareCardPage {
+  const pages = WorkoutStoryCard_pagesFor(data);
+  return selected != null && pages.includes(selected) ? selected : pages[0];
+}
+
 export function WorkoutStoryCard_prCount(record: IHistoryRecord, prs: IPersonalRecords): number {
   return Object.values(prs[record.id] ?? {}).filter((pr) => pr?.prevMaxWeightSet != null || pr?.prevMax1RMSet != null)
     .length;
@@ -222,18 +237,42 @@ export function WorkoutStoryCard_toNext(
   return `${Math.ceil(amount).toLocaleString("en-US")} ${settings.units} to Level ${tier.next.level} · ${tier.next.name}`;
 }
 
-// Every workout card draws the bear sprite, so the export waits for it. The photo only shows on photo and collage.
 export function WorkoutStoryCard_exportImages(
   data: IWorkoutShareData,
   pages: readonly IShareCardPage[],
   photo?: string
 ): string[] {
   const usesPhoto = photo != null && pages.some((page) => page === "photo" || page === "collage");
-  return usesPhoto ? [data.bear.sprite, photo] : [data.bear.sprite];
+  const images = pages.some((page) => page !== "levelUp") ? [data.bear.sprite] : [];
+  if (pages.includes("levelUp") && data.levelUp != null) {
+    images.push(data.levelUp.image);
+  }
+  if (usesPhoto) {
+    images.push(photo);
+  }
+  return images;
 }
 
 export function WorkoutStoryCard_iconCount(count: number): number {
   return Math.max(1, Math.min(maxIcons, Math.round(count)));
+}
+
+function levelUpFor(input: IWorkoutShareInput): IWorkoutShareData["levelUp"] {
+  let beforeKg = 0;
+  if (input.workouts == null) {
+    return undefined;
+  }
+  for (const workout of input.workouts) {
+    if (workout.record.id === input.record.id) {
+      const progress = BearTier_progress(beforeKg, beforeKg + workout.countedKg, input.tierSet);
+      const image = BearLevelUpArt_image(input.line ?? input.tierSet, progress.tier.level);
+      return progress.isTierUp && image != null
+        ? { image, title: BearText_levelUp(progress.tier.level, input.tierSet).title }
+        : undefined;
+    }
+    beforeKg += workout.countedKg;
+  }
+  return undefined;
 }
 
 export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShareData {
@@ -243,6 +282,7 @@ export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShare
   const tier = BearTier_progress(lifetime.beforeKg, lifetime.afterKg, input.tierSet);
   const equivalent = LiftEquivalents_pick(stats.weightKg, input.seed);
   return {
+    levelUp: levelUpFor(input),
     stats,
     bear: {
       sprite: BearArt_cardSprite(input.line ?? input.tierSet, tier.tier.level),
