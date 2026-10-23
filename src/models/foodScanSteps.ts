@@ -32,7 +32,8 @@ export type IScanStep =
   | { kind: "label"; code?: string }
   | { kind: "amount"; pick: IFoodPick }
   | { kind: "quick" }
-  | { kind: "save"; group: "meal" | "recipe" };
+  | { kind: "save"; group: "meal" | "recipe" }
+  | { kind: "catalogRecipe"; recipeId: string };
 
 export type IScanTile = "barcode" | "photo" | "describe" | "quick";
 
@@ -45,6 +46,7 @@ export type IScanEvent =
   | { type: "amountOpened"; pick: IFoodPick }
   | { type: "quickOpened" }
   | { type: "saveOpened"; group: "meal" | "recipe" }
+  | { type: "catalogRecipeOpened"; recipeId: string }
   | { type: "barcodeRead"; code: string }
   | { type: "barcodeFound"; pick: IFoodPick }
   | { type: "barcodeMissed"; code: string; error?: string }
@@ -91,6 +93,8 @@ export function FoodScanSteps_title(step: IScanStep): string | undefined {
       return "Quick Log";
     case "serving":
       return "Serving size";
+    case "catalogRecipe":
+      return "Recipe";
     case "camera":
       return step.mode === "barcode" ? "Scan barcode" : step.mode === "ai" ? "AI Scan" : "Describe";
     default:
@@ -152,6 +156,8 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
       return { kind: "quick" };
     case "saveOpened":
       return { kind: "save", group: event.group };
+    case "catalogRecipeOpened":
+      return { kind: "catalogRecipe", recipeId: event.recipeId };
     case "barcodeRead":
       return { kind: "reading", code: event.code };
     case "barcodeFound":

@@ -1,0 +1,413 @@
+{
+  "generatedBy": "scripts/importExerciseDemos.ts",
+  "library": {
+    "name": "1.300 Animações de Treinos",
+    "archive": "1.300 Animações de Treinos-20261023T122552Z-1-001.zip",
+    "backup": "~/Downloads/CODEX Purchase Backup 2026-10-23",
+    "permission": "Paul confirmed full reuse permission for the exercise animations on 2026-10-23.",
+    "inventory": [
+      "The seven muscle folders hold 762 GIF files, 727 of them unique by SHA-1. Each GIF is a named, single-lift loop of 12 frames at 360, 720 or 1080 px square.",
+      "'+400 Animações musculação e funcional - VERSÃO ATUALIZADA' holds 406 MP4 files with the same SHA-1 set as ' 1.000 Exercise GIF Library/1° BIBLIOTECA - GIFs PREMIUM DE EJERCICIOS'. They are 345 unique videos.",
+      "Each MP4 is a 720x1280, about 23 second reel that shows several lifts in a row, each first done wrong (red cross) and then right (green tick). The file names are generic ('Treinos (273).mp4'). No MP4 is used: one file never shows one lift alone."
+    ]
+  },
+  "settings": {
+    "frameSize": 360,
+    "columns": 4,
+    "format": "webp",
+    "quality": 75
+  },
+  "imported": {
+    "benchpress_barbell": {
+      "source": "PEITORAL/PEITORAL (1)/Supino barra (1).gif",
+      "sha256": "d6b45d9058071019a66ad082cfe56974d8dba24c93020fdaff302cdfddf7c459",
+      "sourceBytes": 1080534,
+      "sourceSize": {
+        "width": 720,
+        "height": 720
+      },
+      "output": "images/exercises/demo/benchpress_barbell.webp",
+      "outputBytes": 87132,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Flat barbell bench press, medium overhand grip, bar to the lower chest."
+    },
+    "bentoverrow_barbell": {
+      "source": "COSTAS e TRAPÉZIO/Costas (55)/remada com barra (1).gif",
+      "sha256": "c80a7b892cf07cf90ed6f832f8ffe1bfc5e135fffe8fde561893d5c206a33b48",
+      "sourceBytes": 326458,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/bentoverrow_barbell.webp",
+      "outputBytes": 82870,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Bent over barbell row, overhand grip, torso about 45 degrees."
+    },
+    "bulgariansplitsquat_dumbbell": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Bulgaro com halteres (1).gif",
+      "sha256": "42b9e4fd232c2128e40d792680863ca2cd479e26f2685e0a2ad87f8366f58e77",
+      "sourceBytes": 244081,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/bulgariansplitsquat_dumbbell.webp",
+      "outputBytes": 74990,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Bulgarian split squat, rear foot on a bench, a dumbbell in each hand."
+    },
+    "cablecrunch_cable": {
+      "source": "ABDOMEN/ABDOMEN CORE (1)/ABS polia alta 2 (1).gif",
+      "sha256": "95a881df7a2b8e8dee9965978d56b055d30a3188c1215d37bf67f5ab0160f23d",
+      "sourceBytes": 227787,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/cablecrunch_cable.webp",
+      "outputBytes": 70352,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Kneeling cable crunch with a rope from a high pulley. The standing version in 'ABS polia alta' was rejected."
+    },
+    "calfpressonlegpress_leveragemachine": {
+      "source": "INFERIORES/PANTURRILHA (1)/leg-press-calf-raise (1).gif",
+      "sha256": "8126f904f95e6a50b96fa8ef5ab91a8bc9ba609a47ecf9d481794cb0cd0427de",
+      "sourceBytes": 1869839,
+      "sourceSize": {
+        "width": 1080,
+        "height": 1080
+      },
+      "output": "images/exercises/demo/calfpressonlegpress_leveragemachine.webp",
+      "outputBytes": 79158,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Calf press with the balls of the feet on a 45 degree leg press."
+    },
+    "chestfly_cable": {
+      "source": "PEITORAL/Peito (40)/crucifixo no cross banco reto (1).gif",
+      "sha256": "a216c4f77594cce36e931141b81ba9ef54d651f4c0afe59a46f656d0d593ce28",
+      "sourceBytes": 365589,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/chestfly_cable.webp",
+      "outputBytes": 83864,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Cable fly lying on a flat bench between two low pulleys. Same setup as the reviewed photo Flat_Bench_Cable_Flyes."
+    },
+    "deadlift_barbell": {
+      "source": "INFERIORES/Membros Inferiores (54)/levantamento terra com barra (1).gif",
+      "sha256": "1b7431434b5750b40c471ab313d0dcf4218856e3efc2810ee3958dbdf54d2e0b",
+      "sourceBytes": 287251,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/deadlift_barbell.webp",
+      "outputBytes": 74352,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Conventional barbell deadlift from the floor, seen from behind at an angle."
+    },
+    "hammercurl_dumbbell": {
+      "source": "BRAÇOS COMPLETO/BÍCEPS e ANTEBRAÇO (1)/dumbbell-hammer-curl (1).gif",
+      "sha256": "ecbc7cc92bf617fe3a9c68978afbc625c1a93233e738e966275c22059db91d78",
+      "sourceBytes": 1145860,
+      "sourceSize": {
+        "width": 1080,
+        "height": 1080
+      },
+      "output": "images/exercises/demo/hammercurl_dumbbell.webp",
+      "outputBytes": 47138,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Standing dumbbell hammer curl, neutral grip."
+    },
+    "hipabductor_leveragemachine": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Cadeira abdutora (1).gif",
+      "sha256": "47eb61b4daa92f896b6c1aa2461d598e0468d57e3a36558c2a789a7bf24c52c2",
+      "sourceBytes": 360250,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/hipabductor_leveragemachine.webp",
+      "outputBytes": 109544,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Seated hip abductor machine."
+    },
+    "hipthrust_barbell": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/barbell-hip-thrust (1).gif",
+      "sha256": "7f6b35aebf337bcc17c4cdcb626103cad242f99c7bdadb448ee5319fd994b8e9",
+      "sourceBytes": 2245553,
+      "sourceSize": {
+        "width": 1080,
+        "height": 1080
+      },
+      "output": "images/exercises/demo/hipthrust_barbell.webp",
+      "outputBytes": 79784,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Barbell hip thrust, upper back on a bench."
+    },
+    "inclinebenchpress_dumbbell": {
+      "source": "PEITORAL/Peito (40)/Supino inclinado com halteres (1).gif",
+      "sha256": "c4ce59a2a8024750599c5e62d3e71679adf52056e76fb52f3f54ec48827154f6",
+      "sourceBytes": 227939,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/inclinebenchpress_dumbbell.webp",
+      "outputBytes": 67532,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Incline dumbbell bench press."
+    },
+    "lateralraise_cable": {
+      "source": "OMBROS/DELTÓIDES (1)/Elevação lateral uni no cabo (1).gif",
+      "sha256": "5d13629d9ddcd3b247a7e9f56b4428be1e145d9b9b87c83b2460de002978b150",
+      "sourceBytes": 230499,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/lateralraise_cable.webp",
+      "outputBytes": 74402,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Standing one-arm lateral raise from a low pulley. The reviewed photo Cable_Seated_Lateral_Raise is seated. The arm movement is the same."
+    },
+    "latpulldown_cable": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/wide-grip-lat-pulldown (1).gif",
+      "sha256": "a1a913caf98316588cc78f026299bd93828fcedb71f45bd362a2278d2f595f27",
+      "sourceBytes": 1556631,
+      "sourceSize": {
+        "width": 1080,
+        "height": 1080
+      },
+      "output": "images/exercises/demo/latpulldown_cable.webp",
+      "outputBytes": 75766,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Seated wide-grip cable lat pulldown, bar to the upper chest."
+    },
+    "legextension_leveragemachine": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Cadeira extensora (1).gif",
+      "sha256": "3b91cf1047fa467e7f6bf84d3e4856b3a4ef39771265e8dda96e34c17a089a65",
+      "sourceBytes": 326025,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/legextension_leveragemachine.webp",
+      "outputBytes": 90862,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Seated leg extension machine."
+    },
+    "lunge_dumbbell": {
+      "source": "INFERIORES/Membros Inferiores (54)/passada a frente com halteres (1).gif",
+      "sha256": "a5a7bc30add78a15ff98521e7fe825e7487260112012aa20a0b1d55616319727",
+      "sourceBytes": 233820,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/lunge_dumbbell.webp",
+      "outputBytes": 56160,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Forward lunge with a dumbbell in each hand."
+    },
+    "overheadpress_barbell": {
+      "source": "OMBROS/DELTÓIDES (1)/military-press (1).gif",
+      "sha256": "ccfc5b8cb9c09ace323c08e80cf89aa092b9bc1695c217bac6b83d15bcc13a1d",
+      "sourceBytes": 726540,
+      "sourceSize": {
+        "width": 720,
+        "height": 720
+      },
+      "output": "images/exercises/demo/overheadpress_barbell.webp",
+      "outputBytes": 57430,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Standing barbell overhead press from the front of the shoulders."
+    },
+    "preachercurl_dumbbell": {
+      "source": "BRAÇOS COMPLETO/BÍCEPS e ANTEBRAÇO (1)/dumbbell-preacher-curl (1).gif",
+      "sha256": "8899aec14507cb87c4366d67cf58d3bac65f1468eaeb7df9e3ee866d6cf5e29e",
+      "sourceBytes": 1892501,
+      "sourceSize": {
+        "width": 1080,
+        "height": 1080
+      },
+      "output": "images/exercises/demo/preachercurl_dumbbell.webp",
+      "outputBytes": 74520,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "One-arm dumbbell preacher curl. Matches the reviewed photo One_Arm_Dumbbell_Preacher_Curl."
+    },
+    "pullup_bodyweight": {
+      "source": "COSTAS e TRAPÉZIO/Costas (55)/barra livre pegada pronada (1).gif",
+      "sha256": "d81a926ba15ab9886cea14df0a510a42d9105b20bfd49375ba36b841210822a6",
+      "sourceBytes": 212669,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/pullup_bodyweight.webp",
+      "outputBytes": 49330,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Pull-up on a fixed bar, overhand (pronated) grip."
+    },
+    "reversefly_leveragemachine": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/reverse-pec-dec-machine (1).gif",
+      "sha256": "f171e3af1b915d1b1371ca08cd74b0262c4cc91c8ba6247b576ad168efcae9dd",
+      "sourceBytes": 1040239,
+      "sourceSize": {
+        "width": 720,
+        "height": 720
+      },
+      "output": "images/exercises/demo/reversefly_leveragemachine.webp",
+      "outputBytes": 80880,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Reverse fly on a pec deck machine, seated facing the pad."
+    },
+    "romaniandeadlift_barbell": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/barbell-romanian-deadlift-movement (1).gif",
+      "sha256": "6408358f337d24be43a70149bed1c45a8cef0f7bf79e5694fcf38375f1bd7315",
+      "sourceBytes": 1817222,
+      "sourceSize": {
+        "width": 1080,
+        "height": 1080
+      },
+      "output": "images/exercises/demo/romaniandeadlift_barbell.webp",
+      "outputBytes": 60118,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Barbell Romanian deadlift. Hip hinge from standing until the bar passes the knees."
+    },
+    "seatedlegcurl_leveragemachine": {
+      "source": "INFERIORES/MEMBROS INFERIORES E GLÚTEOS (1)/Cadeira flexora (1).gif",
+      "sha256": "bc6053d01b6789e92a618846509f702d7cb46ef6b602181b0de8881a700cdd01",
+      "sourceBytes": 1320620,
+      "sourceSize": {
+        "width": 720,
+        "height": 720
+      },
+      "output": "images/exercises/demo/seatedlegcurl_leveragemachine.webp",
+      "outputBytes": 103700,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Seated leg curl machine."
+    },
+    "seatedrow_cable": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/cable-seated-row (1).gif",
+      "sha256": "8a99662447227cbf5e210c8779b9e234afbc5c2e103f76c3d29db42498fcacc1",
+      "sourceBytes": 1580305,
+      "sourceSize": {
+        "width": 1080,
+        "height": 1080
+      },
+      "output": "images/exercises/demo/seatedrow_cable.webp",
+      "outputBytes": 74894,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Seated cable row with a close-grip handle, feet on the platform."
+    },
+    "squat_barbell": {
+      "source": "INFERIORES/Membros Inferiores (54)/Agachamento livre com barra (1).gif",
+      "sha256": "e5641ea4bf94dbcf5922d6dd5ddfac0cb8599c3f48b583d2b46109bf884e89fa",
+      "sourceBytes": 362507,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/squat_barbell.webp",
+      "outputBytes": 107072,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 3000,
+      "review": "Barbell back squat from a rack, bar on the upper back, thighs below parallel."
+    },
+    "standingrowreardeltwithrope_cable": {
+      "source": "COSTAS e TRAPÉZIO/COSTAS E TRAPÉZIO (1)/Facepull (1).gif",
+      "sha256": "e52e6d04e944969ceb9958081e0c529d241794a596b2743f258d9b0b14c1fe70",
+      "sourceBytes": 309459,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/standingrowreardeltwithrope_cable.webp",
+      "outputBytes": 83574,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Standing rope row to the face from a shoulder-height pulley, elbows high. Matches the reviewed photo Cable_Rope_Rear-Delt_Rows."
+    },
+    "tricepsextension_dumbbell": {
+      "source": "BRAÇOS COMPLETO/TRÍCEPS (1)/Triceps frances sentado (1).gif",
+      "sha256": "7b0f97905fd7e78c558df9e807335f726b755188e10dfd0ccdc2b805f0d9248b",
+      "sourceBytes": 203413,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/tricepsextension_dumbbell.webp",
+      "outputBytes": 64620,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Seated overhead triceps extension, one dumbbell in both hands. The reviewed photo Standing_Dumbbell_Triceps_Extension is standing. The arm movement is the same."
+    },
+    "tricepspushdown_cable": {
+      "source": "BRAÇOS COMPLETO/TRÍCEPS (1)/Triceps pulley (1).gif",
+      "sha256": "85986ca971a30e7e236129a89af54d6daef7cda18e990c44ab40414b4c9fd21e",
+      "sourceBytes": 219869,
+      "sourceSize": {
+        "width": 360,
+        "height": 360
+      },
+      "output": "images/exercises/demo/tricepspushdown_cable.webp",
+      "outputBytes": 65070,
+      "outputFrameSize": 360,
+      "frames": 12,
+      "durationMs": 2400,
+      "review": "Standing cable triceps pushdown with a straight bar."
+    }
+  },
+  "missing": {}
+}

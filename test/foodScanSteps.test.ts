@@ -246,3 +246,13 @@ describe("FoodScanSteps_title", () => {
     expect(FoodScanSteps_title({ kind: "browse" })).to.equal(undefined);
   });
 });
+
+describe("FoodScanSteps cookbook recipe", () => {
+  it("opens a recipe from browse and goes back to browse", () => {
+    const step = run([{ type: "browseOpened" }, { type: "catalogRecipeOpened", recipeId: "ginger-beef-broccoli" }]);
+    expect(step).to.deep.equal({ kind: "catalogRecipe", recipeId: "ginger-beef-broccoli" });
+    expect(FoodScanSteps_title(step)).to.equal("Recipe");
+    expect(FoodScanSteps_canLeave(step)).to.equal(false);
+    expect(FoodScanSteps_reduce(step, { type: "back" })).to.deep.equal({ kind: "browse" });
+  });
+});

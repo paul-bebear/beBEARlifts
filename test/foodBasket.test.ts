@@ -19,6 +19,7 @@ import {
 } from "../src/models/savedMeals";
 import { FoodLog_empty, FoodLog_parse, FoodLog_saveMeal, FoodLog_saveRecipe, IFoodEntry } from "../src/models/foodLog";
 import { FoodAddFlow_nutrientsFor, IFoodPick } from "../src/models/foodAddFlow";
+import { RecipeCatalog_basketKey, RecipeCatalog_find, RecipeCatalog_servingPick } from "../src/models/recipeCatalog";
 
 const yogurt: IFoodPick = {
   name: "Greek yogurt",
@@ -146,5 +147,27 @@ describe("SavedMeals and Recipes", () => {
     const parsed = FoodLog_parse(stored);
     expect(parsed.meals).to.deep.equal([meal]);
     expect(parsed.recipes).to.deep.equal([recipe]);
+  });
+});
+
+describe("FoodBasket with a cookbook recipe serving", () => {
+  const bowls = RecipeCatalog_find("teriyaki-chicken-rice-bowls")!;
+  const where = { day: "2026-10-23", meal: "lunch" as const };
+
+  it("logs 1.5 servings once, on the chosen day and meal", () => {
+    const pick = RecipeCatalog_servingPick(bowls, 1.5);
+    const basket = FoodBasket_put([], pick, 0, RecipeCatalog_basketKey(bowls));
+    const entries = FoodBasket_entries(basket, where, () => "e1", 7);
+    expect(entries).to.have.length(1);
+    expect(entries[0]).to.deep.include({ day: "2026-10-23", meal: "lunch", name: bowls.title });
+    expect(entries[0].nutrients).to.deep.equal(pick.fixed!.nutrients);
+    expect(entries[0].grams).to.equal(undefined);
+  });
+
+  it("replaces the serving count when the recipe is logged again before saving the basket", () => {
+    let basket = FoodBasket_put([], RecipeCatalog_servingPick(bowls, 1), 0, RecipeCatalog_basketKey(bowls));
+    basket = FoodBasket_put(basket, RecipeCatalog_servingPick(bowls, 0.5), 0, RecipeCatalog_basketKey(bowls));
+    expect(basket).to.have.length(1);
+    expect(FoodBasket_totals(basket)).to.deep.equal(RecipeCatalog_servingPick(bowls, 0.5).fixed!.nutrients);
   });
 });
