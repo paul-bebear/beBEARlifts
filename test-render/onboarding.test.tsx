@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { OnboardingChat } from "../src/components/onboardingChat.native";
 import { OnboardingCommand_run } from "../src/utils/onboardingCommand";
 import { CloudBackupCommand_run } from "../src/utils/cloudBackupCommand";
+import { SupabaseOAuth_start } from "../src/utils/supabaseOAuth";
 import { IOnboardingState } from "../src/models/onboarding";
 import { IDispatch } from "../src/ducks/types";
 
@@ -21,6 +22,22 @@ jest.mock("../src/utils/aiConsentClient", () => ({
 }));
 jest.mock("../src/components/cloudRestoreBanner", () => ({ CloudRestoreChoice: () => null }));
 jest.mock("react-native-image-picker", () => ({ launchImageLibrary: jest.fn() }));
+jest.mock("../src/utils/supabaseOAuth", () => ({
+  SupabaseOAuth_start: jest.fn().mockResolvedValue({ ok: false, error: "Apple sign-in is not set up yet." }),
+}));
+jest.mock("@invertase/react-native-apple-authentication", () => {
+  const { createElement } = jest.requireActual("react");
+  const { Pressable, Text } = jest.requireActual("react-native");
+  const AppleButton = (props: { onPress: () => void; testID?: string }): unknown =>
+    createElement(
+      Pressable,
+      { accessibilityRole: "button", testID: props.testID, onPress: props.onPress },
+      createElement(Text, null, "Sign in with Apple")
+    );
+  AppleButton.Style = { BLACK: "Black" };
+  AppleButton.Type = { SIGN_IN: "SignIn" };
+  return { AppleButton };
+});
 
 const dispatch = jest.fn() as unknown as IDispatch;
 
@@ -34,15 +51,26 @@ describe("native beBEAR first run", () => {
     await render(<OnboardingChat dispatch={dispatch}>{null}</OnboardingChat>);
   });
 
-  it("opens the bear welcome with email sign-in and a social sign-in slot", () => {
+  it("opens the bear welcome with Apple, Google, an email code link and Not now", () => {
     expect(screen.getByText("Meet your bear")).toBeTruthy();
-    expect(screen.getByLabelText("Email address")).toBeTruthy();
-    expect(screen.getByTestId("onboarding-social-sign-in-slot")).toBeTruthy();
-    expect(screen.queryByText("Continue with Apple")).toBeNull();
-    expect(screen.queryByText("Continue with Google")).toBeNull();
+    expect(screen.getByTestId("onboarding-bear")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sign in with Apple" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sign in with Google" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Use an email code" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Not now" })).toBeTruthy();
+    expect(screen.queryByLabelText("Email address")).toBeNull();
+  });
+
+  it("starts native Apple and Google sign-in and shows the error", async () => {
+    await press("Sign in with Apple");
+    expect(SupabaseOAuth_start).toHaveBeenCalledWith("apple");
+    expect(await screen.findByText("Apple sign-in is not set up yet.")).toBeTruthy();
+    await press("Sign in with Google");
+    expect(SupabaseOAuth_start).toHaveBeenLastCalledWith("google");
   });
 
   it("sends and verifies an email code through the existing command", async () => {
+    await press("Use an email code");
     await fireEvent.changeText(screen.getByLabelText("Email address"), "bear@example.com");
     await press("Send code");
     expect(CloudBackupCommand_run).toHaveBeenCalledWith(
