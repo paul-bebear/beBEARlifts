@@ -11,7 +11,8 @@ if [[ "$VERCEL_ENV" == "preview" && "$VERCEL_GIT_COMMIT_REF" != preview/* ]]; th
   exit 0
 fi
 
-if git diff --quiet HEAD^ HEAD -- . ':(exclude)*.md' 2>/dev/null; then
+# An empty commit changes no files, and it is how a deploy of the current master is asked for.
+if ! git diff --quiet HEAD^ HEAD 2>/dev/null && git diff --quiet HEAD^ HEAD -- . ':(exclude)*.md' 2>/dev/null; then
   echo "Skipped: the commit changes only Markdown files."
   exit 0
 fi
