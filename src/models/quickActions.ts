@@ -1,4 +1,6 @@
-export type IQuickActionId = "food" | "weight" | "friend" | "note";
+import { FeatureLayer_isFront, IFeature } from "./featureLayer";
+
+export type IQuickActionId = "food" | "weight";
 
 export interface IQuickAction {
   id: IQuickActionId;
@@ -9,7 +11,6 @@ export interface IQuickAction {
 export interface IQuickActionsWorkout {
   label: string;
   action: "resume" | "pick";
-  showsRun: boolean;
 }
 
 export interface IQuickActions {
@@ -19,24 +20,21 @@ export interface IQuickActions {
 
 export interface IQuickActionsInput {
   isOngoingProgress: boolean;
-  canRun: boolean;
 }
 
 export const quickActionsSoon = "Soon";
-export const quickActionsRun = "Run";
+
+const squareCandidates: { feature: IFeature; action: IQuickAction }[] = [
+  { feature: "food", action: { id: "food", label: "Food", isSoon: false } },
+  { feature: "weight", action: { id: "weight", label: "Weight", isSoon: false } },
+];
 
 export function QuickActions_list(input: IQuickActionsInput): IQuickActions {
   return {
-    squares: [
-      { id: "food", label: "Food", isSoon: false },
-      { id: "weight", label: "Weight", isSoon: false },
-      { id: "friend", label: "Friend", isSoon: false },
-      { id: "note", label: "Note", isSoon: false },
-    ],
+    squares: squareCandidates.filter((c) => FeatureLayer_isFront(c.feature)).map((c) => c.action),
     workout: {
       label: input.isOngoingProgress ? "Resume workout" : "Start workout",
       action: input.isOngoingProgress ? "resume" : "pick",
-      showsRun: input.canRun,
     },
   };
 }
