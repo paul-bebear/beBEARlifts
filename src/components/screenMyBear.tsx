@@ -1,4 +1,4 @@
-import { JSX, ReactNode, useMemo } from "react";
+import { JSX, ReactNode, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { NavScreenContent } from "../navigation/NavScreenContent";
@@ -16,6 +16,11 @@ import { useBear } from "../utils/useBear";
 import { useBearHoney } from "../utils/useBearHoney";
 import { useBadgeCelebration } from "../utils/useBearBadges";
 import { BadgeUnlockedSheet } from "./badgeUnlockedSheet";
+import { HandleSheet } from "./handleSheet";
+import { BearName_title } from "../models/bearName";
+import { Friends_forUser } from "../models/friends";
+import { FriendsStore } from "../utils/friendsClient";
+import { CloudStore } from "../utils/supabaseClient";
 import { BearStore } from "../utils/bearStore";
 import { NotesStore } from "../utils/notesStore";
 import { BearBoard_tiles, IBearBoardTarget } from "../models/bearBoard";
@@ -90,8 +95,12 @@ function MyBearHead(): JSX.Element {
 
 export function ScreenMyBear(): JSX.Element {
   const dispatch = useTrackedDispatch();
+  const userId = CloudStore.use().session?.userId;
+  const me = Friends_forUser(FriendsStore.use(), userId).me;
+  const [showsNameSheet, setShowsNameSheet] = useState(false);
   useNavOptions({
-    navTitle: "My bear",
+    navTitle: BearName_title(me),
+    navOnTitleClick: () => setShowsNameSheet(true),
     navRightButtons: [
       <Pressable
         key="settings"
@@ -117,6 +126,15 @@ export function ScreenMyBear(): JSX.Element {
           onViewAll={() => {
             celebration.dismiss(false);
             dispatch(Thunk_pushScreen("streak"));
+          }}
+        />
+      )}
+      {showsNameSheet && (
+        <HandleSheet
+          onClose={() => setShowsNameSheet(false)}
+          onOpenSettings={() => {
+            setShowsNameSheet(false);
+            dispatch(Thunk_pushScreen("settings"));
           }}
         />
       )}

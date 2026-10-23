@@ -1,4 +1,4 @@
-import { Friends_errorText } from "../models/friends";
+import { Friends_errorText, Friends_profileSavedMessage } from "../models/friends";
 import { IFriendsCommand, IFriendsFormEvent } from "../models/friendsForm";
 import {
   FriendsClient_accept,
@@ -42,7 +42,7 @@ async function run(command: IFriendsCommand): Promise<IFriendsFormEvent> {
     case "saveProfile":
       return thenLoad(
         await FriendsClient_saveProfile(command.handle, command.displayName, command.isNew),
-        "Profile saved."
+        Friends_profileSavedMessage
       );
     case "find": {
       const result = await FriendsClient_find(command.handle);

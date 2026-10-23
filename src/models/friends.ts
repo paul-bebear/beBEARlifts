@@ -26,6 +26,8 @@ export interface IFriendsLists {
   outgoing: IFriendLink[];
 }
 
+export const Friends_profileSavedMessage = "Profile saved.";
+
 const handlePattern = /^[a-z0-9_]{3,20}$/;
 const maxDisplayName = 40;
 
