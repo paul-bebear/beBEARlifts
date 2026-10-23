@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BEBEA5200000000000000001 /* RCTBebearSignInConfig.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA5200000000000000002 /* RCTBebearSignInConfig.mm */; };
 		00A9D43BFF6350A3156888F5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		12F317DBE89387792B8C2788 /* notification.m4r in Resources */ = {isa = PBXBuildFile; fileRef = 91FAA5A7B2D2A2141783C9C5 /* notification.m4r */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
@@ -225,6 +226,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BEBEA5200000000000000002 /* RCTBebearSignInConfig.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = RCTBebearSignInConfig.mm; path = Liftosaur/RCTBebearSignInConfig.mm; sourceTree = "<group>"; };
+		BEBEA5200000000000000003 /* RCTBebearSignInConfig.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTBebearSignInConfig.h; path = Liftosaur/RCTBebearSignInConfig.h; sourceTree = "<group>"; };
 		0880623F1BFA46C212C4C21F /* Pods_Liftosaur.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Liftosaur.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C643222D97503FBA997CA59 /* RCTLiftosaurLiveActivity.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTLiftosaurLiveActivity.h; path = Liftosaur/RCTLiftosaurLiveActivity.h; sourceTree = "<group>"; };
 		0F867517A1458EA44579B682 /* RCTFastTextView.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTFastTextView.h; path = Liftosaur/FastText/RCTFastTextView.h; sourceTree = "<group>"; };
@@ -435,6 +438,8 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				FD2FDC64C423B610A697466E /* RCTLiftosaurShare.h */,
+				BEBEA5200000000000000003 /* RCTBebearSignInConfig.h */,
+				BEBEA5200000000000000002 /* RCTBebearSignInConfig.mm */,
 				6932EE9394B77D111CEA7C57 /* RCTLiftosaurShare.mm */,
 				E883E351A4F90F4F9BB4EFE5 /* LiftosaurShareImpl.swift */,
 				F34F70BF6900DDCBEC890E05 /* RCTLiftosaurImageResizer.h */,
@@ -1038,6 +1043,7 @@
 				3AACC7412FB4B001001C68AA /* SceneDelegate.swift in Sources */,
 				3AACC7512FB4B001001C68AB /* TouchIndicatorWindow.swift in Sources */,
 				438B6645A9C600CDF5BC2E07 /* RCTLiftosaurShare.mm in Sources */,
+				BEBEA5200000000000000001 /* RCTBebearSignInConfig.mm in Sources */,
 				ABAB4E16DB2DC920D7412751 /* LiftosaurShareImpl.swift in Sources */,
 				6D02DF56F7CB78E851242DEC /* RCTLiftosaurImageResizer.mm in Sources */,
 				8B7AE7DA350672DAFF7AFA16 /* LiftosaurImageResizerImpl.swift in Sources */,

@@ -297,6 +297,7 @@
         "LiftoEditor": "RCTLiftoEditorView"
       },
       "modulesProvider": {
+        "BebearSignInConfig": "RCTBebearSignInConfig",
         "LiftosaurShare": "RCTLiftosaurShare",
         "LiftosaurTimer": "RCTLiftosaurTimer",
         "LiftosaurLiveActivity": "RCTLiftosaurLiveActivity",
