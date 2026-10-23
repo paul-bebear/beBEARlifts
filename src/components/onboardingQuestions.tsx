@@ -1,18 +1,14 @@
 import { Dispatch, JSX } from "react";
+import { Image, Switch, View } from "react-native";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
-import { OnboardingCommand_images } from "../utils/onboardingCommand";
 import { OnboardingHistory_summary } from "../models/onboardingHistory";
 import { IOnboardingAnswers } from "../models/onboardingAnswers";
 import { FoodTargets_activities, FoodTargets_goals } from "../models/foodTargets";
 import { IBearGoal } from "../models/bearPlan";
-
-const field = "w-full p-3 border rounded-xl bg-background-default border-border-prominent text-text-primary";
-const chip = "flex items-center gap-3 w-full p-4 text-left text-lg border-2 rounded-2xl";
-const chipOn = `${chip} border-yellow-500 bg-background-cardyellow`;
-const chipOff = `${chip} border-border-prominent`;
-const pill = "px-4 py-2 border-2 rounded-full";
-const pillOn = `${pill} border-yellow-500 bg-background-cardyellow`;
-const pillOff = `${pill} border-border-prominent`;
+import { Text } from "./primitives/text";
+import { TextInput } from "./primitives/textInput";
+import { OnboardingAction, OnboardingChoice, OnboardingControls_field } from "./onboardingControls";
+import { OnboardingImages } from "./onboardingImages";
 
 const goals: { key: IBearGoal; label: string; detail: string }[] = [
   { key: "size", label: "Size", detail: "Bigger muscles" },
@@ -27,53 +23,47 @@ export function OnboardingFoodQuestions(props: {
   const { a, emit } = props;
   return (
     <>
-      <h2 className="text-xl font-semibold">Food targets (optional)</h2>
-      <p className="text-text-secondary">
+      <Text accessibilityRole="header" className="text-xl font-semibold">
+        Food targets (optional)
+      </Text>
+      <Text className="text-text-secondary">
         Answer both questions to set your targets using your age, height, weight and sex. Leave either blank to skip.
-      </p>
-      <fieldset className="space-y-2">
-        <legend className="mb-2 font-semibold">How active are you?</legend>
-        <div className="space-y-2">
-          {FoodTargets_activities.map((activity) => (
-            <button
-              key={activity.key}
-              className={a.activity === activity.key ? chipOn : chipOff}
-              aria-pressed={a.activity === activity.key}
-              onClick={() =>
-                emit({ type: "answers", patch: { activity: a.activity === activity.key ? undefined : activity.key } })
-              }
-            >
-              <span className="flex flex-col">
-                <span className="font-bold">{activity.label}</span>
-                <span className="text-base text-text-secondary">{activity.detail}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </fieldset>
-      <fieldset className="space-y-2">
-        <legend className="mb-2 font-semibold">What is your weight goal?</legend>
-        <div className="flex flex-wrap gap-2">
+      </Text>
+      <View className="gap-2">
+        <Text className="font-semibold">How active are you?</Text>
+        {FoodTargets_activities.map((activity) => (
+          <OnboardingChoice
+            key={activity.key}
+            selected={a.activity === activity.key}
+            onPress={() =>
+              emit({ type: "answers", patch: { activity: a.activity === activity.key ? undefined : activity.key } })
+            }
+          >
+            <Text className="font-bold">{activity.label}</Text>
+            <Text className="text-text-secondary">{activity.detail}</Text>
+          </OnboardingChoice>
+        ))}
+      </View>
+      <View className="gap-2">
+        <Text className="font-semibold">What is your weight goal?</Text>
+        <View className="flex-row flex-wrap gap-2">
           {FoodTargets_goals.map((goal) => (
-            <button
+            <OnboardingChoice
               key={goal.key}
-              className={a.foodGoal === goal.key ? pillOn : pillOff}
-              aria-pressed={a.foodGoal === goal.key}
-              onClick={() =>
+              pill
+              selected={a.foodGoal === goal.key}
+              onPress={() =>
                 emit({ type: "answers", patch: { foodGoal: a.foodGoal === goal.key ? undefined : goal.key } })
               }
             >
-              {goal.label}
-            </button>
+              <Text>{goal.label}</Text>
+            </OnboardingChoice>
           ))}
-        </div>
-      </fieldset>
-      <button
-        className="self-start py-2 text-text-link"
-        onClick={() => emit({ type: "answers", patch: { activity: undefined, foodGoal: undefined } })}
-      >
+        </View>
+      </View>
+      <OnboardingAction onPress={() => emit({ type: "answers", patch: { activity: undefined, foodGoal: undefined } })}>
         Skip food targets
-      </button>
+      </OnboardingAction>
     </>
   );
 }
@@ -85,53 +75,49 @@ export function OnboardingWantQuestions(props: {
   const { a } = props;
   return (
     <>
-      <h1 className="text-3xl font-bold">What do you want?</h1>
-      <div className="space-y-3">
+      <Text accessibilityRole="header" className="text-3xl font-bold">
+        What do you want?
+      </Text>
+      <View className="gap-3">
         {goals.map((g) => (
-          <button
+          <OnboardingChoice
             key={g.key}
-            className={a.goal === g.key ? chipOn : chipOff}
-            aria-pressed={a.goal === g.key}
-            onClick={() => props.emit({ type: "answers", patch: { goal: g.key } })}
+            selected={a.goal === g.key}
+            onPress={() => props.emit({ type: "answers", patch: { goal: g.key } })}
           >
-            <span className="flex flex-col">
-              <span className="font-bold">{g.label}</span>
-              <span className="text-base text-text-secondary">{g.detail}</span>
-            </span>
-          </button>
+            <Text className="font-bold">{g.label}</Text>
+            <Text className="text-text-secondary">{g.detail}</Text>
+          </OnboardingChoice>
         ))}
-      </div>
-      <fieldset className="space-y-2">
-        <legend className="mb-2 font-semibold">How many days a week can you train?</legend>
-        <div className="flex flex-wrap gap-2">
+      </View>
+      <View className="gap-2">
+        <Text className="font-semibold">How many days a week can you train?</Text>
+        <View className="flex-row flex-wrap gap-2">
           {([2, 3, 4, 5, 6] as const).map((days) => (
-            <button
+            <OnboardingChoice
               key={days}
-              className={a.days === days ? pillOn : pillOff}
-              aria-pressed={a.days === days}
-              onClick={() => props.emit({ type: "answers", patch: { days: a.days === days ? undefined : days } })}
+              pill
+              selected={a.days === days}
+              onPress={() => props.emit({ type: "answers", patch: { days: a.days === days ? undefined : days } })}
             >
-              {days === 6 ? "6+" : days}
-            </button>
+              <Text>{days === 6 ? "6+" : days}</Text>
+            </OnboardingChoice>
           ))}
-        </div>
-      </fieldset>
-      <button
-        role="switch"
-        aria-checked={a.agile}
-        className={a.agile ? chipOn : chipOff}
-        onClick={() => props.emit({ type: "answers", patch: { agile: !a.agile } })}
+        </View>
+      </View>
+      <View
+        className={`flex-row items-center gap-3 p-4 border-2 rounded-2xl ${a.agile ? "border-yellow-500 bg-background-cardyellow" : "border-border-prominent"}`}
       >
-        <span className="flex flex-col flex-1">
-          <span className="font-bold">More agile</span>
-          <span className="text-base text-text-secondary">Adds jumps and quick feet</span>
-        </span>
-        <span
-          className={`w-12 h-7 rounded-full p-1 flex ${a.agile ? "bg-yellow-500 justify-end" : "bg-gray-300 justify-start"}`}
-        >
-          <span className="w-5 h-5 bg-white rounded-full" />
-        </span>
-      </button>
+        <View className="flex-1">
+          <Text className="font-bold">More agile</Text>
+          <Text className="text-text-secondary">Adds jumps and quick feet</Text>
+        </View>
+        <Switch
+          accessibilityLabel="More agile"
+          value={a.agile}
+          onValueChange={(agile) => props.emit({ type: "answers", patch: { agile } })}
+        />
+      </View>
     </>
   );
 }
@@ -139,45 +125,40 @@ export function OnboardingWantQuestions(props: {
 export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispatch<IOnboardingEvent> }): JSX.Element {
   const { form, emit } = props;
   return (
-    <div className="space-y-5">
-      <h1 className="text-3xl font-bold">Import my own</h1>
-      <p>Add screenshots of your plan and recent workouts. Up to 6. The AI brings in your history too.</p>
-      <label className="block">
-        Screenshots
-        <input
-          className={field}
-          type="file"
-          accept="image/*"
-          multiple
-          disabled={form.resizing}
-          onChange={(e) => {
-            OnboardingCommand_images(e.currentTarget.files, emit);
-            e.currentTarget.value = "";
-          }}
-        />
-      </label>
-      <p aria-live="polite">{form.resizing ? "Resizing screenshots…" : `${form.images.length} of 6 screenshots`}</p>
-      <div className="flex flex-wrap gap-3">
+    <View className="gap-5">
+      <Text accessibilityRole="header" className="text-3xl font-bold">
+        Import my own
+      </Text>
+      <Text>Add screenshots of your plan and recent workouts. Up to 6. The AI brings in your history too.</Text>
+      <Text>Screenshots</Text>
+      <OnboardingImages busy={form.resizing} emit={emit} />
+      <Text accessibilityLiveRegion="polite">
+        {form.resizing ? "Resizing screenshots…" : `${form.images.length} of 6 screenshots`}
+      </Text>
+      <View className="flex-row flex-wrap gap-3">
         {form.images.map((image, i) => (
-          <div key={i}>
-            <img src={image} alt={`Screenshot ${i + 1}`} className="object-contain w-24 h-32" />
-            <button className="p-3 text-text-link" onClick={() => emit({ type: "removeImage", index: i })}>
-              Remove {i + 1}
-            </button>
-          </div>
+          <View key={i}>
+            <Image
+              source={{ uri: image }}
+              accessibilityLabel={`Screenshot ${i + 1}`}
+              className="w-24 h-32"
+              resizeMode="contain"
+            />
+            <OnboardingAction onPress={() => emit({ type: "removeImage", index: i })}>Remove {i + 1}</OnboardingAction>
+          </View>
         ))}
-      </div>
-      <label className="block">
-        Plan, injuries, or other details (optional)
-        <textarea
-          className={field}
-          rows={4}
-          maxLength={6000}
-          value={form.answers.plan}
-          onChange={(e) => emit({ type: "answers", patch: { plan: e.currentTarget.value } })}
-        />
-      </label>
-    </div>
+      </View>
+      <Text>Plan, injuries, or other details (optional)</Text>
+      <TextInput
+        accessibilityLabel="Plan, injuries, or other details (optional)"
+        className={OnboardingControls_field}
+        multiline
+        style={{ minHeight: 120, textAlignVertical: "top" }}
+        maxLength={6000}
+        value={form.answers.plan}
+        onChangeText={(plan) => emit({ type: "answers", patch: { plan } })}
+      />
+    </View>
   );
 }
 
@@ -192,38 +173,41 @@ export function OnboardingImportedPlan(props: {
   }
   return (
     <>
-      <h1 className="text-3xl font-bold">Your plan is ready.</h1>
-      <h2 className="text-2xl font-semibold">{result.name}</h2>
-      <p>{result.days} training days per week</p>
-      <p>{result.answer.note}</p>
+      <Text accessibilityRole="header" className="text-3xl font-bold">
+        Your plan is ready.
+      </Text>
+      <Text accessibilityRole="header" className="text-2xl font-semibold">
+        {result.name}
+      </Text>
+      <Text>{result.days} training days per week</Text>
+      <Text>{result.answer.note}</Text>
       {result.history != null && (
-        <div className="space-y-2">
-          <p>{OnboardingHistory_summary(result.history)}</p>
+        <View className="gap-2">
+          <Text>{OnboardingHistory_summary(result.history)}</Text>
           {result.history.records.length > 0 && (
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                className="w-6 h-6"
-                checked={props.form.importHistory}
+            <View className="flex-row items-center gap-3">
+              <Switch
+                accessibilityLabel="Add these workouts to my history"
+                value={props.form.importHistory}
                 disabled={props.busy}
-                onChange={() => props.emit({ type: "toggleHistory" })}
+                onValueChange={() => props.emit({ type: "toggleHistory" })}
               />
-              Add these workouts to my history
-            </label>
+              <Text className="flex-1">Add these workouts to my history</Text>
+            </View>
           )}
-        </div>
+        </View>
       )}
       {result.answer.renamed.length > 0 && (
-        <div>
-          <h3 className="font-semibold">Renamed exercises</h3>
-          <ul>
-            {result.answer.renamed.map(([from, to], i) => (
-              <li key={i}>
-                {from} → {to}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <View>
+          <Text accessibilityRole="header" className="font-semibold">
+            Renamed exercises
+          </Text>
+          {result.answer.renamed.map(([from, to], i) => (
+            <Text key={i}>
+              {from} → {to}
+            </Text>
+          ))}
+        </View>
       )}
     </>
   );

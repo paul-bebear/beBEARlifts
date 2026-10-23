@@ -1,7 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { OnboardingCommand_run } from "../src/utils/onboardingCommand";
+import { OnboardingCommand_pickImage, OnboardingCommand_run } from "../src/utils/onboardingCommand";
 import { Onboarding_empty, IOnboardingEvent, IOnboardingState, Onboarding_reduce } from "../src/models/onboarding";
 import { IDispatch } from "../src/ducks/types";
 import { IState, IEnv } from "../src/models/state";
@@ -20,6 +20,53 @@ import { Equipment_getCurrentGym } from "../src/models/equipment";
 
 const csv =
   "Workout DateTime,Program,Day Name,Exercise,Is Warmup Set?,Required Reps,Completed Reps,Is AMRAP?,Required RPE,Completed RPE,Log RPE?,Required Weight Value,Required Weight Unit,Completed Weight Value,Completed Weight Unit,Ask Weight?,Completed Reps Time,Target Muscles,Synergist Muscles,Notes\n2026-03-01T10:00:00.000Z,Plan,Day 1,Squat,0,5,5,0,,,0,60,kg,60,kg,0,,,,";
+
+describe("Native onboarding screenshots", () => {
+  let form: IOnboardingState;
+  const emit = (event: IOnboardingEvent): void => {
+    form = Onboarding_reduce(form, event);
+  };
+  beforeEach(() => {
+    form = { ...Onboarding_empty(), step: "import" };
+  });
+  it("adds the picked screenshot and releases the busy state", async () => {
+    await OnboardingCommand_pickImage(async () => ({ kind: "photo", dataUrl: "data:image/jpeg;base64,abc" }), emit);
+    expect(form.images).to.deep.equal(["data:image/jpeg;base64,abc"]);
+    expect(form.resizing).to.equal(false);
+    expect(form.error).to.equal(undefined);
+  });
+  it("keeps earlier screenshots when the picker is cancelled", async () => {
+    form = { ...form, images: ["earlier"] };
+    await OnboardingCommand_pickImage(async () => ({ kind: "cancelled" }), emit);
+    expect(form.images).to.deep.equal(["earlier"]);
+    expect(form.resizing).to.equal(false);
+    expect(form.error).to.equal(undefined);
+  });
+  it("shows a picker error without leaving the form busy", async () => {
+    await OnboardingCommand_pickImage(async () => ({ kind: "error", error: "Photo permission denied" }), emit);
+    expect(form.error).to.equal("Photo permission denied");
+    expect(form.resizing).to.equal(false);
+    expect(form.step).to.equal("import");
+  });
+  it("handles a rejected native picker", async () => {
+    await OnboardingCommand_pickImage(async () => {
+      throw new Error("Picker unavailable");
+    }, emit);
+    expect(form.error).to.equal("Picker unavailable");
+    expect(form.resizing).to.equal(false);
+  });
+  it("preserves the six-image and total-size limits", async () => {
+    form = { ...form, images: Array(6).fill("earlier") };
+    await OnboardingCommand_pickImage(async () => ({ kind: "photo", dataUrl: "seventh" }), emit);
+    expect(form.images).to.have.length(6);
+    expect(form.error).to.include("6 smaller screenshots");
+    form = { ...form, images: ["x".repeat(3_500_000)] };
+    await OnboardingCommand_pickImage(async () => ({ kind: "photo", dataUrl: "too large" }), emit);
+    expect(form.images).to.have.length(1);
+    expect(form.resizing).to.equal(false);
+    expect(form.error).to.include("3.5 MB total");
+  });
+});
 
 describe("Onboarding commands", () => {
   let state: IState;
