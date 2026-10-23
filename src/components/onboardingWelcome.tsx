@@ -3,6 +3,8 @@ import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
 import { Invite_parseHandle } from "../models/invite";
+import { BearArt_sprite } from "../models/bearArt";
+import { BearBody } from "./bearBody";
 import { Text } from "./primitives/text";
 import { TextInput } from "./primitives/textInput";
 import { OnboardingSignIn } from "./onboardingSignIn";
@@ -22,9 +24,7 @@ export function OnboardingWelcome(props: {
   return (
     <>
       <View className="items-center gap-3 pt-6">
-        <Text className="text-8xl" accessible={false}>
-          🐻
-        </Text>
+        <BearBody sprite={BearArt_sprite("male", 1, "normal")} height={180} testID="onboarding-bear" />
         <Text accessibilityRole="header" className="text-3xl font-bold text-center">
           Meet your bear
         </Text>
