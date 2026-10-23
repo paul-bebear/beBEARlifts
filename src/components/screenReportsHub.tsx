@@ -18,7 +18,7 @@ import { IconChevronRight } from "./icons/iconFoodUi";
 import { CheckInChart } from "./checkInChart";
 import { HoneySheet } from "./honeySheet";
 import { JournalCheckIn } from "./journalCheckIn";
-import { StatsSections } from "./screenProgressDashboard";
+import { ProgramCardSection, StatsSections } from "./screenProgressDashboard";
 
 function GroupTitle(props: { title: string }): JSX.Element {
   return (
@@ -105,6 +105,7 @@ export function ScreenReportsHub(): JSX.Element {
         {groups.map((group) => (
           <View key={group.id} testID={`reports-hub-group-${group.id}`} data-testid={`reports-hub-group-${group.id}`}>
             <GroupTitle title={group.title} />
+            {group.hasProgramCard && <ProgramCardSection />}
             {group.hasStatsSections && <StatsSections />}
             {group.rows.map((row) => (
               <View key={row.id}>

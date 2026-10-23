@@ -1,4 +1,6 @@
-import { JSX, ReactNode, useMemo } from "react";
+import { JSX, ReactNode, useMemo, useState } from "react";
+import { FoodLog_dayKey, FoodLog_dayTotals, IFoodProgressMode } from "../models/foodLog";
+import { FoodSummaryCard } from "./foodSummaryCard";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
@@ -81,7 +83,7 @@ function LinkRow(props: { testID: string; icon: ReactNode; title: string; onPres
   );
 }
 
-export function MyBearSections(): JSX.Element {
+export function ProgramCardSection(): JSX.Element {
   const state = useTrackedState();
   const dispatch = useTrackedDispatch();
   const settings = untrack(state.storage.settings);
@@ -90,13 +92,42 @@ export function MyBearSections(): JSX.Element {
     currentProgramId != null ? state.storage.programs.find((p) => p.id === currentProgramId) : undefined
   );
   const programCard = useMemo(() => ProgramCard_build(program, settings), [program, settings]);
+  return <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />;
+}
+
+function TodayMacros(): JSX.Element {
+  const dispatch = useTrackedDispatch();
+  const foodLog = useFoodLog();
+  const [mode, setMode] = useState<IFoodProgressMode>("consumed");
+  const today = FoodLog_dayKey(new Date());
+  return (
+    <View testID="my-bear-macros" data-testid="my-bear-macros">
+      <Pressable
+        className="flex-row items-center px-4 pb-1"
+        onPress={() => dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
+      >
+        <Text className="flex-1 text-xl font-bold">Today's food</Text>
+        <Text className="text-sm text-text-link">Journal</Text>
+      </Pressable>
+      <FoodSummaryCard
+        totals={FoodLog_dayTotals(foodLog, today)}
+        goals={foodLog.goals}
+        mode={mode}
+        onModeChange={setMode}
+      />
+    </View>
+  );
+}
+
+export function MyBearSections(): JSX.Element {
+  const state = useTrackedState();
+  const dispatch = useTrackedDispatch();
+  const settings = untrack(state.storage.settings);
   const goal = ProgressHub_goal(ProgramGoalStore.use(), settings, Date.now());
   return (
     <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
       {OfflineOnly_isEnabled() && <CloudRestoreBanner dispatch={dispatch} />}
-      {OfflineOnly_isEnabled() && (
-        <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />
-      )}
+      <TodayMacros />
       <ProgressGoalCard
         goal={goal}
         onChangeGoal={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "goal" }))}

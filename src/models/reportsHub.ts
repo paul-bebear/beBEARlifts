@@ -34,6 +34,7 @@ export interface IReportsHubGroup {
   id: "numbers" | "extras";
   title: string;
   layer: IFeatureLayer;
+  hasProgramCard: boolean;
   hasStatsSections: boolean;
   rows: IReportsHubRow[];
 }
@@ -124,6 +125,7 @@ export function ReportsHub_groups(input: IReportsHubInput): IReportsHubGroup[] {
       id: "numbers",
       title: "Your numbers",
       layer: 2,
+      hasProgramCard: input.isOffline,
       hasStatsSections: true,
       rows: rows.filter((row) => FeatureLayer_of(row.feature) === 2),
     },
@@ -131,6 +133,7 @@ export function ReportsHub_groups(input: IReportsHubInput): IReportsHubGroup[] {
       id: "extras",
       title: "Extras",
       layer: 3,
+      hasProgramCard: false,
       hasStatsSections: false,
       rows: rows.filter((row) => FeatureLayer_of(row.feature) === 3),
     },

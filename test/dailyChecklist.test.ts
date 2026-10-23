@@ -90,6 +90,31 @@ describe("DailyChecklist", () => {
     expect(day.doneCount).to.equal(3);
   });
 
+  it("keeps Feed the bear open until the day's calorie and protein targets are met", () => {
+    const goals = {
+      ...FoodLog_empty().goals,
+      calories: { min: 2800, max: 3000 },
+      protein: { min: 140, max: 180 },
+    };
+    const meal = { ...food("2026-10-25", 1240), nutrients: { calories: 1240, protein: 84, carbs: 0, fat: 0 } };
+    const half = DailyChecklist_build(input({ foodLog: { ...FoodLog_empty(), goals, entries: [meal] } }));
+    expect([half.items[1].subtitle, half.items[1].isDone]).to.deep.equal([
+      "1,240 / 2,800 Cal · 84 / 140 g protein",
+      false,
+    ]);
+    const big = { ...meal, id: "big", nutrients: { calories: 1600, protein: 60, carbs: 0, fat: 0 } };
+    const full = DailyChecklist_build(input({ foodLog: { ...FoodLog_empty(), goals, entries: [meal, big] } }));
+    expect(full.items[1].isDone).to.equal(true);
+  });
+
+  it("checks only the targets that are set", () => {
+    const goals = { ...FoodLog_empty().goals, calories: { min: 0, max: 2000 } };
+    const day = DailyChecklist_build(
+      input({ foodLog: { ...FoodLog_empty(), goals, entries: [food("2026-10-25", 2100)] } })
+    );
+    expect([day.items[1].subtitle, day.items[1].isDone]).to.deep.equal(["2,100 / 2,000 Cal", true]);
+  });
+
   it("does not use a weight logged after the selected day", () => {
     const day = DailyChecklist_build(input({ day: "2026-10-10", today: "2026-10-25" }));
     expect(day.items[0].subtitle).to.equal("No workout");

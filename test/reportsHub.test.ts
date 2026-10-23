@@ -22,6 +22,11 @@ describe("ReportsHub", () => {
     expect(groups.map((g) => g.hasStatsSections)).to.deep.equal([true, false]);
   });
 
+  it("shows the program card first in Your numbers in the offline build", () => {
+    expect(ReportsHub_groups({ isOffline: true, hasRunSensors: false, today })[0].hasProgramCard).to.equal(true);
+    expect(ReportsHub_groups({ isOffline: false, hasRunSensors: false, today })[0].hasProgramCard).to.equal(false);
+  });
+
   it("puts every row in the group of its feature layer", () => {
     for (const group of ReportsHub_groups({ isOffline: true, hasRunSensors: true, today })) {
       for (const row of group.rows) {
