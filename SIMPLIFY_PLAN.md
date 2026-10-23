@@ -1,6 +1,6 @@
 # Simplify pass: one home per job
 
-Status: plan only, nothing built. Four batches, S1 to S4.
+Status: S1 to S4 are built and merged. The next pass is T1, the three layers, in The three layers section of `REDESIGN_PLAN.md`.
 
 ## The rule
 
