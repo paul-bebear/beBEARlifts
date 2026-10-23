@@ -1,0 +1,745 @@
+{
+  "status": "All 24 wardrobe images and 3 requested review sheets rendered.",
+  "rendering_tool": "built-in image_gen",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "female_selection": "Original approved Step 1 sample; slimmer revision not selected.",
+  "presentation": "Neutral planted athletic pose, relaxed arms, no sexualized posing.",
+  "assets": [
+    {
+      "name": "wardrobe_m_teen_gym.png",
+      "sex": "m",
+      "stage": "teen",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        360,
+        749,
+        667,
+        1476
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1475,
+      "baseline_offset_px": 5,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_02.png",
+      "reference_bbox_alpha_gt_8": [
+        360,
+        750,
+        665,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-2d40e8d1-5b40-4d50-b225-72cd9d42a160.png",
+      "sha256": "eeaa3d326e0f91a9c4b38a142b8ad486e09332c1cb5106d103c0a3751e7aa62c"
+    },
+    {
+      "name": "wardrobe_m_teen_fitted.png",
+      "sex": "m",
+      "stage": "teen",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        360,
+        749,
+        665,
+        1470
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1469,
+      "baseline_offset_px": -1,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_02.png",
+      "reference_bbox_alpha_gt_8": [
+        360,
+        750,
+        665,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-148f93a9-5732-4570-8d76-09c04e645541.png",
+      "sha256": "75f0aa4f81b925ea42b2e7f1965997669625ad21d5a49bd81283591b3d636e2f"
+    },
+    {
+      "name": "wardrobe_m_teen_baggy.png",
+      "sex": "m",
+      "stage": "teen",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        351,
+        749,
+        677,
+        1471
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1470,
+      "baseline_offset_px": 0,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_02.png",
+      "reference_bbox_alpha_gt_8": [
+        360,
+        750,
+        665,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-10547343-1986-48e1-930f-c923144051c3.png",
+      "sha256": "042459c1d7ac1bcd0b55c17732a2b9a794664cfa2c8ce752e408487dfd1b924b"
+    },
+    {
+      "name": "wardrobe_m_mid_gym.png",
+      "sex": "m",
+      "stage": "mid",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        199,
+        508,
+        826,
+        1480
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1479,
+      "baseline_offset_px": 9,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_05.png",
+      "reference_bbox_alpha_gt_8": [
+        200,
+        511,
+        824,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-ac0495d7-00e8-4575-adad-17b193ace80b.png",
+      "sha256": "b7937ffc7e435fb712e72ebe8f7f442a13849a62c85267701ab8fd7bbadbf01c"
+    },
+    {
+      "name": "wardrobe_m_mid_fitted.png",
+      "sex": "m",
+      "stage": "mid",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        199,
+        507,
+        829,
+        1482
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1481,
+      "baseline_offset_px": 11,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_05.png",
+      "reference_bbox_alpha_gt_8": [
+        200,
+        511,
+        824,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-87fa3973-88a2-45d9-8e23-f4738c48326e.png",
+      "sha256": "a38fc500b10ba7f5d210693d4a37f61ce06bc935b1139fcb8a4d98562f436661"
+    },
+    {
+      "name": "wardrobe_m_mid_baggy.png",
+      "sex": "m",
+      "stage": "mid",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        186,
+        509,
+        832,
+        1477
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1476,
+      "baseline_offset_px": 6,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_05.png",
+      "reference_bbox_alpha_gt_8": [
+        200,
+        511,
+        824,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-1915e5fb-2c12-4695-b74c-432b576ae816.png",
+      "sha256": "80f12defe09fb2e05337339c775ee716ee1cdd3a47e606569e50c5c1e9bc74f6"
+    },
+    {
+      "name": "wardrobe_m_fit_gym.png",
+      "sex": "m",
+      "stage": "fit",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        129,
+        306,
+        896,
+        1475
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1474,
+      "baseline_offset_px": 4,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_07.png",
+      "reference_bbox_alpha_gt_8": [
+        130,
+        310,
+        894,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-6d9ce28e-03d0-4184-946f-7b546b74c27a.png",
+      "sha256": "d20e5ac4d87159c4432404a5e95e61544b5416df030d5f89979895d69c06a4eb"
+    },
+    {
+      "name": "wardrobe_m_fit_fitted.png",
+      "sex": "m",
+      "stage": "fit",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        131,
+        305,
+        894,
+        1476
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1475,
+      "baseline_offset_px": 5,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_07.png",
+      "reference_bbox_alpha_gt_8": [
+        130,
+        310,
+        894,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-a7de9d7b-5bd1-454f-b34b-24143e50225b.png",
+      "sha256": "1bad01d5e8fac8749d3c6f5b065526ab0a03fe1808cf83c71cf3904af477b625"
+    },
+    {
+      "name": "wardrobe_m_fit_baggy.png",
+      "sex": "m",
+      "stage": "fit",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        123,
+        307,
+        909,
+        1475
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1474,
+      "baseline_offset_px": 4,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_07.png",
+      "reference_bbox_alpha_gt_8": [
+        130,
+        310,
+        894,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-97bef573-4d7b-45e1-ae63-230a99215a7f.png",
+      "sha256": "493b5f4f83050e61f4b21f46cdad7cf242d04a26eadaae58434a227cf5e68807"
+    },
+    {
+      "name": "wardrobe_m_peak_gym.png",
+      "sex": "m",
+      "stage": "peak",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        68,
+        150,
+        957,
+        1479
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1478,
+      "baseline_offset_px": 8,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_09.png",
+      "reference_bbox_alpha_gt_8": [
+        70,
+        150,
+        953,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-bbd03c1d-cd3e-4563-8171-b82bdd1dc550.png",
+      "sha256": "813658392bc25380dc2ce5dafc2f32d056b1faa7c0d06a8092ea3cde40da4ccf"
+    },
+    {
+      "name": "wardrobe_m_peak_fitted.png",
+      "sex": "m",
+      "stage": "peak",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        70,
+        149,
+        959,
+        1475
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1474,
+      "baseline_offset_px": 4,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_09.png",
+      "reference_bbox_alpha_gt_8": [
+        70,
+        150,
+        953,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-3a2e63f6-86ef-4f40-b659-34f7291f2b1b.png",
+      "sha256": "d43e07f6f5567c35dbac20012ba0ff1084b7f4f656044d9edf748810c350da60"
+    },
+    {
+      "name": "wardrobe_m_peak_baggy.png",
+      "sex": "m",
+      "stage": "peak",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        57,
+        150,
+        975,
+        1474
+      ],
+      "nominal_foot_baseline": 1470,
+      "observed_foot_baseline_alpha_gt_8": 1473,
+      "baseline_offset_px": 3,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/i-w/outputs/bebear-assets/bear_level_09.png",
+      "reference_bbox_alpha_gt_8": [
+        70,
+        150,
+        953,
+        1470
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-c00450f0-03c1-44fb-9664-8e737666878a.png",
+      "sha256": "b56474dfbf5a6207784b5d4c4e6a858f5bdf1801aba14c768bb7df33ba2d7ba1"
+    },
+    {
+      "name": "wardrobe_f_teen_gym.png",
+      "sex": "f",
+      "stage": "teen",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        372,
+        755,
+        652,
+        1472
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1471,
+      "baseline_offset_px": 0,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_02.png",
+      "reference_bbox_alpha_gt_8": [
+        372,
+        756,
+        652,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-9c85ee6a-b2e2-4e27-aa32-3dbb6f942e51.png",
+      "sha256": "e70c5640637265c2ea8fda264d00b69b50580fa1bf4785c7184ece1aae0fd4bd"
+    },
+    {
+      "name": "wardrobe_f_teen_fitted.png",
+      "sex": "f",
+      "stage": "teen",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        373,
+        754,
+        661,
+        1478
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1477,
+      "baseline_offset_px": 6,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_02.png",
+      "reference_bbox_alpha_gt_8": [
+        372,
+        756,
+        652,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-f0bfb674-de1c-4708-a04e-8b2ece7d6c97.png",
+      "sha256": "05196937fd62808a3bcab80b396d5e9d7a59d14940f622d7f95f6519b043e054"
+    },
+    {
+      "name": "wardrobe_f_teen_baggy.png",
+      "sex": "f",
+      "stage": "teen",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        372,
+        754,
+        659,
+        1477
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1476,
+      "baseline_offset_px": 5,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_02.png",
+      "reference_bbox_alpha_gt_8": [
+        372,
+        756,
+        652,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-60ed243c-c25b-4716-9f42-c96e6b30caab.png",
+      "sha256": "6bbd6000ab61adc45e70cc0a61d4756f726480f423d3e932940c854d10b9acff"
+    },
+    {
+      "name": "wardrobe_f_mid_gym.png",
+      "sex": "f",
+      "stage": "mid",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        284,
+        514,
+        740,
+        1472
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1471,
+      "baseline_offset_px": 0,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_05.png",
+      "reference_bbox_alpha_gt_8": [
+        285,
+        515,
+        739,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-66674ca0-2a22-40dc-9308-92a469f89a9f.png",
+      "sha256": "faaf8320f1dcc4bcf39692e79a336e36b687b134ea11b9128c5b97c5d134f754"
+    },
+    {
+      "name": "wardrobe_f_mid_fitted.png",
+      "sex": "f",
+      "stage": "mid",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        284,
+        514,
+        740,
+        1478
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1477,
+      "baseline_offset_px": 6,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_05.png",
+      "reference_bbox_alpha_gt_8": [
+        285,
+        515,
+        739,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-9937c425-df07-49bc-90a3-955d6fa47ae2.png",
+      "sha256": "aa18a6cbefd5689e550951c52b1c5191a7241bd7755b9f4a4646e8fc6c761fa6"
+    },
+    {
+      "name": "wardrobe_f_mid_baggy.png",
+      "sex": "f",
+      "stage": "mid",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        285,
+        514,
+        740,
+        1473
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1472,
+      "baseline_offset_px": 1,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_05.png",
+      "reference_bbox_alpha_gt_8": [
+        285,
+        515,
+        739,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-0bc57de2-0dee-401e-8919-6664fb0851e9.png",
+      "sha256": "cb7e4f8c6503179208e1a262e11ea608bcb2559f43f7d65e0899b7532f1a3846"
+    },
+    {
+      "name": "wardrobe_f_fit_gym.png",
+      "sex": "f",
+      "stage": "fit",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        243,
+        313,
+        782,
+        1469
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1468,
+      "baseline_offset_px": -3,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_07.png",
+      "reference_bbox_alpha_gt_8": [
+        244,
+        313,
+        780,
+        1471
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-dea2cc9b-c8af-4e52-aba0-c69942e8f667.png",
+      "sha256": "1d3d6c5b1728cd9e934a29dd731091ae0b9544d42ecde07645fd24e26b8c3f61"
+    },
+    {
+      "name": "wardrobe_f_fit_fitted.png",
+      "sex": "f",
+      "stage": "fit",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        244,
+        313,
+        783,
+        1470
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1469,
+      "baseline_offset_px": -2,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_07.png",
+      "reference_bbox_alpha_gt_8": [
+        244,
+        313,
+        780,
+        1471
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-79916403-eef8-43d5-8ee5-5e1f4f85e3f2.png",
+      "sha256": "109cd28e9027f1ed70ebc49b6c956387a75058d26326787f072245d3b017d685"
+    },
+    {
+      "name": "wardrobe_f_fit_baggy.png",
+      "sex": "f",
+      "stage": "fit",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        243,
+        314,
+        782,
+        1471
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1470,
+      "baseline_offset_px": -1,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_07.png",
+      "reference_bbox_alpha_gt_8": [
+        244,
+        313,
+        780,
+        1471
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-114352f2-99f3-47f0-bf09-f920747918ff.png",
+      "sha256": "cc4641ba0b36e58d2e29f051af4c2e6e146609d41310c0b1bd347b5ac4f22094"
+    },
+    {
+      "name": "wardrobe_f_peak_gym.png",
+      "sex": "f",
+      "stage": "peak",
+      "outfit": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        202,
+        154,
+        823,
+        1472
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1471,
+      "baseline_offset_px": 0,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_09.png",
+      "reference_bbox_alpha_gt_8": [
+        202,
+        153,
+        822,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-66440bc4-0ee1-4571-b662-0f4684d4f5ac.png",
+      "sha256": "a255cf84933d93ce9a94096e8d3b9428229b3d383f168c58b73f2f986d6857d5"
+    },
+    {
+      "name": "wardrobe_f_peak_fitted.png",
+      "sex": "f",
+      "stage": "peak",
+      "outfit": "fitted",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        201,
+        153,
+        826,
+        1472
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1471,
+      "baseline_offset_px": 0,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_09.png",
+      "reference_bbox_alpha_gt_8": [
+        202,
+        153,
+        822,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-40b0536c-b5cb-4ecc-8a03-7a14d7215d7b.png",
+      "sha256": "b1e79a23841667f98bf1ff2c1c577cf6b3a51c8d3866e3ed2e484c7c950bc166"
+    },
+    {
+      "name": "wardrobe_f_peak_baggy.png",
+      "sex": "f",
+      "stage": "peak",
+      "outfit": "baggy",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "has_alpha": true,
+      "visible_bbox_alpha_gt_8": [
+        201,
+        154,
+        825,
+        1474
+      ],
+      "nominal_foot_baseline": 1471,
+      "observed_foot_baseline_alpha_gt_8": 1473,
+      "baseline_offset_px": 2,
+      "reference": "/Users/paulbebear/Documents/Codex/2026-10-22/make-the-female-line-of-the/outputs/bebear-assets-female/bear_f_level_09.png",
+      "reference_bbox_alpha_gt_8": [
+        202,
+        153,
+        822,
+        1472
+      ],
+      "source": "/Users/paulbebear/.codex/generated_images/01a163b0-dd7c-75d3-870a-f8c985355902/exec-efbbd772-9ffb-4bcc-ab6c-813f03017fcf.png",
+      "sha256": "d7d84858bc6064b777d41df6506ed86dc5639b2d464205bfb755ddeee2a61344"
+    }
+  ],
+  "review_sheets": [
+    "wardrobe_m_review.png",
+    "wardrobe_f_review.png",
+    "wardrobe_peak_body_check.png"
+  ],
+  "validation": {
+    "count": 24,
+    "all_filenames_present": true,
+    "all_1024x1536_rgba": true,
+    "all_have_transparency": true,
+    "max_observed_baseline_offset_px": 11
+  },
+  "alignment_note": "Generative wardrobe variants, visually matched to each level reference. Exact pixel identity is not guaranteed. Observed alpha-threshold foot baseline offsets are listed per asset. Original PNG pixels and alpha are preserved; review sheets use full canvases at uniform 50% scale."
+}

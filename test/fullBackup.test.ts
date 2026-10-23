@@ -200,7 +200,13 @@ describe("FullBackup", () => {
   });
 
   it("round-trips the bebear_bear line, celebrated level and seen badges", () => {
-    const bear = { line: "female" as const, celebratedLevel: 9, seenBadges: ["streak-7", "level-9"], spent: 0 };
+    const bear = {
+      line: "female" as const,
+      celebratedLevel: 9,
+      seenBadges: ["streak-7", "level-9"],
+      spent: 0,
+      owned: [],
+    };
     const backup = FullBackup_build(parts({ bear }), now);
     expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).bear).to.deep.equal(bear);
     expect(backup.readme).to.include("bebear_bear");
@@ -210,6 +216,23 @@ describe("FullBackup", () => {
     const { bear, ...older } = FullBackup_build(parts({}), now);
     expect(bear).to.deep.equal(BearStoreData_empty());
     expect(FullBackup_unwrap(older).bear).to.equal(undefined);
+  });
+
+  it("round-trips spent honey, bought outfits, the worn outfit and permanent share rewards", () => {
+    const bear = {
+      ...BearStoreData_empty(),
+      spent: 65,
+      owned: ["gym", "fitted"],
+      equipped: "fitted",
+      sharedPosts: [{ id: "me:workout:1", day: "2026-10-20" }],
+    };
+    const backup = FullBackup_build(parts({ bear }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).bear).to.deep.equal(bear);
+    const old = { ...bear } as Partial<typeof bear>;
+    delete old.owned;
+    delete old.equipped;
+    delete old.sharedPosts;
+    expect(FullBackup_unwrap({ ...backup, bear: old }).bear).to.deep.equal({ ...BearStoreData_empty(), spent: 65 });
   });
 
   it("round-trips the bebear_schedule store and reads an older file without it", () => {

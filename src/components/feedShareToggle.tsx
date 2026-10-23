@@ -31,7 +31,7 @@ export function FeedShareToggle(props: IProps): JSX.Element | null {
   const userId = CloudStore.use().session?.userId;
   const me = Friends_forUser(FriendsStore.use(), userId).me;
   const feed = FeedStore.use();
-  const bear = useBear().state;
+  const { state: bear, store } = useBear();
   const [error, setError] = useState<string | undefined>(undefined);
 
   const build = async (): Promise<IWorkoutPostSummary> => {
@@ -40,6 +40,7 @@ export function FeedShareToggle(props: IProps): JSX.Element | null {
       keptSongs: session != null ? MusicSession_counts(session).kept : undefined,
       songs: session != null ? MusicSession_keptTracks(session).map((track) => track.name) : [],
       bear,
+      equipped: store.equipped,
     });
   };
   const report = (result: ICloudResult<undefined>): void => setError(result.ok ? undefined : result.error);

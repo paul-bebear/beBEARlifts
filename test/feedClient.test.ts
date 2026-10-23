@@ -13,6 +13,9 @@ import { CloudStore, Supabase_origin } from "../src/utils/supabaseClient";
 import { Feed_empty, IFeedState } from "../src/models/feed";
 import { IWorkoutPostSummary } from "../src/models/workoutPost";
 import { IMealPostDraft } from "../src/models/mealPost";
+import { BearStore } from "../src/utils/bearStore";
+import { BearStoreData_empty, IBearStoreData } from "../src/models/bearStoreData";
+import { BearHoney_share } from "../src/models/bearHoney";
 
 const now = Date.UTC(2026, 9, 21, 18);
 const session = {
@@ -40,9 +43,15 @@ const photo = "data:image/jpeg;base64,/9j/";
 describe("FeedClient", () => {
   let fetchStub: sinon.SinonStub;
   let feed: IFeedState;
+  let bear: IBearStoreData;
+  let bearUpdate: sinon.SinonStub;
 
   beforeEach(() => {
     feed = Feed_empty();
+    bear = BearStoreData_empty();
+    bearUpdate = sinon.stub(BearStore, "update").callsFake(async (fn) => {
+      bear = fn(bear);
+    });
     sinon.stub(Date, "now").returns(now);
     sinon.stub(CloudStore, "load").resolves({ version: 1, session });
     sinon.stub(FeedStore, "load").callsFake(async () => feed);
@@ -66,6 +75,7 @@ describe("FeedClient", () => {
     expect((init.headers as Record<string, string>).Prefer).to.equal("resolution=merge-duplicates,return=minimal");
     expect(feed.outbox).to.deep.equal([]);
     expect(feed.posts.map((p) => [p.userId, p.workoutId])).to.deep.equal([["me", 7]]);
+    expect(bear.sharedPosts).to.deep.equal([BearHoney_share("workout", "me", 7, now)]);
   });
 
   it("reports by the server post id and trims the optional note", async () => {
@@ -114,6 +124,7 @@ describe("FeedClient", () => {
     expect(fetchStub.secondCall.args[1].headers.Prefer).to.equal("resolution=ignore-duplicates,return=minimal");
     expect(feed.outbox).to.deep.equal([]);
     expect(feed.meals.map((m) => m.id)).to.deep.equal([mealId]);
+    expect(bear.sharedPosts).to.deep.equal([BearHoney_share("meal", "me", mealId, now)]);
   });
 
   it("posts a meal without a photo with no upload", async () => {
@@ -134,17 +145,20 @@ describe("FeedClient", () => {
     await FeedClient_setShared(7, summary);
     expect(feed.outbox.map((o) => o.type)).to.deep.equal(["meal"]);
     expect(feed.posts.map((p) => p.workoutId)).to.deep.equal([7]);
+    expect(bear.sharedPosts).to.deep.equal([BearHoney_share("workout", "me", 7, now)]);
   });
 
   it("keeps the post queued offline and sends it on the next flush", async () => {
     fetchStub.rejects(new TypeError("offline"));
     expect(await FeedClient_setShared(7, summary)).to.deep.equal({ ok: false, error: "No connection" });
     expect(feed.outbox).to.have.length(1);
+    expect(bear.sharedPosts).to.equal(undefined);
     fetchStub.reset();
     fetchStub.resolves(new Response(null, { status: 201 }));
     await Promise.all([FeedClient_flush(), FeedClient_flush()]);
     expect(fetchStub.callCount).to.equal(1);
     expect(feed.outbox).to.deep.equal([]);
+    expect(bear.sharedPosts).to.deep.equal([BearHoney_share("workout", "me", 7, now)]);
   });
 
   it("deletes a post when the toggle goes off", async () => {
@@ -152,6 +166,46 @@ describe("FeedClient", () => {
     await FeedClient_setShared(7, undefined);
     expect(url(0)).to.equal("/rest/v1/workout_posts?workout_id=eq.7");
     expect(fetchStub.firstCall.args[1].method).to.equal("DELETE");
+  });
+
+  it("records old own shares before refresh drops them and excludes friends", async () => {
+    feed = {
+      ...feed,
+      userId: "me",
+      posts: [
+        { userId: "me", workoutId: 7, postedAt: now, summary },
+        { userId: "friend", workoutId: 8, postedAt: now, summary },
+      ],
+      meals: [{ ...meal, userId: "me", postedAt: now }],
+    };
+    fetchStub.callsFake(async () => new Response("[]"));
+    await FeedClient_refresh();
+    expect(feed.posts).to.deep.equal([]);
+    expect(feed.meals).to.deep.equal([]);
+    expect(bear.sharedPosts).to.deep.equal([
+      BearHoney_share("workout", "me", 7, now),
+      BearHoney_share("meal", "me", mealId, now),
+    ]);
+  });
+
+  it("keeps one reward when a workout is removed and then shared again", async () => {
+    fetchStub.callsFake(async () => new Response(null, { status: 201 }));
+    await FeedClient_setShared(7, summary);
+    await FeedClient_setShared(7, undefined);
+    expect(feed.posts).to.deep.equal([]);
+    await FeedClient_setShared(7, summary);
+    expect(bear.sharedPosts).to.deep.equal([BearHoney_share("workout", "me", 7, now)]);
+  });
+
+  it("keeps a sent post queued when saving its honey fails, so retry saves the reward once", async () => {
+    fetchStub.callsFake(async () => new Response(null, { status: 201 }));
+    bearUpdate.onSecondCall().rejects(new Error("full"));
+    expect(await FeedClient_setShared(7, summary).catch((error) => error.message)).to.equal("full");
+    expect(feed.outbox).to.have.length(1);
+    expect(feed.posts).to.deep.equal([]);
+    await FeedClient_flush();
+    expect(feed.outbox).to.deep.equal([]);
+    expect(bear.sharedPosts).to.deep.equal([BearHoney_share("workout", "me", 7, now)]);
   });
 
   it("loads meals with signed photo URLs after the workouts", async () => {

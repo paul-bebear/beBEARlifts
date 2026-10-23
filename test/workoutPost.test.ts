@@ -89,6 +89,17 @@ describe("WorkoutPost version 2", () => {
     expect(WorkoutPost_build(workout, settings, {}, { bear: other }).bear?.countedKg).to.equal(0);
   });
 
+  it("round-trips each equipped outfit in the version 2 bear summary", () => {
+    for (const equipped of ["gym", "fitted", "baggy"]) {
+      const summary = WorkoutPost_build(workout, settings, {}, { bear: bear(100), equipped });
+      expect(summary.bear?.equipped).to.equal(equipped);
+      expect(WorkoutPost_parse(JSON.parse(JSON.stringify(summary)))?.bear).to.deep.equal(summary.bear);
+    }
+    expect(WorkoutPost_build(workout, settings, {}, { bear: bear(100), equipped: "unknown" }).bear?.equipped).to.equal(
+      undefined
+    );
+  });
+
   it("reads version 1 posts without a bear or songs", () => {
     const v1 = {
       ...WorkoutPost_build(workout, settings, {}, undefined),

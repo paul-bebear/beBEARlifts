@@ -6,7 +6,11 @@ import {
   BearHoney_earned,
   BearHoney_forWorkout,
   BearHoney_sharedAt,
+  BearHoney_share,
+  BearHoney_sharedPosts,
+  BearHoney_recordShares,
   IHoneySources,
+  IHoneyDay,
 } from "../src/models/bearHoney";
 import { IBearCountedWorkout } from "../src/models/bearGrowth";
 import { Feed_empty } from "../src/models/feed";
@@ -84,7 +88,7 @@ function sources(
 
 const now = at(22, 20);
 
-function dayOf(s: IHoneySources, date: number) {
+function dayOf(s: IHoneySources, date: number): IHoneyDay | undefined {
   return BearHoney_day(BearHoney_earned(s, now), dayKey(date));
 }
 
@@ -271,6 +275,55 @@ describe("BearHoney", () => {
   });
 
   describe("sharedAt", () => {
+    it("keeps honey after both 50-post caches roll over, without counting shares twice", () => {
+      const summary = {} as never;
+      const feed = {
+        ...Feed_empty(),
+        userId: "me",
+        posts: Array.from({ length: 50 }, (_, i) => ({
+          userId: "me",
+          workoutId: i,
+          postedAt: at(1 + Math.floor(i / 3)),
+          summary,
+        })),
+        meals: Array.from({ length: 50 }, (_, i) => ({
+          userId: "me",
+          id: `m${i}`,
+          postedAt: at(1 + Math.floor(i / 3)),
+          description: "Meal",
+          macros: { kcal: 1, protein: 1, carbs: 1, fat: 1 },
+        })),
+      };
+      const saved = BearHoney_recordShares(BearStoreData_empty(), BearHoney_sharedPosts(feed));
+      const earned = (cache: typeof feed): number =>
+        BearHoney_earned(sources({ sharedAt: BearHoney_sharedAt(cache, saved.sharedPosts) }), now).total;
+      expect(saved.sharedPosts).to.have.length(100);
+      expect(earned(feed)).to.equal(100);
+      const rolled = { ...feed, posts: [], meals: [] };
+      expect(BearHoney_balance(earned(rolled), 25)).to.equal(75);
+      expect(earned(rolled)).to.equal(earned(feed));
+      expect(BearHoney_recordShares(saved, BearHoney_sharedPosts(feed))).to.equal(saved);
+      expect(BearHoney_sharedAt(Feed_empty(), saved.sharedPosts)).to.have.length(100);
+    });
+
+    it("preserves the first share day across retries, reshares and account switches", () => {
+      const first = BearHoney_share("workout", "me", 1, at(20));
+      const saved = BearHoney_recordShares(BearStoreData_empty(), [first]);
+      const retried = BearHoney_recordShares(saved, [BearHoney_share("workout", "me", 1, at(21))]);
+      expect(retried).to.equal(saved);
+      const other = BearHoney_recordShares(saved, [BearHoney_share("workout", "other", 1, at(21))]);
+      expect(other.sharedPosts).to.have.length(2);
+      expect(saved.sharedPosts).to.deep.equal([first]);
+      const feed = {
+        ...Feed_empty(),
+        userId: "me",
+        posts: [{ userId: "me", workoutId: 1, postedAt: at(21), summary: {} as never }],
+      };
+      expect(BearHoney_sharedAt(feed, saved.sharedPosts).map((time) => FoodLog_dayKey(new Date(time)))).to.deep.equal([
+        dayKey(20),
+      ]);
+    });
+
     it("returns the times of the cache owner's own posts and meals", () => {
       const meal = { id: "m", description: "d", macros: { kcal: 1, protein: 1, carbs: 1, fat: 1 } };
       const summary = {} as never;
@@ -302,7 +355,7 @@ describe("BearStoreData spent", () => {
 
   it("reads an old store with no spent field as 0", () => {
     const parsed = BearStoreData_parse({ line: "male", celebratedLevel: 3, seenBadges: ["a"] });
-    expect(parsed).to.deep.equal({ line: "male", celebratedLevel: 3, seenBadges: ["a"], spent: 0 });
+    expect(parsed).to.deep.equal({ line: "male", celebratedLevel: 3, seenBadges: ["a"], spent: 0, owned: [] });
   });
 
   it("keeps a valid spent and resets a bad one", () => {

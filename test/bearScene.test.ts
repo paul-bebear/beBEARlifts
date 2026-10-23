@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import * as fs from "fs";
 import * as path from "path";
+import sharp from "sharp";
 import {
   BearScene_bodyCrop,
   BearScene_breathing,
@@ -76,6 +77,71 @@ function spriteKey(line: string, assetName: string): string {
 }
 
 describe("BearScene", () => {
+  it("keeps all 24 wardrobe bounds in sync with the manifest, WebP alpha and native map", async () => {
+    const root = path.join(__dirname, "..");
+    const wardrobe = JSON.parse(fs.readFileSync(path.join(root, "images/bear/wardrobe-manifest.json"), "utf8")) as {
+      assets: { sex: string; stage: string; outfit: string; visible_bbox_alpha_gt_8: number[] }[];
+    };
+    const nativeMap = fs.readFileSync(path.join(root, "src/utils/bearImage.native.ts"), "utf8");
+    expect(wardrobe.assets).to.have.length(24);
+    for (const asset of wardrobe.assets) {
+      const line = asset.sex === "m" ? "male" : "female";
+      const sprite = `/images/bear/${line}/outfit-${asset.stage}-${asset.outfit}.webp`;
+      const file = path.join(root, sprite);
+      expect(BearScene_visibleBox(sprite)).to.deep.equal(asset.visible_bbox_alpha_gt_8);
+      expect(fs.statSync(file).size).to.be.lessThan(80000);
+      expect(nativeMap).to.include(`"${sprite}": require("../..${sprite}")`);
+      const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      expect([info.width, info.height, info.channels]).to.deep.equal([512, 768, 4]);
+      const bounds = [info.width, info.height, 0, 0];
+      for (let y = 0; y < info.height; y += 1) {
+        for (let x = 0; x < info.width; x += 1) {
+          if (data[(y * info.width + x) * 4 + 3] > 8) {
+            bounds[0] = Math.min(bounds[0], x);
+            bounds[1] = Math.min(bounds[1], y);
+            bounds[2] = Math.max(bounds[2], x + 1);
+            bounds[3] = Math.max(bounds[3], y + 1);
+          }
+        }
+      }
+      bounds.forEach((value, i) => expect(value * 2, sprite).to.be.closeTo(asset.visible_bbox_alpha_gt_8[i], 2));
+    }
+    for (const line of lines) {
+      expect(
+        fs.readdirSync(path.join(root, "images/bear", line)).filter((file) => file.startsWith("outfit-"))
+      ).to.have.length(12);
+    }
+    const nativeKeys = [...nativeMap.matchAll(/^  "([^\"]+)": require/gm)].map((match) => match[1]);
+    expect(nativeKeys).to.deep.equal([...nativeKeys].sort());
+  });
+
+  it("keeps outfit feet fixed and every body stage below the board during a full breath", () => {
+    for (const line of lines) {
+      for (const [stage, levels] of [
+        ["teen", [2, 3]],
+        ["mid", [4, 5]],
+        ["fit", [6, 7]],
+        ["peak", [8, 9]],
+      ] as const) {
+        for (const outfit of ["gym", "fitted", "baggy"]) {
+          const sprite = `/images/bear/${line}/outfit-${stage}-${outfit}.webp`;
+          for (const level of levels) {
+            for (const width of [iPhoneSeWidth, 390, 480]) {
+              const layout = BearScene_layout(width, level, 1, sprite, 1.015);
+              const [, top, , bottom] = BearScene_visibleBox(sprite);
+              const scale = layout.sprite.height / BearScene_canvas.height;
+              const foot = layout.sprite.top + bottom * scale;
+              expect(foot).to.be.closeTo((width * BearScene_gymFoot.y) / 1024, 0.3);
+              expect(foot - (bottom - top) * scale * 1.015).to.be.at.least(
+                (width * BearScene_boardInkBottom) / 1024 - 0.3
+              );
+            }
+          }
+        }
+      }
+    }
+  });
+
   it("breathes at the requested speed for each mood", () => {
     expect(BearScene_breathing("normal")).to.deep.equal({ durationMs: 3500, scaleY: 1.015 });
     expect(BearScene_breathing("hungry")).to.deep.equal(BearScene_breathing("normal"));
