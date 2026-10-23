@@ -49,7 +49,8 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [photo, setPhoto] = useState<string | undefined>(undefined);
   const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
-  const line = BearStore.use().line;
+  const store = BearStore.use();
+  const line = store.line;
   const tierSet = BearTier_setFor(foodLog.profile.sex, line);
   const growth = useMemo(
     () => BearGrowth_history(props.history, props.settings, props.stats),
@@ -63,13 +64,13 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
       ShareAchievements_build({
         history: props.history,
         prs,
-        doneDays: DailyChecklist_doneDays({ foodLog, workouts: growth.workouts }),
+        doneDays: DailyChecklist_doneDays({ foodLog, workouts: growth.workouts, coveredDays: store.coveredDays }),
         foodLog,
         workouts: growth.workouts,
         settings: props.settings,
         tierSet,
       }),
-    [props.history, prs, growth, foodLog, props.settings, tierSet]
+    [props.history, prs, growth, foodLog, props.settings, tierSet, store.coveredDays]
   );
   const data = useMemo(
     () =>

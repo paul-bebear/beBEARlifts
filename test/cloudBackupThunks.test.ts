@@ -243,7 +243,7 @@ describe("Cloud backup thunks", () => {
   });
 
   it("shares the full export builder and leaves both logins out of its JSON", async () => {
-    bear = { line: "female", celebratedLevel: 8, seenBadges: ["level-8"], spent: 0 };
+    bear = { ...BearStoreData_empty(), line: "female", celebratedLevel: 8, seenBadges: ["level-8"], spent: 0 };
     notes = noted("Legs");
     schedule = scheduled("bebear-ulppl");
     const toFile = sinon.stub(exporter, "Exporter_toFile");
@@ -323,7 +323,13 @@ describe("Cloud backup thunks", () => {
   it("restores every full-backup store while keeping this phone's logins", async () => {
     const parts = {
       ...emptyParts(state.storage),
-      bear: { line: "female" as const, celebratedLevel: 9, seenBadges: ["level-9"], spent: 0 },
+      bear: {
+        ...BearStoreData_empty(),
+        line: "female" as const,
+        celebratedLevel: 9,
+        seenBadges: ["level-9"],
+        spent: 0,
+      },
       notes: noted("Restored"),
       schedule: scheduled("restored-program"),
       goal: ProgramGoal_set(ProgramGoal_empty(), { kind: "maintain", activity: "5to10k", startedAt: now }),
@@ -412,7 +418,7 @@ describe("Cloud backup thunks", () => {
   });
 
   it("keeps the phone's bear when an older backup has no bear", async () => {
-    bear = { line: "female", celebratedLevel: 7, seenBadges: ["level-7"], spent: 0 };
+    bear = { ...BearStoreData_empty(), line: "female", celebratedLevel: 7, seenBadges: ["level-7"], spent: 0 };
     const before = bear;
     await FullBackupFile_restore({ storage: state.storage });
     expect(bear).to.equal(before);
@@ -420,7 +426,7 @@ describe("Cloud backup thunks", () => {
   });
 
   it("rolls back the earlier stores when saving the restored bear fails", async () => {
-    bear = { line: "female", celebratedLevel: 2, seenBadges: ["level-2"], spent: 0 };
+    bear = { ...BearStoreData_empty(), line: "female", celebratedLevel: 2, seenBadges: ["level-2"], spent: 0 };
     const before = bear;
     const localFood = FoodLog_empty();
     (food.FoodLogStore_load as sinon.SinonStub).resolves(localFood);
@@ -434,7 +440,7 @@ describe("Cloud backup thunks", () => {
     (BearStore.update as sinon.SinonStub).rejects(new Error("QuotaExceededError"));
     const parts = {
       ...emptyParts(state.storage),
-      bear: { line: "male" as const, celebratedLevel: 9, seenBadges: [], spent: 0 },
+      bear: { ...BearStoreData_empty(), line: "male" as const, celebratedLevel: 9, seenBadges: [], spent: 0 },
     };
     download.resolves({ ok: true, value: JSON.stringify(FullBackup_build(parts, now - 1000)) });
     const result = sinon.spy();
@@ -455,7 +461,7 @@ describe("Cloud backup thunks", () => {
   });
 
   it("rolls back the bear and the earlier stores when saving the restored notes fails", async () => {
-    bear = { line: "female", celebratedLevel: 2, seenBadges: ["level-2"], spent: 0 };
+    bear = { ...BearStoreData_empty(), line: "female", celebratedLevel: 2, seenBadges: ["level-2"], spent: 0 };
     const beforeBear = bear;
     notes = noted("Phone");
     const beforeNotes = notes;
@@ -471,7 +477,7 @@ describe("Cloud backup thunks", () => {
     (NotesStore.update as sinon.SinonStub).rejects(new Error("QuotaExceededError"));
     const parts = {
       ...emptyParts(state.storage),
-      bear: { line: "male" as const, celebratedLevel: 9, seenBadges: [], spent: 0 },
+      bear: { ...BearStoreData_empty(), line: "male" as const, celebratedLevel: 9, seenBadges: [], spent: 0 },
       notes: noted("Cloud"),
     };
     download.resolves({ ok: true, value: JSON.stringify(FullBackup_build(parts, now - 1000)) });

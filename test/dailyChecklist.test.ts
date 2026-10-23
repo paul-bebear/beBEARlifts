@@ -68,6 +68,16 @@ function input(patch: Partial<IChecklistDayInput> = {}): IChecklistDayInput {
 }
 
 describe("DailyChecklist", () => {
+  it("joins covered days with food and workout days", () => {
+    const done = DailyChecklist_doneDays({
+      foodLog: { ...FoodLog_empty(), entries: [food("2026-10-20", 1)] },
+      workouts: [workout("2026-10-18", 9)],
+      coveredDays: ["2026-10-19", "2026-10-20"],
+    });
+    expect([...done].sort()).to.deep.equal(["2026-10-18", "2026-10-19", "2026-10-20"]);
+    expect(DailyChecklist_streak(done, "2026-10-21")).to.equal(3);
+  });
+
   it("lists Train, Feed the bear and Weigh-in, all open on an empty Sunday", () => {
     const day = DailyChecklist_build(input());
     expect(day.title).to.equal("October 25's checklist");

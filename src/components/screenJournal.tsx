@@ -193,15 +193,19 @@ export function ScreenJournal(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const sources = useJournalSources();
   const { today, history, food } = sources;
-  const { state: bear } = useBear();
+  const { state: bear, store } = useBear();
   const [day, setDay] = useState(today);
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showsExport, setShowsExport] = useState(false);
   const journal = JournalDay_build({ ...sources, day });
   const streak = useMemo(
-    () => DailyChecklist_streak(DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts }), today),
-    [food, bear.workouts, today]
+    () =>
+      DailyChecklist_streak(
+        DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts, coveredDays: store.coveredDays }),
+        today
+      ),
+    [food, bear.workouts, today, store.coveredDays]
   );
   const startsMonday = !!sources.settings.startWeekFromMonday;
   const calendar = useMemo(
@@ -244,6 +248,18 @@ export function ScreenJournal(): JSX.Element {
           <Text className="flex-1 text-2xl font-bold" testID="journal-day-title" data-testid="journal-day-title">
             {journal.title}
           </Text>
+          {store.coveredDays.includes(day) && (
+            <View
+              className="px-3 py-1 rounded-full"
+              style={{ backgroundColor: "#DBEAFE" }}
+              testID="journal-hibernated"
+              data-testid="journal-hibernated"
+            >
+              <Text className="text-sm font-semibold" style={{ color: T.greenDark }}>
+                Hibernated
+              </Text>
+            </View>
+          )}
         </View>
         <JournalMindfulness line={journal.mindfulness} />
         <FoldableSection key={`${day}-checkIn`} journal={journal} section="checkIn">

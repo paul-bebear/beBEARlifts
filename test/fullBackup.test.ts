@@ -199,8 +199,17 @@ describe("FullBackup", () => {
     expect(restored.displayName).to.equal("Paul");
   });
 
-  it("round-trips the bebear_bear line, celebrated level and seen badges", () => {
-    const bear = { line: "female" as const, celebratedLevel: 9, seenBadges: ["streak-7", "level-9"], spent: 0 };
+  it("round-trips the bebear_bear line, celebrated level, badges and hibernation data", () => {
+    const bear = {
+      ...BearStoreData_empty(),
+      line: "female" as const,
+      celebratedLevel: 9,
+      seenBadges: ["streak-7", "level-9"],
+      spent: 50,
+      passes: 1,
+      coveredDays: ["2026-10-21"],
+      pendingWake: { days: ["2026-10-21"], streak: 12 },
+    };
     const backup = FullBackup_build(parts({ bear }), now);
     expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).bear).to.deep.equal(bear);
     expect(backup.readme).to.include("bebear_bear");

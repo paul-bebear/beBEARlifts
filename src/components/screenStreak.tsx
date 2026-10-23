@@ -7,17 +7,21 @@ import { useNavOptions } from "../navigation/useNavOptions";
 import { MonthCalendar_build, MonthCalendar_monthOf, MonthCalendar_shift } from "../models/monthCalendar";
 import { useTrackedState } from "../navigation/TrackedStateContext";
 import { useBearBadges } from "../utils/useBearBadges";
+import { useBearHoney } from "../utils/useBearHoney";
+import { BearStore } from "../utils/bearStore";
+import { HibernationPass_holdLimit, HibernationPass_offer, HibernationPass_purchase } from "../models/hibernationPass";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 
 interface IStreakCalendarProps {
   today: string;
   doneDays: Set<string>;
+  coveredDays: Set<string>;
   startsMonday: boolean;
 }
 
 function StreakCalendar(props: IStreakCalendarProps): JSX.Element {
-  const { today, doneDays, startsMonday } = props;
+  const { today, doneDays, coveredDays, startsMonday } = props;
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const calendar = useMemo(
     () => MonthCalendar_build({ month, today, selected: today, workoutDays: doneDays, startsMonday }),
@@ -67,7 +71,12 @@ function StreakCalendar(props: IStreakCalendarProps): JSX.Element {
                 style={{
                   width: 34,
                   height: 34,
-                  backgroundColor: cell.hasWorkout && cell.isInMonth ? T.honey : "transparent",
+                  backgroundColor:
+                    cell.hasWorkout && cell.isInMonth
+                      ? coveredDays.has(cell.day)
+                        ? "#DBEAFE"
+                        : T.honey
+                      : "transparent",
                   borderWidth: cell.isToday ? 2 : 0,
                   borderColor: T.green,
                 }}
@@ -90,7 +99,10 @@ function StreakCalendar(props: IStreakCalendarProps): JSX.Element {
 }
 
 export function ScreenStreak(): JSX.Element {
-  const { streak, doneDays, today, grid } = useBearBadges();
+  const { streak, doneDays, coveredDays, today, grid } = useBearBadges();
+  const store = BearStore.use();
+  const honey = useBearHoney();
+  const offer = HibernationPass_offer(store, honey.balance);
   const startsMonday = !!useTrackedState().storage.settings.startWeekFromMonday;
 
   useNavOptions({ navTitle: "Streak" });
@@ -105,8 +117,37 @@ export function ScreenStreak(): JSX.Element {
       <Text className="mb-8 text-sm text-center text-text-secondary">
         Train or log one meal a day to keep it going.
       </Text>
-      <StreakCalendar today={today} doneDays={doneDays} startsMonday={startsMonday} />
+      <StreakCalendar today={today} doneDays={doneDays} coveredDays={coveredDays} startsMonday={startsMonday} />
       <BadgeGrid grid={grid} />
+      <View className="w-full mt-8" testID="hibernation-passes" data-testid="hibernation-passes">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-lg font-bold">Hibernation passes</Text>
+          <Text className="text-base" testID="hibernation-pass-count" data-testid="hibernation-pass-count">
+            {store.passes} of {HibernationPass_holdLimit}
+          </Text>
+        </View>
+        <Text className="mt-2 text-sm text-text-secondary">
+          Miss a day and your bear sleeps through it. Works on streaks of 3 days or more.
+        </Text>
+        <Pressable
+          testID="hibernation-pass-buy"
+          data-testid="hibernation-pass-buy"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: offer.disabled }}
+          disabled={offer.disabled}
+          className="items-center px-4 py-4 mt-4 rounded-full"
+          style={{ backgroundColor: T.honey, opacity: offer.disabled ? 0.5 : 1 }}
+          onPress={() =>
+            BearStore.update((saved) => HibernationPass_purchase(saved, honey.sources, Date.now())).catch(
+              () => undefined
+            )
+          }
+        >
+          <Text className="text-base font-semibold" style={{ color: T.greenDark }}>
+            {offer.label}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

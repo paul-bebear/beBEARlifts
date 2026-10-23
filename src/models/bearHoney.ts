@@ -23,6 +23,7 @@ export interface IHoneySources {
   workouts: readonly IBearCountedWorkout[];
   stats: IStats;
   foodLog: IFoodLog;
+  coveredDays?: readonly string[];
   // postedAt of the user's own workout and meal posts
   sharedAt: readonly number[];
 }
@@ -113,7 +114,7 @@ export function BearHoney_earned(sources: IHoneySources, now: number): IHoneyEar
   const workoutDays = new Set(sources.workouts.map(({ record }) => dayOf(record.endTime ?? record.startTime)));
   const weighInDays = new Set((sources.stats.weight.weight ?? []).map((entry) => dayOf(entry.timestamp)));
   const shareCounts = countByDay(sources.sharedAt);
-  const bonusDays = streakDays(DailyChecklist_doneDays({ foodLog: sources.foodLog, workouts: sources.workouts }));
+  const bonusDays = streakDays(DailyChecklist_doneDays(sources));
   const allDays = new Set<string>([...workoutDays, ...weighInDays, ...shareCounts.keys(), ...bonusDays]);
   for (const entry of sources.foodLog.entries) {
     allDays.add(entry.day);
