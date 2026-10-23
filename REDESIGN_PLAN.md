@@ -628,9 +628,75 @@ The rule.
 - A batch goes in V1 only when it fixes a bug or finishes one of those five flows.
 - Every other batch is V2. A new idea is V2 unless it passes the same test.
 - A batch already merged to master stays in V1, because its code is on the owner's iPhone today. In V1 it gets bug fixes only. New work on it waits for V2.
-- V1 ships when the bug list below is empty and S2 is built.
+- V1 ships when the bug list below is empty and S2 and T1 are built.
 
-Status is from master at 3d0cfc15 and the open pull requests on 2026-10-23.
+Status is from master at cdcc2725 and the open pull requests on 2026-10-23.
+
+### The three layers
+
+Decided 2026-10-23, after testers said the app shows "way too much". The owner calls it fractal features. A new user sees three things. A curious user finds the rest by looking deeper.
+
+- Layer 1, the front: train, eat, the bear. Home, the "+" sheet, the workout screen, the finish screen, the Journal day and the top of My bear.
+- Layer 2, one tap in: the details of those three. Past workouts, macros per meal, the bear's level and the countdown to the next one, the program editor, weight history.
+- Layer 3, More: everything else, behind one "More" row on My bear.
+
+The rules.
+
+- A layer 1 screen shows no layer 3 feature. No tile, no row, no sheet, no badge pop-up, no red dot.
+- Layer 3 is hidden, never deleted. Its code and data stay, and honey and badges keep counting. V2 decides what comes back to the front, one feature at a time.
+- A layer 3 feature the user turns on may add one line to layer 1. In V1 only the bulk season does this, with the evening "your bear is still hungry" card.
+- Precision is a layer 1 rule. Every number on a layer 1 screen is right, or the user fixes it in one tap. A tester said food and workout apps "are not precise". Wrong plate maths, unwanted warm-ups and a food guess with no quick fix are V1 bugs.
+
+What moves behind More, screen by screen, checked against master at cdcc2725.
+
+The "+" sheet. `QuickActions_list` in `src/models/quickActions.ts` returns four squares and the workout bar.
+
+- Stays: Food, Weight, and the wide Start workout bar.
+- Moves: Note, to More → Notes. A day that has notes still shows them in the Journal.
+- Moves: Friend, to More → Friends.
+- Moves: the Run button inside the workout bar, to More → Runs.
+
+My bear. `screenMyBear.tsx` renders `BearScene` with the whiteboard tiles and the TV, then `BearPanel`, the goal card and the All stats row.
+
+- Stays: the bear, its status line, the level bar with the countdown to the next level, the goal card.
+- Moves: the TV, which is the friends feed, to More → Friends.
+- Moves: the honey pill in `BearPanel` and its `HoneySheet`, to More → Honey and badges.
+- Moves: `BadgeUnlockedSheet`, the pop-up when a badge unlocks. Badges still unlock, and More → Honey and badges lists them. The level-up card on the finish screen stays, because levels are the bear.
+- Changes: the whiteboard tiles from `BearBoard_tiles` in `src/models/bearBoard.ts`. "Workouts this week" and "weight" stay. "Per workout, 30 d" and "energy, 7 d" move to More. A new tile shows today's kcal and protein against the target and opens the Journal.
+- Renamed: the "All stats" row becomes "More".
+
+The Journal day. `screenJournal.tsx` renders check-in, workouts, meals, songs, weight and notes. Since S4 an empty section shows as one row.
+
+- Stays: workouts, meals, weight.
+- Hidden when empty: check-in, songs, notes. A day with a note shows its Notes section. A day without one shows no Notes row. The rule goes in `JournalDay_sectionFold` in `src/models/journalDay.ts`.
+
+The finish screen. `screenFinishDay.tsx` renders the bear banner, the story card pager, the share-with-friends toggle, totals, exercises, sets per muscle group, personal records and the AI report card.
+
+- Stays: the bear banner with the kg added and the level-up card, totals, exercises, sets per muscle group, personal records.
+- Moves: the honey part of `BearText_finishLine`. The line keeps the kg and the level.
+- Changes: the story card pager, `WorkoutStoryCardSection`, becomes one Share button that shares the first card. The music button on the cards goes. More → Workout music keeps the songs.
+- Moves: `FeedShareToggle`. It shows only when the user has at least one friend.
+- Moves: `WorkoutReportCard`, the AI report. It opens from the workout record in the Journal and from More → Workout reports.
+
+Home and the workout screen. Both are layer 1 already. S2 left Home with the bear head, the week dots, the three checklist chips, today's workout card and the History link. Neither changes in T1.
+
+More. `ReportsHub_rows` in `src/models/reportsHub.ts` builds it, in two groups.
+
+- Your numbers, layer 2: weight, nutrition, workout consistency with week insights, graphs, exercise stats.
+- Extras, layer 3: Friends (the feed, the list, Add a friend), Honey and badges, Notes, Check-ins with the chart, Workout music, Runs, Workout reports, Body measurements, Body composition, Steps, Progress photos, and Seasons once PR 117 merges.
+
+Settings stays behind the gear on My bear.
+
+T1, three layers. V1. 11 hours. Codex can build it from this section.
+
+- A new `src/models/featureLayer.ts` with `FeatureLayer_of`, which returns 1, 2 or 3 for each feature. V2 moves a feature to the front by changing one line there. 1 hour.
+- `src/models/quickActions.ts`: two squares and the workout bar, no Run. 1 hour.
+- `src/models/bearBoard.ts`: the tile set and the new food tile. `screenMyBear.tsx` and `bearPanel.tsx` drop the TV, the honey pill and the badge sheet. 3 hours.
+- `src/models/journalDay.ts`: hide empty check-in, songs and notes. 1 hour.
+- `src/models/reportsHub.ts`: the two groups and the new rows. 3 hours.
+- `src/models/finishDayActions.ts`: the finish screen list, with the friend check for the share toggle. 2 hours.
+- Each module has its test in `test/`, and all but `featureLayer.ts` have one today.
+- T1 shares no file with PR 121, the gym-session bug fixes, so the two run side by side.
 
 ### V1
 
@@ -658,14 +724,15 @@ Built, waiting to merge.
 
 - W3, seasons, the food side: PR 117. 8 hours. Seasons are a new feature, but W3 also fixes a bug for the target users. Before it, the manual "Lose weight" goal gave a calorie deficit to anyone. W3 stops any deficit under 18 or with a BMI under 20. The owner also bulks this winter, and the switch stays off for everyone else.
 - B1's last part: PR 103, "Name your bear" and the small bear on the Journal day.
-- Open pull requests outside the batch list: PR 116 fixes the scan Add button on iPhone. PRs 112, 113 and 115 give food, workouts and weight one way in through the "+" sheet, and fit Home and My bear on one screen. All four polish V1 flows. None is reviewed in this plan.
+- Merged outside the batch list: PR 116 fixes the scan Add button on iPhone. PRs 112, 113, 115 and 123 are the simplify passes S1 to S4 in `SIMPLIFY_PLAN.md`. They give food, workouts and weight one way in through the "+" sheet, and fit Home, My bear and the Journal on one screen.
 
 Not built.
 
 - S2, sign-in in the native build. 6 hours. The owner uses only the iPhone app, and Apple and Google sign-in exist only on the web today. The team ID S2 waited for is known: Victor's team, GKY9GR7VHG.
+- T1, the three layers. 11 hours, specified in The three layers.
 - The bugs below.
 
-V1 total: 220 hours of batch estimates. 170 come from this plan and 50 from review batches J and K. 214 hours are built. S2's 6 hours are left, plus the bugs.
+V1 total: 231 hours of batch estimates. 181 come from this plan and 50 from review batches J and K. 214 hours are built. S2's 6 hours and T1's 11 hours are left, plus the bugs.
 
 ### Bugs found 2026-10-23
 
