@@ -5,6 +5,7 @@ import {
   isScannedCode,
   ScannedObject,
   ScannedObjectType,
+  useCameraDevice,
   useCameraPermission,
   useObjectOutput,
 } from "react-native-vision-camera";
@@ -20,6 +21,7 @@ const barcodeTypes: ScannedObjectType[] = ["ean-13", "ean-8", "upc-e"];
 
 export function FoodBarcodeScanner(props: IProps): JSX.Element {
   const permission = useCameraPermission();
+  const device = useCameraDevice("back");
   const [isDone, setIsDone] = useState(false);
   const isDoneRef = useRef(false);
   const onDetectedRef = useRef(props.onDetected);
@@ -59,10 +61,10 @@ export function FoodBarcodeScanner(props: IProps): JSX.Element {
   return (
     <View testID="food-barcode-scanner">
       <View className="overflow-hidden bg-black rounded-2xl" style={{ aspectRatio: 4 / 3 }}>
-        {permission.hasPermission && (
+        {permission.hasPermission && device != null && (
           <Camera
             style={{ flex: 1 }}
-            device="back"
+            device={device}
             isActive={!isDone}
             outputs={[objectOutput]}
             resizeMode="cover"
