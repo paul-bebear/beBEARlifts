@@ -1,7 +1,15 @@
 import "mocha";
 import { expect } from "chai";
 import { FoodLog_add, FoodLog_empty, IFoodLog } from "../src/models/foodLog";
-import { IFoodProfile } from "../src/models/foodTargets";
+import {
+  FoodTargets_compute,
+  FoodTargets_fromCalories,
+  FoodTargets_maintenance,
+  FoodTargets_start,
+  FoodTargets_toProfile,
+  IFoodBody,
+  IFoodProfile,
+} from "../src/models/foodTargets";
 import {
   ISeasonNudge,
   SeasonNudge_accept,
@@ -76,6 +84,31 @@ describe("SeasonNudge season change", () => {
   it("keeps a teen at maintenance in lean season", () => {
     const nudge = change(SeasonNudge_for({ foodLog: logWith({ birthYear: 2010 }), latestWeight: weight, now: april }));
     expect(nudge.text).to.contain("Under 18 or with a BMI under 20, it stays at maintenance.");
+  });
+
+  it("treats a user who entered age 17 in October as under 18 a year later", () => {
+    const enteredAt17 = FoodTargets_toProfile(
+      { ...FoodTargets_start(profile, weight, "kg", 2026).form, age: "17" },
+      new Date(2026, 9, 23, 12)
+    );
+    expect(enteredAt17.birthYear).to.equal(2009);
+    const body: IFoodBody = { weightKg: 80, heightCm: 180, sex: "male", age: 18 };
+    const maintenance = FoodTargets_compute(body, "moderate", "maintain");
+
+    const lean = change(SeasonNudge_for({ foodLog: logWith({ birthYear: 2009 }), latestWeight: weight, now: april }));
+    expect(lean.text).to.contain("Under 18 or with a BMI under 20, it stays at maintenance.");
+    expect(lean.goals).to.deep.equal(maintenance.goals);
+
+    const october = new Date(2027, 9, 1, 9);
+    const bulk = change(
+      SeasonNudge_for({
+        foodLog: logWith({ birthYear: 2009, lastSeason: "summer" }),
+        latestWeight: weight,
+        now: october,
+      })
+    );
+    const m = FoodTargets_maintenance(body, "moderate");
+    expect(bulk.goals).to.deep.equal(FoodTargets_fromCalories(body, m, m * 1.1).goals);
   });
 
   it("keeps the old targets when the profile has no body to compute from", () => {

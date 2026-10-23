@@ -10,7 +10,14 @@ import {
   IFoodLog,
   INutrients,
 } from "./foodLog";
-import { FoodTargets_compute } from "./foodTargets";
+import {
+  FoodTargets_factor,
+  FoodTargets_fromCalories,
+  FoodTargets_maintenance,
+  IFoodActivity,
+  IFoodBody,
+  IFoodTargetsResult,
+} from "./foodTargets";
 import { ProgramGoal_body } from "./programGoal";
 import { ISeason, Season_for, Season_lastDay, Season_names } from "./season";
 
@@ -66,6 +73,14 @@ export function SeasonNudge_kcalTarget(goals: IFoodGoals): number {
   return goals.calories.min;
 }
 
+// The profile keeps only a birth year, so year minus birth year can be one more than the real age.
+// The under-18 rules use the younger age, so a 17 year old never gets an adult bulk or a lean deficit.
+function seasonTargets(body: IFoodBody, activity: IFoodActivity, season: ISeason): IFoodTargetsResult {
+  const maintenance = FoodTargets_maintenance(body, activity);
+  const { factor, isDeficitBlocked } = FoodTargets_factor({ ...body, age: body.age - 1 }, season);
+  return { ...FoodTargets_fromCalories(body, maintenance, maintenance * factor), isDeficitBlocked };
+}
+
 function seasonChange(input: ISeasonNudgeInput): ISeasonNudge | undefined {
   const profile = input.foodLog.profile;
   const south = !!profile.south;
@@ -74,7 +89,7 @@ function seasonChange(input: ISeasonNudgeInput): ISeasonNudge | undefined {
     return undefined;
   }
   const body = ProgramGoal_body(profile, input.latestWeight, input.now.getFullYear());
-  const result = body == null ? undefined : FoodTargets_compute(body, profile.activity, season);
+  const result = body == null ? undefined : seasonTargets(body, profile.activity, season);
   const lines = [
     profile.lastSeason == null ? undefined : `${Season_names[profile.lastSeason]} season is over.`,
     `${Season_names[season]} season until ${Season_lastDay(season, south)}.`,
