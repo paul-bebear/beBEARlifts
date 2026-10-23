@@ -133,7 +133,7 @@ function WorkoutSection(props: { journal: IJournalDay }): JSX.Element {
       testID="journal-all-workouts"
       data-testid="journal-all-workouts"
       accessibilityRole="link"
-      onPress={() => dispatch(Thunk_pushScreen("history", undefined, { tab: "food" }))}
+      onPress={() => dispatch(Thunk_pushScreen("history"))}
     >
       <Text className="text-sm text-text-link">All workouts</Text>
     </Pressable>

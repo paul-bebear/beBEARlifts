@@ -71,6 +71,8 @@ export type IFoodStackParamList = {
   food: undefined;
   foodAdd: IFoodAddScreenParams;
   history: undefined;
+  progress: { id?: number } | undefined;
+  exerciseStats: undefined;
 };
 
 export type IMeStackParamList = {

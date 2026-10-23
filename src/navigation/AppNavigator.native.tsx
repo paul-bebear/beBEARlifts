@@ -370,6 +370,17 @@ function FoodStackScreen(): JSX.Element {
       <FoodStack.Screen name="food" component={ScreenJournal} />
       <FoodStack.Screen name="foodAdd" component={NavScreenFoodAdd} />
       <FoodStack.Screen name="history" component={ScreenHistory} />
+      <FoodStack.Screen
+        name="progress"
+        component={NavScreenProgress}
+        getId={({ params }) => String(params?.id ?? 0)}
+        options={{ headerShown: true, header: NavHeader }}
+      />
+      <FoodStack.Screen
+        name="exerciseStats"
+        component={NavScreenExerciseStats}
+        options={{ headerShown: true, header: NavHeader }}
+      />
     </FoodStack.Navigator>
   );
 }
