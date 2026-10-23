@@ -150,7 +150,9 @@ function ScreenWorkoutInner(props: IScreenWorkoutProps): JSX.Element | null {
   const isCurrent = Progress_isCurrent(progress);
   const onDeletePress = useCallback(async (): Promise<void> => {
     const confirmed = await Dialog_confirm(
-      `Are you sure you want to delete this ${isCurrent ? "ONGOING" : "PAST"} workout?`
+      isCurrent
+        ? "Cancel this workout? Nothing from it is saved."
+        : "Delete this past workout? Its sets leave your history."
     );
     if (confirmed) {
       dispatch(Thunk_deleteProgress(progress.id));
@@ -302,6 +304,7 @@ function ScreenWorkoutInner(props: IScreenWorkoutProps): JSX.Element | null {
         progress={progressView}
         dispatch={props.dispatch}
         renderHeaderMenu={renderHeaderMenu}
+        onCancel={isCurrent ? onDeletePressHandler : undefined}
       />
     );
   } else {
