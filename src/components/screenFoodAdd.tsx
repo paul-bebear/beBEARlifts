@@ -1,5 +1,4 @@
 import { JSX, useReducer, useRef, useState } from "react";
-import { RandomBytes_get } from "../utils/randomBytes";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./primitives/text";
@@ -58,6 +57,7 @@ import { Friends_forUser } from "../models/friends";
 import { FeedClient_shareMeal } from "../utils/feedClient";
 import { FriendsStore } from "../utils/friendsClient";
 import { CloudStore } from "../utils/supabaseClient";
+import { RandomBytes_get } from "../utils/randomBytes";
 
 function NotFound(props: {
   code: string;
