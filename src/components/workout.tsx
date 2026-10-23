@@ -65,7 +65,6 @@ import {
   ExerciseOrderFatigue_lookup,
   ExerciseOrderFatigue_notes,
 } from "../models/exerciseOrderFatigue";
-import { WorkoutOrderNoteContext } from "./workoutOrderNoteContext";
 import {
   IWorkoutStripLabelFadeRange,
   WorkoutStripLabel_fadeRange,
@@ -369,55 +368,54 @@ function WorkoutInner(props: IWorkoutViewProps): JSX.Element {
             />
             {selectedEntry != null && (
               <View className="mt-2">
-                <WorkoutOrderNoteContext.Provider value={orderNotes}>
-                  <PerfProbeSubtree id="workout-list">
-                    <WorkoutExercisePager
-                      currentEntryIndex={currentEntryIndex}
-                      currentEntryId={selectedEntry.id}
-                      entryCount={progressEntries.length}
-                      windowWidth={windowWidth}
-                      forceUpdateEntryIndex={forceUpdateEntryIndex}
-                      onIndexChange={onPagerIndexChange}
-                      onSettledIndex={onPagerSettled}
-                    >
-                      {progressEntries.map((entry, entryIndex) => (
-                        <FirstUseTipContext.Provider
-                          key={entry.id}
-                          value={
-                            isFocused && entryIndex === currentEntryIndex && isCurrentProgress ? tipContext : undefined
-                          }
-                        >
-                          <WorkoutExercisePage
-                            entry={entry}
-                            entryIndex={entryIndex}
-                            isCurrentPage={entryIndex === currentEntryIndex}
-                            tabStopIndex={entryIndex < currentEntryIndex ? -1 : 0}
-                            impressionsSeenRef={impressionsSeenRef}
-                            shouldRender={renderedIndices.has(entryIndex)}
-                            windowWidth={windowWidth}
-                            day={progressDay}
-                            stats={props.stats}
-                            history={props.history}
-                            otherStates={otherStates}
-                            program={props.program}
-                            programDay={props.programDay}
-                            progressId={progressId}
-                            progressStartTime={progressStartTime}
-                            userPromptedStateVars={progressUserPromptedStateVars}
-                            supersetEntry={supersetByEntryId.get(entry.id)}
-                            prevData={prevExerciseData[Exercise_toKey(entry.exercise)]}
-                            isCurrentProgress={isCurrentProgress}
-                            helps={props.helps}
-                            subscription={props.subscription}
-                            settings={props.settings}
-                            dispatch={dispatch}
-                            onTitleLayout={onTitleLayout}
-                          />
-                        </FirstUseTipContext.Provider>
-                      ))}
-                    </WorkoutExercisePager>
-                  </PerfProbeSubtree>
-                </WorkoutOrderNoteContext.Provider>
+                <PerfProbeSubtree id="workout-list">
+                  <WorkoutExercisePager
+                    currentEntryIndex={currentEntryIndex}
+                    currentEntryId={selectedEntry.id}
+                    entryCount={progressEntries.length}
+                    windowWidth={windowWidth}
+                    forceUpdateEntryIndex={forceUpdateEntryIndex}
+                    onIndexChange={onPagerIndexChange}
+                    onSettledIndex={onPagerSettled}
+                  >
+                    {progressEntries.map((entry, entryIndex) => (
+                      <FirstUseTipContext.Provider
+                        key={entry.id}
+                        value={
+                          isFocused && entryIndex === currentEntryIndex && isCurrentProgress ? tipContext : undefined
+                        }
+                      >
+                        <WorkoutExercisePage
+                          entry={entry}
+                          entryIndex={entryIndex}
+                          isCurrentPage={entryIndex === currentEntryIndex}
+                          tabStopIndex={entryIndex < currentEntryIndex ? -1 : 0}
+                          impressionsSeenRef={impressionsSeenRef}
+                          shouldRender={renderedIndices.has(entryIndex)}
+                          windowWidth={windowWidth}
+                          day={progressDay}
+                          stats={props.stats}
+                          history={props.history}
+                          otherStates={otherStates}
+                          program={props.program}
+                          programDay={props.programDay}
+                          progressId={progressId}
+                          progressStartTime={progressStartTime}
+                          userPromptedStateVars={progressUserPromptedStateVars}
+                          supersetEntry={supersetByEntryId.get(entry.id)}
+                          prevData={prevExerciseData[Exercise_toKey(entry.exercise)]}
+                          orderNote={orderNotes[entry.id]}
+                          isCurrentProgress={isCurrentProgress}
+                          helps={props.helps}
+                          subscription={props.subscription}
+                          settings={props.settings}
+                          dispatch={dispatch}
+                          onTitleLayout={onTitleLayout}
+                        />
+                      </FirstUseTipContext.Provider>
+                    ))}
+                  </WorkoutExercisePager>
+                </PerfProbeSubtree>
               </View>
             )}
           </View>
@@ -448,6 +446,7 @@ interface IWorkoutExercisePageProps {
   userPromptedStateVars?: Partial<Record<string, IProgramState>>;
   supersetEntry?: IHistoryEntry;
   prevData?: IPrevExerciseData;
+  orderNote?: string;
   isCurrentProgress: boolean;
   helps: string[];
   subscription: ISubscription;
@@ -488,6 +487,7 @@ function WorkoutExercisePageInner(props: IWorkoutExercisePageProps): JSX.Element
               userPromptedStateVars={props.userPromptedStateVars}
               supersetEntry={props.supersetEntry}
               prevData={props.prevData}
+              orderNote={props.orderNote}
               isCurrentProgress={props.isCurrentProgress}
               showHelp={true}
               helps={props.helps}
