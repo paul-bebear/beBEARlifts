@@ -5,6 +5,7 @@ import { n, MathUtils_roundTo005, MathUtils_round, MathUtils_roundFloat, MathUti
 import {
   Equipment_getUnitOrDefaultForExerciseType,
   Equipment_getEquipmentDataForExerciseType,
+  Equipment_exactWeightStep,
   Equipment_smallestPlate,
 } from "./equipment";
 import { Exercise_get, Exercise_onerm, Exercise_defaultRounding } from "./exercise";
@@ -188,6 +189,10 @@ export function Weight_round(weight: IWeight, settings: ISettings, unit: IUnit, 
 }
 
 export function Weight_increment(weight: IWeight, settings: ISettings, exerciseType?: IExerciseType): IWeight {
+  const exactStep = Equipment_exactWeightStep(settings, exerciseType);
+  if (exactStep != null) {
+    return Weight_roundTo005(Weight_build(weight.value + exactStep, weight.unit));
+  }
   const equipmentData = Equipment_getEquipmentDataForExerciseType(settings, exerciseType);
   if (equipmentData) {
     const unit = equipmentData.unit ?? weight.unit;
@@ -217,6 +222,10 @@ export function Weight_increment(weight: IWeight, settings: ISettings, exerciseT
 }
 
 export function Weight_decrement(weight: IWeight, settings: ISettings, exerciseType?: IExerciseType): IWeight {
+  const exactStep = Equipment_exactWeightStep(settings, exerciseType);
+  if (exactStep != null) {
+    return Weight_roundTo005(Weight_build(Math.max(0, weight.value - exactStep), weight.unit));
+  }
   const equipmentData = exerciseType ? Equipment_getEquipmentDataForExerciseType(settings, exerciseType) : undefined;
   if (equipmentData) {
     const unit = equipmentData.unit ?? weight.unit;
@@ -311,6 +320,10 @@ export function Weight_calculatePlates(
   exerciseType: IExerciseType
 ): { plates: IPlate[]; platesWeight: IWeight; totalWeight: IWeight } {
   const equipmentData = Equipment_getEquipmentDataForExerciseType(settings, exerciseType);
+  if (Equipment_exactWeightStep(settings, exerciseType) != null) {
+    const exact = Weight_roundTo005(allWeight);
+    return { plates: [], platesWeight: exact, totalWeight: exact };
+  }
   if (equipmentData == null) {
     const rounding = Exercise_defaultRounding(exerciseType, settings);
     allWeight = Weight_build(MathUtils_round(allWeight.value, rounding), allWeight.unit);

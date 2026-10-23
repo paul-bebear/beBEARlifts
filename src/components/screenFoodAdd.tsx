@@ -1,4 +1,5 @@
-import { JSX, useReducer, useState } from "react";
+import { JSX, useReducer, useRef, useState } from "react";
+import { RandomBytes_get } from "../utils/randomBytes";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./primitives/text";
@@ -103,6 +104,7 @@ function ReviewBar(props: { basket: IFoodBasketItem[]; onPress: () => void }): J
 
 export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Element {
   const navigation = useNavigation();
+  const isLoggingRef = useRef(false);
   const log = useFoodLog();
   const hasAi = AiConsent_showFeatures(AiConsentStore.use());
   const [step, send] = useReducer(FoodScanSteps_reduce, undefined, () =>
@@ -164,19 +166,27 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   };
 
   const logBasket = async (): Promise<void> => {
+    if (isLoggingRef.current) {
+      return;
+    }
+    isLoggingRef.current = true;
     const entries = FoodBasket_entries(basket, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
     await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
     navigation.goBack();
   };
 
   const logServing = async (serving: IScanServing): Promise<void> => {
+    if (isLoggingRef.current) {
+      return;
+    }
+    isLoggingRef.current = true;
     const entries = FoodScanSteps_entries(serving, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
     await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
-    const post = MealPost_fromServing(serving, share, MealPost_newId(crypto.getRandomValues(new Uint8Array(16))));
+    navigation.goBack();
+    const post = MealPost_fromServing(serving, share, () => MealPost_newId(RandomBytes_get(16)));
     if (post != null) {
       await FeedClient_shareMeal(post, serving.photo);
     }
-    navigation.goBack();
   };
 
   const onTile = async (tile: IFoodTile): Promise<void> => {

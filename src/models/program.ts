@@ -114,6 +114,7 @@ import { EditProgram_initPlannerState } from "./editProgram";
 import { ProgramSet_getEvaluatedWeight } from "./programSet";
 import { Stats_getCurrentMovingAverageBodyweight } from "./stats";
 import { ProgramsHost_fork } from "../utils/programsHost";
+import { WarmupSkip_isAlreadyWarm } from "./warmupSkip";
 
 declare let __HOST__: string;
 
@@ -402,7 +403,12 @@ export function Program_nextHistoryRecordFromEvaluated(
   const now = Date.now();
   const sortedDayExercises = Program_getDayExercisesInOrder(program, day);
   const entries = sortedDayExercises.map((exercise, i) => {
-    return Program_nextHistoryEntry(program, dayData, i, exercise, stats, settings);
+    const entry = Program_nextHistoryEntry(program, dayData, i, exercise, stats, settings);
+    const earlier = sortedDayExercises.slice(0, i).map((e) => e.exerciseType);
+    const hasProgramWarmups = PlannerProgramExercise_programWarmups(exercise, settings) != null;
+    return !hasProgramWarmups && WarmupSkip_isAlreadyWarm(exercise.exerciseType, earlier, settings)
+      ? { ...entry, warmupSets: [] }
+      : entry;
   });
   return {
     vtype: "progress",
