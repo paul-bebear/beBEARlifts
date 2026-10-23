@@ -84,7 +84,7 @@ Each batch is its own PR. Logic changes go into the pure modules named here, eac
 
 S1. One way to add. Built. The describe box left Journal and became a third "Describe" mode on the "+" Food camera, because Journal was its only home. The Journal Start button is gone. Per-meal add buttons and an "Add to this day" button show only on past days. The "+" Measurement square is now Weight and opens `stats`. Modules: `src/models/quickActions.ts`, `src/models/journalDay.ts`, `src/models/foodScanSteps.ts`.
 
-S2. Home fits one screen. Drop the history `LegendList` from `ProgramHistoryView`. Make Journal workout cards open the record. Turn `DailyChecklistCard` into a chip row. Modules: `src/models/dailyChecklist.ts`, `src/models/journalDay.ts`. About half a day. `NavModalMonthCalendar` sets `scrollToHistoryRecordId` to scroll Home to a record, so it must select that day in Journal instead.
+S2. Home fits one screen. Built. Home shows the header, the checklist as three chips, today's workout card and a "History · N workouts" link. The full list moved to a `history` screen in the Journal stack (`src/components/screenHistory.tsx`), also opened from Journal's "All workouts" link and My bear's workout row. Journal workout cards open the record. Module: `src/models/homeToday.ts`. `NavModalMonthCalendar` and the `main` `historyRecordId` param had no callers; the scroll-to-record effect moved to the History screen.
 
 S3. My bear fits one screen. Move everything below the goal card into `ScreenReportsHub` (`src/components/screenReportsHub.tsx`, 39 lines today). Module: a new `src/models/statsHubSections.ts` that lists the hub rows and their targets. About 3 hours.
 

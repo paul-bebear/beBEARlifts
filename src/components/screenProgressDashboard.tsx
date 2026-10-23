@@ -199,7 +199,7 @@ export function ProgressSections(): JSX.Element {
         <ProgressDetailLink
           testID="progress-workouts-open"
           title="Open workout history"
-          onPress={() => dispatch(Thunk_pushScreen("main", undefined, { tab: "home" }))}
+          onPress={() => dispatch(Thunk_pushScreen("history", undefined, { tab: "food" }))}
         />
       </ProgressExpandRow>
       <View className="mx-4 mb-3">

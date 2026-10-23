@@ -10,7 +10,7 @@ export type ITab = "home" | "friends" | "program" | "workout" | "food" | "graphs
 
 export type IScreenData =
   | { name: "first"; params?: Record<string, never> }
-  | { name: "main"; params?: { historyRecordId?: number } }
+  | { name: "main"; params?: Record<string, never> }
   | { name: "settings"; params?: Record<string, never> }
   | { name: "account"; params?: Record<string, never> }
   | { name: "timers"; params?: Record<string, never> }
@@ -32,6 +32,7 @@ export type IScreenData =
   | { name: "food"; params?: Record<string, never> }
   | { name: "friends"; params?: Record<string, never> }
   | { name: "foodAdd"; params: IFoodAddScreenParams }
+  | { name: "history"; params?: Record<string, never> }
   | { name: "finishDay"; params?: { id?: number } }
   | { name: "muscles"; params?: Record<string, never> }
   | { name: "muscleGroups"; params?: Record<string, never> }
@@ -150,7 +151,8 @@ export function Screen_tab(screen: IScreen): ITab {
     case "food": {
       return "food";
     }
-    case "foodAdd": {
+    case "foodAdd":
+    case "history": {
       return "food";
     }
     case "friends": {

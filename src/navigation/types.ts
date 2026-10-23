@@ -12,7 +12,7 @@ import type { IHelpKey } from "../components/help/helpRegistry";
 import type { IFoodMeal } from "../models/foodLog";
 
 export type IHomeStackParamList = {
-  main: { historyRecordId?: number } | undefined;
+  main: undefined;
   progress: { id?: number } | undefined;
   exerciseStats: undefined;
 };
@@ -70,6 +70,9 @@ export type IFriendsStackParamList = {
 export type IFoodStackParamList = {
   food: undefined;
   foodAdd: IFoodAddScreenParams;
+  history: undefined;
+  progress: { id?: number } | undefined;
+  exerciseStats: undefined;
 };
 
 export type IMeStackParamList = {

@@ -12,7 +12,7 @@ import { useNavOptions } from "../navigation/useNavOptions";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
-import { Thunk_pushScreen } from "../ducks/thunks";
+import { Thunk_editHistoryRecord, Thunk_pushScreen } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { History_getPersonalRecords } from "../models/history";
 import { IJournalDay, IJournalSection, JournalDay_build, JournalDay_sectionFold } from "../models/journalDay";
@@ -119,11 +119,29 @@ function Card(props: { children: ReactNode; onPress?: () => void; testID?: strin
 }
 
 function WorkoutSection(props: { journal: IJournalDay }): JSX.Element {
+  const dispatch = useTrackedDispatch();
+  const history = useTrackedState().storage.history;
   const { workouts, workoutEmptyLine } = props.journal;
+  const open = (id: number): void => {
+    const record = history.find((r) => r.id === id);
+    if (record != null) {
+      dispatch(Thunk_editHistoryRecord(record));
+    }
+  };
+  const allWorkouts = (
+    <Pressable
+      testID="journal-all-workouts"
+      data-testid="journal-all-workouts"
+      accessibilityRole="link"
+      onPress={() => dispatch(Thunk_pushScreen("history"))}
+    >
+      <Text className="text-sm text-text-link">All workouts</Text>
+    </Pressable>
+  );
   return (
-    <Section title="Workout" testID="journal-workout">
+    <Section title="Workout" testID="journal-workout" action={allWorkouts}>
       {workouts.map((w) => (
-        <Card key={w.id} testID="journal-workout-card">
+        <Card key={w.id} testID="journal-workout-card" onPress={() => open(w.id)}>
           <Text className="text-lg font-bold">{w.dayName}</Text>
           <Text className="text-base text-text-secondary">{w.statsLine}</Text>
           {w.prs.map((pr) => (
