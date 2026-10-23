@@ -14,6 +14,8 @@ import { Settings_build } from "../src/models/settings";
 import { IEquipment, IEquipmentData } from "../src/types";
 import { FoodTargets_activities, FoodTargets_compute, FoodTargets_goals } from "../src/models/foodTargets";
 
+const today = new Date(2026, 9, 23, 12);
+
 describe("OnboardingAnswers", () => {
   it("converts supplied body details and leaves skipped fields absent", () => {
     const answers = {
@@ -77,7 +79,7 @@ describe("OnboardingAnswers", () => {
     foodGoal: "maintain" as const,
   };
   it("calculates food targets and the calculator profile from metric answers", () => {
-    expect(OnboardingAnswers_foodTargets(foodAnswers, 2026)).to.deep.equal({
+    expect(OnboardingAnswers_foodTargets(foodAnswers, today)).to.deep.equal({
       goals: {
         calories: { min: 2660, max: 2860 },
         protein: { min: 130, max: 175 },
@@ -104,7 +106,7 @@ describe("OnboardingAnswers", () => {
       weight: "180,5",
       sex: "female" as const,
     };
-    const result = OnboardingAnswers_foodTargets(answers, 2026);
+    const result = OnboardingAnswers_foodTargets(answers, today);
     expect(result?.profile).to.include({ heightCm: 177.8, heightUnit: "ftin", sex: "female" });
     expect(result?.goals).to.deep.equal(
       FoodTargets_compute(
@@ -117,7 +119,7 @@ describe("OnboardingAnswers", () => {
   for (const { key: activity } of FoodTargets_activities) {
     for (const { key: foodGoal } of FoodTargets_goals) {
       it(`uses the calculator's ${activity} activity and ${foodGoal} goal`, () => {
-        const result = OnboardingAnswers_foodTargets({ ...foodAnswers, activity, foodGoal }, 2026);
+        const result = OnboardingAnswers_foodTargets({ ...foodAnswers, activity, foodGoal }, today);
         expect(result?.goals).to.deep.equal(
           FoodTargets_compute({ weightKg: 80, heightCm: 180, sex: "male", age: 30 }, activity, foodGoal).goals
         );
@@ -140,11 +142,11 @@ describe("OnboardingAnswers", () => {
       { weight: "0" },
     ];
     for (const patch of patches) {
-      expect(OnboardingAnswers_foodTargets({ ...foodAnswers, ...patch }, 2026), JSON.stringify(patch)).to.equal(
+      expect(OnboardingAnswers_foodTargets({ ...foodAnswers, ...patch }, today), JSON.stringify(patch)).to.equal(
         undefined
       );
     }
-    expect(OnboardingAnswers_foodTargets(OnboardingAnswers_empty(), 2026)).to.equal(undefined);
+    expect(OnboardingAnswers_foodTargets(OnboardingAnswers_empty(), today)).to.equal(undefined);
   });
   it("keeps the place picks as a set and treats no pick as no equipment", () => {
     expect(OnboardingAnswers_togglePlace(["gym"], "street")).to.deep.equal(["gym", "street"]);

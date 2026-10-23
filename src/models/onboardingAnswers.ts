@@ -131,7 +131,7 @@ export function OnboardingAnswers_body(
 
 export function OnboardingAnswers_foodTargets(
   answers: IOnboardingAnswers,
-  year: number
+  today: Date
 ): { goals: IFoodGoals; profile: IFoodProfile } | undefined {
   if (answers.activity == null || answers.foodGoal == null) {
     return undefined;
@@ -148,8 +148,8 @@ export function OnboardingAnswers_foodTargets(
     activity: answers.activity,
     goal: answers.foodGoal,
   };
-  const result = FoodTargets_result(form);
-  return result == null ? undefined : { goals: result.goals, profile: FoodTargets_toProfile(form, year) };
+  const result = FoodTargets_result(form, today);
+  return result == null ? undefined : { goals: result.goals, profile: FoodTargets_toProfile(form, today) };
 }
 
 export function OnboardingAnswers_programGoal(

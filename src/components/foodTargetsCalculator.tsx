@@ -1,6 +1,8 @@
 import { JSX, useState } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
+import { Switch } from "./primitives/switch";
+import { Season_summary } from "../models/season";
 import { IFoodGoals } from "../models/foodLog";
 import {
   FoodTargets_activities,
@@ -11,6 +13,7 @@ import {
   FoodTargets_pickActivity,
   FoodTargets_pickGoal,
   FoodTargets_result,
+  FoodTargets_resultNotes,
   FoodTargets_setForm,
   FoodTargets_setHeightUnit,
   FoodTargets_start,
@@ -147,6 +150,17 @@ function BodyStep(props: { flow: IFoodTargetsFlow; setFlow: (flow: IFoodTargetsF
           style={numberInputStyle}
         />
       </FieldRow>
+      <FieldRow label="Follow the seasons">
+        <Switch testID="food-targets-seasons" value={form.seasons} onValueChange={(seasons) => set({ seasons })} />
+      </FieldRow>
+      {form.seasons && (
+        <>
+          <Text className="mb-3 text-sm text-text-secondary">{Season_summary(!!form.south)}</Text>
+          <FieldRow label="South of the equator">
+            <Switch testID="food-targets-south" value={form.south} onValueChange={(south) => set({ south })} />
+          </FieldRow>
+        </>
+      )}
       {error != null && <Text className="mb-2 text-sm text-text-secondary">{error}</Text>}
       <View className="flex-row mt-2">
         <Button
@@ -164,15 +178,15 @@ function BodyStep(props: { flow: IFoodTargetsFlow; setFlow: (flow: IFoodTargetsF
 }
 
 function ResultStep(props: { flow: IFoodTargetsFlow; onFill: () => void }): JSX.Element {
-  const result = FoodTargets_result(props.flow.form);
+  const today = new Date();
+  const result = FoodTargets_result(props.flow.form, today);
   if (result == null) {
     return <Text className="text-sm text-text-error">Go back and check your weight, height and age.</Text>;
   }
   return (
     <View>
       <Text className="mb-3 text-sm text-text-secondary">
-        Your maintenance is about {result.maintenance} cal a day.
-        {result.isFloored ? " The target stays at the usual minimum of 1200 cal for women and 1500 for men." : ""}
+        {FoodTargets_resultNotes(props.flow.form, result, today).join(" ")}
       </Text>
       {resultRows.map((row) => (
         <View key={row.key} className="flex-row items-center py-2 border-b border-border-neutral">
@@ -217,9 +231,10 @@ export function FoodTargetsCalculator(props: IProps): JSX.Element {
     }
   };
   const onFill = (): void => {
-    const result = FoodTargets_result(flow.form);
+    const today = new Date();
+    const result = FoodTargets_result(flow.form, today);
     if (result != null) {
-      props.onFill(result.goals, FoodTargets_toProfile(flow.form, new Date().getFullYear()));
+      props.onFill(result.goals, FoodTargets_toProfile(flow.form, today));
     }
   };
   return (

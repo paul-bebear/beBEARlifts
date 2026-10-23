@@ -27,6 +27,7 @@ import { Program_nextHistoryRecord } from "../models/program";
 import { useTrackedState } from "../navigation/TrackedStateContext";
 import { HistoryRecordView } from "./historyRecord";
 import { HomeChecklist } from "./homeChecklist";
+import { SeasonNudgeCard } from "./seasonNudgeCard";
 import { navigateToModal } from "../navigation/navigationService";
 import { IEvaluatedProgram, Program_evaluate, Program_getProgramDay } from "../models/program";
 import {
@@ -234,6 +235,7 @@ export function ProgramHistoryView(props: IProps): JSX.Element {
         onTrain={() => navigateToModal("nextWorkoutModal")}
         startWeekFromMonday={props.settings.startWeekFromMonday}
       />
+      <SeasonNudgeCard stats={props.navCommon.stats} />
     </View>
   );
 
