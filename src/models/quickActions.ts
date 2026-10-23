@@ -1,4 +1,4 @@
-export type IQuickActionId = "food" | "measurement" | "friend" | "note";
+export type IQuickActionId = "food" | "weight" | "friend" | "note";
 
 export interface IQuickAction {
   id: IQuickActionId;
@@ -29,7 +29,7 @@ export function QuickActions_list(input: IQuickActionsInput): IQuickActions {
   return {
     squares: [
       { id: "food", label: "Food", isSoon: false },
-      { id: "measurement", label: "Measurement", isSoon: false },
+      { id: "weight", label: "Weight", isSoon: false },
       { id: "friend", label: "Friend", isSoon: false },
       { id: "note", label: "Note", isSoon: false },
     ],

@@ -11,6 +11,9 @@ import {
   JournalDay_build,
   JournalDay_mindfulness,
   JournalDay_mindfulnessLines,
+  JournalDay_noFoodToday,
+  JournalDay_noWorkoutToday,
+  JournalDay_restDay,
   JournalDay_sectionFold,
   JournalDay_sectionSummary,
 } from "../src/models/journalDay";
@@ -91,7 +94,6 @@ function input(extra: Partial<IJournalDayInput> = {}): IJournalDayInput {
     music: MusicLog_empty(),
     weights: [],
     notes: Notes_empty(),
-    isOngoingProgress: false,
     ...extra,
   };
 }
@@ -178,27 +180,31 @@ describe("JournalDay", () => {
     ).to.equal("Songs · 1 logged");
   });
 
-  it("shows today's empty day with a Start button and the day's mindfulness line", () => {
+  it("points today's empty day at the + and shows the day's mindfulness line", () => {
     const day = JournalDay_build(input());
     expect(day.title).to.equal("Today, Oct 22");
     expect(day.isToday).to.equal(true);
     expect(day.workouts).to.eql([]);
-    expect(day.plan).to.eql({ kind: "start", label: "Start workout" });
+    expect(day.workoutEmptyLine).to.equal(JournalDay_noWorkoutToday);
     expect(day.mealCount).to.equal(0);
+    expect(day.mealsEmptyLine).to.equal(JournalDay_noFoodToday);
+    expect(day.canAddFood).to.equal(false);
     expect(day.notes).to.eql([]);
     expect(day.chips).to.eql([]);
     expect(day.mindfulness).to.equal(JournalDay_mindfulness(today));
   });
 
-  it("reads Resume when a workout is running today", () => {
-    expect(JournalDay_build(input({ isOngoingProgress: true })).plan).to.eql({
-      kind: "start",
-      label: "Resume workout",
-    });
+  it("calls a past day without a workout a rest day and lets food be added to it", () => {
+    const day = JournalDay_build(input({ day: "2026-10-21" }));
+    expect(day.workoutEmptyLine).to.equal(JournalDay_restDay);
+    expect(day.canAddFood).to.equal(true);
+    expect(day.mealsEmptyLine).to.equal(undefined);
   });
 
-  it("calls a past day without a workout a rest day", () => {
-    expect(JournalDay_build(input({ day: "2026-10-21" })).plan).to.eql({ kind: "rest" });
+  it("adds food only to past days, never today or a future day", () => {
+    expect(JournalDay_build(input({ day: "2026-10-01" })).canAddFood).to.equal(true);
+    expect(JournalDay_build(input({ day: today })).canAddFood).to.equal(false);
+    expect(JournalDay_build(input({ day: "2026-10-23" })).canAddFood).to.equal(false);
   });
 
   it("shows the day's finished workouts in order, with stats, records and a chip", () => {
@@ -208,7 +214,7 @@ describe("JournalDay", () => {
       workout(at(today, 7), "Arms", [set(20, 10)], 30),
     ];
     const day = JournalDay_build(input({ history }));
-    expect(day.plan).to.equal(undefined);
+    expect(day.workoutEmptyLine).to.equal(undefined);
     expect(day.workouts.map((w) => w.dayName)).to.eql(["Arms", "Legs"]);
     expect(day.workouts[1].statsLine).to.equal("48 min · 1,000 kg · 2 sets");
     expect(day.workouts[1].prs).to.eql(["Squat 100 kg × 5"]);

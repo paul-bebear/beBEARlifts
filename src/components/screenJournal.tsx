@@ -12,8 +12,7 @@ import { useNavOptions } from "../navigation/useNavOptions";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
-import { buildNavCommon } from "../navigation/utils";
-import { Thunk_pushScreen, Thunk_startProgramDay } from "../ducks/thunks";
+import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { History_getPersonalRecords } from "../models/history";
 import { IJournalDay, IJournalSection, JournalDay_build, JournalDay_sectionFold } from "../models/journalDay";
@@ -48,7 +47,6 @@ function useJournalSources(): IJournalExportSources {
     music,
     weights: stats.weight.weight ?? [],
     notes,
-    isOngoingProgress: buildNavCommon(state).isOngoingProgress,
   };
 }
 
@@ -121,15 +119,7 @@ function Card(props: { children: ReactNode; onPress?: () => void; testID?: strin
 }
 
 function WorkoutSection(props: { journal: IJournalDay }): JSX.Element {
-  const dispatch = useTrackedDispatch();
-  const { workouts, plan } = props.journal;
-  const start = (): void => {
-    if (plan?.kind === "start" && plan.label === "Resume workout") {
-      dispatch(Thunk_startProgramDay());
-    } else {
-      navigateToModal("nextWorkoutModal");
-    }
-  };
+  const { workouts, workoutEmptyLine } = props.journal;
   return (
     <Section title="Workout" testID="journal-workout">
       {workouts.map((w) => (
@@ -143,12 +133,7 @@ function WorkoutSection(props: { journal: IJournalDay }): JSX.Element {
           ))}
         </Card>
       ))}
-      {plan?.kind === "rest" && <Text className="text-base text-text-secondary">Rest day. The bear rested too.</Text>}
-      {plan?.kind === "start" && (
-        <Button name="journal-start" kind="pill" className="flex-1" onPress={start}>
-          {plan.label}
-        </Button>
-      )}
+      {workoutEmptyLine != null && <Text className="text-base text-text-secondary">{workoutEmptyLine}</Text>}
     </Section>
   );
 }
@@ -255,7 +240,7 @@ export function ScreenJournal(): JSX.Element {
         <FoldableSection key={`${day}-meals`} journal={journal} section="meals">
           <Section title="Meals" testID="journal-meals-section">
             <View className="-mx-4">
-              <JournalMeals day={day} />
+              <JournalMeals day={day} canAdd={journal.canAddFood} emptyLine={journal.mealsEmptyLine} />
             </View>
           </Section>
         </FoldableSection>

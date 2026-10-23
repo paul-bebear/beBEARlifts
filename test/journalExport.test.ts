@@ -81,7 +81,6 @@ function sources(extra: Partial<IJournalExportSources> = {}): IJournalExportSour
     music: MusicLog_empty(),
     weights: [],
     notes: Notes_empty(),
-    isOngoingProgress: false,
     ...extra,
   };
 }
