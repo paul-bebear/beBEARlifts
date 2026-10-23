@@ -1,5 +1,4 @@
-import { JSX, memo, useCallback, useContext, useMemo, useRef, useState } from "react";
-import { WorkoutOrderNoteContext } from "./workoutOrderNoteContext";
+import { JSX, memo, useCallback, useMemo, useRef, useState } from "react";
 import { View, Pressable, Platform } from "react-native";
 import { Text } from "./primitives/text";
 import {
@@ -90,6 +89,7 @@ interface IWorkoutExerciseCardProps {
   showHelp?: boolean;
   helps: string[];
   otherStates?: IByExercise<IProgramState>;
+  orderNote?: string;
   onTitleLayout?: (title: View) => void;
 }
 
@@ -124,7 +124,7 @@ function WorkoutExerciseCardInner(props: IWorkoutExerciseCardProps): JSX.Element
   );
   const lastHistoryEntry = props.prevData?.lastEntry;
   const lastNote = props.prevData?.lastNote;
-  const orderNote = useContext(WorkoutOrderNoteContext)[props.entry.id];
+  const orderNote = props.orderNote;
   const timestamp = props.prevData?.lastNoteTimestamp;
 
   const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
