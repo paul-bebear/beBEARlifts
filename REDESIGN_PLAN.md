@@ -250,6 +250,35 @@ Every gym day earns honey, and honey buys things the bear wears. The rules live 
 - A new badge opens a full-screen sheet with confetti (`Confetti` exists), the coin, "Badge unlocked", the name, Share your badge, View all badges, as in `6899eec2-7100-49c8-860c-c1ca863b8771.JPG`. Share reuses `shareCardExport.ts`.
 - `BadgeCelebration_next(badges, seen)` in a new `src/models/badgeCelebration.ts` picks which badge to show now, so the sheet never shows twice.
 
+### Winter Arc: The Big Hibernation
+
+Added 2026-10-23, from the Liftoff teardown in `docs/research/liftoff-in-app.md`. Liftoff's "Night of the Lifting Dead" had every user add to one counter for 9 days. beBEAR's version runs once, before the bears sleep for winter. Batch W1 builds it.
+
+- Window: 10 days, 2026-12-12 to 2026-12-21, ending on the winter solstice. Both days count, in the user's local time.
+- One counter for all users: the sum of counted kg from `BearGrowth_countedKg`, so the anti-cheat caps under Growth apply. One counted workout per day means at most 25,000 kg per user per day.
+- The goal is one thing from `src/models/bearComparison.ts`, shown as "Lift 8 blue whales together". The owner sets the goal kg a week before the start: signed-in users times 24,000 kg, which is 4 workouts of 6,000 kg each. With 50 users that is 1,200,000 kg.
+- Signed-out users see the counter and "Sign in to add your kg". Their workouts still grow their own bear.
+- Rewards, given at the end from local history and the final total: 1 counted workout in the window earns the "Winter Arc 2026" badge and a beanie, 3 counted workouts add a scarf, and a reached goal adds a puffer jacket for everyone who joined. Until B4's shop renders accessories, the three items show as coins in the badge grid.
+- Home shows a banner during the window: the bear in snow, the counter bar, "6 days left". A tap opens the event screen with the counter, the user's part ("You added 18,400 kg in 3 workouts"), the three rewards with their state, and the days left.
+- The finish screen adds one line in the window: "+3,100 kg to The Big Hibernation".
+- Server: a new table `season_events` (id, title, starts_on, ends_on, goal_kg) and `season_event_days` (event_id, user_id, day, counted_kg), one row per user per day, written by its owner with an upsert. Inserts check that `day` sits in the event window and that `counted_kg` is between 0 and 25,000. A `security definer` function `season_event_total(event_id)` returns the total kg and the number of users, callable by `anon` and `authenticated`. Nobody reads another user's rows.
+- The client upserts the day's row after each finish and again on app open in the window, so a workout logged offline still counts once the phone is online.
+- The event row lives in the database, so the goal and dates change without an app release. The app ships the same values as a fallback for offline display.
+- A later "Glute Week" for the female line can reuse the tables with a filter on hip thrusts, squats and RDLs. It needs a per-exercise count from `bearGrowth.ts`, which W1 does not add.
+
+### The Hibernation pass
+
+Liftoff sells streak restores. beBEAR's version is the bear sleeping through a missed day. It is bought with honey only, never with money. Batch W2 builds it.
+
+- Price: 25 honey, about a week of earning for a three-day lifter who logs food. A user holds at most 2 passes.
+- The pass is used without a tap. On app open, `HibernationPass_settle(store, doneDays, today)` looks at the days between the last streak day and today. Today is still open, so it never counts as missed.
+- When the user holds at least as many passes as missed days, each missed day becomes a covered day and one pass is spent per day. When there are more missed days than passes, nothing is spent and the streak breaks.
+- A pass is spent only on a streak of 3 days or more. A 1-day streak is not worth a week of honey.
+- A covered day counts as a streak day in `DailyChecklist_streak`, in the streak badges, and in the 7-day honey bonus run. It earns no honey of its own.
+- On the next open, a sheet shows the bear waking up: "Your bear hibernated yesterday. Streak saved: 12 days. 1 pass left." The Journal day shows the bear asleep.
+- `HibernationPass_settle` returns the next store and the covered days, so running it twice changes nothing. A workout logged later for a covered day keeps the day, and the pass stays spent.
+- The Streak screen shows the passes held and a "Buy a pass, 25 honey" row. The purchase adds to `spent` through `BearHoney_balance`.
+
 ### The TV, the friends feed
 
 The TV shows two kinds of post: lifts and meals, plus the songs kept during a workout. Notes never appear on it.
@@ -561,7 +590,12 @@ Group 4, after group 3. The bear.
 - B3, the TV: lifts and meals in the feed. Codex. 10 hours. U17, U28. Files: `src/models/workoutPost.ts` (summary version 2 with bear, equipped and songs), new `src/models/mealPost.ts`, `src/models/feed.ts` (merge two kinds), `src/utils/feedClient.ts` (the new table and the photo upload), `src/components/friendsFeed.tsx` (two row kinds), `src/components/screenFoodAdd.tsx` (enable the "Share with friends" switch), new migration `supabase/migrations/<date>_meal_posts.sql` (the table, its policies, the `meal-photos` bucket and its policies), tests `test/workoutPost.test.ts`, `test/workoutFeed.test.ts`, new `test/mealPost.test.ts`. After B1, beside B2 and B4.
 - B4, honey and the accessory shop. Codex. 9 hours. Owner's accessories note and honey rates. Files: new `src/models/bearHoney.ts` (the five earning rules and the balance), new `src/models/bearAnchors.ts`, new `src/components/bearShop.tsx`, `src/components/bearSprite.tsx` (overlay layer, through a prop B1 leaves), `src/utils/bearStore.ts` (owned and equipped), the 12 item SVGs under `/images/bear/items/`, `src/components/screenFinishDay.tsx` ("+5 honey" line), tests new `test/bearHoney.test.ts`, new `test/bearAnchors.test.ts`. After B1, beside B2 and B3.
 
-Totals: group 1 about 30 hours plus 2 of the owner's, group 2 about 56 hours, group 3 about 24 hours plus 2 of the owner's, group 4 about 49 hours. About 159 hours of code, plus the art.
+Group 5, Winter Arc. Added 2026-10-23. It has a date: W1 must be on the owner's iPhone by 2026-12-05, a week before the event, to leave time for one fix. It needs B1 and B2 merged. It runs beside any group 2 to 4 batch that touches none of its files.
+
+- W2, the Hibernation pass. Codex. 8 hours. The rules under The Hibernation pass. Files: new `src/models/hibernationPass.ts` (`HibernationPass_settle`, `HibernationPass_buy`, the 25 honey price, the hold limit of 2, the 3-day minimum streak) and `test/hibernationPass.test.ts`, `src/models/bearStoreData.ts` (`passes`, `coveredDays` and `pendingWake`, parsed with the same guards as `spent`) and new `test/bearStoreData.test.ts`, `src/models/dailyChecklist.ts` (`DailyChecklist_doneDays` takes covered days) and `test/dailyChecklist.test.ts`, `src/models/bearHoney.ts` (covered days join the 7-day run and earn nothing) and `test/bearHoney.test.ts`, `src/utils/useBear.ts` (settle on open), `src/utils/useBearBadges.ts` and `src/utils/useBearHoney.ts` (covered days in), `src/components/screenStreak.tsx` (covered days on the calendar, passes held, the buy row), new `src/components/hibernationWakeSheet.tsx` mounted from `src/components/programHistory.tsx`, `src/components/screenJournal.tsx` and `src/components/workoutStoryCard.tsx` (covered days in their streak counts). Art: one sleeping bear still per body stage, 5 files. Lands before W1, because both touch the badge hook.
+- W1, The Big Hibernation. Opus. 14 hours. The rules under Winter Arc: The Big Hibernation. Files: new migration `supabase/migrations/<date>_season_events.sql` (the two tables, their policies, `season_event_total`, the 2026 event row), new `src/models/seasonEvent.ts` (the window check, the user's contribution from counted workouts, the day rows to upsert, the reward states, the goal text from `BearComparison_all`) and `test/seasonEvent.test.ts`, new `src/utils/seasonEventClient.ts` (upsert and total), new `src/utils/useSeasonEvent.ts`, new `src/components/seasonEventBanner.tsx`, new `src/components/screenSeasonEvent.tsx`, `src/components/programHistory.tsx` (the banner on Home), `src/components/bearFinishBanner.tsx` (the "+3,100 kg to The Big Hibernation" line), `src/models/bearBadges.ts` (the three event badges) and `test/bearBadges.test.ts`, `src/utils/useBearBadges.ts` (event input), `src/navigation/AppNavigator.tsx` and `.native.tsx` (register the event screen). Art: the banner bear in snow, and three coins plus three item SVGs (beanie, scarf, puffer jacket) under `/images/events/winter-2026/`. Owner action: apply the migration, then set `goal_kg` on 2026-12-05. Design calls: the banner and the event screen. After W2.
+
+Totals: group 1 about 30 hours plus 2 of the owner's, group 2 about 56 hours, group 3 about 24 hours plus 2 of the owner's. Group 4 about 49 hours, group 5 about 22 hours. About 181 hours of code, plus the art.
 
 ## 9. Decisions for the owner
 
@@ -585,7 +619,12 @@ Decided on 2026-10-22, from the owner's reply and sketch.
 - My bear is the bear, how he's doing (the bars and the check-in scores), the dashboard with stats to dive into, and the TV with the feed.
 - In version one the check-in scores never change the bear. A later version makes the bear react to them (stretching, yawning, bouncing), possibly as a 3D model. The rules are kept pure so that swap touches only the renderer.
 
-Nothing is open. Every question in this plan has an answer from the owner.
+Open for group 5, added 2026-10-23. Each has a default, so W1 and W2 can start without an answer.
+
+- Event dates. Default 2026-12-12 to 2026-12-21, ending on the winter solstice. An earlier window catches more of Winter Arc, but W1 then has less time to land.
+- The goal kg. Default: signed-in users times 24,000 kg, set on 2026-12-05.
+- The pass price and limit. Default 25 honey, at most 2 held.
+- The three reward items. Default beanie, scarf and puffer jacket.
 
 ## 10. Art prompt for the owner
 
