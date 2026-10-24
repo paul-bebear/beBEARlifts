@@ -12,6 +12,7 @@ import { localdomain, localapidomain, localport, localapiport } from "./localdom
 import { ForkServices_hosts, ForkServices_plan } from "./utils/forkServices";
 import { ProgramsHost_fork } from "./utils/programsHost";
 import { OfflineOnly_isEnabled } from "./utils/offlineOnly";
+import { PlanFollowsSignIn_start } from "./utils/planFollowsSignIn";
 
 declare let Rollbar: RB;
 
@@ -516,6 +517,8 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
     });
     return () => sub.remove();
   }, [dispatch, env]);
+
+  useEffect(() => PlanFollowsSignIn_start(), []);
 
   useEffect(() => {
     const iap = env.iap;

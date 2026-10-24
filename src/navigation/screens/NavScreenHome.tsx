@@ -11,6 +11,11 @@ import { ImagePreloader_preload } from "../../utils/imagePreloader";
 import { OnboardingChat } from "../../components/onboardingChat";
 import { Invite_surface } from "../../models/invite";
 import { OfflineOnly_isEnabled } from "../../utils/offlineOnly";
+import { AccountPlanStore } from "../../utils/accountPlanClient";
+import { PlusOfferClient_offerFirstProgram, PlusOfferStore } from "../../utils/plusOfferClient";
+import { Purchases_isAvailable } from "../../utils/purchases";
+import { CloudStore } from "../../utils/supabaseClient";
+import { PlusOffer_afterFirstProgram } from "../../models/plusOffer";
 
 const subscriptionImages = ["/images/subscriptionhero.png"];
 
@@ -30,6 +35,23 @@ export function NavScreenMain(): JSX.Element {
     state.storage.currentProgramId != null ? Program_getProgram(state, state.storage.currentProgramId) : undefined
   );
   const insets = useSafeAreaInsets();
+  const accountPlan = AccountPlanStore.use();
+  const plusOffer = PlusOfferStore.use();
+  const userId = CloudStore.use().session?.userId;
+  const hasProgram = currentProgram != null;
+  useEffect(() => {
+    if (
+      PlusOffer_afterFirstProgram({
+        hasProgram,
+        available: Purchases_isAvailable(),
+        userId,
+        plan: accountPlan,
+        shownBefore: plusOffer.firstProgramShown === true,
+      })
+    ) {
+      PlusOfferClient_offerFirstProgram();
+    }
+  }, [hasProgram, userId, accountPlan, plusOffer.firstProgramShown]);
   const showChat =
     Invite_surface({
       offline: OfflineOnly_isEnabled(),

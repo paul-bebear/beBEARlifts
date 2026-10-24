@@ -12,17 +12,28 @@ describe("Fork services", () => {
 
   it("disables every upstream service in the offline fork", () => {
     for (const unlocked of [true, false]) {
-      const { appleSignIn, googleSignIn, ...upstream } = ForkServices_plan(true, unlocked);
+      const { appleSignIn, googleSignIn, revenueCat, ...upstream } = ForkServices_plan(true, unlocked);
       expect(Object.values(upstream).every((on) => !on)).to.equal(true);
       expect(appleSignIn).to.equal(true);
       expect(googleSignIn).to.equal(true);
+      expect(revenueCat).to.equal(false);
     }
   });
 
   it("preserves upstream services when opted in, while respecting the premium unlock", () => {
-    expect(Object.values(ForkServices_plan(false, false)).every(Boolean)).to.equal(true);
+    const { revenueCat, ...upstream } = ForkServices_plan(false, false);
+    expect(Object.values(upstream).every(Boolean)).to.equal(true);
+    expect(revenueCat).to.equal(false);
     expect(ForkServices_plan(false, true).storeKit).to.equal(false);
     expect(ForkServices_plan(false, true).rollbar).to.equal(true);
+  });
+
+  it("runs RevenueCat on iOS only, and never beside upstream's StoreKit listeners", () => {
+    expect(ForkServices_plan(true, true, true).revenueCat).to.equal(true);
+    expect(ForkServices_plan(true, false, true).revenueCat).to.equal(true);
+    expect(ForkServices_plan(false, true, true).revenueCat).to.equal(true);
+    expect(ForkServices_plan(false, false, true)).to.deep.include({ storeKit: true, revenueCat: false });
+    expect(ForkServices_plan(true, true, false).revenueCat).to.equal(false);
   });
 
   it("keeps the offline app on the fork's host in Debug and Release", () => {

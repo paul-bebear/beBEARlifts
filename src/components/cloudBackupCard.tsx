@@ -11,8 +11,10 @@ import {
 } from "../models/cloudBackupForm";
 import { AccountDeletion_confirmWord, AccountDeletion_isConfirmed } from "../models/accountDeletion";
 import { CloudStore, SentCodeStore } from "../utils/supabaseClient";
-import { CloudBackupCommand_loadPlan, CloudBackupCommand_run } from "../utils/cloudBackupCommand";
+import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
 import { AiCaps_plusLine } from "../models/aiCaps";
+import { AccountPlan_isPlus } from "../models/accountPlan";
+import { AccountPlanStore } from "../utils/accountPlanClient";
 import { CloudBackup_olderCopies } from "../models/cloudBackup";
 import { StoreBuild_showsProCodes } from "../models/storeBuild";
 import { StoreReceipt_name } from "../utils/storeReceipt";
@@ -26,7 +28,9 @@ import { TextInput } from "./primitives/textInput";
 
 export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean }): JSX.Element {
   const cloud = CloudStore.use();
+  const accountPlan = AccountPlanStore.use();
   const [form, emit] = useReducer(CloudBackupForm_reduce, undefined, CloudBackupForm_empty);
+  const plus = AccountPlan_isPlus(accountPlan, cloud.session?.userId);
   const busy = form.command != null;
   const [oauth, setOAuth] = useState<{ busy: boolean; error?: string }>({ busy: false });
   const [showEmail, setShowEmail] = useState(false);
@@ -57,11 +61,6 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
 
   useEffect(() => {
     emit({ type: "session", email: cloud.session?.email });
-    if (cloud.session != null && !props.compact) {
-      CloudBackupCommand_loadPlan()
-        .then((plan) => plan != null && emit({ type: "plan", plan }))
-        .catch(() => undefined);
-    }
   }, [cloud.session?.email]);
 
   useEffect(() => {
@@ -142,7 +141,7 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
               ))}
             </View>
           )}
-          {form.plan === "plus" ? (
+          {plus ? (
             <Text className="text-sm font-semibold" testID="cloud-plan-plus">
               {AiCaps_plusLine()}
             </Text>

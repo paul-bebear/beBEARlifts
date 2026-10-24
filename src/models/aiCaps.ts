@@ -8,8 +8,8 @@ export type IAiCapsRefusal =
   | { reason: "onboard"; used: number; cap: number }
   | { reason: "report" | "global"; error: string };
 
-// The Vercel defaults in api/_auth.mjs. The app shows them on the beBEAR+ line, because only the server reads the variables.
-const AiCaps_plus: IAiCapsUsage = { day: 30, week: 150 };
+// The Vercel defaults in api/_auth.mjs. The app shows them in its beBEAR+ text, because only the server reads the variables.
+export const AiCaps_plus: IAiCapsUsage = { day: 30, week: 150 };
 
 function count(value: unknown): number | undefined {
   return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;

@@ -2,7 +2,8 @@ import { SupabaseClient_accessToken, Supabase_notSignedIn } from "./supabaseClie
 import { ApiUrl_for } from "./apiUrl";
 import { AiConsent_disabledMessage, AiConsent_ensure, AiConsentStore } from "./aiConsentClient";
 import { AiConsent_maySend } from "../models/aiConsent";
-import { AiCaps_refusalText } from "../models/aiCaps";
+import { AiCaps_parse, AiCaps_refusalText } from "../models/aiCaps";
+import { PlusOfferClient_onRefusal } from "./plusOfferClient";
 
 export const AiRequest_signInMessage = "Sign in to use AI features. Open Progress → the gear icon → Cloud backup.";
 export const AiRequest_offlineMessage = "No connection. AI features need a signal.";
@@ -51,6 +52,10 @@ export async function AiRequest_post(
   }
   if (response.status === 401) {
     return { ok: false, error: AiRequest_signInMessage };
+  }
+  const refusal = response.status === 429 ? AiCaps_parse(body) : undefined;
+  if (refusal != null) {
+    PlusOfferClient_onRefusal(refusal);
   }
   const capped = response.status === 429 ? AiCaps_refusalText(body) : undefined;
   if (capped != null) {
