@@ -86,6 +86,27 @@ A fix whose timestamp is earlier than the empty segment's start is dropped by th
 
 `RunRecording_onFix` and `RunRecording_onTick` return the next recording and a `save` flag. They save when the status or the segment count changes, and otherwise every 10 seconds. `RunRecorder` applies the step and owns only the timer and the store write.
 
+## Story card
+
+`RunShareCard` draws the run on a 360 × 640 card: date, distance, three stats, and a 312 × 270 route box.
+
+```text
+RunShareCard
+  route = RunRoute_forCard(run.route, hideEnds)     "As recorded" or "Hide 50 m"
+  RunMapSnapshot_render(route, 312, 270, 24)
+    iOS: LiftosaurMapSnapshot.render → { uri, xs, ys }
+         RunRoute_mapDrawing(flat route, xs, ys) → lines, gaps, start, end
+    web, Android, no network: undefined → RunRoute_fit draws on plain green
+  RunStoryCard → map image under RunRouteSvg
+```
+
+- `RunRoute_trimEnds` cuts along the path and splits the segment it lands in, so a 300 m straight loses exactly 50 m. Pause gaps do not count toward the 50 m. A run shorter than 100 m shows no route.
+- The trim applies to the card only. The run screen always shows the route as recorded.
+- `ios/Liftosaur/LiftosaurMapSnapshotImpl.swift` renders a dark `.mutedStandard` map with no points of interest. It returns each route point's position from `snapshot.point(for:)`, so the route uses MapKit's own projection and lines up with the streets.
+- The map rect gets the image's aspect ratio before rendering. MapKit then draws exactly that rect, with the route inside a 24 pt padding. A route under 200 m across is widened to 200 m.
+- `RunRouteSvg` draws each pause gap as a dotted line from the end of one segment to the start of the next.
+- The export waits for the map image through `onImageLoad`, the same way it waits for a photo.
+
 ## Reloads
 
 `RunRecording_restore` brings an unfinished draft back paused, because the gap since the last save is unknown. A new JS runtime wires the module again through `setEventEmitterCallback`. `setEmitters` then calls `stopUpdatesFromPreviousRuntime()`, so GPS left on by the old runtime does not run under a paused draft.
@@ -105,5 +126,7 @@ A fix whose timestamp is earlier than the empty segment's start is dropped by th
 - Blue location pill stays after a run → `stopUpdates` was not called. Check the cleanup that `RunSensors_watch` returns in `runSensors.ios.ts`.
 - Distance jumps across a tunnel → the platform uses the "pause" gap rule. Check `RunRecording_gapRule`.
 - Moving time runs backward on iOS → `RecordingStats` is not using `RunRecording_stats`.
+- Card shows plain green on iPhone → `LiftosaurMapSnapshot` rejected, usually no network for map tiles, or the binary predates the module.
+- Route sits off the streets on the card → the drawing came from `RunRoute_fit` instead of the `xs` and `ys` that MapKit returned.
 - Resume shows "Waiting for GPS" forever → authorization is `.notDetermined` and `startUpdates` did not ask again.
 - `npm run ios` fails with "Failed to get the SHA-1 for … index.js" inside `.claude/worktrees/` → `metro.config.js` blocks that path. Bundle from the main checkout.

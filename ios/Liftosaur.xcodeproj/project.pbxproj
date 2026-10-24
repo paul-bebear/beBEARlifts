@@ -139,6 +139,8 @@
 		BEBEA5200000000000000001 /* RCTBebearSignInConfig.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA5200000000000000002 /* RCTBebearSignInConfig.mm */; };
 		BEBEA5300000000000000001 /* RCTLiftosaurLocation.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA5300000000000000002 /* RCTLiftosaurLocation.mm */; };
 		BEBEA5300000000000000004 /* LiftosaurLocationImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA5300000000000000005 /* LiftosaurLocationImpl.swift */; };
+		BEBEA5300000000000000006 /* RCTLiftosaurMapSnapshot.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA5300000000000000007 /* RCTLiftosaurMapSnapshot.mm */; };
+		BEBEA5300000000000000009 /* LiftosaurMapSnapshotImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA530000000000000000A /* LiftosaurMapSnapshotImpl.swift */; };
 		C0FF1C00000000000000C001 /* LiftosaurComplicationBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FF1C00000000000000B001 /* LiftosaurComplicationBundle.swift */; };
 		C0FF1C00000000000000C002 /* LiftosaurComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FF1C00000000000000B002 /* LiftosaurComplication.swift */; };
 		C0FF1C00000000000000C004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C0FF1C00000000000000B004 /* Assets.xcassets */; };
@@ -348,6 +350,9 @@
 		BEBEA5300000000000000002 /* RCTLiftosaurLocation.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = RCTLiftosaurLocation.mm; path = Liftosaur/RCTLiftosaurLocation.mm; sourceTree = "<group>"; };
 		BEBEA5300000000000000003 /* RCTLiftosaurLocation.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTLiftosaurLocation.h; path = Liftosaur/RCTLiftosaurLocation.h; sourceTree = "<group>"; };
 		BEBEA5300000000000000005 /* LiftosaurLocationImpl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiftosaurLocationImpl.swift; path = Liftosaur/LiftosaurLocationImpl.swift; sourceTree = "<group>"; };
+		BEBEA5300000000000000007 /* RCTLiftosaurMapSnapshot.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; name = RCTLiftosaurMapSnapshot.mm; path = Liftosaur/RCTLiftosaurMapSnapshot.mm; sourceTree = "<group>"; };
+		BEBEA5300000000000000008 /* RCTLiftosaurMapSnapshot.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RCTLiftosaurMapSnapshot.h; path = Liftosaur/RCTLiftosaurMapSnapshot.h; sourceTree = "<group>"; };
+		BEBEA530000000000000000A /* LiftosaurMapSnapshotImpl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiftosaurMapSnapshotImpl.swift; path = Liftosaur/LiftosaurMapSnapshotImpl.swift; sourceTree = "<group>"; };
 		C0FF1C00000000000000A001 /* LiftosaurWatchComplication.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiftosaurWatchComplication.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0FF1C00000000000000B001 /* LiftosaurComplicationBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiftosaurComplicationBundle.swift; sourceTree = "<group>"; };
 		C0FF1C00000000000000B002 /* LiftosaurComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiftosaurComplication.swift; sourceTree = "<group>"; };
@@ -448,6 +453,9 @@
 				BEBEA5300000000000000003 /* RCTLiftosaurLocation.h */,
 				BEBEA5300000000000000002 /* RCTLiftosaurLocation.mm */,
 				BEBEA5300000000000000005 /* LiftosaurLocationImpl.swift */,
+				BEBEA5300000000000000008 /* RCTLiftosaurMapSnapshot.h */,
+				BEBEA5300000000000000007 /* RCTLiftosaurMapSnapshot.mm */,
+				BEBEA530000000000000000A /* LiftosaurMapSnapshotImpl.swift */,
 				6932EE9394B77D111CEA7C57 /* RCTLiftosaurShare.mm */,
 				E883E351A4F90F4F9BB4EFE5 /* LiftosaurShareImpl.swift */,
 				F34F70BF6900DDCBEC890E05 /* RCTLiftosaurImageResizer.h */,
@@ -1054,6 +1062,8 @@
 				BEBEA5200000000000000001 /* RCTBebearSignInConfig.mm in Sources */,
 				BEBEA5300000000000000001 /* RCTLiftosaurLocation.mm in Sources */,
 				BEBEA5300000000000000004 /* LiftosaurLocationImpl.swift in Sources */,
+				BEBEA5300000000000000006 /* RCTLiftosaurMapSnapshot.mm in Sources */,
+				BEBEA5300000000000000009 /* LiftosaurMapSnapshotImpl.swift in Sources */,
 				ABAB4E16DB2DC920D7412751 /* LiftosaurShareImpl.swift in Sources */,
 				6D02DF56F7CB78E851242DEC /* RCTLiftosaurImageResizer.mm in Sources */,
 				8B7AE7DA350672DAFF7AFA16 /* LiftosaurImageResizerImpl.swift in Sources */,

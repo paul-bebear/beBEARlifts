@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   IRun,
+  RunLog_cardDate,
   RunLog_empty,
   RunLog_fastestSplit,
   RunLog_pace,
@@ -45,5 +46,14 @@ describe("RunLog", () => {
     expect(RunLog_fastestSplit(run)).to.deep.equal({ km: 1, ms: 300000 });
     expect(RunLog_splitBars(run.splits)).to.deep.equal([1, 0.75]);
     expect(RunLog_splitBars([])).to.deep.equal([]);
+  });
+
+  it("writes the card date as weekday, day and month, then the time", () => {
+    const startedAt = new Date(2026, 9, 24, 18, 48).getTime();
+    const text = RunLog_cardDate(startedAt);
+    const [day, time] = text.split(" · ");
+    expect(day).to.include("24");
+    expect(day).not.to.include("2026");
+    expect(time).to.match(/(18|6).48/);
   });
 });
