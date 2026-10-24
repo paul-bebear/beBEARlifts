@@ -1,6 +1,6 @@
 # App Store checklist for beBEAR V1
 
-Status on 2026-10-23: the release script builds a signed `.ipa`. The upload waits for the App Store Connect app record for `com.paulbebear.bebear`, which does not exist yet.
+Status on 2026-10-24: `./scripts/release-ios-production.sh --dry-run` built `ios/build/archive/export/beBEAR.ipa`, 44.5 MB. It is signed by "Apple Distribution: Victor Backouche (GKY9GR7VHG)" and holds the watch app and the widget. The upload waits for the App Store Connect app record for `com.paulbebear.bebear`, which does not exist yet.
 
 V1 ships with no paywall. Tracking is free. AI runs under the caps in `api/_auth.mjs`: 3 uses a day, 10 a week. beBEAR+ billing comes in a later release. Until then the owner grants beBEAR+ by hand, as the section on making someone beBEAR+ shows.
 
@@ -21,7 +21,7 @@ What the script does:
 - It reads `ASC_KEY_ID` and `ASC_ISSUER_ID` from `~/.appstoreconnect/bebear.env`. The key file is `~/.appstoreconnect/private_keys/AuthKey_3MV54P3QWH.p8`.
 - It asks `scripts/ios-signing.ts app <version>` whether the app record exists and which build was uploaded last.
 - It runs `scripts/ios-signing.ts profiles appstore`. That deletes and recreates the 4 App Store profiles (app, widget, watch app, complication) through the API and installs them.
-- It archives with manual signing, `Apple Distribution` and the `BEBEAR_PROFILE_<target>` settings from `scripts/ios-signing.ts build-settings appstore`. `xcodebuild -authenticationKeyPath` rejects this key on Xcode 26.6, so the script never passes the key to `xcodebuild`.
+- It archives with manual signing, `Apple Distribution` and the `BEBEAR_PROFILE_<target>` settings from `scripts/ios-signing.ts build-settings appstore`. `xcodebuild -authenticationKeyPath` rejects this key on Xcode 26.6, so the script never passes the key to `xcodebuild`. The archive uses its own DerivedData in `~/Library/Developer/Xcode/DerivedData/bebear-release` and starts clean each run. A shared DerivedData once kept a stale `ReactCodegen` header after a TurboModule spec change, and the archive failed. The script also runs `watchman watch` on the checkout. Without it, a worktree reuses the main checkout's watch, whose `.watchmanconfig` ignores `.claude/worktrees`, and Metro fails with "Failed to get the SHA-1 for: …/index.js".
 - It exports the `.ipa` to `ios/build/archive/export/` with the plist from `scripts/ios-signing.ts export-options export`.
 - It uploads with `xcrun altool --upload-package` and the same API key.
 - `--dry-run` stops after the export and changes nothing in App Store Connect.

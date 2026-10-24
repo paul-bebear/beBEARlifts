@@ -20,6 +20,8 @@ ARCHIVE_DIR="$ROOT/ios/build/archive"
 ARCHIVE_PATH="$ARCHIVE_DIR/Liftosaur.xcarchive"
 EXPORT_PATH="$ARCHIVE_DIR/export"
 EXPORT_OPTIONS="$ARCHIVE_DIR/ExportOptions.plist"
+# A clean DerivedData per release: a reused one kept a stale ReactCodegen header after a TurboModule spec change.
+DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData/bebear-release"
 APP_STORE_NOTES_LIMIT=4000
 
 DRY_RUN=0
@@ -193,8 +195,11 @@ run_xcodebuild() {
 
 if [[ $SKIP_BUILD -eq 0 ]]; then
   cd "$ROOT"
-  rm -rf "$ARCHIVE_DIR"
+  rm -rf "$ARCHIVE_DIR" "$DERIVED_DATA"
   mkdir -p "$ARCHIVE_DIR"
+  # In a worktree, watchman otherwise reuses the main checkout's watch, whose .watchmanconfig ignores
+  # .claude/worktrees, and Metro fails with "Failed to get the SHA-1 for: .../index.js".
+  watchman watch "$ROOT" > /dev/null
 
   echo "Making App Store provisioning profiles..."
   signing profiles appstore
@@ -223,6 +228,7 @@ if [[ $SKIP_BUILD -eq 0 ]]; then
     -configuration Release \
     -destination "generic/platform=iOS" \
     -archivePath "$ARCHIVE_PATH" \
+    -derivedDataPath "$DERIVED_DATA" \
     CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="Apple Distribution" \
     'PROVISIONING_PROFILE_SPECIFIER=$(BEBEAR_PROFILE_$(TARGET_NAME))' \
