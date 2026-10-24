@@ -4,6 +4,7 @@ import { ModalStateProvider } from "../navigation/ModalStateContext";
 import { ActiveSheetHeightProvider } from "../navigation/ActiveSheetHeightContext";
 import { reducerWrapper, defaultOnActions, IAction } from "../ducks/reducer";
 import { Dialog_alert } from "../utils/dialog";
+import { PlanFollowsSignIn_start } from "../utils/planFollowsSignIn";
 import { Program_getProgram } from "../models/program";
 import { useThunkReducer } from "../utils/useThunkReducer";
 import {
@@ -331,6 +332,8 @@ export function AppView(props: IProps): JSX.Element | null {
       window.removeEventListener("unhandledrejection", onunhandledexception);
     };
   }, []);
+
+  useEffect(() => PlanFollowsSignIn_start(), []);
 
   const onNavigationStateChange = useCallback((navState: NavigationState | undefined) => {
     const screenName = getScreenNameFromNavState(navState);

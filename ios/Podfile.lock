@@ -176,6 +176,11 @@ PODS:
     - Yoga
   - openiap (2.1.0)
   - PromisesObjC (2.4.0)
+  - PurchasesHybridCommon (19.10.0):
+    - RevenueCat (= 5.94.0)
+  - PurchasesHybridCommonUI (19.10.0):
+    - PurchasesHybridCommon (= 19.10.0)
+    - RevenueCatUI (= 5.94.0)
   - RCTDeprecation (0.84.1)
   - RCTRequired (0.84.1)
   - RCTSwiftUI (0.84.1)
@@ -2220,6 +2225,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RevenueCat (5.94.0)
+  - RevenueCatUI (5.94.0):
+    - RevenueCat (= 5.94.0)
   - RNAppleAuthentication (2.5.1):
     - React-Core
   - RNCClipboard (1.16.3):
@@ -2363,6 +2371,12 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
+  - RNPaywalls (10.12.2):
+    - PurchasesHybridCommonUI (= 19.10.0)
+    - React-Core
+  - RNPurchases (10.12.2):
+    - PurchasesHybridCommon (= 19.10.0)
+    - React-Core
   - RNReactNativeHapticFeedback (3.0.0):
     - hermes-engine
     - RCTRequired
@@ -2816,6 +2830,8 @@ DEPENDENCIES:
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - "RNLiveMarkdown (from `../node_modules/@expensify/react-native-live-markdown`)"
+  - RNPaywalls (from `../node_modules/react-native-purchases-ui`)
+  - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -2843,7 +2859,11 @@ SPEC REPOS:
     - nanopb
     - openiap
     - PromisesObjC
+    - PurchasesHybridCommon
+    - PurchasesHybridCommonUI
     - React-Codegen
+    - RevenueCat
+    - RevenueCatUI
     - RollbarCommon
     - RollbarCrash
     - RollbarNotifier
@@ -3048,6 +3068,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keychain"
   RNLiveMarkdown:
     :path: "../node_modules/@expensify/react-native-live-markdown"
+  RNPaywalls:
+    :path: "../node_modules/react-native-purchases-ui"
+  RNPurchases:
+    :path: "../node_modules/react-native-purchases"
   RNReactNativeHapticFeedback:
     :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -3077,7 +3101,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  hermes-engine: a92b5702a283768075d54fff0e60ea12aee1e5c6
+  hermes-engine: d2b93de1b40ac4ff1503ea67c269963ea3f40af3
   LiquidGlass: e426379d683592548ec9168892c55f20b1ca20ec
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
@@ -3087,6 +3111,8 @@ SPEC CHECKSUMS:
   NitroModules: 48bc5e0cf2f9cab79f82754c0404a046c6cb6ed6
   openiap: 35b7ebf3b953bc3f24a57fcb5f98fc4dd30f1b04
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  PurchasesHybridCommon: 4ea84285a799df27db9e4a0cc180d9129e6e9cf2
+  PurchasesHybridCommonUI: 64533f29a16a47437a194a1dec89e5fcc73a3732
   RCTDeprecation: af44b104091a34482596cd9bd7e8d90c4e9b4bd7
   RCTRequired: bb77b070f75f53398ce43c0aaaa58337cebe2bf6
   RCTSwiftUI: afc0a0a635860da1040a0b894bfd529da06d7810
@@ -3096,7 +3122,7 @@ SPEC CHECKSUMS:
   React-callinvoker: bc2a26f8d84fb01f003fc6de6c9337b64715f95b
   React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 7840d3a80b43a95c5e80ef75146bd70925ebab0f
-  React-Core-prebuilt: 51ebe5da42247c3fd84b37e69a2a1ba54e6bb94f
+  React-Core-prebuilt: 072d6d4fec7bea93dc1936df93572bce609e92e5
   React-CoreModules: 2eb010400b63b89e53a324ffb3c112e4c7c3ce42
   React-cxxreact: a558e92199d26f145afa9e62c4233cf8e7950efe
   React-debug: d196e6df0599d78360b3211367e28c5583054133
@@ -3165,10 +3191,12 @@ SPEC CHECKSUMS:
   React-utils: 7ace4a70a287291541c646e3f02688ba439ed743
   React-webperformancenativemodule: 4b56d01c3a3f403231c3756ac7031db8ab64f504
   ReactAppDependencyProvider: e96e93b493d8d86eeaee3e590ba0be53f6abe46f
-  ReactCodegen: 6fd205f091c67e98ae3d078989008e91a3426cde
+  ReactCodegen: 5eb183db1ae48244eba7ed125eb399cd7acc08fa
   ReactCommon: 07572bf9e687c8a52fbe4a3641e9e3a1a477c78e
-  ReactNativeDependencies: 3d200db358dd530d9fa1f6bda0109bee48ffe01b
+  ReactNativeDependencies: 6752115607864432c3db62f81a8bbe8160b79d68
   ReactNativeHealthkit: b81525b73d998c228ac466f2a0c8e0aa0fbcce8f
+  RevenueCat: f381deba42a93e5194104b17a1f653a389d2e215
+  RevenueCatUI: 7f972d3c8cff4d64d5eb26e25b5aace659024260
   RNAppleAuthentication: a89c9804592b38ed4ab11f0aee68d05ba12ad432
   RNCClipboard: fc456104340b49bdf812f68bd00e764abf360361
   RNDateTimePicker: ce02bc16b4c1f1359b611d607eb3287272a56d29
@@ -3178,6 +3206,8 @@ SPEC CHECKSUMS:
   RNInAppBrowser: 904d24dc75e8e6c6c98a3160329192608946f9df
   RNKeychain: ce2cee63eab83888c3da68684da50b9c83c33461
   RNLiveMarkdown: 9973dff3d594229d05002e1e5400018fe591b195
+  RNPaywalls: 4bd13cb3085e5d642849c8f2627b0d4e60116c3a
+  RNPurchases: 5c8606bc3715d6eb35502ab65d3b167ca33ed1d2
   RNReactNativeHapticFeedback: 52c9ac4deb817e0a158bcfb3e25f5b9e9e3448bb
   RNReanimated: e6f5caa293a7b65e8ee1f594c5fc9b43a95456b4
   RNScreens: c580e997926a29cd5607d9153daf0faf98cf3b36

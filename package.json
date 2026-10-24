@@ -261,6 +261,8 @@
     "react-native-nitro-image": "0.15.0",
     "react-native-nitro-modules": "^0.35.10",
     "react-native-pager-view": "^8.0.1",
+    "react-native-purchases": "10.12.2",
+    "react-native-purchases-ui": "10.12.2",
     "react-native-reanimated": "~4.5.5",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.27.0",
