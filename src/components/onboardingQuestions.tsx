@@ -4,7 +4,11 @@ import { OnboardingCommand_images } from "../utils/onboardingCommand";
 import { OnboardingHistory_summary } from "../models/onboardingHistory";
 import { IOnboardingAnswers } from "../models/onboardingAnswers";
 import { FoodTargets_activities, FoodTargets_goals } from "../models/foodTargets";
-import { IBearGoal } from "../models/bearPlan";
+import {
+  OnboardingChoices_dayLabel,
+  OnboardingChoices_days,
+  OnboardingChoices_goals,
+} from "../models/onboardingChoices";
 
 const field = "w-full p-3 border rounded-xl bg-background-default border-border-prominent text-text-primary";
 const chip = "flex items-center gap-3 w-full p-4 text-left text-lg border-2 rounded-2xl";
@@ -13,12 +17,6 @@ const chipOff = `${chip} border-border-prominent`;
 const pill = "px-4 py-2 border-2 rounded-full";
 const pillOn = `${pill} border-yellow-500 bg-background-cardyellow`;
 const pillOff = `${pill} border-border-prominent`;
-
-const goals: { key: IBearGoal; label: string; detail: string }[] = [
-  { key: "size", label: "Size", detail: "Bigger muscles" },
-  { key: "strength", label: "Strength", detail: "Lift heavier" },
-  { key: "both", label: "Both", detail: "Heavy first lift, then muscle work" },
-];
 
 export function OnboardingFoodQuestions(props: {
   a: IOnboardingAnswers;
@@ -87,7 +85,7 @@ export function OnboardingWantQuestions(props: {
     <>
       <h1 className="text-3xl font-bold">What do you want?</h1>
       <div className="space-y-3">
-        {goals.map((g) => (
+        {OnboardingChoices_goals.map((g) => (
           <button
             key={g.key}
             className={a.goal === g.key ? chipOn : chipOff}
@@ -104,14 +102,14 @@ export function OnboardingWantQuestions(props: {
       <fieldset className="space-y-2">
         <legend className="mb-2 font-semibold">How many days a week can you train?</legend>
         <div className="flex flex-wrap gap-2">
-          {([2, 3, 4, 5, 6] as const).map((days) => (
+          {OnboardingChoices_days.map((days) => (
             <button
               key={days}
               className={a.days === days ? pillOn : pillOff}
               aria-pressed={a.days === days}
               onClick={() => props.emit({ type: "answers", patch: { days: a.days === days ? undefined : days } })}
             >
-              {days === 6 ? "6+" : days}
+              {OnboardingChoices_dayLabel(days)}
             </button>
           ))}
         </div>
