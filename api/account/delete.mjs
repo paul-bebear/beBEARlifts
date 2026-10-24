@@ -1,7 +1,10 @@
 import { fetchJson, json } from "../_food.mjs";
 import { AiAuth_bearerToken, Supabase_origin, Supabase_publishableKey } from "../_auth.mjs";
 
-const bucket = "backups";
+const buckets = [
+  { bucket: "backups", label: "cloud backups" },
+  { bucket: "meal-photos", label: "meal photos" },
+];
 const listLimit = 1000;
 const timeoutMs = 10000;
 
@@ -46,27 +49,29 @@ export async function POST(request) {
         : json({ error: `Supabase Auth returned ${user.status}` }, 502);
     }
 
-    const listing = await fetchJson(
-      `${Supabase_origin}/storage/v1/object/list/${bucket}`,
-      {
-        method: "POST",
-        headers: adminHeaders(serviceKey),
-        body: JSON.stringify({ prefix: userId, limit: listLimit, offset: 0 }),
-      },
-      timeoutMs
-    );
-    const paths = AccountDelete_objectPaths(userId, listing.body);
-    if (listing.status !== 200 || paths == null) {
-      return json({ error: `Could not list the cloud backups (Supabase returned ${listing.status})` }, 502);
-    }
-    if (paths.length > 0) {
-      const removed = await fetchJson(
-        `${Supabase_origin}/storage/v1/object/${bucket}`,
-        { method: "DELETE", headers: adminHeaders(serviceKey), body: JSON.stringify({ prefixes: paths }) },
+    for (const { bucket, label } of buckets) {
+      const listing = await fetchJson(
+        `${Supabase_origin}/storage/v1/object/list/${bucket}`,
+        {
+          method: "POST",
+          headers: adminHeaders(serviceKey),
+          body: JSON.stringify({ prefix: userId, limit: listLimit, offset: 0 }),
+        },
         timeoutMs
       );
-      if (removed.status !== 200) {
-        return json({ error: `Could not delete the cloud backups (Supabase returned ${removed.status})` }, 502);
+      const paths = AccountDelete_objectPaths(userId, listing.body);
+      if (listing.status !== 200 || paths == null) {
+        return json({ error: `Could not list the ${label} (Supabase returned ${listing.status})` }, 502);
+      }
+      if (paths.length > 0) {
+        const removed = await fetchJson(
+          `${Supabase_origin}/storage/v1/object/${bucket}`,
+          { method: "DELETE", headers: adminHeaders(serviceKey), body: JSON.stringify({ prefixes: paths }) },
+          timeoutMs
+        );
+        if (removed.status !== 200) {
+          return json({ error: `Could not delete the ${label} (Supabase returned ${removed.status})` }, 502);
+        }
       }
     }
 

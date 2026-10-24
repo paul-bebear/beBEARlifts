@@ -70,7 +70,7 @@ describe("api/account/delete", () => {
     expect(fetchStub.firstCall.args[1].headers.Authorization).to.equal("Bearer user-jwt");
   });
 
-  it("deletes the user's backups, then the auth user, with the service key", async () => {
+  it("deletes the user's backups and meal photos, then the auth user, with the service key", async () => {
     fetchStub.onCall(0).resolves(reply({ id: "u1" }));
     fetchStub.onCall(1).resolves(
       reply([
@@ -79,30 +79,47 @@ describe("api/account/delete", () => {
       ])
     );
     fetchStub.onCall(2).resolves(reply([{ name: "u1/latest.json" }, { name: "u1/day-0.json" }]));
-    fetchStub.onCall(3).resolves(reply({}));
+    fetchStub.onCall(3).resolves(reply([{ id: "c", name: "p1.jpg" }]));
+    fetchStub.onCall(4).resolves(reply([{ name: "u1/p1.jpg" }]));
+    fetchStub.onCall(5).resolves(reply({}));
     const response = await POST(post());
     expect(response.status).to.equal(200);
     expect(await response.json()).to.deep.equal({ deleted: true });
 
-    const [list, remove, deleteUser] = [fetchStub.getCall(1), fetchStub.getCall(2), fetchStub.getCall(3)];
+    const [list, remove, listMeals, removeMeals, deleteUser] = [1, 2, 3, 4, 5].map((i) => fetchStub.getCall(i));
     expect(list.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/list/backups`);
     expect(JSON.parse(list.args[1].body).prefix).to.equal("u1");
     expect(list.args[1].headers.apikey).to.equal("sb_secret_test");
     expect(remove.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/backups`);
     expect(remove.args[1].method).to.equal("DELETE");
     expect(JSON.parse(remove.args[1].body)).to.deep.equal({ prefixes: ["u1/latest.json", "u1/day-0.json"] });
+    expect(listMeals.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/list/meal-photos`);
+    expect(removeMeals.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/meal-photos`);
+    expect(JSON.parse(removeMeals.args[1].body)).to.deep.equal({ prefixes: ["u1/p1.jpg"] });
     expect(deleteUser.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
     expect(deleteUser.args[1].method).to.equal("DELETE");
     expect(deleteUser.args[1].headers.Authorization).to.equal("Bearer sb_secret_test");
   });
 
-  it("skips the storage delete when the user has no backups", async () => {
+  it("skips the storage delete when the user has no stored files", async () => {
     fetchStub.onCall(0).resolves(reply({ id: "u1" }));
     fetchStub.onCall(1).resolves(reply([]));
-    fetchStub.onCall(2).resolves(new Response(null, { status: 204 }));
+    fetchStub.onCall(2).resolves(reply([]));
+    fetchStub.onCall(3).resolves(new Response(null, { status: 204 }));
     expect((await POST(post())).status).to.equal(200);
-    expect(fetchStub.callCount).to.equal(3);
+    expect(fetchStub.callCount).to.equal(4);
     expect(fetchStub.lastCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
+  });
+
+  it("keeps the account when the meal photos cannot be deleted", async () => {
+    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(1).resolves(reply([]));
+    fetchStub.onCall(2).resolves(reply([{ id: "c", name: "p1.jpg" }]));
+    fetchStub.onCall(3).resolves(reply({ message: "boom" }, 500));
+    const response = await POST(post());
+    expect(response.status).to.equal(502);
+    expect((await response.json()).error).to.include("meal photos");
+    expect(fetchStub.callCount).to.equal(4);
   });
 
   it("keeps the account when the backups cannot be deleted", async () => {
@@ -118,7 +135,8 @@ describe("api/account/delete", () => {
   it("reports a failed auth delete and a Supabase timeout", async () => {
     fetchStub.onCall(0).resolves(reply({ id: "u1" }));
     fetchStub.onCall(1).resolves(reply([]));
-    fetchStub.onCall(2).resolves(reply({ msg: "Database error deleting user" }, 500));
+    fetchStub.onCall(2).resolves(reply([]));
+    fetchStub.onCall(3).resolves(reply({ msg: "Database error deleting user" }, 500));
     expect((await POST(post())).status).to.equal(502);
     fetchStub.reset();
     fetchStub.rejects(new Error("aborted"));

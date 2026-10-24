@@ -1,11 +1,15 @@
 import * as fs from "fs";
+import * as os from "os";
 import * as jwt from "jsonwebtoken";
 
 const API_BASE_URL = "https://api.appstoreconnect.apple.com/v1";
-const BUNDLE_ID = "com.liftosaur.www";
-const ISSUER_ID = "4c82c687-0990-4745-ac91-89ab459a6c5c";
-const KEY_ID = "F286YBUYZ7";
-const KEY_PATH = "./lambda/scripts/AuthKey_F286YBUYZ7.p8";
+const BUNDLE_ID = fs
+  .readFileSync("./ios/AppBranding.xcconfig", "utf8")
+  .match(/^APP_BUNDLE_PREFIX = (.+)$/m)![1]
+  .trim();
+const ISSUER_ID = process.env.ASC_ISSUER_ID!;
+const KEY_ID = process.env.ASC_KEY_ID!;
+const KEY_PATH = process.env.ASC_KEY_PATH || `${os.homedir()}/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8`;
 const LOCALE = "en-US";
 const BUILD_POLL_INTERVAL_MS = 60 * 1000;
 const BUILD_POLL_TIMEOUT_MS = 45 * 60 * 1000;
