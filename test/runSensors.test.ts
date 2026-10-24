@@ -1,7 +1,13 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { RunSensors_isAvailable, RunSensors_keepScreenOn, RunSensors_watch } from "../src/utils/runSensors";
+import {
+  RunSensors_isAvailable,
+  RunSensors_keepScreenOn,
+  RunSensors_platform,
+  RunSensors_requestPermission,
+  RunSensors_watch,
+} from "../src/utils/runSensors";
 
 describe("RunSensors", () => {
   const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
@@ -47,6 +53,11 @@ describe("RunSensors", () => {
     failure({ code: 3 });
     expect(point.callCount).to.equal(2);
     expect(error.callCount).to.equal(1);
+  });
+
+  it("leaves the location prompt to the browser", async () => {
+    expect(RunSensors_platform).to.equal("web");
+    expect(await RunSensors_requestPermission()).to.equal("granted");
   });
 
   it("handles platforms without GPS or wake lock", () => {
