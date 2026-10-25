@@ -301,6 +301,8 @@
       "modulesProvider": {
         "BebearSignInConfig": "RCTBebearSignInConfig",
         "LiftosaurShare": "RCTLiftosaurShare",
+        "LiftosaurLocation": "RCTLiftosaurLocation",
+        "LiftosaurMapSnapshot": "RCTLiftosaurMapSnapshot",
         "LiftosaurTimer": "RCTLiftosaurTimer",
         "LiftosaurLiveActivity": "RCTLiftosaurLiveActivity",
         "LiftosaurWatch": "RCTLiftosaurWatch",

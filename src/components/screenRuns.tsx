@@ -1,12 +1,18 @@
 import { JSX, useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { IRun, RunLog_date, RunLog_pace, RunLog_put, RunLog_remove } from "../models/runLog";
-import { IRunRecording, RunRecording_restore, RunRecording_snapshot, RunRecording_start } from "../models/runRecording";
+import {
+  IRunRecording,
+  RunRecording_permissionText,
+  RunRecording_restore,
+  RunRecording_snapshot,
+  RunRecording_start,
+} from "../models/runRecording";
 import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPace } from "../models/runTrack";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 import { RunDraftStore, RunStore } from "../utils/runStore";
-import { RunSensors_isAvailable } from "../utils/runSensors";
+import { RunSensors_isAvailable, RunSensors_platform, RunSensors_requestPermission } from "../utils/runSensors";
 import { Text } from "./primitives/text";
 import { Button } from "./button";
 import { RunRecorder } from "./runRecorder";
@@ -41,6 +47,12 @@ export function ScreenRuns(): JSX.Element {
   const start = async (): Promise<void> => {
     setLoading(true);
     try {
+      const blocked = RunRecording_permissionText(await RunSensors_requestPermission(), RunSensors_platform);
+      if (blocked != null) {
+        Dialog_alert(blocked);
+        setLoading(false);
+        return;
+      }
       const next = RunRecording_snapshot(RunRecording_start(Date.now()), Date.now());
       await RunDraftStore.update(() => next);
       setSelected(undefined);

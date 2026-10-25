@@ -1,7 +1,14 @@
 import { IRunPoint } from "../models/runTrack";
+import { IRunPermission, IRunSensorPlatform } from "../models/runRecording";
+
+export const RunSensors_platform: IRunSensorPlatform = "web";
 
 export function RunSensors_isAvailable(): boolean {
   return typeof navigator !== "undefined" && navigator.geolocation != null;
+}
+
+export async function RunSensors_requestPermission(): Promise<IRunPermission> {
+  return "granted";
 }
 
 export function RunSensors_watch(onPoint: (point: IRunPoint) => void, onError: (code: number) => void): () => void {

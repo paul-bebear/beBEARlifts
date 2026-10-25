@@ -21,6 +21,13 @@ export function RunLog_empty(): IRunLog {
   return { version: 1, runs: [] };
 }
 
+export function RunLog_cardDate(startedAt: number): string {
+  const date = new Date(startedAt);
+  const day = date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const time = date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return `${day} · ${time}`;
+}
+
 export function RunLog_date(startedAt: number): string {
   return new Date(startedAt).toLocaleString(undefined, {
     day: "numeric",
