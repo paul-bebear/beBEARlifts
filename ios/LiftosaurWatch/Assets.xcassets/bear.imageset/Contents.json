@@ -1,15 +1,17 @@
 {
   "images" : [
     {
+      "filename" : "bear.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "dino_silhouette_filled.pdf",
+      "filename" : "bear@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "bear@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

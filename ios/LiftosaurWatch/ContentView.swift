@@ -159,7 +159,7 @@ struct ContentView: View {
                     )
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
-                            Image("dino")
+                            Image("bear")
                                 .renderingMode(.template)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
