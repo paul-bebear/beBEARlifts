@@ -11,6 +11,11 @@ import { Thunk_exportEverything } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
 import { EffortRating_isEnabled } from "../models/effortRating";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { AccountPlan_settingsRow } from "../models/accountPlan";
+import { AccountPlanStore } from "../utils/accountPlanClient";
+import { PlusOfferClient_open, PlusOfferClient_restore } from "../utils/plusOfferClient";
+import { Purchases_isAvailable, Purchases_manage } from "../utils/purchases";
+import { CloudStore } from "../utils/supabaseClient";
 import { ISettings } from "../types";
 
 export function SettingsRateEachSet(props: { settings: ISettings; dispatch: IDispatch }): JSX.Element {
@@ -32,9 +37,35 @@ export function SettingsRateEachSet(props: { settings: ISettings; dispatch: IDis
   );
 }
 
+function SettingsPlusRows(): JSX.Element | null {
+  const plan = AccountPlanStore.use();
+  const userId = CloudStore.use().session?.userId;
+  if (!Purchases_isAvailable()) {
+    return null;
+  }
+  const row = AccountPlan_settingsRow(plan, userId);
+  const onClick = row.action === "open" ? PlusOfferClient_open : row.action === "manage" ? Purchases_manage : undefined;
+  return (
+    <>
+      <MenuItemWrapper name="bebear-plus" onClick={onClick == null ? undefined : () => onClick()}>
+        <View className="py-3">
+          <Text className="text-base text-text-primary">{row.title}</Text>
+          {row.subtitle != null && <Text className="text-xs text-text-secondary">{row.subtitle}</Text>}
+        </View>
+      </MenuItemWrapper>
+      <MenuItemWrapper name="bebear-plus-restore" onClick={() => PlusOfferClient_restore()}>
+        <View className="py-3">
+          <Text className="text-base text-text-primary">Restore purchases</Text>
+        </View>
+      </MenuItemWrapper>
+    </>
+  );
+}
+
 export function SettingsBackupRows(props: { dispatch: IDispatch }): JSX.Element {
   return (
     <>
+      <SettingsPlusRows />
       {OfflineOnly_isEnabled() && <CloudBackupCard dispatch={props.dispatch} />}
       <MenuItemWrapper name="Export everything" onClick={() => props.dispatch(Thunk_exportEverything())}>
         <View className="py-3">

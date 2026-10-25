@@ -2,7 +2,6 @@ import "mocha";
 import { expect } from "chai";
 import {
   CloudBackupForm_empty,
-  CloudBackupForm_parsePlan,
   CloudBackupForm_parseSentCode,
   CloudBackupForm_redeemedMessage,
   CloudBackupForm_resendLabel,
@@ -167,21 +166,9 @@ describe("CloudBackupForm", () => {
     expect(refused.proCode).to.equal(" BEAR-1 ");
     state = reduce(state, { type: "redeemed" });
     expect(state).to.deep.include({
-      plan: "plus",
       proCode: "",
       command: undefined,
       message: CloudBackupForm_redeemedMessage,
     });
-  });
-
-  it("keeps the plan only while signed in and reads it from the account_plans rows", () => {
-    expect(reduce(CloudBackupForm_empty(), { type: "plan", plan: "plus" }).plan).to.equal(undefined);
-    let state = reduce(CloudBackupForm_empty(), { type: "session", email: "paul@example.com" });
-    state = reduce(state, { type: "plan", plan: "plus" });
-    expect(state.plan).to.equal("plus");
-    expect(reduce(state, { type: "signedOut" }).plan).to.equal(undefined);
-    expect(CloudBackupForm_parsePlan([{ plan: "plus" }])).to.equal("plus");
-    expect(CloudBackupForm_parsePlan([])).to.equal("free");
-    expect(CloudBackupForm_parsePlan({ message: "relation does not exist" })).to.equal("free");
   });
 });

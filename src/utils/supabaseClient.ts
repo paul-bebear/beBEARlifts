@@ -106,6 +106,11 @@ export async function SupabaseClient_accessToken(): Promise<ICloudResult<string>
   return auth.ok ? { ok: true, value: auth.value.accessToken } : auth;
 }
 
+export async function SupabaseClient_signedIn(): Promise<ICloudResult<{ userId: string; accessToken: string }>> {
+  const auth = await SupabaseClient_session();
+  return auth.ok ? { ok: true, value: { userId: auth.value.userId, accessToken: auth.value.accessToken } } : auth;
+}
+
 export async function SupabaseClient_authed(
   path: string,
   init: RequestInit

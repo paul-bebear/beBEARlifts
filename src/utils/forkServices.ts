@@ -2,7 +2,8 @@ import { ProgramsHost_fork } from "./programsHost";
 
 export function ForkServices_plan(
   offline: boolean,
-  premiumUnlocked = false
+  premiumUnlocked = false,
+  ios = false
 ): {
   rollbar: boolean;
   analytics: boolean;
@@ -10,19 +11,23 @@ export function ForkServices_plan(
   push: boolean;
   serverStartup: boolean;
   storeKit: boolean;
+  revenueCat: boolean;
   universalLinks: boolean;
   ota: boolean;
   upstreamLogin: boolean;
   appleSignIn: boolean;
   googleSignIn: boolean;
 } {
+  const storeKit = !offline && !premiumUnlocked;
   return {
     rollbar: !offline,
     analytics: !offline,
     telemetry: !offline,
     push: !offline,
     serverStartup: !offline,
-    storeKit: !offline && !premiumUnlocked,
+    storeKit,
+    // Upstream's react-native-iap listeners would also finish RevenueCat's transactions, so only one of the two runs.
+    revenueCat: ios && !storeKit,
     universalLinks: !offline,
     ota: !offline,
     upstreamLogin: !offline,

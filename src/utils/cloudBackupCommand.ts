@@ -5,24 +5,15 @@ import {
   Thunk_cloudRestore,
 } from "../ducks/cloudBackupThunks";
 import { IThunk } from "../ducks/types";
-import {
-  CloudBackupForm_parsePlan,
-  IAccountPlan,
-  ICloudBackupCommand,
-  ICloudBackupEvent,
-} from "../models/cloudBackupForm";
+import { ICloudBackupCommand, ICloudBackupEvent } from "../models/cloudBackupForm";
 import {
   CloudBackupClient_deleteAccount,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
   CloudBackupClient_verify,
 } from "./cloudBackupClient";
-import { SentCodeStore, SupabaseClient_authed, SupabaseClient_json, SupabaseClient_readJson } from "./supabaseClient";
-
-export async function CloudBackupCommand_loadPlan(): Promise<IAccountPlan | undefined> {
-  const result = await SupabaseClient_authed("/rest/v1/account_plans?select=plan", { method: "GET" });
-  return result.ok ? CloudBackupForm_parsePlan(await SupabaseClient_readJson(result.value.response)) : undefined;
-}
+import { SentCodeStore, SupabaseClient_authed, SupabaseClient_json } from "./supabaseClient";
+import { AccountPlanClient_markCodeRedeemed } from "./accountPlanClient";
 
 export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (event: ICloudBackupEvent) => void): IThunk {
   return async (dispatch, getState, env) => {
@@ -78,6 +69,9 @@ export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (even
             "/rest/v1/rpc/redeem_pro_code",
             SupabaseClient_json({ p_code: command.proCode ?? "" })
           );
+          if (result.ok) {
+            await AccountPlanClient_markCodeRedeemed(result.value.userId);
+          }
           emit(result.ok ? { type: "redeemed" } : { type: "failed", error: result.error });
           break;
         }

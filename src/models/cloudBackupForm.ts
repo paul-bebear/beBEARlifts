@@ -21,14 +21,12 @@ export type ICloudBackupCommand = {
   copy?: ICloudCopy;
   proCode?: string;
 };
-export type IAccountPlan = "free" | "plus";
 
 export interface ICloudBackupForm {
   step: "email" | "code" | "signedIn";
   email: string;
   code: string;
   proCode: string;
-  plan?: IAccountPlan;
   command?: ICloudBackupCommand;
   error?: string;
   message?: string;
@@ -40,7 +38,6 @@ export interface ICloudBackupForm {
 
 export type ICloudBackupEvent =
   | { type: "email" | "code" | "proCode" | "deleteText"; value: string }
-  | { type: "plan"; plan: IAccountPlan }
   | { type: "redeemed" }
   | { type: "deleteOpen" | "deleteCancel" | "toggleOlderCopies" }
   | { type: "deleted" }
@@ -85,13 +82,6 @@ export function CloudBackupForm_empty(): ICloudBackupForm {
 }
 
 export const CloudBackupForm_redeemedMessage = "Code redeemed. You have beBEAR+.";
-
-// PostgREST answers a select on account_plans with an array, empty for an account that never redeemed a code.
-export function CloudBackupForm_parsePlan(body: unknown): IAccountPlan {
-  return Array.isArray(body) && body.some((row) => (row as { plan?: unknown } | null)?.plan === "plus")
-    ? "plus"
-    : "free";
-}
 
 export function CloudBackupForm_parseSentCode(raw: unknown): ISentCode {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -141,11 +131,8 @@ export function CloudBackupForm_reduce(state: ICloudBackupForm, event: ICloudBac
       message: "Signed in. Backups upload after each workout.",
     };
   }
-  if (event.type === "plan") {
-    return state.step === "signedIn" ? { ...state, plan: event.plan } : state;
-  }
   if (event.type === "redeemed") {
-    return { ...state, command: undefined, proCode: "", plan: "plus", message: CloudBackupForm_redeemedMessage };
+    return { ...state, command: undefined, proCode: "", message: CloudBackupForm_redeemedMessage };
   }
   if (event.type === "done") {
     return { ...state, command: undefined, message: event.message, showOlderCopies: false };
