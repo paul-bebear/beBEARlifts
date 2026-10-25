@@ -1,7 +1,6 @@
 import { JSX, useMemo } from "react";
 import { useRoute } from "@react-navigation/native";
 import { useTrackedState, useTrackedDispatch, untrack } from "../TrackedStateContext";
-import { buildNavCommon } from "../utils";
 import { NavScreenContent } from "../NavScreenContent";
 import { ScreenWorkout } from "../../components/screenWorkout";
 import { ScreenFinishDay as ScreenFinishDayComponent } from "../../components/screenFinishDay";
@@ -93,22 +92,6 @@ export function NavScreenFinishDay(): JSX.Element {
 }
 
 export function NavScreenSubscription(): JSX.Element {
-  const state = useTrackedState();
   const dispatch = useTrackedDispatch();
-  const navCommon = untrack(buildNavCommon(state));
-  return (
-    <ScreenSubscriptionComponent
-      history={untrack(state.storage.history)}
-      prices={untrack({ ...state.storage.subscriptionPrices, ...state.prices })}
-      offers={untrack(state.offers)}
-      appleOffer={untrack(state.appleOffer)}
-      googleOffer={untrack(state.googleOffer)}
-      subscription={untrack(state.storage.subscription)}
-      subscriptionLoading={state.subscriptionLoading}
-      subscriptionStatus={state.subscriptionStatus}
-      ownedLifetime={state.ownedLifetime}
-      dispatch={dispatch}
-      navCommon={navCommon}
-    />
-  );
+  return <ScreenSubscriptionComponent dispatch={dispatch} />;
 }

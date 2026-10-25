@@ -9,7 +9,7 @@ import { Modal } from "./modal";
 import { MusclesView } from "./muscles/musclesView";
 import { Locker } from "./locker";
 import { navigateToModal } from "../navigation/navigationService";
-import { Subscriptions_hasSubscription } from "../utils/subscriptions";
+import { usePlusAccess } from "../utils/usePlusAccess";
 import {
   IEvaluatedProgram,
   Program_evaluate,
@@ -183,6 +183,7 @@ interface IProgramPreviewMusclesModalProps {
 }
 
 export function ProgramPreviewMusclesModal(props: IProgramPreviewMusclesModalProps): JSX.Element {
+  const hasMuscles = usePlusAccess("muscles");
   let points: IPoints | undefined;
   let name = "";
   if (props.muscles.type === "program") {
@@ -206,11 +207,9 @@ export function ProgramPreviewMusclesModal(props: IProgramPreviewMusclesModalPro
       shouldShowClose={true}
       onClose={props.onClose}
       isFullWidth={true}
-      overflowHidden={props.dispatch && !Subscriptions_hasSubscription(props.subscription)}
+      overflowHidden={props.dispatch && !hasMuscles}
     >
-      {props.dispatch && (
-        <Locker topic="Muscles" dispatch={props.dispatch} blur={8} subscription={props.subscription} />
-      )}
+      {props.dispatch && <Locker topic="Muscles" feature="muscles" dispatch={props.dispatch} blur={8} />}
       <Text className="pb-2 text-xl font-bold text-center">{title}</Text>
       <MusclesView settings={props.settings} points={points} title={props.program.name} />
     </Modal>

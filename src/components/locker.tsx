@@ -3,21 +3,21 @@ import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { Button } from "./button";
 import { IDispatch } from "../ducks/types";
-import { Subscriptions_hasSubscription } from "../utils/subscriptions";
+import { usePlusAccess } from "../utils/usePlusAccess";
 import { Thunk_pushScreen } from "../ducks/thunks";
-import { ISubscription } from "../types";
+import { IPlusFeature } from "../models/plusAccess";
 
 interface IProps {
   dispatch: IDispatch;
-  subscription: ISubscription;
+  feature: IPlusFeature;
   topic: string;
   blur: number;
 }
 
 function LockerInner(props: IProps): JSX.Element {
-  const isSubscribed = Subscriptions_hasSubscription(props.subscription);
+  const isUnlocked = usePlusAccess(props.feature);
 
-  if (isSubscribed) {
+  if (isUnlocked) {
     return <></>;
   }
   return (
@@ -32,7 +32,7 @@ function LockerInner(props: IProps): JSX.Element {
     >
       <View className="mx-auto text-center" style={{ maxWidth: 192 }}>
         <Text>
-          Get <Text className="font-bold text-icon-yellow">Premium</Text> to unlock{" "}
+          Get <Text className="font-bold text-icon-yellow">beBEAR+</Text> to unlock{" "}
           <Text className="font-bold">{props.topic}</Text>
         </Text>
       </View>

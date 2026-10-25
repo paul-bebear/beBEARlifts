@@ -43,7 +43,7 @@ Behind the plugin is the Liftosaur MCP server. MCP (Model Context Protocol) is a
 - **Testing and analysis**: `run_playground` simulates a workout to check that a progression works. `get_program_stats` reports duration per day, weekly volume per muscle group, and the strength vs hypertrophy split.
 - **Reference**: the Liftoscript language reference, complete program examples, the program design guide, the workout record format, the built-in exercise list, and the source of every built-in program.
 
-Everything that touches your account needs [Premium](/features/premium). The reference tools work without an account.
+Everything that touches your account needs [beBEAR+](/features/premium). The reference tools work without an account.
 
 ## Write a program with an assistant
 
@@ -64,7 +64,7 @@ Any MCP client can use the same server. The URL is `https://www.liftosaur.com/mc
 
 Sign-in uses OAuth 2.1. The client opens a browser window once, and then refreshes the token on its own. Command-line clients and config-file setups can skip the browser and send an [API key](/features/api) as `Authorization: Bearer lftsk_your_key_here` instead. Every client's exact steps are in the [MCP server docs](/doc/mcp).
 
-## Without Premium
+## Without beBEAR+
 
 The reference tools are open to everyone. An assistant can read the Liftoscript reference, the examples, the design guide and the built-in programs, and write valid Liftoscript for you. Paste the result into the [Web Editor](/planner), or into the program editor in the app. See [Liftoscript](/doc/liftoscript) for the syntax.
 

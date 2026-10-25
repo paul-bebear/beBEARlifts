@@ -13,7 +13,7 @@ screenshots: [watch-apple-watch-exercise, watch-apple-watch-get-ready]
 
 ![New Workout card on the Apple Watch](/images/features/apple-watch/watch-apple-watch-home.webp)
 
-The watch app comes with the iPhone app. It needs Premium. Without it, the watch shows **Premium Required** with a **Recheck** button.
+The watch app comes with the iPhone app. It is free.
 
 Open Liftosaur on the phone once after pairing, or the watch shows **Sync Required**.
 

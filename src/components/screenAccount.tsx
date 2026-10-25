@@ -11,7 +11,6 @@ import {
   Thunk_createAccount,
   Thunk_deleteAccountRemote,
   Thunk_pushScreen,
-  Thunk_openManageSubscriptions,
   Thunk_iapRefreshActiveSubscriptions,
   Thunk_fetchAccounts,
 } from "../ducks/thunks";
@@ -29,15 +28,13 @@ import { IconGoogle } from "./icons/iconGoogle";
 import { LinkButton } from "./linkButton";
 import { IconTrash } from "./icons/iconTrash";
 import { IconApple } from "./icons/iconApple";
-import { IconSpinner } from "./icons/iconSpinner";
 import { Dialog_confirm, Dialog_prompt, Dialog_alert } from "../utils/dialog";
 import { EmailAuthButton } from "./account";
 import { navigateToModal } from "../navigation/navigationService";
 import { Tailwind_colors, Tailwind_semantic } from "../utils/tailwindConfig";
 import { IIapActiveSubscription } from "../utils/iapAdapter";
-import { SubscriptionPlan_derive, ISubscriptionPlanKind, IDerivedSubscriptionPlan } from "../utils/subscriptionPlan";
-import { DateUtils_format } from "../utils/date";
-import { StoreRuntime_isIos } from "../utils/storeRuntime";
+import { PlusAccess_accountRow } from "../models/plusAccess";
+import { useHasPlus } from "../utils/usePlusAccess";
 import { Support_email } from "../utils/support";
 
 declare let __HOST__: string;
@@ -93,18 +90,7 @@ export function ScreenAccount(props: IProps): JSX.Element {
     return () => sub.remove();
   }, []);
 
-  const isNative = Platform.OS === "ios" || Platform.OS === "android";
-  const plan = SubscriptionPlan_derive({
-    subscription: props.storage.subscription,
-    status: props.subscriptionStatus,
-    ownedLifetime: props.ownedLifetime,
-    isNative,
-    isIos: Platform.OS === "ios",
-  });
-  // "loading" = native subscriber whose store status hasn't arrived yet (status undefined). Spinning here
-  // (rather than flashing "Free plan") covers the first render and a failed getActiveSubscriptions(); once a
-  // known status arrives a re-check keeps showing it instead of flipping back to a spinner.
-  const isLoadingSubscription = plan.state === "loading";
+  const plusRow = PlusAccess_accountRow(useHasPlus());
 
   useEffect(() => {
     if (Platform.OS === "web" && typeof window !== "undefined" && window.AppleID?.auth) {
@@ -118,8 +104,6 @@ export function ScreenAccount(props: IProps): JSX.Element {
   }, []);
 
   useNavOptions({ navTitle: "Account", navHelpKey: "account" });
-
-  const premiumCard = buildPremiumCard(plan);
 
   const semantic = Tailwind_semantic();
   const colors = Tailwind_colors();
@@ -222,36 +206,15 @@ export function ScreenAccount(props: IProps): JSX.Element {
           <EmailAuthButton onPress={() => navigateToModal("emailAuthModal")} />
         </View>
       )}
-      <GroupHeader name="🌟 beBEAR Premium" topPadding={true} />
-      {isLoadingSubscription ? (
-        <MenuItem name="Checking your subscription…" expandName={true} value={<IconSpinner width={18} height={18} />} />
-      ) : (
-        <>
-          <MenuItem
-            name={premiumCard.title}
-            value={premiumCard.actionLabel}
-            shouldShowRightArrow={!!premiumCard.actionLabel}
-            expandName={true}
-            onClick={premiumCard.actionLabel ? () => props.dispatch(Thunk_pushScreen("subscription")) : undefined}
-            addons={
-              premiumCard.subtitle ? (
-                <Text className="-mt-1 text-xs text-text-secondary">{premiumCard.subtitle}</Text>
-              ) : undefined
-            }
-          />
-          {premiumCard.showCancel && (
-            <View className="pt-1">
-              <LinkButton
-                name="account-cancel-subscription"
-                className="text-sm text-text-error"
-                onClick={() => props.dispatch(Thunk_openManageSubscriptions())}
-              >
-                Cancel subscription
-              </LinkButton>
-            </View>
-          )}
-        </>
-      )}
+      <GroupHeader name="🐻 beBEAR+" topPadding={true} />
+      <MenuItem
+        name={plusRow.title}
+        value={plusRow.actionLabel}
+        shouldShowRightArrow={true}
+        expandName={true}
+        onClick={() => props.dispatch(Thunk_pushScreen("subscription"))}
+        addons={<Text className="-mt-1 text-xs text-text-secondary">{plusRow.subtitle}</Text>}
+      />
       <GroupHeader
         name="Other local accounts"
         topPadding={true}
@@ -395,63 +358,4 @@ export function ScreenAccount(props: IProps): JSX.Element {
       )}
     </View>
   );
-}
-
-interface IPremiumCard {
-  title: string;
-  subtitle?: string;
-  actionLabel?: string;
-  showCancel: boolean;
-}
-
-function buildPremiumCard(plan: IDerivedSubscriptionPlan): IPremiumCard {
-  const planKindLabel = (k?: ISubscriptionPlanKind): string =>
-    k === "yearly" ? "Yearly" : k === "monthly" ? "Monthly" : "Premium";
-  const dateStr = plan.expirationDate ? DateUtils_format(plan.expirationDate, true) : undefined;
-  switch (plan.state) {
-    case "subscriber":
-      return {
-        title: `Premium — ${planKindLabel(plan.plan)}`,
-        subtitle: dateStr ? `Renews on ${dateStr}` : "Active subscription",
-        actionLabel: "Manage",
-        showCancel: true,
-      };
-    case "cancelled":
-      return {
-        title: `Premium — ${planKindLabel(plan.plan)}`,
-        subtitle: dateStr ? `Ends on ${dateStr}, won't renew` : "Won't renew",
-        actionLabel: "Manage",
-        showCancel: false,
-      };
-    case "lifetime":
-      return {
-        title: "Lifetime Premium",
-        subtitle: "All features unlocked forever",
-        actionLabel: "View",
-        showCancel: false,
-      };
-    case "freeaccess":
-      return {
-        title: "Free access",
-        subtitle: "All features unlocked",
-        actionLabel: "View",
-        showCancel: false,
-      };
-    case "premium":
-      return { title: "Premium", subtitle: "Manage on the mobile app", actionLabel: "Manage", showCancel: false };
-    case "otherstore":
-      return {
-        title: "Premium",
-        subtitle:
-          plan.managedOn === "apple"
-            ? "Bought on the App Store — manage it on an Apple device"
-            : StoreRuntime_isIos()
-              ? "Bought on another device — manage it there"
-              : "Bought on Google Play — manage it on an Android device",
-        actionLabel: "View",
-        showCancel: false,
-      };
-    default:
-      return { title: "Free plan", actionLabel: "Get Premium", showCancel: false };
-  }
 }
