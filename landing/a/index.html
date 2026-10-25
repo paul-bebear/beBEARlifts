@@ -252,6 +252,40 @@
   .cell.three { background: var(--tint-sage); }
   .cell.two p, .cell.three p { color: var(--muted); }
 
+  .compare { padding-block: 0 72px; }
+  .compare h2 { font-size: clamp(36px, 7vw, 56px); text-transform: uppercase; line-height: 0.98; max-width: 18ch; }
+  .compare .lead { color: var(--muted); max-width: 44ch; margin: 12px 0 20px; }
+  .period { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 18px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--line); }
+  .period button { min-height: 44px; padding: 0 20px; font-size: 15px; background: transparent; color: var(--muted); }
+  .period button:hover { background: var(--tint-sage); }
+  .period button[aria-pressed="true"] { background: var(--forest); color: var(--cream); }
+  .receipts { display: grid; gap: 14px; }
+  .receipt { display: flex; flex-direction: column; border-radius: var(--radius); padding: 24px; background: var(--surface); border: 1.5px solid var(--line); }
+  .receipt h3 { font-size: 30px; line-height: 1; margin-bottom: 6px; }
+  .receipt ul { list-style: none; margin: 0; padding: 0; }
+  .receipt li, .receipt .total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  .receipt li { padding: 12px 0; border-bottom: 1.5px dashed var(--line); }
+  .receipt li small { display: block; font-size: 14px; color: var(--muted); }
+  .receipt b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .receipt .total { margin: auto 0 0; padding-top: 14px; font-weight: 700; }
+  .receipt .total b { font-family: var(--display); font-size: 34px; line-height: 1; }
+  .receipt.us { background: var(--forest); color: var(--cream); border-color: var(--forest); }
+  .receipt.us li { border-bottom-color: #2c5a44; }
+  .receipt.us li small { color: #cfd9cf; }
+  .receipt.us .total b { color: var(--honey); }
+  .save { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 5vw, 40px); text-transform: uppercase; line-height: 1; margin: 24px 0 8px; }
+  .lifetime { margin: 0 0 16px; max-width: 52ch; }
+  .fine { font-size: 13px; color: var(--muted); max-width: 70ch; margin: 0; }
+  .perks { display: grid; gap: 14px; margin: 8px 0 24px; }
+  .perk-list { border-radius: var(--radius); padding: 24px; background: var(--surface); border: 1.5px solid var(--line); }
+  .perk-list.plus { background: var(--tint-honey); border-color: transparent; }
+  .perk-list h3 { font-size: 30px; line-height: 1; }
+  .perk-list .note { margin: 6px 0 14px; color: var(--muted); font-size: 15px; }
+  .perk-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .perk-list li { display: flex; gap: 10px; align-items: baseline; }
+  .perk-list li::before { content: "✓"; font-weight: 800; color: var(--success); flex: none; }
+  @media (min-width: 760px) { .receipts, .perks { grid-template-columns: 1fr 1fr; } }
+
   .closing { background: var(--forest); color: var(--cream); }
   .closing .wrap { display: grid; gap: 24px; align-items: center; padding-block: 56px 0; }
   .closing h2 { font-size: clamp(42px, 9vw, 76px); text-transform: uppercase; line-height: 0.95; }
@@ -353,6 +387,66 @@
     </div>
   </section>
 
+  <section class="wrap compare" id="price">
+    <h2>Three apps cost $35 a month. Your bear costs $7.</h2>
+    <p class="lead">Most people pay one app to run, one to lift and one to count food. beBEAR does all three.</p>
+    <div class="period" role="group" aria-label="Show prices">
+      <button type="button" data-period="month" aria-pressed="true">Monthly</button>
+      <button type="button" data-period="year" aria-pressed="false">Yearly</button>
+    </div>
+    <div class="receipts">
+      <div class="receipt them">
+        <h3>Three apps</h3>
+        <ul>
+          <li><span>Strava<small>Runs</small></span><b data-month="$11.99" data-year="$79.99">$11.99</b></li>
+          <li><span>Liftoff Pro<small>Lifts</small></span><b data-month="$12.99" data-year="$79.99">$12.99</b></li>
+          <li><span>Cal AI<small>Food scans</small></span><b data-month="$9.99" data-year="$29.99">$9.99</b></li>
+        </ul>
+        <p class="total"><span data-month="Every month" data-year="Every year">Every month</span><b data-month="$34.97" data-year="$189.97">$34.97</b></p>
+      </div>
+      <div class="receipt us">
+        <h3>beBEAR</h3>
+        <ul>
+          <li><span>Lifts, food and runs<small>Log every set, meal and run</small></span><b>Free</b></li>
+          <li><span>beBEAR+<small>More AI, advanced insights, API and MCP</small></span><b data-month="$6.99" data-year="$39.99">$6.99</b></li>
+        </ul>
+        <p class="total"><span data-month="Every month" data-year="Every year">Every month</span><b data-month="$6.99" data-year="$39.99">$6.99</b></p>
+      </div>
+    </div>
+    <p class="save" data-month="You keep $27.98 every month." data-year="You keep $149.98 every year.">You keep $27.98 every month.</p>
+    <p class="lifetime">Or pay $79.99 once and keep beBEAR+ for life. That is what Strava costs for one year.</p>
+    <div class="perks">
+      <div class="perk-list plus">
+        <h3>What beBEAR+ adds</h3>
+        <p class="note">Everything in free, plus:</p>
+        <ul>
+          <li>150 AI uses a week instead of 10. Snap a meal, a label or a body-scan printout, say what you ate, or get a warm-up for today.</li>
+          <li>Week Insights: your volume, sets and PRs each week</li>
+          <li>Muscle views: see which muscles each workout trains</li>
+          <li>Trend lines on your graphs</li>
+          <li>API and MCP: let Claude or ChatGPT read your training</li>
+          <li>Early access to new features</li>
+        </ul>
+      </div>
+      <div class="perk-list">
+        <h3>Free for everyone</h3>
+        <p class="note">Logging is always free. Liftoff puts some of these behind Pro.</p>
+        <ul>
+          <li>Log lifts, food and GPS runs</li>
+          <li>Barcode scan for packaged food</li>
+          <li>Ready plans for gym, home or street workout</li>
+          <li>Plates calculator and rest timer alerts</li>
+          <li>Apple Watch app</li>
+          <li>Graphs for every lift and your body weight, all your history</li>
+          <li>Body measurements, import and export</li>
+          <li>Friends feed, Spotify and your bear</li>
+          <li>10 AI uses a week, and an AI report after every workout</li>
+        </ul>
+      </div>
+    </div>
+    <p class="fine">Prices are US App Store list prices on 25 October 2026. They change over time and by country. beBEAR+ prices are the planned launch prices. Each app has features beBEAR does not have. Strava, Liftoff and Cal AI are trademarks of their owners and are not connected to beBEAR.</p>
+  </section>
+
   <section class="closing" id="join">
     <div class="wrap">
       <div>
@@ -435,6 +529,21 @@
           .then(function () {
             button.disabled = false;
           });
+      });
+    });
+  })();
+
+  (function () {
+    var buttons = document.querySelectorAll(".period button");
+    buttons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        var period = button.dataset.period;
+        buttons.forEach(function (other) {
+          other.setAttribute("aria-pressed", String(other === button));
+        });
+        document.querySelectorAll(".compare [data-month]").forEach(function (el) {
+          el.textContent = el.dataset[period];
+        });
       });
     });
   })();
