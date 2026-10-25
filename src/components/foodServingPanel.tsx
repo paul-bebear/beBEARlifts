@@ -12,7 +12,7 @@ import {
   FoodScanSteps_totals,
   IScanServing,
 } from "../models/foodScanSteps";
-import { FoodMealPicker, FoodNutrientsRow, FoodTextInput } from "./foodUi";
+import { FoodMealPicker, FoodNutrientsRow, FoodTextInput, useGramsFieldWidth } from "./foodUi";
 import { Button } from "./button";
 
 interface IProps {
@@ -35,6 +35,7 @@ function ItemRow(props: {
 }): JSX.Element {
   const { item } = props;
   const [gramsText, setGramsText] = useState(`${item.grams}`);
+  const gramsWidth = useGramsFieldWidth(4);
   const commit = (): void => {
     const grams = FoodAddFlow_parseGrams(gramsText);
     if (grams != null && grams !== item.grams) {
@@ -58,7 +59,7 @@ function ItemRow(props: {
             keyboardType="decimal-pad"
             inputMode="decimal"
             selectTextOnFocus={true}
-            style={{ width: 72, textAlign: "right" }}
+            style={{ width: gramsWidth, textAlign: "right" }}
             onBlur={commit}
             onSubmitEditing={commit}
           />

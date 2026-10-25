@@ -3,7 +3,7 @@ import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodLog_sum } from "../models/foodLog";
 import { FoodAddFlow_parseGrams, FoodAddFlow_setPhotoGrams, IFoodPhotoChoice } from "../models/foodAddFlow";
-import { FoodNutrientsRow, FoodTextInput } from "./foodUi";
+import { FoodNutrientsRow, FoodTextInput, useGramsFieldWidth } from "./foodUi";
 import { Button } from "./button";
 
 function ChoiceRow(props: {
@@ -13,6 +13,7 @@ function ChoiceRow(props: {
 }): JSX.Element {
   const { choice } = props;
   const [gramsText, setGramsText] = useState(`${choice.grams}`);
+  const gramsWidth = useGramsFieldWidth(4);
   const commitGrams = (): void => {
     const grams = FoodAddFlow_parseGrams(gramsText);
     if (grams != null && grams !== choice.grams) {
@@ -50,7 +51,7 @@ function ChoiceRow(props: {
         keyboardType="decimal-pad"
         inputMode="decimal"
         selectTextOnFocus={true}
-        style={{ width: 64, textAlign: "right" }}
+        style={{ width: gramsWidth, textAlign: "right" }}
         onBlur={commitGrams}
         onSubmitEditing={commitGrams}
       />

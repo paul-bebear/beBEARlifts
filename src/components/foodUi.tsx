@@ -1,5 +1,5 @@
 import { JSX } from "react";
-import { View, Pressable, TextInput, TextInputProps } from "react-native";
+import { View, Pressable, TextInput, TextInputProps, useWindowDimensions } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodLog_formatNumber, FoodLog_mealNames, FoodLog_meals, IFoodMeal, INutrients } from "../models/foodLog";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
@@ -15,6 +15,12 @@ export function FoodTextInput(props: TextInputProps & { testID?: string }): JSX.
       style={[{ fontSize: 16, color: semantic.text.primary }, props.style]}
     />
   );
+}
+
+// Digits grow with the iOS text size setting. A fixed 64 pt box showed 650 g as "65" at a large text size.
+export function useGramsFieldWidth(digits: number): number {
+  const { fontScale } = useWindowDimensions();
+  return Math.ceil(26 + digits * 10 * fontScale);
 }
 
 export function FoodMealPicker(props: { meal: IFoodMeal; onChange: (meal: IFoodMeal) => void }): JSX.Element {
