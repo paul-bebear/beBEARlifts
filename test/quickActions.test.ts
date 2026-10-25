@@ -4,23 +4,28 @@ import { QuickActions_inProgressLine, QuickActions_list } from "../src/models/qu
 
 describe("QuickActions", () => {
   it("lists only Food and Weight, the front-layer squares", () => {
-    const list = QuickActions_list({ isOngoingProgress: false });
+    const list = QuickActions_list({ isOngoingProgress: false, canRecordRun: false });
     expect(list.squares.map((s) => s.label)).to.eql(["Food", "Weight"]);
   });
 
+  it("adds a Run square after Food and Weight when the phone can record a run", () => {
+    const list = QuickActions_list({ isOngoingProgress: false, canRecordRun: true });
+    expect(list.squares.map((s) => s.id)).to.eql(["food", "weight", "run"]);
+  });
+
   it("marks no square as coming soon", () => {
-    const list = QuickActions_list({ isOngoingProgress: false });
+    const list = QuickActions_list({ isOngoingProgress: false, canRecordRun: false });
     expect(list.squares.filter((s) => s.isSoon)).to.eql([]);
   });
 
   it("starts a workout through the picker when none is ongoing", () => {
-    const list = QuickActions_list({ isOngoingProgress: false });
+    const list = QuickActions_list({ isOngoingProgress: false, canRecordRun: false });
     expect(list.workout.label).to.equal("Start workout");
     expect(list.workout.action).to.equal("pick");
   });
 
   it("resumes the ongoing workout", () => {
-    const list = QuickActions_list({ isOngoingProgress: true });
+    const list = QuickActions_list({ isOngoingProgress: true, canRecordRun: false });
     expect(list.workout.label).to.equal("Resume workout");
     expect(list.workout.action).to.equal("resume");
   });
