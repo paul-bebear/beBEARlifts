@@ -5,6 +5,9 @@ import { Text } from "./primitives/text";
 import { IconFood } from "./icons/iconFood";
 import { IconStats } from "./icons/iconStats";
 import { IconBarbell2 } from "./icons/iconBarbell2";
+import { IconRoute } from "./icons/iconRoute";
+import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
+import { RunSensors_isAvailable } from "../utils/runSensors";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { SheetScreenContainer } from "../navigation/SheetScreenContainer";
@@ -23,6 +26,8 @@ function SquareIcon(props: { id: IQuickActionId; color: string }): JSX.Element {
       return <IconFood size={28} color={props.color} />;
     case "weight":
       return <IconStats size={28} color={props.color} />;
+    case "run":
+      return <IconRoute size={28} color={props.color} />;
   }
 }
 
@@ -53,7 +58,10 @@ export function PlusSheetModal(): JSX.Element {
   const state = useTrackedState();
   const dispatch = useTrackedDispatch();
   const navigation = useNavigation();
-  const actions = QuickActions_list({ isOngoingProgress: buildNavCommon(state).isOngoingProgress });
+  const actions = QuickActions_list({
+    isOngoingProgress: buildNavCommon(state).isOngoingProgress,
+    canRecordRun: OfflineOnly_isEnabled() && RunSensors_isAvailable(),
+  });
   const close = (): void => navigation.goBack();
   const closeThen = (effect: () => void) => (): void => {
     close();
@@ -67,6 +75,7 @@ export function PlusSheetModal(): JSX.Element {
       );
     }),
     weight: closeThen(() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))),
+    run: closeThen(() => dispatch(Thunk_pushScreen("runs"))),
   };
   const onWorkout = closeThen(() => {
     if (actions.workout.action === "resume") {
