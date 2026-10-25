@@ -5,6 +5,7 @@ export interface IFoodPhotoItem {
   name: string;
   grams: number;
   nutrients: INutrients;
+  isAmountSuspect?: boolean;
 }
 
 export interface IFoodPhotoEstimate {
@@ -17,6 +18,24 @@ function num(value: unknown): number | undefined {
   return typeof n === "number" && isFinite(n) && n >= 0 ? n : undefined;
 }
 
+const fatCaloriesPerGram = 9;
+const macroMismatchShare = 0.15;
+const macroMismatchCalories = 20;
+
+function oneDecimal(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function checkedCalories(calories: number, macros: Omit<INutrients, "calories">, alcohol: number | undefined): number {
+  const fromMacros = 4 * macros.protein + 4 * macros.carbs + 9 * macros.fat + 7 * (alcohol ?? 0);
+  const gap = Math.abs(calories - fromMacros);
+  if (fromMacros === 0 || gap <= Math.max(fromMacros * macroMismatchShare, macroMismatchCalories)) {
+    return calories;
+  }
+  // An answer without an alcohol field may hide alcohol in the calorie surplus, so only a shortfall is fixed then.
+  return alcohol != null || calories < fromMacros ? Math.round(fromMacros) : calories;
+}
+
 function parseItem(raw: unknown): IFoodPhotoItem | undefined {
   if (raw == null || typeof raw !== "object") {
     return undefined;
@@ -24,20 +43,21 @@ function parseItem(raw: unknown): IFoodPhotoItem | undefined {
   const r = raw as Record<string, unknown>;
   const name = typeof r.name === "string" ? r.name.trim() : "";
   const grams = num(r.grams);
-  const calories = num(r.calories);
-  if (name === "" || grams == null || grams === 0 || calories == null) {
+  const rawCalories = num(r.calories);
+  if (name === "" || grams == null || grams === 0 || rawCalories == null) {
     return undefined;
   }
-  return {
-    name,
-    grams: Math.round(grams),
-    nutrients: {
-      calories: Math.round(calories),
-      protein: Math.round((num(r.protein) ?? 0) * 10) / 10,
-      carbs: Math.round((num(r.carbs) ?? 0) * 10) / 10,
-      fat: Math.round((num(r.fat) ?? 0) * 10) / 10,
-    },
+  const macros = {
+    protein: oneDecimal(num(r.protein) ?? 0),
+    carbs: oneDecimal(num(r.carbs) ?? 0),
+    fat: oneDecimal(num(r.fat) ?? 0),
   };
+  const calories = checkedCalories(Math.round(rawCalories), macros, num(r.alcohol));
+  const item: IFoodPhotoItem = { name, grams: Math.round(grams), nutrients: { calories, ...macros } };
+  if (calories > fatCaloriesPerGram * grams) {
+    item.isAmountSuspect = true;
+  }
+  return item;
 }
 
 export const FoodPhotoEstimate_cutOffNote = "The answer was cut off, so some foods may be missing. Add them by hand.";

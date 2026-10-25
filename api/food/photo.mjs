@@ -7,14 +7,33 @@ const maxImageChars = 3_000_000;
 const maxTextChars = 600;
 
 const itemsShape = `When the user had several of the same food, give one item with the total grams rather than one item per piece.
+For a drink, "grams" is its volume in ml. A cocktail is usually 150 to 300 ml, a beer 330 to 500 ml.
+"alcohol" is grams of pure alcohol in the portion, and 0 for food and soft drinks.
+Check every item before you answer. Calories must be close to 4 × protein + 4 × carbs + 9 × fat + 7 × alcohol. No food or drink has more than 9 calories per gram. Fix any item that fails.
 Answer with JSON only, no other text, in this shape:
-{"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4}],"note":"optional short caveat"}`;
+{"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4,"alcohol":0}],"note":"optional short caveat"}`;
+
+const pieceWeights = `For food that comes in pieces, count the pieces and multiply by the weight of one piece. Use these edible weights unless the photo clearly shows bigger or smaller pieces:
+- small corn tortilla, 10 to 15 cm: 20 g. Street tacos often use two per taco.
+- flour tortilla, 20 cm: 45 g. 25 cm: 70 g.
+- filling of one small taco: 30 to 45 g.
+- slice of sandwich bread: 30 g.
+- large egg without shell: 50 g.
+- slice of a 35 cm pizza cut in 8: 110 g.
+- one nigiri: 35 g.
+- tablespoon of oil: 14 g.
+- can of soda or bottle of beer: 330 ml. Glass of wine: 150 ml. Shot: 40 ml.`;
 
 const mealPrompt = `You estimate the nutrition of a meal from one photo, for a calorie tracker.
-List each separate food you can see. For each one, estimate the portion in grams from the plate size, utensils and packaging, then estimate calories, protein, carbs and fat for that portion.
+Work in this order.
+1. Name each separate food and drink you can see. Count the pieces you can count, such as tacos, slices or wings.
+2. Estimate the edible portion of each one in grams. Use the plate, utensils, hands and packaging for scale. Leave out what people do not eat: rinds, peels, bones, shells, and garnish that stays on the plate.
+3. Estimate calories, protein, carbs, fat and alcohol for that portion.
+${pieceWeights}
 Count visible oil, butter, sauces and dressings as their own items when they add real calories.
 If the photo shows a nutrition label or packaged product, use the label values.
-The user may add a note about the meal. Trust the note over the photo for amounts and hidden ingredients.
+The user may add a note about the meal. Trust the note over the photo for counts, amounts and hidden ingredients.
+In "note", name the one item whose amount you are least sure of, in one short sentence.
 If there is no food in the photo, return an empty list and say why in "note".
 ${itemsShape}`;
 
@@ -22,6 +41,7 @@ const describePrompt = `You estimate the nutrition of a meal from the user's des
 List each separate food. Use the amounts the user gives. When an amount is missing, assume one typical adult portion and say so in "note".
 For branded or packaged foods, use the brand's published values when you know them, for example "a pack of Buldak ramen" is one 140 g pack.
 Count cooking oil, butter and sauces as their own items when the description implies them.
+${pieceWeights}
 If the description is too vague to estimate, return an empty list and ask one short question in "note", or suggest a photo.
 ${itemsShape}`;
 
@@ -93,7 +113,8 @@ export async function POST(request) {
     ai,
     {
       maxTokens: task.maxTokens,
-      temperature: 0.2,
+      // The same taco photo gave 1,268 and 953 kcal at 0.2, so answers are kept as repeatable as the model allows.
+      temperature: 0,
       messages: [
         { role: "system", content: task.system },
         { role: "user", content: userContent(task, task.needsImage ? image : undefined, text) },

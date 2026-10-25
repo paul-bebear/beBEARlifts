@@ -3,6 +3,7 @@ import {
   FoodAddFlow_entryFromPick,
   FoodAddFlow_initialGrams,
   FoodAddFlow_nutrientsFor,
+  FoodAddFlow_regramPick,
   IFoodPhotoChoice,
   IFoodPick,
 } from "./foodAddFlow";
@@ -51,7 +52,11 @@ export function FoodBasket_remove(basket: IFoodBasketItem[], key: string): IFood
 }
 
 export function FoodBasket_setGrams(basket: IFoodBasketItem[], key: string, grams: number): IFoodBasketItem[] {
-  return grams > 0 ? basket.map((item) => (item.key === key ? { ...item, grams } : item)) : basket;
+  return grams > 0
+    ? basket.map((item) =>
+        item.key === key ? { ...item, pick: FoodAddFlow_regramPick(item.pick, grams), grams } : item
+      )
+    : basket;
 }
 
 export function FoodBasket_nutrients(item: IFoodBasketItem): INutrients {
@@ -88,7 +93,13 @@ export function FoodBasket_fromChoices(
   return choices
     .filter((c) => c.isSelected)
     .map((c, i) => ({
-      pick: { name: c.name, source, fixed: { grams: c.grams, nutrients: c.nutrients } },
+      pick: {
+        name: c.name,
+        source,
+        fixed: c.isAmountSuspect
+          ? { grams: c.grams, nutrients: c.nutrients, isAmountSuspect: true }
+          : { grams: c.grams, nutrients: c.nutrients },
+      },
       grams: c.grams,
       key: `ai|${nonce}|${i}`,
     }));
