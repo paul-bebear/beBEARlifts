@@ -22,7 +22,13 @@ const pieceWeights = `For food that comes in pieces, count the pieces and multip
 - slice of a 35 cm pizza cut in 8: 110 g.
 - one nigiri: 35 g.
 - tablespoon of oil: 14 g.
-- can of soda or bottle of beer: 330 ml. Glass of wine: 150 ml. Shot: 40 ml.`;
+- can of soda or bottle of beer: 330 ml. Glass of wine: 150 ml. Shot: 40 ml.
+- whole Spanish tortilla (tortilla de patatas) from a 24 cm pan: 800 to 1000 g, about 150 kcal per 100 g. One wedge of eight: 110 g.`;
+
+const eatenRules = `The items are exactly what gets logged, so they are what the user eats in this meal.
+Leave out oil or grease left in the pan, tray or plate. A fried dish such as tortilla, fries or fried rice already includes the oil it soaked up.
+A dish with a usual name, such as a tortilla de patatas, lasagna or a curry, is one item with the weight of the dish, unless the user lists the ingredients.
+"note" never asks the user to log a different amount than the items give.`;
 
 const mealPrompt = `You estimate the nutrition of a meal from one photo, for a calorie tracker.
 Work in this order.
@@ -30,9 +36,11 @@ Work in this order.
 2. Estimate the edible portion of each one in grams. Use the plate, utensils, hands and packaging for scale. Leave out what people do not eat: rinds, peels, bones, shells, and garnish that stays on the plate.
 3. Estimate calories, protein, carbs, fat and alcohol for that portion.
 ${pieceWeights}
-Count visible oil, butter, sauces and dressings as their own items when they add real calories.
+Count oil, butter, sauces and dressings on the food as their own items when they add real calories.
 If the photo shows a nutrition label or packaged product, use the label values.
+Food already eaten is gone from the photo. Estimate all the food still on the plate or tray, since that is what the user will eat.
 The user may add a note about the meal. Trust the note over the photo for counts, amounts and hidden ingredients.
+${eatenRules}
 In "note", name the one item whose amount you are least sure of, in one short sentence.
 If there is no food in the photo, return an empty list and say why in "note".
 ${itemsShape}`;
@@ -40,8 +48,10 @@ ${itemsShape}`;
 const describePrompt = `You estimate the nutrition of a meal from the user's description, for a calorie tracker.
 List each separate food. Use the amounts the user gives. When an amount is missing, assume one typical adult portion and say so in "note".
 For branded or packaged foods, use the brand's published values when you know them, for example "a pack of Buldak ramen" is one 140 g pack.
-Count cooking oil, butter and sauces as their own items when the description implies them.
+Count cooking oil, butter and sauces as their own items when the description implies them and no named dish already includes them.
+When the user says how much of a dish they eat in total, log that total, even if part of it is already eaten.
 ${pieceWeights}
+${eatenRules}
 If the description is too vague to estimate, return an empty list and ask one short question in "note", or suggest a photo.
 ${itemsShape}`;
 
