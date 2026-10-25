@@ -46,7 +46,7 @@ Tap a set row to expand it. Tap it again to collapse it. After you complete the 
 
 ![The e1RM column](/images/features/workout-screen/workout-screen-e1rm.webp) ![Why is the weight adjusted? sheet for a 212 lb target rounded to 210 lb](/images/features/workout-screen/workout-screen-rounding.webp)
 
-The second column header is **Target**. Tap it to cycle: **Target**, **Previous Set**, **Plates**, **e1RM**. **Plates** needs Premium and equipment set for the exercise. **e1RM** is the estimated one rep max for each set: the set's weight divided by the share of 1RM that the RPE chart gives for its reps at its RPE, with RPE 10 assumed when none is logged.
+The second column header is **Target**. Tap it to cycle: **Target**, **Previous Set**, **Plates**, **e1RM**. **Plates** needs equipment set for the exercise. **e1RM** is the estimated one rep max for each set: the set's weight divided by the share of 1RM that the RPE chart gives for its reps at its RPE, with RPE 10 assumed when none is logged.
 
 When the program's weight does not match your plates, the target shows the exact weight crossed out like ~~212lb~~ and the rounded weight underlined, 210lb. Tap the underlined weight. A sheet titled **Why is the weight adjusted?** explains the percentage of your 1RM, the kg to lb conversion, the bar weight, the plates per side, or the closest fixed dumbbell.
 
@@ -72,7 +72,7 @@ For notes on the whole workout, tap the kebab at the top and pick **Show Workout
 
 ![Graph and personal records under the sets](/images/features/workout-screen/workout-screen-history.webp)
 
-Scroll below the sets. The graph shows your weights over time for this exercise, after two or more past workouts. It needs Premium. **Hide Graphs and PRs** hides this block.
+Scroll below the sets. The graph shows your weights over time for this exercise, after two or more past workouts. **Hide Graphs and PRs** hides this block.
 
 **Personal Records** lists **Max Weight** and **Max 1RM** with their dates. **Max 1RM** is an estimate (e1RM), not a lift you did. The app takes the weight of a set and divides it by the share of your 1RM that the RPE chart gives for that many reps at that RPE. A set without a logged RPE counts as RPE 10, so 5 reps at 200 lb become 200 lb ÷ 0.865 ≈ 231 lb. The chart follows the OpenPowerlifting RPE calculator. Under the records is every past workout of this exercise.
 

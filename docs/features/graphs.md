@@ -13,7 +13,7 @@ screenshots: [graphs-exercise, graphs-muscle-group]
 
 ![Bench Press graph on the Graphs tab](/images/features/graphs/graphs-exercise.webp)
 
-Tap **Graphs** in the footer. Graphs are a Premium feature. Without Premium, the tab opens the subscription screen instead.
+Tap **Graphs** in the footer. Graphs are free.
 
 The first time, the screen says "Select graphs you want to display by tapping filter icon at right top corner." Every graph you pick stays on this screen, in the order you set, until you remove it.
 
@@ -87,5 +87,3 @@ The **Settings** group at the top of the picker sheet has:
 Every exercise also has its own **Exercise Stats** screen. Open it from **Me → Exercises** and tap the exercise, or tap the exercise name during a workout.
 
 The screen shows the exercise graph with the e1RM line and program lines always on. Below the graph, the **Personal Records** card lists your **Max Weight** and **Max 1RM**, each with the date. The 1RM row also shows the set behind it, like `5 x 225lb`. Tap a record to open that workout. The exercise history follows below.
-
-Without Premium, the graph on this screen is blurred and does not respond to touch. The personal records stay visible.

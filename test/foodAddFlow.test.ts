@@ -94,6 +94,23 @@ describe("FoodAddFlow photo", () => {
     });
   });
 
+  it("keeps calories on the first edit of a suspect amount, then scales", () => {
+    const margarita = {
+      name: "Margarita",
+      grams: 20,
+      nutrients: { calories: 240, protein: 0, carbs: 22, fat: 0 },
+      isAmountSuspect: true,
+    };
+    const fixed = FoodAddFlow_setPhotoGrams(FoodAddFlow_photoChoices([margarita]), 0, 240);
+    expect(fixed[0]).to.deep.equal({
+      name: "Margarita",
+      grams: 240,
+      nutrients: { calories: 240, protein: 0, carbs: 22, fat: 0 },
+      isSelected: true,
+    });
+    expect(FoodAddFlow_setPhotoGrams(fixed, 0, 480)[0].nutrients.calories).to.equal(480);
+  });
+
   it("logs only the selected items", () => {
     let n = 0;
     const choices = FoodAddFlow_photoChoices(items).map((c, i) => ({ ...c, isSelected: i === 0 }));

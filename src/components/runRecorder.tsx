@@ -5,26 +5,33 @@ import { Text } from "./primitives/text";
 import { Button } from "./button";
 import {
   IRunRecording,
-  RunRecording_addPoint,
+  IRunRecordingStep,
+  RunRecording_clearsGpsError,
   RunRecording_fixText,
+  RunRecording_gapRule,
   RunRecording_gpsErrorText,
-  RunRecording_isSaveDue,
   RunRecording_markHidden,
+  RunRecording_onFix,
+  RunRecording_onTick,
   RunRecording_pause,
   RunRecording_pauseStale,
   RunRecording_recentPace,
   RunRecording_resume,
+  RunRecording_screenHints,
   RunRecording_snapshot,
+  RunRecording_stats,
   RunRecording_toRun,
 } from "../models/runRecording";
-import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPace, RunTrack_stats } from "../models/runTrack";
+import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPace } from "../models/runTrack";
 import { IRun } from "../models/runLog";
 import { RunDraftStore } from "../utils/runStore";
-import { RunSensors_keepScreenOn, RunSensors_watch } from "../utils/runSensors";
+import { RunSensors_keepScreenOn, RunSensors_platform, RunSensors_watch } from "../utils/runSensors";
 import { Dialog_confirm } from "../utils/dialog";
 
+const gapRule = RunRecording_gapRule(RunSensors_platform);
+
 function RecordingStats(props: { recording: IRunRecording; now: number; dark?: boolean }): JSX.Element {
-  const stats = RunTrack_stats(props.recording.segments, props.now);
+  const stats = RunRecording_stats(props.recording, props.now, gapRule);
   const textClass = props.dark ? "text-white" : "text-text-primary";
   return (
     <View className="items-center py-6" style={{ gap: 16 }}>
@@ -69,19 +76,31 @@ export function RunRecorder(props: {
     );
   }, []);
 
+  const apply = useCallback(
+    (step: IRunRecordingStep): void => {
+      current.current = step.recording;
+      if (step.save) {
+        persist(step.recording);
+      }
+      setRecording(current.current);
+    },
+    [persist]
+  );
+
   useEffect(() => {
     if (recording.status !== "recording") {
       return;
     }
     return RunSensors_watch(
       (point) => {
-        current.current = RunRecording_addPoint(current.current, point);
-        setRecording(current.current);
-        setGpsError(undefined);
+        apply(RunRecording_onFix(current.current, point, gapRule, Date.now()));
+        if (RunRecording_clearsGpsError(point)) {
+          setGpsError(undefined);
+        }
       },
-      (code) => setGpsError(RunRecording_gpsErrorText(code))
+      (code) => setGpsError(RunRecording_gpsErrorText(code, RunSensors_platform))
     );
-  }, [recording.status]);
+  }, [recording.status, apply]);
 
   useEffect(() => RunSensors_keepScreenOn(setScreenAwake), []);
 
@@ -90,11 +109,7 @@ export function RunRecorder(props: {
       const at = Date.now();
       setNow(at);
       if (!closing.current) {
-        const next = RunRecording_pauseStale(current.current, at);
-        if (next !== current.current || RunRecording_isSaveDue(next.savedAt, at)) {
-          persist(next);
-          setRecording(current.current);
-        }
+        apply(RunRecording_onTick(current.current, at, gapRule));
       }
     }, 1000);
     const onVisibility = (): void => {
@@ -115,7 +130,7 @@ export function RunRecorder(props: {
         persist(RunRecording_pause(current.current, Date.now()));
       }
     };
-  }, [persist]);
+  }, [persist, apply]);
 
   const change = (next: IRunRecording): void => {
     persist(next);
@@ -139,6 +154,8 @@ export function RunRecorder(props: {
     setBusy(false);
   };
 
+  const hints = RunRecording_screenHints(RunSensors_platform, screenAwake);
+
   return (
     <View testID="run-recorder" className="pb-6">
       <Text className="text-lg font-bold">{recording.status === "paused" ? "Run paused" : "Recording run"}</Text>
@@ -151,14 +168,12 @@ export function RunRecorder(props: {
         </Text>
       )}
       <RecordingStats recording={recording} now={now} />
-      <Text className="mb-2 text-sm text-text-secondary">{gpsError ?? RunRecording_fixText(recording, now)}</Text>
+      <Text className="mb-2 text-sm text-text-secondary">
+        {gpsError ?? RunRecording_fixText(recording, now, RunSensors_platform)}
+      </Text>
       <Text className="mb-2 text-sm text-text-secondary">{recording.dropped} GPS points dropped</Text>
-      <Text className="mb-3 font-semibold">Keep the screen on. Locking the phone stops GPS.</Text>
-      {!screenAwake && (
-        <Text className="mb-3 text-sm text-text-error">
-          Screen wake lock is unavailable. Keep the display awake manually.
-        </Text>
-      )}
+      <Text className="mb-3 font-semibold">{hints.lock}</Text>
+      {hints.warning != null && <Text className="mb-3 text-sm text-text-error">{hints.warning}</Text>}
       {saveError != null && (
         <Text accessibilityRole="alert" className="mb-3 text-text-error">
           {saveError}
@@ -194,7 +209,7 @@ export function RunRecorder(props: {
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}>
             <Text className="text-lg font-semibold text-center text-white">Touches locked · {recording.status}</Text>
             <RecordingStats recording={recording} now={now} dark />
-            <Text className="mb-4 text-center text-white">Keep the screen on. Locking the phone stops GPS.</Text>
+            <Text className="mb-4 text-center text-white">{hints.lock}</Text>
             <Pressable
               testID="run-unlock"
               accessibilityRole="button"

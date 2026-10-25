@@ -38,6 +38,11 @@ function ChoiceRow(props: {
           {choice.nutrients.calories} cal · {Math.round(choice.nutrients.protein)} P ·{" "}
           {Math.round(choice.nutrients.carbs)} C · {Math.round(choice.nutrients.fat)} F
         </Text>
+        {choice.isAmountSuspect && (
+          <Text className="text-xs text-text-error" testID="food-ai-item-amount-warning">
+            Too few grams for these calories. Type the real amount.
+          </Text>
+        )}
       </View>
       <FoodTextInput
         value={gramsText}

@@ -213,7 +213,7 @@ export function ScreenExerciseStats(props: IProps): JSX.Element {
       </View>
       {history.length > 1 && (
         <View data-testid="exercise-stats-graph" testID="exercise-stats-graph" className="relative">
-          <Locker topic="Graphs" dispatch={dispatch} blur={8} subscription={props.subscription} />
+          <Locker topic="Graphs" feature="graphs" dispatch={dispatch} blur={8} />
           <GraphExercise
             isSameXAxis={false}
             minX={Math.round(minX / 1000)}

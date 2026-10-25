@@ -13,7 +13,7 @@ import { PlannerWeekMuscles } from "../pages/planner/components/plannerWeekMuscl
 import { colorPctValue, PlannerSetSplit } from "../pages/planner/components/plannerStats";
 import { ObjectUtils_keys } from "../utils/object";
 import { PersonalRecords } from "./personalRecords";
-import { Subscriptions_hasSubscription } from "../utils/subscriptions";
+import { usePlusAccess } from "../utils/usePlusAccess";
 import { IconCrown } from "./icons/iconCrown";
 import { IDispatch } from "../ducks/types";
 import { Thunk_pushScreen } from "../ducks/thunks";
@@ -38,12 +38,13 @@ export function WeekInsights(props: IWeekInsightsProps): JSX.Element {
   const setResults = WeekInsightsUtils_calculateSetResults(props.thisWeekHistory, props.settings);
   const lastSetResults = WeekInsightsUtils_calculateSetResults(props.lastWeekHistory, props.settings);
   const numberOfPrs = History_getNumberOfPersonalRecords(props.thisWeekHistory, props.prs);
+  const hasInsights = usePlusAccess("weekInsights");
   const historyRecord = props.thisWeekHistory[0];
   if (!historyRecord) {
     return <View />;
   }
 
-  if (!Subscriptions_hasSubscription(props.subscription)) {
+  if (!hasInsights) {
     return (
       <Pressable
         className="w-full px-3 py-2 border border-border-cardyellow bg-background-cardyellow rounded-b-xl"

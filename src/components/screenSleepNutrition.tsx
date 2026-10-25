@@ -132,7 +132,7 @@ function HealthMetricList(props: IHealthMetricListProps): JSX.Element {
               statsKey={statsKey}
               isInteractive={Subscriptions_hasSubscription(subscription)}
             />
-            <Locker topic="Graphs" dispatch={dispatch} blur={8} subscription={subscription} />
+            <Locker topic="Graphs" feature="graphs" dispatch={dispatch} blur={8} />
           </>
         )}
       </View>

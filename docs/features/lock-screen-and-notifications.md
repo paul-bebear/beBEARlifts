@@ -13,7 +13,7 @@ screenshots: [lock-screen-and-notifications-live-activity, lock-screen-and-notif
 
 ![Live Activity on the lock screen after completing a set](/images/features/lock-screen-and-notifications/lock-screen-and-notifications-live-activity.webp)
 
-With Premium, an ongoing workout shows as a **Live Activity** on the lock screen.
+An ongoing workout shows as a **Live Activity** on the lock screen.
 
 The top row has the workout time, **Set: 2/5**, and one dot per set. Green is done, orange partial, red failed, gray still to do. Warmup dots are dimmer.
 
@@ -39,7 +39,7 @@ Long press the island to expand it. The expanded view adds the exercise name, **
 
 ![Live Update notification on Android with -15s, +15s and Done](/images/features/lock-screen-and-notifications/android-lock-screen-and-notifications-live-update.webp)
 
-With Premium, Android shows an ongoing notification for the workout. Its title is the exercise and the rest target, like **Bench Press (1:30)**. The text is **Set 2/5 • Target: 5 × 100lb • Plates: 45, 2.5**.
+Android shows an ongoing notification for the workout. Its title is the exercise and the rest target, like **Bench Press (1:30)**. The text is **Set 2/5 • Target: 5 × 100lb • Plates: 45, 2.5**.
 
 A clock in the notification counts the rest. The notification turns red when the rest is over.
 
@@ -93,7 +93,7 @@ Take the headphones out during the rest, and the notification plays instead. See
 
 ## Play the chime in Silent or Do Not Disturb mode
 
-On Android with Premium, the **Me** screen has an **Ignore Do Not Disturb** toggle under **Sound**. With it on, the rest-over notification makes a sound even in Silent or Do Not Disturb mode. The app switches the ringer to normal for about four seconds, then restores it.
+On Android, the **Me** screen has an **Ignore Do Not Disturb** toggle under **Sound**. With it on, the rest-over notification makes a sound even in Silent or Do Not Disturb mode. The app switches the ringer to normal for about four seconds, then restores it.
 
 Android needs the Do Not Disturb access permission for this. The first time, the app opens the system settings page for it.
 

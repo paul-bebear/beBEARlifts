@@ -10,7 +10,7 @@ import { INavCommon } from "../models/state";
 import { Service } from "../api/service";
 import { ClipboardUtils_copy } from "../utils/clipboard";
 import { ISubscription } from "../types";
-import { Subscriptions_hasSubscription } from "../utils/subscriptions";
+import { usePlusAccess } from "../utils/usePlusAccess";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { IconSpinner } from "./icons/iconSpinner";
 import { Dialog_confirm } from "../utils/dialog";
@@ -37,7 +37,7 @@ export function ScreenApiKeys(props: IProps): JSX.Element {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | undefined>(undefined);
   const isLoggedIn = props.userId != null;
-  const isSubscribed = Subscriptions_hasSubscription(props.subscription);
+  const isSubscribed = usePlusAccess("api");
 
   useEffect(() => {
     if (isSubscribed) {
@@ -48,7 +48,7 @@ export function ScreenApiKeys(props: IProps): JSX.Element {
     } else {
       setIsLoading(false);
     }
-  }, []);
+  }, [isSubscribed]);
 
   const handleCreate = async (): Promise<void> => {
     const name = newKeyNameRef.current.trim() || "API Key";
@@ -109,7 +109,7 @@ export function ScreenApiKeys(props: IProps): JSX.Element {
               name="subscribe-for-api"
               onClick={() => props.dispatch(Thunk_pushScreen("subscription"))}
             >
-              Subscribe to unlock
+              Get beBEAR+
             </Button>
           </View>
         </View>

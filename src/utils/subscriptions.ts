@@ -14,8 +14,9 @@ export function Subscriptions_isUnlockedByFork(): boolean {
   return FORK_UNLOCKS_PREMIUM;
 }
 
+// beBEAR keeps every upstream Premium feature that logs free, so the call sites still reading this are the free ones.
+// The beBEAR+ features read PlusAccess_allows instead (docs/features/premium.md).
 export function Subscriptions_hasSubscription(subscription: ISubscription): boolean {
-  // beBEARlifts fork: every premium feature is unlocked. This is the single gate all call sites read.
   if (Subscriptions_isUnlockedByFork()) {
     return true;
   }

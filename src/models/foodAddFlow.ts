@@ -9,7 +9,7 @@ export interface IFoodPick {
   barcode?: string;
   per100g?: INutrients;
   servingGrams?: number;
-  fixed?: { grams?: number; nutrients: INutrients };
+  fixed?: { grams?: number; nutrients: INutrients; isAmountSuspect?: boolean };
 }
 
 export interface IFoodPhotoChoice extends IFoodPhotoItem {
@@ -108,13 +108,26 @@ export function FoodAddFlow_setPhotoGrams(
     if (i !== index || grams <= 0) {
       return choice;
     }
-    const pick: IFoodPick = {
+    const pick = FoodAddFlow_regramPick(
+      {
+        name: choice.name,
+        source: "photo",
+        fixed: { grams: choice.grams, nutrients: choice.nutrients, isAmountSuspect: choice.isAmountSuspect },
+      },
+      grams
+    );
+    return {
       name: choice.name,
-      source: "photo",
-      fixed: { grams: choice.grams, nutrients: choice.nutrients },
+      grams,
+      nutrients: FoodAddFlow_nutrientsFor(pick, grams),
+      isSelected: choice.isSelected,
     };
-    return { ...choice, grams, nutrients: FoodAddFlow_nutrientsFor(pick, grams) };
   });
+}
+
+// A suspect amount has the AI's calories right and its grams wrong, so the first edit fixes the grams only.
+export function FoodAddFlow_regramPick(pick: IFoodPick, grams: number): IFoodPick {
+  return pick.fixed?.isAmountSuspect ? { ...pick, fixed: { grams, nutrients: pick.fixed.nutrients } } : pick;
 }
 
 export function FoodAddFlow_entriesFromPhoto(

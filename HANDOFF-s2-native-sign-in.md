@@ -4,7 +4,7 @@ Status: implemented on `codex/s2-native-sign-in`. Provider setup and iPhone vali
 
 Validation passes: TypeScript, changed-file ESLint, 42 relevant tests, React Native iOS codegen, plist validation and the bridge's Objective-C++ syntax check.
 
-Setup and debugging details are in `docs/features/native-sign-in.md`.
+Setup and debugging details are in `docs/native-sign-in.md`.
 
 S2 is a V1 batch. The owner uses only the iPhone app, and Apple and Google sign-in work only on the web today (S1, `src/utils/supabaseOAuth.ts`). The spec is the Sign-in section of `REDESIGN_PLAN.md`, "Flow in the native build". Read it first.
 

@@ -70,6 +70,8 @@ import { Exporter_toFile } from "../utils/exporter";
 import { FullBackup_filename, FullBackup_unwrap } from "../models/fullBackup";
 import { FullBackupFile_build, FullBackupFile_restore } from "../utils/fullBackupFile";
 import { CloudStore } from "../utils/supabaseClient";
+import { PlusAccess_screenFeature } from "../models/plusAccess";
+import { PlusAccessClient_allows } from "../utils/plusAccessClient";
 import { DateUtils_formatYYYYMMDD, DateUtils_format } from "../utils/date";
 import { getInitialState } from "./reducer";
 import { IndexedDBUtils_set } from "../utils/indexeddb";
@@ -1411,10 +1413,8 @@ export function Thunk_pushScreen<T extends IScreen>(
 ): IThunk {
   return async (dispatch, getState) => {
     dispatch(Thunk_postevent("navigate-to-" + screen));
-    if (
-      ["musclesProgram", "musclesDay", "graphsList"].indexOf(screen) !== -1 &&
-      !Subscriptions_hasSubscription(getState().storage.subscription)
-    ) {
+    const feature = PlusAccess_screenFeature(screen);
+    if (feature != null && !(await PlusAccessClient_allows(feature))) {
       opts = { stack: "subscription" };
       screen = "subscription" as T;
     }

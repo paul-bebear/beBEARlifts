@@ -124,8 +124,8 @@ describe("AI routes", () => {
       maxTokens: 700,
       temperature: 0.4,
     },
-    { post: photo, body: { kind: "describe", text: "150 g rice" }, maxTokens: 4000, temperature: 0.2 },
-    { post: photo, body: { kind: "bodyscan", image }, maxTokens: 1500, temperature: 0.2 },
+    { post: photo, body: { kind: "describe", text: "150 g rice" }, maxTokens: 4000, temperature: 0 },
+    { post: photo, body: { kind: "bodyscan", image }, maxTokens: 1500, temperature: 0 },
     { post: onboard, body: { answers: { goal: "muscle" }, images: [] }, maxTokens: 12000, temperature: 0.2 },
   ];
 

@@ -65,7 +65,7 @@ Tap **Me** in the footer. The top row is **Program**, showing the current progra
 - **Account**: **Account** shows your email or "Not signed in" ([Account](/features/account)). **Nickname** is used on your profile page. **Is Profile Page Public?** appears when you are signed in. **API Keys** opens the keys for the [API](/features/api).
 - **My Measurements**: **Bodyweight** and **Bodyfat** show your latest values. **Measurements** and **Sleep & Nutrition** open the tracking screens ([Measurements](/features/measurements)).
 - **Workout**: **Exercises** ([Exercise library](/features/exercise-library)), **Muscle Groups**, **Timers** ([Rest timer](/features/rest-timer)), **Available Equipment** ([Equipment and gyms](/features/equipment-and-gyms)), **Weight Units**, **Length Units**, **Week starts from:**, and **Always On Display**. **Current Gym** appears when you have more than one gym.
-- **Sound**: a **Vibration** toggle and a volume slider for the rest timer chime. On Android with [Premium](/features/premium), **Ignore Do Not Disturb** lets the notification sound play in Silent mode.
+- **Sound**: a **Vibration** toggle and a volume slider for the rest timer chime. On Android, **Ignore Do Not Disturb** lets the notification sound play in Silent mode.
 - **Sync**: **Apple Health** on iOS or **Google Health Connect** on Android ([Health sync](/features/health-sync)).
 - **Appearance**: the text size slider and **Dark mode**.
 - **Import / Export**: export to JSON, CSV, or a text file, and import history and programs ([Import and export](/features/import-export)).

@@ -25,7 +25,7 @@ Each measurement is a value with a date. You can log as often as you like, and y
 
 Go to **Me → Measurements**. The **My Measurements** group on the Me screen also shows your latest **Bodyweight** and **Bodyfat**. Tap either row to open that type.
 
-At the top, **Type** picks the measurement to show. Only types with at least one value are listed. With three or more values, a graph appears above the list. Tap the graph to see the value on a given date. The graph needs Premium. Without it, the graph is blurred.
+At the top, **Type** picks the measurement to show. Only types with at least one value are listed. With three or more values, a graph appears above the list. Tap the graph to see the value on a given date.
 
 Below the graph is the **List of measurements**. Each row has the date, the value and a trash icon. Tap the date to change it. Tap the value to edit it. The trash icon deletes the row after an **Are you sure?** confirmation.
 
@@ -33,7 +33,7 @@ Below the graph is the **List of measurements**. Each row has the date, the valu
 
 ![Bodyweight graph with the blue moving average line](/images/features/measurements/measurements-moving-average.webp)
 
-Bodyweight and body fat jump from day to day. **Moving Average Window Size** adds a second, blue line to the graph. It averages the last 2, 3, 4 or 5 values. Pick **Off** to hide it. The setting is per type, so bodyweight and waist can use different windows. This option needs Premium.
+Bodyweight and body fat jump from day to day. **Moving Average Window Size** adds a second, blue line to the graph. It averages the last 2, 3, 4 or 5 values. Pick **Off** to hide it. The setting is per type, so bodyweight and waist can use different windows. This option needs [beBEAR+](/features/premium). Without it, the row shows **beBEAR+** and opens the beBEAR+ screen.
 
 The moving average also feeds your programs. The `bodyweight` variable in Liftoscript returns the latest moving average when a window is set for Bodyweight, and the latest raw value otherwise. This helps for weighted or assisted pull ups and dips:
 

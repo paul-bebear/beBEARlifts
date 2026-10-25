@@ -650,7 +650,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
     });
   }, [dispatch]);
 
-  const initialScreen = props.initialState.storage.currentProgramId ? "main" : "first";
+  const initialScreen = props.initialState.storage.currentProgramId || OfflineOnly_isEnabled() ? "main" : "first";
 
   const [currentScreenName, setCurrentScreenName] = useState<IScreen | undefined>(undefined);
   const [isNavReady, setIsNavReady] = useState(false);

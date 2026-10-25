@@ -75,6 +75,22 @@ describe("FoodBasket", () => {
     expect(basket.map((i) => i.grams)).to.deep.equal([150, 50]);
     expect(FoodBasket_totals(basket).calories).to.equal(260);
   });
+
+  it("keeps calories on the first edit of a suspect AI amount, then scales", () => {
+    const choices = [
+      {
+        name: "Margarita",
+        grams: 20,
+        isSelected: true,
+        isAmountSuspect: true,
+        nutrients: { calories: 240, protein: 0, carbs: 22, fat: 0 },
+      },
+    ];
+    const basket = FoodBasket_putAll([], FoodBasket_fromChoices(choices, "photo", 7));
+    const fixed = FoodBasket_setGrams(basket, basket[0].key, 240);
+    expect(FoodBasket_totals(fixed).calories).to.equal(240);
+    expect(FoodBasket_totals(FoodBasket_setGrams(fixed, basket[0].key, 480)).calories).to.equal(480);
+  });
 });
 
 function entry(name: string, meal: IFoodEntry["meal"], createdAt: number): IFoodEntry {
