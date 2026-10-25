@@ -2,6 +2,7 @@ import { Dispatch, JSX } from "react";
 import { IDispatch } from "../ducks/types";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
 import { Invite_parseHandle } from "../models/invite";
+import { OnboardingChoices_welcomeLabel } from "../models/onboardingChoices";
 import { CloudBackupCard } from "./cloudBackupCard";
 
 export const OnboardingWelcome_field =
@@ -48,7 +49,7 @@ export function OnboardingWelcome(props: {
         disabled={badInvite || props.busy}
         onClick={props.onContinue}
       >
-        {props.signedIn ? "Continue" : "Not now"}
+        {OnboardingChoices_welcomeLabel(props.signedIn)}
       </button>
     </>
   );

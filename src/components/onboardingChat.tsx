@@ -14,6 +14,7 @@ import {
   Onboarding_reduce,
 } from "../models/onboarding";
 import { IBearPlacePick } from "../models/bearPlace";
+import { OnboardingChoices_experiences, OnboardingChoices_places } from "../models/onboardingChoices";
 import { OnboardingCommand_run } from "../utils/onboardingCommand";
 import { CloudStore } from "../utils/supabaseClient";
 import { InviteClient_current, InviteClient_save, InviteStore } from "../utils/inviteClient";
@@ -49,18 +50,12 @@ function IconBars(): JSX.Element {
   );
 }
 
-const places: { pick: IBearPlacePick; label: string; icon: () => JSX.Element }[] = [
-  { pick: "gym", label: "Full gym", icon: () => <IconEquipmentBarbell /> },
-  { pick: "dumbbells", label: "Only dumbbells", icon: () => <IconEquipmentDumbbell /> },
-  { pick: "street", label: "Street workout", icon: () => <IconBars /> },
-  { pick: "none", label: "No equipment", icon: () => <IconHome /> },
-];
-
-const experiences: { key: IOnboardingAnswers["experience"]; label: string }[] = [
-  { key: "new", label: "New" },
-  { key: "months", label: "A few months" },
-  { key: "years", label: "Years" },
-];
+const placeIcons: Record<IBearPlacePick, () => JSX.Element> = {
+  gym: () => <IconEquipmentBarbell />,
+  dumbbells: () => <IconEquipmentDumbbell />,
+  street: () => <IconBars />,
+  none: () => <IconHome />,
+};
 
 function PlaceScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element {
   return (
@@ -68,7 +63,7 @@ function PlaceScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
       <h1 className="text-3xl font-bold">Where do you train?</h1>
       <p className="text-text-secondary">Pick all that fit.</p>
       <div className="space-y-3">
-        {places.map((p) => {
+        {OnboardingChoices_places.map((p) => {
           const on = props.a.places.includes(p.pick);
           return (
             <button
@@ -82,7 +77,7 @@ function PlaceScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
                 })
               }
             >
-              {p.icon()}
+              {placeIcons[p.pick]()}
               {p.label}
             </button>
           );
@@ -101,7 +96,7 @@ function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
       <fieldset className="space-y-2">
         <legend className="mb-2 font-semibold">How long have you lifted?</legend>
         <div className="flex flex-wrap gap-2">
-          {experiences.map((e) => (
+          {OnboardingChoices_experiences.map((e) => (
             <button
               key={e.key}
               className={a.experience === e.key ? pillOn : pillOff}
