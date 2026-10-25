@@ -102,6 +102,6 @@ Tap **Edit Muscle Groups** in Muscle Settings, or go to **Me → Muscle Groups**
 
 Custom groups get their own row in the weekly ranges and their own line in Week Insights.
 
-## Premium
+## beBEAR+
 
-Week Insights is a Premium feature. Without Premium, the card on the Home tab shows **See Week Insights**. Tap it to open the subscription screen.
+Week Insights is a [beBEAR+](/features/premium) feature. Without beBEAR+, the card on the Home tab shows **See Week Insights**. Tap it to open the beBEAR+ screen.

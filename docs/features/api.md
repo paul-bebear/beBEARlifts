@@ -17,7 +17,7 @@ The new key appears under **Your Keys** with its name and creation date. It star
 
 Keep the key secret. Anyone who has it can read and change your training data. If you lose it, delete it and create a new one.
 
-API keys need Premium and a signed-in account. Without an account, the screen shows a **Log in** button. Without Premium, it shows **Subscribe to unlock**.
+API keys need [beBEAR+](/features/premium) and a signed-in account. Without an account, the screen shows a **Log in** button. Without beBEAR+, it shows **Get beBEAR+**.
 
 ## Revoke a key
 

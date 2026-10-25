@@ -167,9 +167,6 @@
   "src/components/runRecorder.tsx": {
     "decision-in-view:useEffect#1": "Registers the timer and visibility listener, then releases them on unmount. runRecording.ts owns save timing and pause transitions."
   },
-  "src/components/screenAccount.tsx": {
-    "long-view": "predates the rule"
-  },
   "src/components/screenEquipment.tsx": {
     "decision-in-view:useEffect#1": "predates the rule"
   },
@@ -185,9 +182,6 @@
     "long-view": "Upstream's settings menu, 594 lines before the fork. The fork's rows render from settingsForkRows.tsx and appStoreSettings.tsx."
   },
   "src/components/screenStats.tsx": {
-    "long-view": "predates the rule"
-  },
-  "src/components/screenSubscription.tsx": {
     "long-view": "predates the rule"
   },
   "src/components/screenWorkout.tsx": {

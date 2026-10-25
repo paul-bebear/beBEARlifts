@@ -101,4 +101,4 @@ Whether an exercise is unilateral comes from the **Is Unilateral** checkbox on i
 
 ## Lock screen and Apple Watch
 
-With Premium, the countdown and the set clock also run in the **Live Activity** on the iOS lock screen and in the Dynamic Island, in the **Live Update** on Android, and on the Apple Watch, with buttons to stop and record the set from there.
+The countdown and the set clock also run in the **Live Activity** on the iOS lock screen and in the Dynamic Island, in the **Live Update** on Android, and on the Apple Watch, with buttons to stop and record the set from there.

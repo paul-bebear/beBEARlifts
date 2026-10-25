@@ -17,6 +17,7 @@ import {
   CloudBackupClient_signOut,
   CloudBackupClient_verify,
 } from "./cloudBackupClient";
+import { PlusAccessClient_markRedeemed } from "./plusAccessClient";
 import { SentCodeStore, SupabaseClient_authed, SupabaseClient_json, SupabaseClient_readJson } from "./supabaseClient";
 
 export async function CloudBackupCommand_loadPlan(): Promise<IAccountPlan | undefined> {
@@ -78,6 +79,9 @@ export function CloudBackupCommand_run(command: ICloudBackupCommand, emit: (even
             "/rest/v1/rpc/redeem_pro_code",
             SupabaseClient_json({ p_code: command.proCode ?? "" })
           );
+          if (result.ok) {
+            await PlusAccessClient_markRedeemed().catch(() => undefined);
+          }
           emit(result.ok ? { type: "redeemed" } : { type: "failed", error: result.error });
           break;
         }

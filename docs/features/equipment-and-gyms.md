@@ -21,7 +21,7 @@ The rule for each kind of equipment:
 - Fixed weights: the heaviest fixed weight that does not go over the target, or the lightest one if all are heavier.
 - No equipment: the nearest multiple of the exercise's **Default Rounding**, 5 lb or 2.5 kg unless you change it.
 
-Rounding happens on the workout screen only. Program state variables stay exact. With Premium, the expanded set also lists the plates for each side.
+Rounding happens on the workout screen only. Program state variables stay exact. The expanded set also lists the plates for each side.
 
 ## Where your equipment lives
 

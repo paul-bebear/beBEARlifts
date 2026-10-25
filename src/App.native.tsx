@@ -249,6 +249,7 @@ import { PerfLongTasks_start } from "./utils/perfLongTasks";
 import { usePerfFrameSampling, PerfFrameSampler_flush } from "./utils/perfFrameCallback";
 import { PerfNavTracker_handleStateChange } from "./utils/perfNavTracker";
 import { PerfEnabled_tier1 } from "./utils/perfEnabled";
+import { PlusAccessClient_start } from "./utils/plusAccessClient";
 import {
   PerfScorecard_recordFrameWindow,
   PerfScorecard_onScreenChange,
@@ -325,6 +326,8 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
   useEffect(() => {
     return ScreenRemovalCleanup_subscribe(dispatch);
   }, []);
+
+  useEffect(() => PlusAccessClient_start(), []);
 
   const {
     workoutId: heartRateWorkoutId,

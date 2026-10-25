@@ -71,7 +71,7 @@ When the rest ends, the app plays a chime and vibrates. Both are in **Me → Set
 
 ![Rest timer in the Live Activity on the lock screen](/images/features/rest-timer/rest-timer-lock-screen.webp) ![Rest timer in the Dynamic Island](/images/features/rest-timer/rest-timer-dynamic-island.webp) ![Rest timer notification on Android](/images/features/rest-timer/android-rest-timer-live-update.webp)
 
-With Premium, the timer follows you out of the app:
+The timer follows you out of the app:
 
 - A notification arrives when the rest is over, with the next set and the plates to load: "It's time for the next set! Next set: Bench Press, 5 × 100lb".
 - On iOS, the rest timer runs in the **Live Activity** on the lock screen and in the **Dynamic Island**, with -15s and +15s buttons.
@@ -82,7 +82,7 @@ With Premium, the timer follows you out of the app:
 
 ![Rest timer on the Apple Watch](/images/features/rest-timer/watch-rest-timer.webp)
 
-With Premium, the watch app has its own **Rest Timer** screen: -15s, elapsed and target, +15s, and a delete button. When the rest ends, the watch taps your wrist and chirps, unless volume is 0.
+The watch app has its own **Rest Timer** screen: -15s, elapsed and target, +15s, and a delete button. When the rest ends, the watch taps your wrist and chirps, unless volume is 0.
 
 ## Timed sets and the countdown
 

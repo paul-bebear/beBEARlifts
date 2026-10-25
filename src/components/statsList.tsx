@@ -21,7 +21,7 @@ import { Stats_name } from "../models/stats";
 import { Weight_is, Weight_convertTo, Weight_build } from "../models/weight";
 import { ILength, IPercentage, ISettings, IStats, IStatsKey, ISubscription, IWeight } from "../types";
 import { ObjectUtils_keys } from "../utils/object";
-import { MenuItemWrapper } from "./menuItem";
+import { MenuItem, MenuItemWrapper } from "./menuItem";
 import { GroupHeader } from "./groupHeader";
 import { MenuItemEditable } from "./menuItemEditable";
 import { GraphStats, getWeightDataForGraph, getLengthDataForGraph, getPercentageDataForGraph } from "./graphStats";
@@ -31,7 +31,7 @@ import { Button } from "./button";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { updateSettings } from "../models/state";
 import { lb } from "lens-shmens";
-import { Subscriptions_hasSubscription } from "../utils/subscriptions";
+import { usePlusAccess } from "../utils/usePlusAccess";
 import { ImagePreloader_dynoflex, ImagePreloader_uri } from "../utils/imagePreloader";
 import { Dialog_confirm } from "../utils/dialog";
 import { DatePicker } from "./datePicker";
@@ -79,7 +79,10 @@ export function StatsList(props: IProps): JSX.Element {
     ...ObjectUtils_keys(props.stats.length).filter((k) => (props.stats.length[k] || []).length > 0),
   ];
   const [selectedKey, setSelectedKey] = useState<IStatsKey>(props.initialKey || statsKeys[0] || "weight");
-  const movingAverageWindowSize = props.settings.graphOptions[selectedKey]?.movingAverageWindowSize;
+  const hasTrendLines = usePlusAccess("trendLines");
+  const movingAverageWindowSize = hasTrendLines
+    ? props.settings.graphOptions[selectedKey]?.movingAverageWindowSize
+    : undefined;
   const values = useMemo(() => getValues(props.stats, selectedKey), [props.stats, selectedKey]);
   const { visibleItems: visibleValues, onScroll: onProgressiveScroll } = useScrollProgressiveList(values, {
     batchSize: 10,
@@ -152,7 +155,7 @@ export function StatsList(props: IProps): JSX.Element {
           setSelectedKey(value as IStatsKey);
         }}
       />
-      {Subscriptions_hasSubscription(props.subscription) && (
+      {hasTrendLines ? (
         <MenuItemEditable
           name="Moving Average Window Size"
           type="select"
@@ -178,6 +181,13 @@ export function StatsList(props: IProps): JSX.Element {
             );
           }}
         />
+      ) : (
+        <MenuItem
+          name="Moving Average Window Size"
+          value="beBEAR+"
+          shouldShowRightArrow={true}
+          onClick={() => props.dispatch(Thunk_pushScreen("subscription"))}
+        />
       )}
       <View className="relative">
         {graphPoints.length > 2 && (
@@ -193,9 +203,9 @@ export function StatsList(props: IProps): JSX.Element {
               collection={graphPoints}
               statsKey={selectedKey}
               movingAverageWindowSize={movingAverageWindowSize}
-              isInteractive={Subscriptions_hasSubscription(props.subscription)}
+              isInteractive={true}
             />
-            <Locker topic="Graphs" dispatch={props.dispatch} blur={8} subscription={props.subscription} />
+            <Locker topic="Graphs" feature="graphs" dispatch={props.dispatch} blur={8} />
           </>
         )}
       </View>

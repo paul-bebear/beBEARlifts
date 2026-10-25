@@ -207,7 +207,7 @@ function WorkoutExerciseInner(props: IWorkoutExerciseProps): JSX.Element {
                 ref={graphImpression.ref}
                 onLayout={graphImpression.onLayout}
               >
-                <Locker topic="Graphs" dispatch={props.dispatch} blur={8} subscription={props.subscription} />
+                <Locker topic="Graphs" feature="graphs" dispatch={props.dispatch} blur={8} />
                 <ActiveGraphContext.Provider value={activeGraphValue}>
                   <PerfProbeSubtree id="graph">
                     <GraphExercise
