@@ -44,8 +44,8 @@ struct LiftosaurComplicationView: View {
     @Environment(\.widgetFamily) private var family
     let info: ComplicationInfo?
 
-    private var dino: some View {
-        Image("dino")
+    private var bear: some View {
+        Image("bear")
             .renderingMode(.template)
             .resizable()
             .scaledToFit()
@@ -54,7 +54,7 @@ struct LiftosaurComplicationView: View {
 
     private var brandRow: some View {
         HStack(spacing: 6) {
-            dino
+            bear
                 .frame(width: 24, height: 24)
             Text("beBEAR")
                 .font(.headline)
@@ -66,12 +66,12 @@ struct LiftosaurComplicationView: View {
     var body: some View {
         switch family {
         case .accessoryCircular:
-            dino
+            bear
                 .padding(8)
         case .accessoryCorner:
             // The corner slot rejects raster images (renders a placeholder square),
             // so use the custom SF Symbol, with the day name as the curved label.
-            Image("DinoSymbol")
+            Image("BearSymbol")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 26, height: 26)
@@ -86,14 +86,14 @@ struct LiftosaurComplicationView: View {
                 }
             } icon: {
                 // accessoryInline only renders SF Symbols, not raster images,
-                // so use the custom-symbol dino here.
-                Image("DinoSymbol")
+                // so use the custom-symbol bear here.
+                Image("BearSymbol")
             }
         case .accessoryRectangular:
             if let info = info {
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 3) {
-                        dino
+                        bear
                             .frame(width: 16, height: 16)
                         Text(info.isOngoing ? "Ongoing" : "Up Next")
                             .font(.system(.caption2, design: .rounded).weight(.semibold))
@@ -116,7 +116,7 @@ struct LiftosaurComplicationView: View {
                 brandRow
             }
         default:
-            dino
+            bear
         }
     }
 }
