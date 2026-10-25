@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTrackedState, useTrackedDispatch, untrack } from "../TrackedStateContext";
 import { NavScreenContent } from "../NavScreenContent";
 import { buildNavCommon } from "../utils";
-import { ScreenFirst as ScreenFirstComponent } from "../../components/screenFirst";
+import { OnboardingChat } from "../../components/onboardingChat";
+import { navigateTo } from "../navigationService";
+import { useNavOptions } from "../useNavOptions";
 import { ScreenUnitSelector } from "../../components/screenUnitSelector";
 import { ScreenProgramSelect as ScreenProgramSelectComponent } from "../../components/screenProgramSelect";
 import { ChooseProgramView } from "../../components/chooseProgram";
@@ -18,11 +21,19 @@ import {
 import { ScreenHearAboutUs as ScreenHearAboutUsComponent } from "../../components/screenHearAboutUs";
 
 export function NavScreenFirst(): React.JSX.Element {
+  const state = useTrackedState();
   const dispatch = useTrackedDispatch();
+  const insets = useSafeAreaInsets();
+  useNavOptions({ navHidden: true });
+  useEffect(() => {
+    if (state.storage.currentProgramId != null) {
+      navigateTo("main", undefined, { tab: "home" });
+    }
+  }, [state.storage.currentProgramId]);
   return (
-    <NavScreenContent>
-      <ScreenFirstComponent dispatch={dispatch} />
-    </NavScreenContent>
+    <View className="flex-1 bg-background-default" style={{ paddingTop: insets.top }}>
+      <OnboardingChat dispatch={dispatch}>{null}</OnboardingChat>
+    </View>
   );
 }
 

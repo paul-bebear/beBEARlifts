@@ -1,11 +1,14 @@
 import { Dispatch, JSX } from "react";
+import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
 import { Invite_parseHandle } from "../models/invite";
-import { CloudBackupCard } from "./cloudBackupCard";
-
-export const OnboardingWelcome_field =
-  "w-full p-3 border rounded-xl bg-background-default border-border-prominent text-text-primary";
+import { BearArt_sprite } from "../models/bearArt";
+import { BearBody } from "./bearBody";
+import { Text } from "./primitives/text";
+import { TextInput } from "./primitives/textInput";
+import { OnboardingSignIn } from "./onboardingSignIn";
+import { OnboardingAction, OnboardingControls_field } from "./onboardingControls";
 
 export function OnboardingWelcome(props: {
   form: IOnboardingState;
@@ -20,36 +23,33 @@ export function OnboardingWelcome(props: {
   const badInvite = form.invite !== "" && Invite_parseHandle(form.invite) == null;
   return (
     <>
-      <div className="flex flex-col items-center gap-3 pt-6 text-center">
-        <div className="text-8xl" aria-hidden="true">
-          🐻
-        </div>
-        <h1 className="text-3xl font-bold">Meet your bear</h1>
-        <p className="text-lg">This is your bear. Train it, feed it, watch it grow.</p>
-      </div>
-      <CloudBackupCard dispatch={props.dispatch} compact />
+      <View className="items-center gap-3 pt-6">
+        <BearBody sprite={BearArt_sprite("male", 1, "normal")} height={180} testID="onboarding-bear" />
+        <Text accessibilityRole="header" className="text-3xl font-bold text-center">
+          Meet your bear
+        </Text>
+        <Text className="text-lg text-center">This is your bear. Train it, feed it, watch it grow.</Text>
+      </View>
+      <OnboardingSignIn dispatch={props.dispatch} />
       {props.showInvite && (
-        <label className="block">
-          Who invited you?
-          <input
-            className={OnboardingWelcome_field}
+        <View className="gap-2">
+          <Text>Who invited you?</Text>
+          <TextInput
+            accessibilityLabel="Who invited you?"
+            className={OnboardingControls_field}
             value={form.invite}
             autoCapitalize="none"
-            autoCorrect="off"
+            autoCorrect={false}
             maxLength={20}
-            onChange={(e) => emit({ type: "invite", value: e.currentTarget.value })}
+            onChangeText={(value) => emit({ type: "invite", value })}
           />
-        </label>
+        </View>
       )}
-      {badInvite && <p role="alert">Use 3–20 lowercase letters, numbers, or underscores.</p>}
-      <div className="flex-1" />
-      <button
-        className="w-full p-4 text-lg font-bold text-black rounded-2xl bg-yellow-400 disabled:opacity-40"
-        disabled={badInvite || props.busy}
-        onClick={props.onContinue}
-      >
+      {badInvite && <Text accessibilityRole="alert">Use 3–20 lowercase letters, numbers, or underscores.</Text>}
+      <View className="flex-1" />
+      <OnboardingAction primary disabled={badInvite || props.busy} onPress={props.onContinue}>
         {props.signedIn ? "Continue" : "Not now"}
-      </button>
+      </OnboardingAction>
     </>
   );
 }
