@@ -1,2 +1,2 @@
 // RevenueCat's public iOS key ("appl_..."). It ships inside the app. Never put the secret "sk_" key here.
-export const RevenueCat_iosApiKey = "";
+export const RevenueCat_iosApiKey = "appl_aaYkbeLaWPMzyyWDYCGfvaJqFoS";
