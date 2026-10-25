@@ -64,6 +64,41 @@ describe("FoodPhotoEstimate_parse", () => {
   });
 });
 
+describe("FoodPhotoEstimate_parse checks", () => {
+  function onlyItem(json: string): ReturnType<typeof FoodPhotoEstimate_parse> {
+    return FoodPhotoEstimate_parse(`{"items":[${json}]}`);
+  }
+
+  it("recomputes calories from the macros and alcohol when they disagree", () => {
+    const item = onlyItem('{"name":"Margarita","grams":240,"calories":120,"protein":0,"carbs":22,"fat":0,"alcohol":22}')
+      ?.items[0];
+    expect(item?.nutrients.calories).to.equal(242);
+    expect(item?.isAmountSuspect).to.equal(undefined);
+  });
+
+  it("raises calories that fall short of the macros", () => {
+    const item = onlyItem('{"name":"Chicken","grams":150,"calories":100,"protein":46.5,"carbs":0,"fat":5.4}')?.items[0];
+    expect(item?.nutrients.calories).to.equal(235);
+  });
+
+  it("keeps a calorie surplus when the answer has no alcohol field", () => {
+    const item = onlyItem('{"name":"Beer","grams":330,"calories":150,"protein":1.5,"carbs":13,"fat":0}')?.items[0];
+    expect(item?.nutrients.calories).to.equal(150);
+  });
+
+  it("keeps calories when the answer has no macros", () => {
+    const item = onlyItem('{"name":"Toast","grams":30,"calories":80}')?.items[0];
+    expect(item?.nutrients.calories).to.equal(80);
+  });
+
+  it("flags an item with more than 9 calories per gram", () => {
+    const item = onlyItem('{"name":"Salt-rimmed margarita","grams":20,"calories":240,"protein":0,"carbs":22,"fat":0}')
+      ?.items[0];
+    expect(item?.nutrients.calories).to.equal(240);
+    expect(item?.isAmountSuspect).to.equal(true);
+  });
+});
+
 describe("FoodPhotoEstimate_failure", () => {
   it("names an empty answer, a cut-off answer and an unreadable one", () => {
     expect(FoodPhotoEstimate_failure("  ", "stop", "Try another photo.")).to.equal(

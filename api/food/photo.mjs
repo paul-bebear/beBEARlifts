@@ -7,14 +7,21 @@ const maxImageChars = 3_000_000;
 const maxTextChars = 600;
 
 const itemsShape = `When the user had several of the same food, give one item with the total grams rather than one item per piece.
+For a drink, "grams" is its volume in ml. A cocktail is usually 150 to 300 ml, a beer 330 to 500 ml.
+"alcohol" is grams of pure alcohol in the portion, and 0 for food and soft drinks.
+Check every item before you answer. Calories must be close to 4 × protein + 4 × carbs + 9 × fat + 7 × alcohol. No food or drink has more than 9 calories per gram. Fix any item that fails.
 Answer with JSON only, no other text, in this shape:
-{"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4}],"note":"optional short caveat"}`;
+{"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4,"alcohol":0}],"note":"optional short caveat"}`;
 
 const mealPrompt = `You estimate the nutrition of a meal from one photo, for a calorie tracker.
-List each separate food you can see. For each one, estimate the portion in grams from the plate size, utensils and packaging, then estimate calories, protein, carbs and fat for that portion.
+Work in this order.
+1. Name each separate food and drink you can see. Count the pieces you can count, such as tacos, slices or wings.
+2. Estimate the edible portion of each one in grams. Use the plate, utensils, hands and packaging for scale. Leave out what people do not eat: rinds, peels, bones, shells, and garnish that stays on the plate.
+3. Estimate calories, protein, carbs, fat and alcohol for that portion.
 Count visible oil, butter, sauces and dressings as their own items when they add real calories.
 If the photo shows a nutrition label or packaged product, use the label values.
-The user may add a note about the meal. Trust the note over the photo for amounts and hidden ingredients.
+The user may add a note about the meal. Trust the note over the photo for counts, amounts and hidden ingredients.
+In "note", name the one item whose amount you are least sure of, in one short sentence.
 If there is no food in the photo, return an empty list and say why in "note".
 ${itemsShape}`;
 
