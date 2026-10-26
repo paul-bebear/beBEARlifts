@@ -316,7 +316,7 @@ describe("BearScene_place", () => {
   it("stands the bear on the house floor below the board at every level", () => {
     const unit = 390 / BearScene_canvas.width;
     for (const level of [1, 6, 12]) {
-      const sprite = BearArt_sprite("male", level, "normal");
+      const sprite = BearArt_sprite("male", "brown", level, "normal");
       const layout = BearScene_layout(390, level, 1, sprite, 1.015, BearHouse_floor);
       const [, y1, , y2] = BearScene_visibleBox(sprite);
       const scale = layout.sprite.height / BearScene_canvas.height;

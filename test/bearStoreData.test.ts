@@ -22,10 +22,11 @@ describe("BearStoreData fur", () => {
     expect(parsed).to.not.have.property("fur");
   });
 
-  it("falls back to an empty store for a fur it does not know, the same as for a bad line", () => {
-    expect(BearStoreData_parse({ ...base, fur: "green" })).to.deep.equal(BearStoreData_empty());
-    expect(BearStoreData_parse({ ...base, fur: 3 })).to.deep.equal(BearStoreData_empty());
-    expect(BearStoreData_parse({ ...base, line: "other" })).to.deep.equal(BearStoreData_empty());
+  it("drops a fur it does not know and keeps the rest, the same as for a bad line", () => {
+    const kept = { ...BearStoreData_empty(), ...base };
+    expect(BearStoreData_parse({ ...base, fur: "green" })).to.deep.equal(kept);
+    expect(BearStoreData_parse({ ...base, fur: 3 })).to.deep.equal(kept);
+    expect(BearStoreData_parse({ ...base, line: "other" })).to.deep.equal(kept);
   });
 
   it("survives a JSON round trip", () => {

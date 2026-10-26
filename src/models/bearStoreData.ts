@@ -27,38 +27,17 @@ export function BearStoreData_parse(raw: unknown): IBearStoreData {
     return BearStoreData_empty();
   }
   const r = raw as Record<string, unknown>;
-<<<<<<< HEAD
   const empty = BearStoreData_empty();
   const celebratedLevel = wholeAtLeast(r.celebratedLevel, 1);
   const seenBadges = Array.isArray(r.seenBadges) ? r.seenBadges.filter((id) => typeof id === "string") : undefined;
   // A lost level or badge list drops its seeded flag too, so the next render seeds it again with no celebration.
   return {
     ...(r.line === "male" || r.line === "female" ? { line: r.line } : {}),
+    ...(r.fur === "brown" || r.fur === "black" || r.fur === "polar" ? { fur: r.fur } : {}),
     celebratedLevel: celebratedLevel ?? empty.celebratedLevel,
     seenBadges: seenBadges ?? empty.seenBadges,
     spent: wholeAtLeast(r.spent, 0) ?? empty.spent,
     ...(r.seeded === true && celebratedLevel != null ? { seeded: true as const } : {}),
     ...(r.badgesSeeded === true && seenBadges != null ? { badgesSeeded: true as const } : {}),
-=======
-  if (
-    (r.line != null && r.line !== "male" && r.line !== "female") ||
-    (r.fur != null && r.fur !== "brown" && r.fur !== "black" && r.fur !== "polar") ||
-    typeof r.celebratedLevel !== "number" ||
-    !Number.isSafeInteger(r.celebratedLevel) ||
-    r.celebratedLevel < 1 ||
-    !Array.isArray(r.seenBadges) ||
-    !r.seenBadges.every((id) => typeof id === "string")
-  ) {
-    return BearStoreData_empty();
-  }
-  return {
-    ...(r.line === "male" || r.line === "female" ? { line: r.line } : {}),
-    ...(r.fur === "brown" || r.fur === "black" || r.fur === "polar" ? { fur: r.fur } : {}),
-    celebratedLevel: r.celebratedLevel,
-    seenBadges: [...r.seenBadges],
-    spent: typeof r.spent === "number" && Number.isSafeInteger(r.spent) && r.spent > 0 ? r.spent : 0,
-    ...(r.seeded === true ? { seeded: true as const } : {}),
-    ...(r.badgesSeeded === true ? { badgesSeeded: true as const } : {}),
->>>>>>> origin/claude/bear-world-g1-g2-e0d8d9
   };
 }

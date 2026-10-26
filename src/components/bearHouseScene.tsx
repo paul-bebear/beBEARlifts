@@ -35,7 +35,7 @@ export function BearHouseScene(props: IProps): JSX.Element {
   const { state } = props;
   const breathing = BearScene_breathing(state.mood);
   const scaleY = useBearBreathing(breathing.durationMs, breathing.scaleY);
-  const spritePath = BearArt_sprite(state.line, state.level.tier.level, state.mood);
+  const spritePath = BearArt_sprite(state.line, state.fur, state.level.tier.level, state.mood);
   const layout = BearScene_layout(
     width,
     state.level.tier.level,
