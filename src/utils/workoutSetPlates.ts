@@ -1,5 +1,5 @@
 import { IExerciseType, ISet, ISettings, IWeight } from "../types";
-import { Equipment_getEquipmentNameForExerciseType } from "../models/equipment";
+import { Equipment_getEquipmentNameForExerciseType, Equipment_loadsPlatesOnBar } from "../models/equipment";
 import { Exercise_get } from "../models/exercise";
 import { Weight_calculatePlates, Weight_eq, Weight_formatOneSide, Weight_oneSidePlates } from "../models/weight";
 
@@ -9,13 +9,17 @@ export interface IWorkoutSetPlatesLine {
   isMatch: boolean;
 }
 
+export function PlatesLine_shouldShow(exerciseType: IExerciseType, settings: ISettings): boolean {
+  return Equipment_loadsPlatesOnBar(settings, exerciseType);
+}
+
 export function WorkoutSetPlates_line(
   set: ISet,
   settings: ISettings,
   exerciseType: IExerciseType
 ): IWorkoutSetPlatesLine | undefined {
   const target = set.completedWeight ?? set.weight;
-  if (target == null) {
+  if (target == null || !PlatesLine_shouldShow(exerciseType, settings)) {
     return undefined;
   }
   const exercise = Exercise_get(exerciseType, settings.exercises);
