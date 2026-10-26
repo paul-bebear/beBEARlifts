@@ -38,6 +38,10 @@ store_entitlements  user_id, active, product_id, expires_at,   store_entitlement
 
 `ai_usage_take` also refuses a "report" after 10 reports a day for one user. It refuses any user who holds 50 or more of the day's calls and more than a tenth of the app-wide 600. The API shows both as a 429 with reason `reportDay` or `share`.
 
+The app-wide ceiling is the one row in `public.ai_settings`. Change it in the Supabase SQL editor with `update public.ai_settings set daily_ceiling = 1200;`. beBEAR+ users skip the ceiling. The call that takes the day's total to 80 percent of it writes one line to the Vercel logs: `AI allowance at 80 percent`.
+
+`redeem_pro_code` refuses after 10 wrong codes a day for one user. A wrong code answers HTTP 400 with the same message as before, because a raised error would roll back the counter.
+
 `store_entitlement_put` keeps a write only when its `snapshot_at` is newer than the row's. `snapshot_at` is RevenueCat's `request_date_ms`. The webhook and the app's sync can read RevenueCat at almost the same time, and the newer read is kept whatever order they commit in.
 
 Both functions are callable only by `service_role`. Signed-in users can read their own `store_entitlements` row.

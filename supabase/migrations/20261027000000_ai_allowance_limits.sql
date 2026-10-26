@@ -2,6 +2,17 @@
 -- Left granted, any signed-in user could call it 600 times and use up the app-wide ceiling for everyone.
 drop function if exists public.ai_usage_take();
 
+-- One row. Change the ceiling from the Supabase dashboard: update public.ai_settings set daily_ceiling = 1200;
+create table public.ai_settings (
+  id boolean primary key default true check (id),
+  daily_ceiling integer not null default 600 check (daily_ceiling > 0)
+);
+
+insert into public.ai_settings (id, daily_ceiling) values (true, 600);
+
+alter table public.ai_settings enable row level security;
+revoke all on public.ai_settings from public, anon, authenticated;
+
 create or replace function public.ai_usage_take(p_kind text, p_ref text default null, p_caps jsonb default '{}')
 returns jsonb
 language plpgsql
@@ -19,9 +30,12 @@ declare
   ref_used boolean := false;
   allowed boolean := false;
   report_ref text := nullif(btrim(coalesce(p_ref, '')), '');
+  day_ceiling integer := coalesce((select s.daily_ceiling from public.ai_settings s), 600);
+  warn_at integer;
   total_today integer;
   user_today integer;
   report_today integer;
+  warn boolean := false;
 begin
   if uid is null or coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false) then
     raise exception 'Sign in to use AI features' using errcode = '28000';
@@ -33,9 +47,11 @@ begin
     raise exception 'A report needs a workout id' using errcode = '22023';
   end if;
   perform pg_advisory_xact_lock(hashtext('public.ai_usage_take'), 0);
+  user_plan := public.account_plan_effective(uid) ->> 'plan';
   total_today := (select coalesce(sum(u.count), 0) from public.ai_usage u where u.day = today)
     + (select coalesce(sum(k.count), 0) from public.ai_usage_kinds k where k.day = today);
-  if total_today >= 600 then
+  -- beBEAR+ users skip the ceiling. Their own caps and the share rule below already bound them.
+  if user_plan <> 'plus' and total_today >= day_ceiling then
     raise exception 'Daily AI allowance reached' using errcode = 'PT429';
   end if;
   -- p_caps comes from the caller, so a user who posts to the RPC directly can raise their own caps.
@@ -46,7 +62,6 @@ begin
   if user_today >= 50 and user_today * 10 > total_today then
     raise exception 'Daily AI share reached' using errcode = 'PT429';
   end if;
-  user_plan := public.account_plan_effective(uid) ->> 'plan';
   if p_kind = 'capped' then
     select
       coalesce(sum(k.count) filter (where k.day = today), 0),
@@ -81,6 +96,10 @@ begin
     if p_kind = 'report' then
       insert into public.ai_report_refs (user_id, ref) values (uid, report_ref);
     end if;
+    -- True for exactly one call a day: the one that takes the day's total to 80 percent of the ceiling.
+    warn_at := (day_ceiling * 8 + 9) / 10;
+    warn := total_today < warn_at and total_today + 1 >= warn_at;
+    total_today := total_today + 1;
   end if;
   return jsonb_build_object(
     'plan', user_plan,
@@ -88,7 +107,10 @@ begin
     'week', week_used,
     'weekFreesIn', week_frees_in,
     'lifetime', lifetime_used,
-    'refUsed', ref_used
+    'refUsed', ref_used,
+    'dayTotal', total_today,
+    'ceiling', day_ceiling,
+    'ceilingWarn', warn
   );
 end;
 $$;

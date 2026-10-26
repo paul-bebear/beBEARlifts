@@ -29,7 +29,20 @@ $$;
 insert into auth.users(id) values
   ('00000000-0000-0000-0000-0000000000b1'),
   ('00000000-0000-0000-0000-0000000000b2'),
-  ('00000000-0000-0000-0000-0000000000b3');
+  ('00000000-0000-0000-0000-0000000000b3'),
+  ('00000000-0000-0000-0000-0000000000b4');
+
+create function pg_temp.assert_rejected(query text)
+returns void language plpgsql as $$
+begin
+  begin
+    execute query;
+  exception when others then
+    return;
+  end;
+  raise exception 'Query unexpectedly succeeded: %', query;
+end;
+$$;
 
 set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b1';
@@ -76,12 +89,38 @@ set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b1';
 select pg_temp.assert_rejected_with($q$select public.ai_usage_take('capped', null, '{"day": 9999, "week": 9999}')$q$, 'Daily AI share reached');
 
--- The app-wide ceiling still stops everyone.
+-- The app-wide ceiling stops free users.
 reset role;
 update public.ai_usage_kinds set count = 600 where user_id = '00000000-0000-0000-0000-0000000000b3' and kind = 'capped';
 set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b2';
 select pg_temp.assert_rejected_with($q$select public.ai_usage_take('capped', null, '{"day": 3, "week": 10}')$q$, 'Daily AI allowance reached');
+
+-- A beBEAR+ user skips the ceiling and still answers with their plan.
+reset role;
+select public.store_entitlement_put('00000000-0000-0000-0000-0000000000b4', true, 'bebear_plus_monthly', now() + interval '30 days', false, now());
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b4';
+select pg_temp.assert_text($q$select public.ai_usage_take('capped', null, '{"plusDay": 30, "plusWeek": 150}')->>'plan'$q$, 'plus');
+
+-- The ceiling is the one row in ai_settings, and the answer reports it.
+reset role;
+update public.ai_settings set daily_ceiling = 5000;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b2';
+select pg_temp.assert_text($q$select public.ai_usage_take('capped', null, '{"day": 3, "week": 10}')->>'ceiling'$q$, '5000');
+select pg_temp.assert_rejected($q$select * from public.ai_settings$q$);
+select pg_temp.assert_rejected($q$update public.ai_settings set daily_ceiling = 1000000$q$);
+
+-- ceilingWarn is true for exactly one call, the one that takes the day's total to 80 percent of the ceiling.
+reset role;
+update public.ai_settings set daily_ceiling = (((
+  (select coalesce(sum(count), 0) from public.ai_usage where day = (now() at time zone 'utc')::date)
+  + (select coalesce(sum(count), 0) from public.ai_usage_kinds where day = (now() at time zone 'utc')::date)
+  + 5) * 10 + 7) / 8)::integer;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b4';
+select pg_temp.assert_text($q$select count(*) filter (where r->>'ceilingWarn' = 'true')::text from (select public.ai_usage_take('report', 'warn' || g) as r from generate_series(1, 10) g offset 0) s$q$, '1');
 
 reset role;
 rollback;

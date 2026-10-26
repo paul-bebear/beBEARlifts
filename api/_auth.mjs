@@ -92,6 +92,14 @@ export function AiAuth_decideUsage(answer, kind, caps) {
   };
 }
 
+// ai_usage_take sets ceilingWarn on the one call a day that takes the app-wide total to 80 percent of the ceiling.
+export function AiAuth_ceilingNotice(answer) {
+  if (answer?.ceilingWarn !== true) {
+    return undefined;
+  }
+  return `AI allowance at 80 percent: ${count(answer.dayTotal)} of ${count(answer.ceiling)} calls used today (UTC)`;
+}
+
 // ai_usage_take answers 401 for a missing or expired token and 403 for an anonymous user.
 export function AiAuth_decide(status, answer, kind, caps) {
   if (status === 401 || status === 403) {
@@ -151,6 +159,10 @@ export async function AiAuth_check(request, ai, kind = "capped", ref) {
     );
   } catch {
     return json({ error: checkFailedMessage }, 503);
+  }
+  const notice = answer.status === 200 ? AiAuth_ceilingNotice(answer.body) : undefined;
+  if (notice != null) {
+    console.warn(notice);
   }
   const decision = AiAuth_decide(answer.status, answer.body, kind, caps);
   return decision.ok ? undefined : json(decision.body, decision.status);
