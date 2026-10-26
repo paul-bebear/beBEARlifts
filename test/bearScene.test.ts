@@ -15,6 +15,7 @@ import {
   BearScene_layout,
   BearScene_maxHeightShare,
   BearScene_minHeightShare,
+  BearScene_place,
   BearScene_spriteFoot,
   BearScene_visibleBox,
   IBearSceneLayout,
@@ -275,5 +276,12 @@ describe("BearScene", () => {
     expect(crop.width).to.be.closeTo((1024 * 56) / side, 0.1);
     expect(crop.top).to.be.lessThan(0);
     expect(-crop.left + 28).to.be.closeTo(((261 + 763) / 2) * (56 / side), 0.2);
+  });
+});
+
+describe("BearScene_place", () => {
+  it("puts the bear in the gym while a workout runs and at home the rest of the time", () => {
+    expect(BearScene_place(true)).to.equal("gym");
+    expect(BearScene_place(false)).to.equal("home");
   });
 });

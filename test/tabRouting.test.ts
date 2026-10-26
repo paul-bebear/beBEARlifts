@@ -5,6 +5,7 @@ import {
   TabRouting_programTab,
   TabRouting_resetRoutes,
   TabRouting_shouldReset,
+  TabRouting_showsBack,
   TabRouting_tabForScreen,
 } from "../src/models/tabRouting";
 import type { IScreen } from "../src/models/screen";
@@ -96,6 +97,25 @@ describe("TabRouting", () => {
         { name: "history", params: undefined },
       ]);
     }
+  });
+
+  it("draws the back chevron at the root of every tab but home, so it leads home", () => {
+    const root = { hasStackBack: false, isTabRoot: true, hasLeftButtons: false };
+    expect(TabRouting_showsBack({ ...root, routeName: "food" })).to.equal(true);
+    expect(TabRouting_showsBack({ ...root, routeName: "settings" })).to.equal(true);
+    expect(TabRouting_showsBack({ ...root, routeName: "main" })).to.equal(false);
+  });
+
+  it("keeps the workout's own Close button and the onboarding roots without a chevron", () => {
+    expect(
+      TabRouting_showsBack({ hasStackBack: false, isTabRoot: true, routeName: "progress", hasLeftButtons: true })
+    ).to.equal(false);
+    expect(
+      TabRouting_showsBack({ hasStackBack: false, isTabRoot: false, routeName: "first", hasLeftButtons: false })
+    ).to.equal(false);
+    expect(
+      TabRouting_showsBack({ hasStackBack: true, isTabRoot: false, routeName: "progress", hasLeftButtons: false })
+    ).to.equal(true);
   });
 
   it("opens a workout record on the Journal tab when Journal or History opens it", () => {

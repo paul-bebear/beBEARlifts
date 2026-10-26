@@ -11,7 +11,16 @@ import { NavScreenContent } from "../navigation/NavScreenContent";
 import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { Thunk_editHistoryRecord, Thunk_pushScreen } from "../ducks/thunks";
-import { IJournalDay, IJournalSection, JournalDay_build, JournalDay_sectionFold } from "../models/journalDay";
+import {
+  IJournalDay,
+  IJournalHeader,
+  IJournalSection,
+  JournalDay_build,
+  JournalDay_header,
+  JournalDay_sectionFold,
+} from "../models/journalDay";
+import { IconChevronRight } from "./icons/iconFoodUi";
+import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { Notes_firstLine, Notes_preview } from "../models/notes";
 import { FoodMealForTime_pick } from "../models/foodMealForTime";
 import { DailyChecklist_doneDays, DailyChecklist_streak } from "../models/dailyChecklist";
@@ -185,6 +194,49 @@ function NotesSection(props: { journal: IJournalDay; add: ReactNode }): JSX.Elem
   );
 }
 
+function JournalWeek(props: {
+  header: IJournalHeader;
+  selected: string;
+  onSelectDay: (day: string) => void;
+  onHistory: () => void;
+}): JSX.Element {
+  const { header } = props;
+  return (
+    <View className="px-4 pt-2" testID="journal-week" data-testid="journal-week">
+      <View className="flex-row items-center" style={{ justifyContent: "space-between" }}>
+        {header.dots.map((dot) => (
+          <Pressable
+            key={dot.day}
+            testID={`journal-week-dot-${dot.day}`}
+            data-testid={`journal-week-dot-${dot.day}`}
+            accessibilityRole="button"
+            accessibilityState={{ selected: dot.day === props.selected }}
+            onPress={() => props.onSelectDay(dot.day)}
+            className="p-1"
+          >
+            <View
+              className={`rounded-full border ${dot.isToday ? "border-2" : ""} border-border-neutral`}
+              style={{ width: 24, height: 24, backgroundColor: dot.filled ? T.honey : "transparent" }}
+            />
+          </Pressable>
+        ))}
+      </View>
+      {header.historyLabel != null && (
+        <Pressable
+          testID="journal-history"
+          data-testid="journal-history"
+          accessibilityRole="link"
+          onPress={props.onHistory}
+          className="flex-row items-center px-4 py-3 mt-2 rounded-2xl bg-background-subtle"
+        >
+          <Text className="flex-1 text-base">{header.historyLabel}</Text>
+          <IconChevronRight size={16} color={Tailwind_semantic().icon.neutral} />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 export function ScreenJournal(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const sources = useJournalSources();
@@ -194,6 +246,16 @@ export function ScreenJournal(): JSX.Element {
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const [isCollapsed, setIsCollapsed] = useState(true);
   const journal = JournalDay_build({ ...sources, day });
+  const header = useMemo(
+    () =>
+      JournalDay_header({
+        history,
+        food,
+        now: Date.now(),
+        startWeekFromMonday: sources.settings.startWeekFromMonday,
+      }),
+    [history, food, sources.settings.startWeekFromMonday]
+  );
   const streak = useMemo(
     () => DailyChecklist_streak(DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts }), today),
     [food, bear.workouts, today]
@@ -246,6 +308,12 @@ export function ScreenJournal(): JSX.Element {
   return (
     <NavScreenContent>
       <View testID="journal" data-testid="journal">
+        <JournalWeek
+          header={header}
+          selected={day}
+          onSelectDay={selectDay}
+          onHistory={() => dispatch(Thunk_pushScreen("history"))}
+        />
         <ProgressCalendarHeader
           streak={streak}
           calendar={calendar}

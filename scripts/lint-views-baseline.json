@@ -15,6 +15,9 @@
     "decision-in-view:useEffect#1": "predates the rule",
     "long-view": "predates the rule"
   },
+  "src/components/bearScene.tsx": {
+    "decision-in-view:useEffect#1": "subscribes to the OS reduce-motion setting and holds no decision"
+  },
   "src/components/bottomSheetEditTarget.tsx": {
     "decision-in-view:anonymous#1": "predates the rule",
     "long-view": "predates the rule"

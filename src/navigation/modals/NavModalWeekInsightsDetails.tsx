@@ -4,9 +4,8 @@ import { useAppState } from "../StateContext";
 import { ModalScreenContainer } from "../ModalScreenContainer";
 import { FormSheet } from "../FormSheet";
 import { WeekInsightsDetails } from "../../components/weekInsights";
-import { History_getPersonalRecords } from "../../models/history";
+import { History_getHistoryRecordsForTimerange, History_getPersonalRecords } from "../../models/history";
 import { CollectionUtils_sort } from "../../utils/collection";
-import { getWeekHistory } from "../../components/programHistory";
 import { WeekInsightsUtils_calculateSetResults } from "../../utils/weekInsightsUtils";
 import { navigateToModal } from "../navigationService";
 import type { IRootStackParamList } from "../types";
@@ -28,7 +27,12 @@ export function NavModalWeekInsightsDetails(): JSX.Element {
     [state.storage.history]
   );
   const prs = History_getPersonalRecords(sortedHistory);
-  const thisWeekHistory = getWeekHistory(sortedHistory, selectedFirstDayOfWeek, settings.startWeekFromMonday);
+  const thisWeekHistory = History_getHistoryRecordsForTimerange(
+    sortedHistory,
+    selectedFirstDayOfWeek,
+    "week",
+    settings.startWeekFromMonday
+  );
   const setResults = WeekInsightsUtils_calculateSetResults(thisWeekHistory, settings);
 
   const onClose = (): void => {

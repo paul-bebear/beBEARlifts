@@ -1,9 +1,8 @@
 import { JSX, useEffect } from "react";
 import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTrackedState, useTrackedDispatch, untrack } from "../TrackedStateContext";
 import { buildNavCommon } from "../utils";
-import { ProgramHistoryView } from "../../components/programHistory";
+import { ScreenHome } from "../../components/screenHome";
 import { ChooseProgramView } from "../../components/chooseProgram";
 import { Program_getProgram } from "../../models/program";
 import { useScreenPerf } from "../../utils/useScreenPerf";
@@ -34,7 +33,6 @@ export function NavScreenMain(): JSX.Element {
   const currentProgram = untrack(
     state.storage.currentProgramId != null ? Program_getProgram(state, state.storage.currentProgramId) : undefined
   );
-  const insets = useSafeAreaInsets();
   const accountPlan = AccountPlanStore.use();
   const plusOffer = PlusOfferStore.use();
   const userId = CloudStore.use().session?.userId;
@@ -62,7 +60,7 @@ export function NavScreenMain(): JSX.Element {
 
   if (currentProgram == null) {
     return (
-      <View className="flex-1 bg-background-default" style={{ paddingTop: insets.top }}>
+      <View className="flex-1 bg-background-default">
         <OnboardingHome enabled={showChat} dispatch={dispatch}>
           <ChooseProgramView
             navCommon={navCommon}
@@ -80,19 +78,7 @@ export function NavScreenMain(): JSX.Element {
     );
   }
 
-  return (
-    <View className="flex-1 bg-background-default" style={{ paddingTop: insets.top }}>
-      <ProgramHistoryView
-        progress={ongoingProgress}
-        navCommon={navCommon}
-        program={currentProgram}
-        settings={untrack(state.storage.settings)}
-        history={untrack(state.storage.history)}
-        subscription={untrack(state.storage.subscription)}
-        dispatch={dispatch}
-      />
-    </View>
-  );
+  return <ScreenHome program={currentProgram} progress={ongoingProgress} />;
 }
 
 function OnboardingHome(props: {

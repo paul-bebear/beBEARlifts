@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NavbarView } from "../components/navbar";
 import { useTrackedState, useTrackedDispatch, untrack } from "./TrackedStateContext";
 import { buildNavCommon } from "./utils";
+import { TabRouting_showsBack } from "../models/tabRouting";
 import type { ITourId } from "../models/state";
 import type { IHelpKey } from "../components/help/helpRegistry";
 
@@ -23,6 +24,8 @@ export interface INavHeaderOptions {
 interface IHeaderProps {
   options: object;
   back?: { title: string | undefined } | undefined;
+  route?: { name: string };
+  navigation?: { getParent?: () => { getState?: () => { type?: string } | undefined } | undefined };
 }
 
 export function NavHeader(props: IHeaderProps): JSX.Element | null {
@@ -48,7 +51,12 @@ export function NavHeader(props: IHeaderProps): JSX.Element | null {
     <View className="bg-background-default" style={[{ paddingTop: insets.top }, shadowStyle]}>
       <NavbarView
         isStatic
-        showBack={!!props.back}
+        showBack={TabRouting_showsBack({
+          hasStackBack: !!props.back,
+          isTabRoot: props.navigation?.getParent?.()?.getState?.()?.type === "tab",
+          routeName: props.route?.name ?? "",
+          hasLeftButtons: (options.navLeftButtons?.length ?? 0) > 0,
+        })}
         dispatch={dispatch}
         navCommon={navCommon}
         title={options.navTitle ?? ""}

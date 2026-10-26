@@ -161,6 +161,7 @@ export type IRootStackParamList = {
   dayFromAdhocModal: { progressId?: number; historyRecordId?: number };
   nextWorkoutModal: undefined;
   plusSheetModal: undefined;
+  bearPanelModal: undefined;
   addFriendModal: undefined;
   noteEditorModal: { day: string; noteId?: string };
   whatsnewModal: undefined;

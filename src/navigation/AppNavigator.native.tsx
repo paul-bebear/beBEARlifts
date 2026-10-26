@@ -39,7 +39,6 @@ import {
 import { NavScreenProgress, NavScreenFinishDay, NavScreenSubscription } from "./screens/NavScreenWorkout";
 import { NavScreenGraphs } from "./screens/NavScreenGraphs";
 import { NavScreenFoodAdd } from "./screens/NavScreenFoodAdd";
-import { ScreenMyBear } from "../components/screenMyBear";
 import { ScreenReportsHub } from "../components/screenReportsHub";
 import { ScreenJournal } from "../components/screenJournal";
 import { ScreenHistory } from "../components/screenHistory";
@@ -107,6 +106,7 @@ import { NavModalProgramPreviewMuscles } from "./modals/NavModalProgramPreviewMu
 import { NavModalAmrap } from "./modals/NavModalAmrap";
 import { NavModalNextWorkout } from "./modals/NavModalNextWorkout";
 import { PlusSheetModal } from "../components/plusSheet";
+import { BearPanelSheetModal } from "../components/bearPanelSheet";
 import { AddFriendModal } from "../components/addFriendSheet";
 import { NoteEditorModal } from "../components/noteEditor";
 import { NavModalEditTarget } from "./modals/NavModalEditTarget";
@@ -263,7 +263,7 @@ function OnboardingStackScreen(): JSX.Element {
 function HomeStackScreen(): JSX.Element {
   return (
     <HomeStack.Navigator screenOptions={stackScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
-      <HomeStack.Screen name="main" component={NavScreenMain} />
+      <HomeStack.Screen name="main" component={NavScreenMain} options={{ headerShown: true, header: NavHeader }} />
       <HomeStack.Screen
         name="progress"
         component={NavScreenProgress}
@@ -331,7 +331,7 @@ function GraphsStackScreen(): JSX.Element {
     <GraphsStack.Navigator screenOptions={stackScreenOptions} screenLayout={renderScreenWithErrorBoundary}>
       <GraphsStack.Screen
         name="progressDashboard"
-        component={ScreenMyBear}
+        component={ScreenReportsHub}
         options={{ headerShown: true, header: NavHeader }}
       />
       <GraphsStack.Screen
@@ -540,6 +540,7 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="programPreviewMusclesModal" component={NavModalProgramPreviewMuscles} />
           <RootStack.Screen name="nextWorkoutModal" component={NavModalNextWorkout} />
           <RootStack.Screen name="plusSheetModal" component={PlusSheetModal} />
+          <RootStack.Screen name="bearPanelModal" component={BearPanelSheetModal} />
           <RootStack.Screen name="addFriendModal" component={AddFriendModal} />
           <RootStack.Screen name="noteEditorModal" component={NoteEditorModal} />
           <RootStack.Screen name="graphsModal" component={NavModalGraphs} options={{ sheetAllowedDetents: [0.9] }} />

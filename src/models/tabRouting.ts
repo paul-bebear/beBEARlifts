@@ -32,6 +32,17 @@ export function TabRouting_tabForScreen(screen: IScreen, preferredTab: ITab | un
   return preferredTab ?? Screen_tab(screen);
 }
 
+// With no tab bar, the chevron at the root of any tab but home is the way home. The tab navigator's
+// firstRoute back behaviour sends that goBack to the home tab.
+export function TabRouting_showsBack(args: {
+  hasStackBack: boolean;
+  isTabRoot: boolean;
+  routeName: string;
+  hasLeftButtons: boolean;
+}): boolean {
+  return args.hasStackBack || (args.isTabRoot && args.routeName !== "main" && !args.hasLeftButtons);
+}
+
 export function TabRouting_resetRoutes(
   tab: ITab,
   screen: IScreen,
