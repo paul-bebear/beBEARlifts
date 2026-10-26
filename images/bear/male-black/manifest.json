@@ -1,0 +1,656 @@
+{
+  "canvas": [
+    1024,
+    1536
+  ],
+  "bear_foot_anchor": [
+    512,
+    1470
+  ],
+  "scene_placement": {
+    "scale": 0.48,
+    "full_canvas_top_left": [
+      266,
+      784
+    ],
+    "foot_anchor": [
+      512,
+      1490
+    ],
+    "note": "Render the whole sprite canvas at this uniform scale; do not crop to the silhouette in the app."
+  },
+  "dashboard_safe_rect": [
+    125,
+    195,
+    825,
+    675
+  ],
+  "tv_safe_rect": [
+    875,
+    345,
+    1000,
+    530
+  ],
+  "floor_safe_rect": [
+    180,
+    930,
+    844,
+    1510
+  ],
+  "assets": {
+    "bear_level_01.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        261,
+        890,
+        763,
+        1470
+      ],
+      "visible_height": 580,
+      "target_height": 580,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-27562776-04a1-4196-8cdf-8ff726eb3188.png"
+    },
+    "bear_level_02.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        360,
+        750,
+        665,
+        1470
+      ],
+      "visible_height": 720,
+      "target_height": 720,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-b10512fd-19ef-46d7-8d70-a2b41297bd75.png"
+    },
+    "bear_level_03.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        261,
+        670,
+        763,
+        1470
+      ],
+      "visible_height": 800,
+      "target_height": 800,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-9cdc7d25-c8d6-4c50-bd60-30dc603aa6e9.png"
+    },
+    "bear_level_04.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        232,
+        589,
+        791,
+        1470
+      ],
+      "visible_height": 881,
+      "target_height": 880,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-e3d4bf11-ca34-4afc-9252-6a127c478fbf.png"
+    },
+    "bear_level_05.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        200,
+        511,
+        824,
+        1470
+      ],
+      "visible_height": 959,
+      "target_height": 960,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-c3feb982-d404-4023-8ff8-c6df3a3408c5.png"
+    },
+    "bear_level_06.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        161,
+        410,
+        862,
+        1470
+      ],
+      "visible_height": 1060,
+      "target_height": 1060,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-e4cae9ee-aa16-4fd9-82df-85992a7c8add.png"
+    },
+    "bear_level_07.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        130,
+        310,
+        894,
+        1470
+      ],
+      "visible_height": 1160,
+      "target_height": 1160,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-191a562b-fcc9-4cc7-b0dc-99a76a638c99.png"
+    },
+    "bear_level_08.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        104,
+        229,
+        921,
+        1470
+      ],
+      "visible_height": 1241,
+      "target_height": 1240,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-c709f778-79d6-4012-8c56-b6450e27ac9f.png"
+    },
+    "bear_level_09.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        70,
+        150,
+        953,
+        1470
+      ],
+      "visible_height": 1320,
+      "target_height": 1320,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-3b2529a0-2dd6-4076-907c-721de0c98145.png"
+    },
+    "bear_level_10.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        67,
+        151,
+        957,
+        1470
+      ],
+      "visible_height": 1319,
+      "target_height": 1320,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-0560a58c-5dd6-49fc-8ac1-b33dc2570810.png"
+    },
+    "bear_level_11.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        51,
+        29,
+        973,
+        1470
+      ],
+      "visible_height": 1441,
+      "target_height": 1440,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-8b5e2fa0-b612-4a4a-a0a3-271f358e40fa.png"
+    },
+    "bear_level_12.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        68,
+        28,
+        957,
+        1470
+      ],
+      "visible_height": 1442,
+      "target_height": 1440,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-54028fb5-511f-455f-86dc-4fa5206fe482.png"
+    },
+    "bear_mood_small_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        360,
+        750,
+        665,
+        1470
+      ],
+      "visible_height": 720,
+      "target_height": 720,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-f3a17ea4-b1b0-46a2-8439-1e184f91adce.png"
+    },
+    "bear_mood_small_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        299,
+        938,
+        724,
+        1470
+      ],
+      "visible_height": 532,
+      "target_height": 533,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-86732c9d-9bba-4f3f-bad0-11c4301b0dd6.png"
+    },
+    "bear_mood_small_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        308,
+        721,
+        717,
+        1470
+      ],
+      "visible_height": 749,
+      "target_height": 749,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-2d10f8b3-e248-40bd-bb4e-f63055aa686d.png"
+    },
+    "bear_mood_medium_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        243,
+        509,
+        782,
+        1470
+      ],
+      "visible_height": 961,
+      "target_height": 960,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-e8d1d77e-f78d-4a54-b01b-d3bcddce7bf6.png"
+    },
+    "bear_mood_medium_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        220,
+        759,
+        805,
+        1470
+      ],
+      "visible_height": 711,
+      "target_height": 710,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-14b6deb2-51f7-45ad-8146-88ca6bb918b4.png"
+    },
+    "bear_mood_medium_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        181,
+        472,
+        843,
+        1470
+      ],
+      "visible_height": 998,
+      "target_height": 998,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-a04ae8ec-64d8-493f-ae9b-eea20c59b0d5.png"
+    },
+    "bear_mood_big_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        142,
+        230,
+        882,
+        1470
+      ],
+      "visible_height": 1240,
+      "target_height": 1240,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-6a680586-98ce-449d-aed4-80a35ad243b7.png"
+    },
+    "bear_mood_big_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        152,
+        552,
+        871,
+        1470
+      ],
+      "visible_height": 918,
+      "target_height": 918,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-03d27ff3-2452-4570-8271-2232025b8927.png"
+    },
+    "bear_mood_big_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        78,
+        181,
+        947,
+        1470
+      ],
+      "visible_height": 1289,
+      "target_height": 1290,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-8ae2550f-57be-47e6-bfb3-858448676f10.png"
+    },
+    "bear_mood_space_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        127,
+        151,
+        898,
+        1470
+      ],
+      "visible_height": 1319,
+      "target_height": 1320,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-05ae6df3-1bff-4e1b-a9bb-8506b6f40484.png"
+    },
+    "bear_mood_space_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        147,
+        493,
+        877,
+        1470
+      ],
+      "visible_height": 977,
+      "target_height": 977,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-df441f1d-fc82-4d46-9bd4-336332816466.png"
+    },
+    "bear_mood_space_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        66,
+        97,
+        957,
+        1470
+      ],
+      "visible_height": 1373,
+      "target_height": 1373,
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-71fba1bb-8834-43bd-9a31-c71cb88ed5bd.png"
+    },
+    "gym_bedroom.png": {
+      "kind": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGB",
+      "sha256": "2eafd3f57a01bc6a9d77e376dfe65e0eedb425c1fead08f4a99e7e5971ebce60",
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-111251f5-7e71-4984-99a5-ff50a33f7684.png",
+      "approved_original_unchanged": true
+    },
+    "gym_garage.png": {
+      "kind": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGB",
+      "sha256": "94cd2956073aa886f0a735b8c4144062afac7dce69febc33eab3bbc3d8427e0a",
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-207a5040-e708-4faf-a71b-30df7ea4404a.png",
+      "approved_original_unchanged": true
+    },
+    "gym_pro.png": {
+      "kind": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGB",
+      "sha256": "152e27322fdf01c2cec01fb7b7598d3df3014d5cbac1a2c4e64d7b1fd2e1066e",
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-1c45c1a6-460e-4a98-9533-79260f381c81.png",
+      "approved_original_unchanged": true
+    },
+    "gym_spaceship.png": {
+      "kind": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGB",
+      "sha256": "b567caef3dc1a32cae99b8aa52cfcc8a214a98e3fdaf7eefb8c3c26c649544bd",
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-9c15d005-206d-48c9-8015-4142c2a1f038.png",
+      "approved_original_unchanged": true
+    },
+    "gym_moon.png": {
+      "kind": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGB",
+      "sha256": "c43faa7a7b9415051844bf21d8064b7de623e6b383ed632f193e44066933cd5d",
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-77a41a23-14f6-4b04-b83c-57d402004e2c.png",
+      "approved_original_unchanged": true
+    },
+    "gym_mars.png": {
+      "kind": "gym",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGB",
+      "sha256": "a05fe0f48a3f7b4ca02fd28583a49433dc988487944fae7aa88f536edcc33157",
+      "source": "/Users/paulbebear/.codex/generated_images/01a160ee-3f9c-70d0-9b8c-5281fc3fe38b/exec-b3ff46d7-1777-4ad2-8fe5-ac228d62ede0.png",
+      "approved_original_unchanged": true
+    }
+  },
+  "review_composites": [
+    {
+      "bear": "bear_level_05.png",
+      "gym": "gym_garage.png",
+      "sprite_scale": 0.48,
+      "sprite_top_left": [
+        266,
+        784
+      ],
+      "foot_anchor": [
+        512,
+        1490
+      ],
+      "visible_bbox": [
+        362,
+        1029,
+        662,
+        1490
+      ],
+      "whiteboard_overlap_pixels": 0
+    },
+    {
+      "bear": "bear_level_10.png",
+      "gym": "gym_spaceship.png",
+      "sprite_scale": 0.48,
+      "sprite_top_left": [
+        266,
+        784
+      ],
+      "foot_anchor": [
+        512,
+        1490
+      ],
+      "visible_bbox": [
+        297,
+        856,
+        725,
+        1490
+      ],
+      "whiteboard_overlap_pixels": 0
+    }
+  ],
+  "explicit_user_exception": "Medium hungry/pumped keep the shoulder towel plus bowl/phone.",
+  "generation": "Built-in image_gen. Alpha-preserving canvas alignment and requested contact sheets assembled with Pillow. Approved gyms copied unchanged."
+}

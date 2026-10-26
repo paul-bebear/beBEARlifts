@@ -24,7 +24,7 @@ export function BearScene(props: IProps): JSX.Element {
   const { state } = props;
   const breathing = BearScene_breathing(state.mood);
   const scaleY = useBearBreathing(breathing.durationMs, breathing.scaleY);
-  const spritePath = BearArt_cardSprite(state.line, state.level.tier.level);
+  const spritePath = BearArt_cardSprite(state.line, state.fur, state.level.tier.level);
   const gym = BearArt_gym(state.level.tier.level);
   const exit = BearHouse_gymExit(gym);
   const layout = BearScene_layout(width, state.level.tier.level, state.level.fraction, spritePath, breathing.scaleY);

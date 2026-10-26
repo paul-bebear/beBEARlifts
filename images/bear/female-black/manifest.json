@@ -1,0 +1,558 @@
+{
+  "assets": [
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 580,
+      "kind": "level",
+      "name": "bear_f_level_01.png",
+      "prompt": "Use case: precise-object-edit. Create female beBEAR LEVEL 01 CUB from this MALE CUB reference. This cub stage must be IDENTICAL to the male cub except the fur color becomes slightly lighter HONEY-BROWN with a light cream bear muzzle. Keep exactly the same young cub bear face, proportions, round ears, big bear nose, seated pose with round paw pads visible, plain oversized grey tee and dark grey shorts with white trim under the tee. No female adult anatomy, no changed curves, no makeup, lashes, hair or accessories. NO earring at level01. No new props. Keep original detailed groomed premium 3D fur and soft light from upper left. One small cub sitting with the lowest paws on the same near-bottom baseline, exact 1024x1536 portrait PNG with genuine alpha transparency around the entire cub, no floor or backdrop, clean fur edges and no colored fringe. No text, logos, numbers, glow, sparkle, stars, hearts or bows.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-5f7dc7dc-f779-4e69-ab72-b8f5a18bd2db.png",
+      "stage": 1,
+      "visible_bbox": [
+        260,
+        892,
+        765,
+        1472
+      ],
+      "visible_height": 580
+    },
+    {
+      "approved": true,
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 720,
+      "kind": "level",
+      "name": "bear_f_level_02.png",
+      "prompt": "Approved style-test render; see style-test-prompts.json",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-2cf4cf9f-cdd9-48ad-9ba9-a74b8f025fe8.png",
+      "stage": 2,
+      "visible_bbox": [
+        372,
+        752,
+        652,
+        1472
+      ],
+      "visible_height": 720
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 800,
+      "kind": "level",
+      "name": "bear_f_level_03.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 03 AMATEUR. Use approved level02 as the face and body-family anchor. Slightly more upright and self-assured young beginner, still slim with slender limbs, little muscle definition and a modest youthful frame, less developed than adult level06. Normal bright friendly eyes, tentative confident smirk, shoulders a little shy but feet planted.\nOUTFIT ONLY: a fitted PLAIN GREY TEE with short sleeves, crew neck and full-length hem covering belly; charcoal mid-thigh bike shorts with white trim; clean WHITE SNEAKERS with plain white soles and no brand marks. One small gold hoop in one ear. No belt, jewelry other than hoop, headphones, towel, wraps, phone or any other props. Same full-body slight 3/4 camera and even-weight neutral stance.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-aaa65d26-594b-4054-8a2c-2013a2b3a0d0.png",
+      "stage": 3,
+      "visible_bbox": [
+        361,
+        672,
+        663,
+        1472
+      ],
+      "visible_height": 800
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 880,
+      "kind": "level",
+      "name": "bear_f_level_04.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 04 ROOKIE. Use the supplied level03 as identity anchor. Slightly more shape and confidence than level03: a natural subtly more defined waist and gently toned upper arms, still a slender beginning lifter with slim legs, less developed than level06. Head a little more upright, bright friendly smirk, feet planted, level hips, both paws down.\nOUTFIT: plain fitted grey crew-neck short-sleeve athletic TEE covering torso and belly, charcoal mid-thigh BIKE SHORTS with white trim. ONE pair of matte dark grey over-ear HEADPHONES resting AROUND THE NECK with both earcups visible at the collarbone. One small gold hoop in one ear. Bare furry BEAR FEET, no sneakers. No belt, towel, chain, wraps or anything hanging from shorts. Only headphones as extra item.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-5c74a5a3-f7ac-4307-8da3-b818f7d217b3.png",
+      "stage": 4,
+      "visible_bbox": [
+        343,
+        592,
+        680,
+        1472
+      ],
+      "visible_height": 880
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 960,
+      "kind": "level",
+      "name": "bear_f_level_05.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 05 REGULAR. Approved female level06 reference is the exact identity anchor. A slightly less defined and less confident version than level06, still visibly athletic with a slim natural waist and toned slender legs. Flat smooth stomach, no abs or extra bulk. Bright friendly smirk. Feet planted and both paws relaxed down.\nOUTFIT: charcoal high-neck modest SPORTS TOP under a lightweight dark grey ZIP JACKET WORN OPEN, sleeves pushed to forearms, subtle white piping. A sports bra must NEVER be worn alone; jacket covers the sides of torso and top is modest and long. Charcoal full-length LEGGINGS with thin white side trim, natural slim fit. ONE folded white gym TOWEL draped OVER ONE SHOULDER, short neat ends. One small gold hoop in one ear. Bare furry bear feet. Only jacket and towel as extras. No belt, headphones, chain, wrist wraps, phone or hanging shorts items.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-4462832f-b844-4416-bff8-3aba125652e7.png",
+      "stage": 5,
+      "visible_bbox": [
+        285,
+        512,
+        739,
+        1472
+      ],
+      "visible_height": 960
+    },
+    {
+      "approved": true,
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1060,
+      "kind": "level",
+      "name": "bear_f_level_06.png",
+      "prompt": "Approved style-test render; see style-test-prompts.json",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-ddf8dfd7-9363-4cbf-8e08-fa8380794762.png",
+      "stage": 6,
+      "visible_bbox": [
+        257,
+        413,
+        768,
+        1472
+      ],
+      "visible_height": 1059
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1160,
+      "kind": "level",
+      "name": "bear_f_level_07.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 07 ATHLETE. Supplied approved former level09 body is now the level07–08 build range. Keep its SLIM feminine fit-athlete proportions and natural waist/hips, with a little more arm and leg tone than level06 but LESS pronounced definition than final09. Smooth flat stomach; at most a faint abdominal outline, never ripped abs. Confident upright chin, friendly smirk, both feet firmly planted and both arms relaxed down.\nOUTFIT: charcoal high-neck long CROP TANK with white trim and plain straight hem, a matching cropped ZIP JACKET WORN OPEN over it, sleeves pushed to just below elbows, subtle white piping. Charcoal mid-thigh bike shorts with white trim. Black WRIST WRAPS with one clean white stripe on EACH wrist. One gold hoop. Bare furry bear feet. Jacket and wrist wraps are the only extra items. REMOVE GOLD BELT completely; no black belt, towel, headphones, chain or chalk. Nothing attached to shorts. Keep chest modest and covered, no small sports bra alone.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-8a4056b0-3be6-40a7-bd7b-add5efb886bc.png",
+      "stage": 7,
+      "visible_bbox": [
+        244,
+        313,
+        779,
+        1472
+      ],
+      "visible_height": 1159
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1240,
+      "kind": "level",
+      "name": "bear_f_level_08.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 08 POWER. The supplied image is the approved build the user wants in the level07–08 range: keep this exact slim feminine athletic body, naturally defined waist and moderate hips, slender toned legs and arms. Cleaner shoulder tone than06 but softer muscle contours than final09, NO added girth. Smooth flat stomach, at most a faint centerline, no blocks. Friendly confident smirk, head upright, feet planted with level hips, both arms down.\nOUTFIT: charcoal long fitted CROP TANK with crew neck, wide straps, white trim, continuous front and plain hem close to waist. Charcoal mid-thigh bike shorts with white trim. ONE THIN GOLD CHAIN around the neck with NO pendant. White CHALK residue softly coats the palms and finger surfaces of both paws, not sparkling or glowing; NO chalk bag or floating dust. One small gold hoop in one ear. Bare furry bear feet. REMOVE the GOLD BELT completely. No jacket, wrist wraps, towel, headphones, phone or other items. Chain and chalk are the two extras.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-0e6d9383-9c8d-40a0-900c-c43612a504bf.png",
+      "stage": 8,
+      "visible_bbox": [
+        223,
+        232,
+        801,
+        1472
+      ],
+      "visible_height": 1240
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1320,
+      "kind": "level",
+      "name": "bear_f_level_09.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: revised final LEVEL 09 TITAN. The reference is the APPROVED build now intended for level 07–08. Elevate it to a clearly more DEFINED PEAK without making her bigger: same slim limb circumference and same waist/hip proportions, but crisper natural deltoid and triceps contours, firmer upper arms, cleaner athletic quadriceps and calf contours with close-lying fur that follows the sculpted forms. She looks like a lean trained female athlete, not a muscular bodybuilder. Show muscle tone through natural form and soft light, not drawn lines. Do NOT increase thighs, glutes, arms, chest or shoulder width. No six-pack or ripped abdominal blocks. Chin confidently UP, head upright, shoulders open, both arms down, both feet planted with even weight and level hips.\nKeep the approved charcoal long fitted CROP TANK with crew neckline, broad straps, white trim, continuous fabric front and straight stitched hem almost at the waist; small flat midriff gap. Same charcoal mid-thigh bike shorts with white trim. GOLD CHAMPIONSHIP BELT with a plain gold plate at waist, no lettering or symbols. Bare furry bear feet. One gold hoop. No other items. Preserve face and bright friendly expression.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-89d68619-1d1b-41e1-a2ce-d7f4f2932147.png",
+      "stage": 9,
+      "visible_bbox": [
+        205,
+        152,
+        819,
+        1472
+      ],
+      "visible_height": 1320
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1320,
+      "kind": "level",
+      "name": "bear_f_level_10.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 10 ASTRONAUT.\nIMAGE 1 is the APPROVED FEMALE identity/body anchor: retain her exact face, slim feminine athletic frame and modest unchanged chest. IMAGE 2 is ONLY a WHITE SPACE SUIT MATERIAL/DESIGN reference. Do NOT copy the male body or ANY gym gear from image2.\nDress her in a FITTED FUNCTIONAL WHITE ASTRONAUT SUIT adapted to her slim frame. Full white sleeves, white padded pressure fabric, dark grey flexible ribbed elbow/knee joint inserts, subtle grey fasteners, a modest rectangular chest control module with BLANK panels and no lettering, integrated white boots with dark grey soles, fitted white suit gloves. Entire torso and limbs covered; tailoring follows her natural athletic waist and slender limbs without corset shaping or exaggerated chest armor. Head and ears uncovered, single gold hoop visible.\nCarry one matching WHITE ASTRONAUT HELMET UNDER ONE ARM at her side, white shell, dark glossy visor; the other gloved paw relaxed down. No helmet on head. Feet planted, pelvis level, chin confidently upright, friendly bright eyes and smirk.\nABSOLUTELY NO GYM GEAR: no championship belt, lifting belt, towel, wrist wraps, headband, cap, chain, bottle, dumbbells, shorts or anything hanging from suit. Helmet is the only extra item. No cape. Real alpha transparent background, no backdrop or glow.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-563f2550-abee-4e81-b2e5-b2b30d531acb.png",
+      "stage": 10,
+      "visible_bbox": [
+        165,
+        152,
+        858,
+        1472
+      ],
+      "visible_height": 1320
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1440,
+      "kind": "level",
+      "name": "bear_f_level_11.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 11 LUNAR.\nIMAGE1 is the exact FEMALE identity, slim athletic silhouette and functional suit-fit anchor. IMAGE2 is ONLY the SILVER LUNAR SUIT design/material reference, not male anatomy or accessories.\nDress her in a fitted SILVER METALLIC FABRIC lunar pressure suit with dark charcoal flexible accordion joints, functional panels and straps, modest smooth chest control plate with blank panels, smooth torso tailoring and integrated silver gloves and boots. Keep natural feminine waist and modest chest without molded bust armor, corset or bulky muscles.\nHELMET IS ON her head, metallic silver rim enclosing her head and a clear curved VISOR FLIPPED UP ABOVE THE FOREHEAD so the entire friendly bear face is unobstructed. Round ears fit inside the helmet; one small gold hoop visible in one ear where exposed. Silver moon boots have a realistic light layer of grey MOON DUST stuck to soles and lower boot panels. No moon ground or dust cloud.\nBoth arms down, gloved paws relaxed, feet planted evenly and pelvis level, bright friendly eyes and confident smirk, chin upright. No spare handheld helmet.\nABSOLUTELY NO GYM GEAR from image2: no towel, lifting/championship belt, wrist wraps, headband, cap, necklace, bottle, dumbbells or dangling items. No cape or other props. Full body alpha-transparent PNG, no text, logos or stars.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-de2d6fa3-3d56-43a2-9edd-0c8ea06f1d9d.png",
+      "stage": 11,
+      "visible_bbox": [
+        190,
+        32,
+        835,
+        1472
+      ],
+      "visible_height": 1440
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1440,
+      "kind": "level",
+      "name": "bear_f_level_12.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nTHIS ASSET: LEVEL 12 MARS.\nIMAGE1 is the exact FEMALE identity, slim suit silhouette and helmet-fit anchor. IMAGE2 is ONLY the RUST-ORANGE MARS SUIT color/design reference, not the male body or gym accessories.\nFitted functional RUST-ORANGE pressure suit, charcoal flexible elbow/knee joints, dark grey straps and grey chest breathing/control module with blank panels, modest smooth chest shape, integrated orange/charcoal gloves and matching practical boots. Keep natural feminine proportions and slender limbs, no enlarged bust, hips or muscles. A small round MISSION PATCH on one upper sleeve uses an abstract rust-hill-and-cream-planet design with NO text, numerals, stars or branding.\nHELMET ON, visor flipped UP above forehead leaving friendly face fully visible, matching orange/silver shell. One gold hoop visible in one ear inside. A SHORT MATTE RED CAPE attached neatly at the shoulders hangs behind her only to upper thigh; no dramatic flight or twisting, no hood, no fluttering sparkle. Both arms relaxed down, both feet planted evenly, level hips and upright chin.\nNO GYM GEAR: remove every towel, belt, headband, cap, wraps, chain, bottle, dumbbell or dangling accessory seen in image2. No spare handheld helmet. Only helmet and short cape beyond the suit/patch. Full-body 1024x1536 PNG with actual alpha transparency, no backdrop, floor or glow.",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-cba2ca5e-4e05-414c-b2fe-cdf5194515fe.png",
+      "stage": 12,
+      "visible_bbox": [
+        174,
+        32,
+        851,
+        1472
+      ],
+      "visible_height": 1440
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1240,
+      "kind": "mood",
+      "mood": "hungry",
+      "name": "bear_f_mood_big_hungry.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: BIG HUNGRY, using the female LEVEL08 slim athletic body and crop-tank outfit. Same charcoal long fitted CROP TANK with white trim, charcoal mid-thigh bike shorts with white trim, one gold hoop and THIN GOLD CHAIN without pendant. Bare furry bear feet. Keep arms and thighs slender and toned, natural feminine waist/hips, modest chest and flat smooth stomach.\nREMOVE CHALK from paws. She holds ONE EMPTY plain matte grey BOWL in BOTH PAWS, in front of her lower torso, bowl tilted up enough that its EMPTY interior is visible. Both paws support opposite sides, exactly two arms. She looks DOWN into it with a SULKY POUT, downturned mouth and disappointed expressive brows. Shoulders slightly drooped, feet planted evenly and pelvis level. Chain and bowl are the only extras. No food, utensils, phone, towel, jacket, wraps or belts.",
+      "size": "big",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-f7858ff1-d558-4a17-a175-7822ca73e8d8.png",
+      "visible_bbox": [
+        268,
+        233,
+        756,
+        1472
+      ],
+      "visible_height": 1239
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1290,
+      "kind": "mood",
+      "mood": "pumped",
+      "name": "bear_f_mood_big_pumped.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: BIG PUMPED, female LEVEL08 slim athletic body and outfit, using supplied same-size hungry reference only for identity/build/outfit. REMOVE BOWL completely and change mood and action.\nKeep charcoal long fitted CROP TANK and mid-thigh bike shorts with white trim, one small gold hoop, THIN GOLD CHAIN without pendant, clean honey-brown paws with NO chalk, bare furry bear feet. Natural waist/hips, toned slender arms and thighs, unchanged modest chest, flat smooth stomach with no six-pack.\nA GYM MIRROR SELFIE reflected-view character cutout ONLY, no room or mirror frame. ONE arm raised and bent in a confident BICEP FLEX with paw near shoulder/head height; show fit feminine muscle definition without a giant bicep or bulky arm. OTHER paw holds ONE dark SMARTPHONE upright at shoulder height, camera-lens back toward viewer as in a mirror reflection, face unobstructed. Two arms only. COCKY HAPPY GRIN with bright excited eyes looking toward phone. Evenly planted feet, level hips, no twist or arched back. Whole body and phone visible. Chain and phone only, no bowl, towel, food, belt, wraps, jacket or other items.",
+      "size": "big",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-2de997e5-9822-4949-98a2-8dd10654eb30.png",
+      "visible_bbox": [
+        209,
+        182,
+        815,
+        1472
+      ],
+      "visible_height": 1290
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 918,
+      "kind": "mood",
+      "mood": "tired",
+      "name": "bear_f_mood_big_tired.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: BIG TIRED, female LEVEL08 slim athletic body and outfit. Same charcoal long fitted crop tank and mid-thigh bike shorts with white trim, one gold hoop and THIN GOLD CHAIN with no pendant, bare furry bear feet. Remove all chalk residue.\nShe is SITTING ON THE GROUND SLUMPED with knees naturally bent and feet resting forward on same ground plane, pelvis low, shoulders drooped, back slightly rounded, paws resting limply on knees. One plain white TOWEL drapes OVER HER HEAD with ends beside her face. Eyes HALF CLOSED with exhausted brows and a small weary parted mouth. Keep her slim athletic limbs and modest natural seated posture; no thickened thighs, bodybuilder abs, chest emphasis or fashion posing. Whole figure and feet included. Chain and towel are the only extras. No floor painted into image, bench, bowl, phone, belt, jacket, wraps, food or other items.",
+      "refinement_prompt": "Precise object cleanup. In this tired seated female bear image, REMOVE ONLY THE WHITE POWDER PATCHES on BOTH PAWS and fingers. The white marks on her knuckles and finger fur are unwanted chalk. Restore those marked areas to clean natural honey-brown fur matching the rest of each paw, with dark claws unchanged. No white powder anywhere on paws, wrists, fingers or forearms.\nKeep everything else pixel-compositionally the same: her face, tired half-closed eyes, gold hoop, thin gold chain, white towel over head, charcoal modest crop tank and shorts, seated slumped pose, body proportions, lighting and full-body framing. The WHITE HEAD TOWEL remains white and intact. Do not remove the towel or white garment trim.\nExact 1024x1536 PNG with genuine alpha transparency outside character, no background, floor, text, glow or added items.",
+      "size": "big",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-927a9d1e-385f-4831-9c2e-47fe4d888a9b.png",
+      "visible_bbox": [
+        230,
+        554,
+        795,
+        1472
+      ],
+      "visible_height": 918
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 960,
+      "kind": "mood",
+      "mood": "hungry",
+      "name": "bear_f_mood_medium_hungry.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: MEDIUM HUNGRY, using female LEVEL05 body and outfit. Same slim fit figure, natural waist/hips and modest unchanged chest. Keep the charcoal high-neck sports top with matching dark grey ZIP JACKET WORN OPEN (sleeves pushed to forearms) and charcoal full-length LEGGINGS with white trim, single gold hoop and bare furry bear feet.\nREMOVE THE SHOULDER TOWEL. She holds ONE EMPTY plain matte grey BOWL in BOTH PAWS in front of her lower torso, angled upward so the empty interior is obvious. Both paws support opposite sides; only two arms. She looks DOWN at the empty bowl with a sulky pout and disappointed brows. Normal planted stance, shoulders slightly drooped, no hip cock. Jacket and bowl are the only extras. No food, spoon, phone, belt, chain, wraps or other props.",
+      "size": "medium",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-92d425ae-1e13-4367-abd5-7cd58164e6d2.png",
+      "visible_bbox": [
+        309,
+        512,
+        715,
+        1472
+      ],
+      "visible_height": 960
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 998,
+      "kind": "mood",
+      "mood": "pumped",
+      "name": "bear_f_mood_medium_pumped.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: MEDIUM PUMPED, using the female LEVEL05 body and outfit. Charcoal modest high-neck sports top with dark grey ZIP JACKET WORN OPEN (sleeves pushed to elbows), full-length charcoal LEGGINGS with white trim, single gold hoop, bare furry bear feet. REMOVE the shoulder towel entirely.\nA GYM MIRROR SELFIE reflected-view character cutout ONLY, no mirror frame or gym room. ONE arm bent and raised in a BICEP FLEX, paw near shoulder/head height, keep the arm slim and gently toned under jacket sleeve, not a big bodybuilder bicep. OTHER paw holds ONE plain dark SMARTPHONE upright at chest/shoulder height with phone back/camera lenses toward viewer as in a mirror reflection. Phone does not cover face. TWO arms only. She looks toward phone with a COCKY HAPPY GRIN, bright excited brown eyes and energetic raised brows. Feet planted at same depth, hips level, no twisting or arching. Whole figure and phone included. Jacket and phone are the only extra items; no belt, towel, bowl, food, chain, wraps or other props.",
+      "size": "medium",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-256c2a54-446c-4830-a5fa-e1b9f5c3d998.png",
+      "visible_bbox": [
+        271,
+        474,
+        753,
+        1472
+      ],
+      "visible_height": 998
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 710,
+      "kind": "mood",
+      "mood": "tired",
+      "name": "bear_f_mood_medium_tired.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: MEDIUM TIRED, female LEVEL05 slim fit body and outfit. Keep modest charcoal sports top with dark grey ZIP JACKET WORN OPEN, sleeves pushed to forearms, charcoal full-length LEGGINGS with white trim, single gold hoop and furry bear feet.\nShe is SITTING ON THE GROUND SLUMPED, knees comfortably bent and feet resting forward, pelvis low on the same ground plane, shoulders sagging, paws limp on her knees. No invisible-chair hovering or dangling legs, no visible floor or bench. A SINGLE plain white TOWEL is draped OVER HER HEAD with ends beside her face, NOT over a shoulder as in the reference. Eyes HALF CLOSED, tired brows, small weary parted mouth. Preserve slim feminine limbs and natural modest seated posture, no posing or arch. Whole figure including both feet visible. Jacket and towel are the only extras. No bowl, phone, belt, chain, wraps or food.",
+      "size": "medium",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-746a37eb-8d7a-4090-915c-3b0165159ebf.png",
+      "visible_bbox": [
+        278,
+        763,
+        746,
+        1472
+      ],
+      "visible_height": 709
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 720,
+      "kind": "mood",
+      "mood": "hungry",
+      "name": "bear_f_mood_small_hungry.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: SMALL HUNGRY, the LEVEL02 slim shy teen size and oversized plain grey tee with charcoal shorts/white trim, one gold hoop, bare furry bear feet. She holds ONE EMPTY plain matte grey BOWL in BOTH PAWS in front of her lower torso, angled so the empty interior is clearly visible. Both paws support opposite sides of the bowl, only TWO arms. She looks DOWN into the empty bowl with a sulky pout and subtly disappointed brows, ears slightly drooped. Feet planted and slender youthful body unchanged. No food, utensils, belts, towel, phone, chain or other items.",
+      "size": "small",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-074639d9-6558-4bcb-a12c-28c1b5f7ae25.png",
+      "visible_bbox": [
+        378,
+        753,
+        646,
+        1472
+      ],
+      "visible_height": 719
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 749,
+      "kind": "mood",
+      "mood": "pumped",
+      "name": "bear_f_mood_small_pumped.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: SMALL PUMPED, the LEVEL02 slim teen size. Same oversized grey tee, charcoal bike shorts with white trim, gold hoop and bare furry bear feet. A family-friendly GYM MIRROR SELFIE POSE, shown as the reflected-view character cutout ONLY, no mirror frame or room. ONE arm is bent and raised in a modest BICEP FLEX with the paw near shoulder/head height, youthful arm remains slim with only mild tone. The OTHER paw holds ONE plain dark SMARTPHONE upright at chest/shoulder height, phone back with small camera lenses visible as it faces a mirror. Phone does not hide her face. Only TWO arms and TWO paws. She looks at the phone with a COCKY HAPPY GRIN and energetic bright eyes, no winking or sleepy gaze. Feet planted evenly, hips level, no torso twist or arch, whole body visible. No bowl, towel, belt, chain or extra accessories. One phone is the only prop.",
+      "size": "small",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-f48f998f-a818-4e7d-84d3-4d2f3404c7c1.png",
+      "visible_bbox": [
+        350,
+        724,
+        674,
+        1472
+      ],
+      "visible_height": 748
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 533,
+      "kind": "mood",
+      "mood": "tired",
+      "name": "bear_f_mood_small_tired.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: SMALL TIRED, the LEVEL02 slim shy teen size. Same oversized plain grey tee, charcoal shorts with white trim, one small gold hoop, bare furry bear feet. She is SITTING SLUMPED with shoulders dropped and back a little rounded, knees bent and legs resting forward naturally, paws resting limply on thighs, whole body visible including bear paw pads. A PLAIN WHITE TOWEL drapes OVER THE TOP OF HER HEAD and hangs on both sides of her face, face visible. Her eyes are HALF CLOSED with an exhausted slightly droopy expression; mouth slack in a small weary pout. Keep the adolescent face and slim youthful limbs, do not turn into a stocky cub. One towel only. No bowl, food, phone, belts, chain, jacket, headphones or other items. No bench or visible floor. Sitting pose replaces the planted standing stance.",
+      "size": "small",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-c95f2688-36a0-4ad0-82bb-35271bd99fc1.png",
+      "visible_bbox": [
+        390,
+        940,
+        634,
+        1472
+      ],
+      "visible_height": 532
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1320,
+      "kind": "mood",
+      "mood": "hungry",
+      "name": "bear_f_mood_space_hungry.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: SPACE HUNGRY, female LEVEL10 slim fitted WHITE ASTRONAUT SUIT with charcoal joint panels, white suit gloves and white boots exactly as reference. Same face and honey-brown head fur, single gold hoop. NO HELMET anywhere: remove the under-arm helmet completely; head and ears uncovered. No gym gear.\nShe holds ONE EMPTY plain matte grey BOWL in BOTH SUITED GLOVED PAWS in front of her lower torso, opposite sides of bowl, tilted to clearly show the EMPTY interior. Exactly TWO arms, both occupied holding the bowl. Looking DOWN into empty bowl with sulky downturned pout and disappointed brows. Feet planted and level hips, shoulders a little drooped. Keep fitted practical suit with flat functional control module and unchanged modest chest. No food, spoon, towel, phone, belts, chain, cape, patch or other props. Empty bowl is the only extra item. Whole body and boots visible, genuine transparent PNG.",
+      "size": "space",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-85abdc37-c90d-44a1-92cf-53bdf461321d.png",
+      "visible_bbox": [
+        243,
+        152,
+        780,
+        1472
+      ],
+      "visible_height": 1320
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 1373,
+      "kind": "mood",
+      "mood": "pumped",
+      "name": "bear_f_mood_space_pumped.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: SPACE PUMPED. Exact female LEVEL10 fitted WHITE SPACE SUIT with dark charcoal flexible joints, integrated white gloves and boots, same slim feminine body, friendly honey-brown bear face and single gold hoop. NO HELMET anywhere and no gym gear. REMOVE EMPTY BOWL from reference.\nA GYM MIRROR SELFIE reflected-view character cutout ONLY, no mirror frame or room. ONE suited arm is raised and bent in a confident BICEP FLEX, gloved paw near shoulder/head height. Preserve the slim practical pressure suit, no giant muscle enlargement. OTHER gloved paw holds ONE plain dark SMARTPHONE upright at chest/shoulder height, camera-lens back toward viewer as in a mirror reflection, face fully visible. Two arms only. COCKY HAPPY GRIN, bright excited brown eyes looking at phone. Head proud and upright, both boots planted evenly, level hips, no torso twist, hip cock or arch. Entire body and phone inside frame. Phone is the only extra item; no bowl, towel, helmet, belts, chain, cape, gym props or lettering.",
+      "size": "space",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-7c8a6b48-a91a-4eb1-bfac-064f672cd1d0.png",
+      "visible_bbox": [
+        184,
+        99,
+        840,
+        1472
+      ],
+      "visible_height": 1373
+    },
+    {
+      "canvas": [
+        1024,
+        1536
+      ],
+      "foot_baseline": 1471,
+      "has_alpha": true,
+      "height": 977,
+      "kind": "mood",
+      "mood": "tired",
+      "name": "bear_f_mood_space_tired.png",
+      "prompt": "Use case: stylized-concept. A consistent female beBEAR gym mascot asset. Match the supplied APPROVED female reference identity and premium 3D CGI groomed fur, honey-brown color, cream bear muzzle, round bear ears and nose, short narrow neck, bright friendly brown eyes and confident cheeky male-family smirk. No heavy lashes, eyeliner, sleepy bedroom eyes or makeup. Family-friendly animated animal woman character appeal like Zootopia or Sing. HUMAN FEMALE PROPORTIONS: slim, naturally curvy athletic body, defined natural waist, moderate hips, slender toned arms and thighs. Never stocky, masculine, bulky, exaggerated hourglass or thick thighs. Modest proportionate chest stays unchanged across adult stages, never emphasized, no cleavage. Flat smooth stomach, no segmented/bodybuilder abs at any level. One small gold hoop in ONE ear from stage02 on.\nCamera: front with slight 3/4 turn of whole body, eye-level, full body, entire ears and feet visible, feet planted at same depth, pelvis level, arms relaxed unless a specified action requires otherwise. No hand on cocked hip, no twist, arched back or fashion-model pose. Soft upper-left studio light. EXACT 1024x1536 portrait PNG with real alpha transparency outside figure, clean neutral fur edges and no colored fringe. NO backdrop, floor, shadow plate, vignette, text, logos, numerals, stars, sparkles, glow, hearts, bows or glitter. Nothing hangs from shorts. Only specified outfit and items; items replace other levels' items.\nMOOD RULES: change the pose and expression as specified; otherwise lock the referenced size's face, fur, age, slim feminine build and outfit. These are transparent mascot reactions intended to overlay the same gym backgrounds. Keep full character and all props inside frame, no text or symbols. The requested mood replaces old level accessories to keep at most two extras. No cocked hip, torso twist or seductive expression. Emotional expression may override the normal confident smirk.\nTHIS ASSET: SPACE TIRED. Same female LEVEL10 fitted WHITE SPACE SUIT with dark grey joints, integrated white gloves and boots, honey-brown bear head and one gold hoop as supplied reference. NO HELMET, no headband, no towel. REMOVE BOWL.\nShe is SITTING ON THE GROUND SLUMPED, knees naturally bent, both boots forward on the same plane, pelvis low, shoulders sagging. ONE attached gloved paw is raised OVER HER FACE in a weary facepalm: the glove palm covers one eye and part of forehead, the OTHER eye remains visible and HALF CLOSED; tired small parted mouth visible. The other suited paw hangs limply on her knee. Two arms only. Keep slim athletic proportions inside functional pressure suit and natural modest seated posture. Entire body, glove and both boots visible.\nSpace tired uses a SUIT GLOVE OVER FACE INSTEAD OF A HEAD TOWEL. No towel anywhere. No bowl, food, phone, spare glove, belt, chain, cape, gym gear, bench, visible floor or other props.",
+      "size": "space",
+      "source": "/Users/paulbebear/.codex/generated_images/01a16136-4e7f-7b80-884a-c185fdb9c140/exec-99bc0830-843e-46b9-9c90-9fb6251de2a9.png",
+      "visible_bbox": [
+        196,
+        495,
+        828,
+        1472
+      ],
+      "visible_height": 977
+    }
+  ],
+  "canvas": [
+    1024,
+    1536
+  ],
+  "foot_baseline": 1471,
+  "rendering_tool": "built-in image_gen",
+  "nominal_foot_anchor": [
+    512,
+    1470
+  ],
+  "observed_alpha_foot_baseline": 1471,
+  "scene_placement": {
+    "scale": 0.48,
+    "full_canvas_top_left": [
+      266,
+      784
+    ],
+    "foot_anchor": [
+      512,
+      1490
+    ],
+    "note": "Render the whole sprite canvas at this uniform scale; do not crop to the silhouette in the app."
+  },
+  "style": "Approved slim feminine athletic build; final level09 has greater definition than level07–08 without increased bulk or bodybuilder abs.",
+  "mood_sizes": {
+    "small": 2,
+    "medium": 5,
+    "big": 8,
+    "space": 10
+  },
+  "review_sheets": {
+    "levels": "bear_f_review_levels.png",
+    "moods": "bear_f_review_moods.png",
+    "family": "bear_f_review_family.png"
+  }
+}

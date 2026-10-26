@@ -14,7 +14,7 @@ export function RankCard(props: { data: IWorkoutShareData; onImageLoad?: (uri: s
   return (
     <ShareCardFrame background={T.green}>
       <View style={{ paddingTop: 28, alignItems: "center" }}>
-        <ShareCardBrand size={36} color={T.cream} faceColor={T.green} />
+        <ShareCardBrand size={36} color={T.cream} faceColor={T.green} fur={props.data.bear.fur} />
       </View>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
         <ShareCardText size={13} weight="semibold" color={T.honey} spacing={3}>

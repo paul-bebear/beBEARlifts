@@ -42,7 +42,7 @@ import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { ProgramsHost_fork } from "../utils/programsHost";
 import { AppStoreSettings } from "./appStoreSettings";
-import { SettingsBackupRows, SettingsRateEachSet } from "./settingsForkRows";
+import { SettingsBackupRows, SettingsBearRow, SettingsRateEachSet } from "./settingsForkRows";
 
 interface IProps {
   dispatch: IDispatch;
@@ -78,6 +78,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
   return (
     <View className="px-gutter">
       <AppStoreSettings />
+      <SettingsBearRow />
       <MenuItem
         shouldShowRightArrow={true}
         name="Program"

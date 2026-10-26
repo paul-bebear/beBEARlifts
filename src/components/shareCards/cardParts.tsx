@@ -2,6 +2,7 @@ import { JSX, ReactNode } from "react";
 import { StyleProp, TextStyle, View, ViewStyle } from "react-native";
 import { TextRaw, Text_resolveFontFamily } from "../primitives/text";
 import { Svg, Defs, LinearGradient, Rect, Stop } from "../primitives/svg";
+import { IBearFur } from "../../models/bearStoreData";
 import { IShareCardBear } from "../../models/workoutStoryCard";
 import { BearMark } from "./bearMark";
 import { ShareCardBear } from "./shareCardBear";
@@ -76,6 +77,7 @@ export function ShareCardBrand(props: {
   color: string;
   faceColor: string;
   bear?: IShareCardBear;
+  fur?: IBearFur;
   onImageLoad?: (uri: string) => void;
 }): JSX.Element {
   return (
@@ -83,7 +85,7 @@ export function ShareCardBrand(props: {
       {props.bear != null ? (
         <ShareCardBear bear={props.bear} height={props.size * brandBearHeight} onImageLoad={props.onImageLoad} />
       ) : (
-        <BearMark size={props.size} color={props.color} faceColor={props.faceColor} />
+        <BearMark size={props.size} color={props.color} faceColor={props.faceColor} fur={props.fur} />
       )}
       <ShareCardText size={props.size * 0.9} weight="bold" color={props.color} spacing={-0.5}>
         beBEAR
