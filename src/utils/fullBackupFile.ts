@@ -1,9 +1,16 @@
 import { IStorage } from "../types";
 import { FullBackup_build, FullBackup_keepSpotifyLogin, IFullBackupContents } from "../models/fullBackup";
-import { FoodLogStore_load, FoodLogStore_replace } from "./foodLogStore";
-import { MusicStore_load, MusicStore_update } from "./musicStore";
-import { BodyScanStore_load, BodyScanStore_update } from "./bodyScanStore";
-import { WarmupStore_load, WarmupStore_update } from "./warmupStore";
+import { ICloudStoresInput } from "../models/cloudBackup";
+import { IFoodLog } from "../models/foodLog";
+import { INotesLog } from "../models/notes";
+import { IRunLog } from "../models/runLog";
+import { IBodyScanLog } from "../models/bodyScans";
+import { IChecklistLog } from "../models/dailyChecklist";
+import { IProgressPhotoLog, ProgressPhotos_index } from "../models/progressPhotos";
+import { FoodLogStore_load, FoodLogStore_loadStrict, FoodLogStore_replace } from "./foodLogStore";
+import { MusicStore_load, MusicStore_loadStrict, MusicStore_update } from "./musicStore";
+import { BodyScanStore_load, BodyScanStore_loadStrict, BodyScanStore_replace } from "./bodyScanStore";
+import { WarmupStore_load, WarmupStore_loadStrict, WarmupStore_replace } from "./warmupStore";
 import { ReportStore } from "./reportStore";
 import { SetClipStore } from "./setClipStore";
 import { RunStore } from "./runStore";
@@ -13,23 +20,46 @@ import { ChecklistStore } from "./checklistStore";
 import { BearStore } from "./bearStore";
 import { NotesStore } from "./notesStore";
 import { WeekScheduleStore } from "./weekScheduleStore";
+import { ProgressPhotoStore } from "./progressPhotoStore";
 
-export async function FullBackupFile_build(getStorage: () => IStorage): Promise<{ text: string; now: number }> {
-  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes, schedule] =
+export function FullBackupFile_stores(parts: {
+  food: IFoodLog;
+  notes: INotesLog;
+  runs: IRunLog;
+  body: IBodyScanLog;
+  checklist: IChecklistLog;
+  photos: IProgressPhotoLog;
+}): ICloudStoresInput {
+  return {
+    food: parts.food.entries,
+    notes: parts.notes.notes,
+    runs: parts.runs.runs,
+    scans: parts.body.scans,
+    checkIns: parts.checklist.checkIns,
+    photos: parts.photos.photos,
+  };
+}
+
+// Every read is strict. A store that fails to read stops the backup, so its empty value never replaces the cloud copy.
+export async function FullBackupFile_build(
+  getStorage: () => IStorage
+): Promise<{ text: string; now: number; stores: ICloudStoresInput }> {
+  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes, schedule, photos] =
     await Promise.all([
-      FoodLogStore_load(),
-      MusicStore_load(),
-      BodyScanStore_load(),
-      WarmupStore_load(),
-      ReportStore.load(),
-      SetClipStore.load(),
-      RunStore.load(),
-      ProgramGoalStore.load(),
-      StepsStore.load(),
-      ChecklistStore.load(),
-      BearStore.load(),
-      NotesStore.load(),
-      WeekScheduleStore.load(),
+      FoodLogStore_loadStrict(),
+      MusicStore_loadStrict(),
+      BodyScanStore_loadStrict(),
+      WarmupStore_loadStrict(),
+      ReportStore.loadStrict(),
+      SetClipStore.loadStrict(),
+      RunStore.loadStrict(),
+      ProgramGoalStore.loadStrict(),
+      StepsStore.loadStrict(),
+      ChecklistStore.loadStrict(),
+      BearStore.loadStrict(),
+      NotesStore.loadStrict(),
+      WeekScheduleStore.loadStrict(),
+      ProgressPhotoStore.loadStrict(),
     ]);
   const now = Date.now();
   const backup = FullBackup_build(
@@ -48,10 +78,15 @@ export async function FullBackupFile_build(getStorage: () => IStorage): Promise<
       bear,
       notes,
       schedule,
+      photos: ProgressPhotos_index(photos),
     },
     now
   );
-  return { text: JSON.stringify(backup, null, 2), now };
+  return {
+    text: JSON.stringify(backup, null, 2),
+    now,
+    stores: FullBackupFile_stores({ food, notes, runs, body, checklist, photos }),
+  };
 }
 
 interface IRestoreStep {
@@ -72,23 +107,24 @@ async function step<T>(
 }
 
 // The stores have no shared transaction, so a failed write puts back the stores already written and rethrows.
+// Each write replaces without reading, so a restore also repairs a store whose saved text cannot be parsed.
 export async function FullBackupFile_restore(contents: IFullBackupContents): Promise<void> {
   const steps = await Promise.all([
     step(contents.food, FoodLogStore_load, FoodLogStore_replace),
     step(contents.music, MusicStore_load, (value) =>
       MusicStore_update((current) => FullBackup_keepSpotifyLogin(value, current))
     ),
-    step(contents.body, BodyScanStore_load, (value) => BodyScanStore_update(() => value)),
-    step(contents.warmups, WarmupStore_load, (value) => WarmupStore_update(() => value)),
-    step(contents.reports, ReportStore.load, (value) => ReportStore.update(() => value)),
-    step(contents.clips, SetClipStore.load, (value) => SetClipStore.update(() => value)),
-    step(contents.runs, RunStore.load, (value) => RunStore.update(() => value)),
-    step(contents.goal, ProgramGoalStore.load, (value) => ProgramGoalStore.update(() => value)),
-    step(contents.steps, StepsStore.load, (value) => StepsStore.update(() => value)),
-    step(contents.checklist, ChecklistStore.load, (value) => ChecklistStore.update(() => value)),
-    step(contents.bear, BearStore.load, (value) => BearStore.update(() => value)),
-    step(contents.notes, NotesStore.load, (value) => NotesStore.update(() => value)),
-    step(contents.schedule, WeekScheduleStore.load, (value) => WeekScheduleStore.update(() => value)),
+    step(contents.body, BodyScanStore_load, BodyScanStore_replace),
+    step(contents.warmups, WarmupStore_load, WarmupStore_replace),
+    step(contents.reports, ReportStore.load, ReportStore.replace),
+    step(contents.clips, SetClipStore.load, SetClipStore.replace),
+    step(contents.runs, RunStore.load, RunStore.replace),
+    step(contents.goal, ProgramGoalStore.load, ProgramGoalStore.replace),
+    step(contents.steps, StepsStore.load, StepsStore.replace),
+    step(contents.checklist, ChecklistStore.load, ChecklistStore.replace),
+    step(contents.bear, BearStore.load, BearStore.replace),
+    step(contents.notes, NotesStore.load, NotesStore.replace),
+    step(contents.schedule, WeekScheduleStore.load, WeekScheduleStore.replace),
   ]);
   const done: IRestoreStep[] = [];
   for (const s of steps) {

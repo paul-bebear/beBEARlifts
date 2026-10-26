@@ -2,7 +2,11 @@ import { JSX, useState } from "react";
 import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
 import { ICloudRestoreOffer } from "../models/cloudBackup";
-import { CloudBackupCompare_offerText, CloudBackupCompare_when } from "../models/cloudBackupCompare";
+import {
+  CloudBackupCompare_offerText,
+  CloudBackupCompare_offerTitle,
+  CloudBackupCompare_when,
+} from "../models/cloudBackupCompare";
 import { Thunk_cloudKeepPhone, Thunk_cloudRestore } from "../ducks/cloudBackupThunks";
 import { CloudStore, ICloudResult } from "../utils/supabaseClient";
 import { Dialog_alert } from "../utils/dialog";
@@ -17,7 +21,7 @@ export function CloudRestoreChoice(props: {
 }): JSX.Element {
   return (
     <View className="p-3 border rounded-lg border-border-prominent" style={{ gap: 12 }} testID="cloud-restore-offer">
-      <Text className="text-sm font-semibold">A cloud backup has data this phone does not have</Text>
+      <Text className="text-sm font-semibold">{CloudBackupCompare_offerTitle(props.offer)}</Text>
       <Text className="text-sm">
         {CloudBackupCompare_offerText(props.offer, CloudBackupCompare_when(props.offer.cloud.exportedAt))}
       </Text>

@@ -4,9 +4,13 @@ import { Thunk_importStorage } from "./thunks";
 import {
   CloudBackup_isAutoDue,
   CloudBackup_isCatchUpDue,
+  CloudBackup_ownerAnswer,
+  CloudBackup_ownerCheck,
+  CloudBackup_storesMark,
   CloudBackup_workoutsMark,
   ICloudCopy,
   ICloudRestoreOffer,
+  ICloudStoresInput,
 } from "../models/cloudBackup";
 import {
   CloudBackupCompare_decide,
@@ -23,8 +27,14 @@ import {
   CloudBackupClient_upload,
 } from "../utils/cloudBackupClient";
 import { CloudStore, ICloudResult } from "../utils/supabaseClient";
-import { FullBackupFile_build } from "../utils/fullBackupFile";
+import { FullBackupFile_build, FullBackupFile_stores } from "../utils/fullBackupFile";
 import { FoodLogStore_load } from "../utils/foodLogStore";
+import { NotesStore } from "../utils/notesStore";
+import { RunStore } from "../utils/runStore";
+import { BodyScanStore_load } from "../utils/bodyScanStore";
+import { ChecklistStore } from "../utils/checklistStore";
+import { ProgressPhotoStore } from "../utils/progressPhotoStore";
+import { ProgressPhotoCloud_restore, ProgressPhotoCloud_sync } from "../utils/progressPhotoCloud";
 import { FeedClient_flush } from "../utils/feedClient";
 import { BackupReminderMarks_recordBackup } from "../utils/backupReminderMarks";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
@@ -33,12 +43,50 @@ import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 export type ICloudBackupMode = "auto" | "manual" | "keep";
 
 export const CloudBackup_offerPendingError =
-  "The cloud backup has workouts or food this phone does not have. Choose Restore or Keep first.";
+  "The cloud backup changed since this phone's last backup. Choose Restore or Keep first.";
+
+export const CloudBackup_ownerDeclinedError = "Nothing was uploaded. This phone's data stays off that account.";
 
 let lastCatchUpAt: number | undefined;
+let ownerQuestion: Promise<boolean> | undefined;
 
 function errorText(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
+}
+
+async function storesNow(): Promise<ICloudStoresInput> {
+  const [food, notes, runs, body, checklist, photos] = await Promise.all([
+    FoodLogStore_load(),
+    NotesStore.load(),
+    RunStore.load(),
+    BodyScanStore_load(),
+    ChecklistStore.load(),
+    ProgressPhotoStore.load(),
+  ]);
+  return FullBackupFile_stores({ food, notes, runs, body, checklist, photos });
+}
+
+// The finish screen and a return to the app can both reach this at once, and the user should see one question.
+async function askOwner(question: string): Promise<boolean> {
+  if (ownerQuestion == null) {
+    ownerQuestion = Dialog_confirm(question).finally(() => {
+      ownerQuestion = undefined;
+    });
+  }
+  return ownerQuestion;
+}
+
+async function ownerAllows(mode: ICloudBackupMode): Promise<ICloudResult<boolean>> {
+  const check = CloudBackup_ownerCheck(await CloudStore.load(), mode !== "auto");
+  if (check.kind === "upload") {
+    return { ok: true, value: true };
+  }
+  if (check.kind === "skip") {
+    return { ok: true, value: false };
+  }
+  const yes = await askOwner(check.question);
+  await CloudStore.update((state) => CloudBackup_ownerAnswer(state, yes));
+  return yes ? { ok: true, value: true } : { ok: false, error: CloudBackup_ownerDeclinedError };
 }
 
 async function phoneHoldings(getState: () => IState): Promise<ICloudBackupHoldings> {
@@ -63,8 +111,15 @@ async function offerFromCloud(getState: () => IState): Promise<ICloudResult<IClo
 }
 
 async function backUp(mode: ICloudBackupMode, getState: () => IState): Promise<ICloudResult<number | undefined>> {
-  if (mode === "auto" && !CloudBackup_isAutoDue(await CloudStore.load(), getState().storage.history)) {
+  if (
+    mode === "auto" &&
+    !CloudBackup_isAutoDue(await CloudStore.load(), getState().storage.history, await storesNow())
+  ) {
     return { ok: true, value: undefined };
+  }
+  const allowed = await ownerAllows(mode);
+  if (!allowed.ok || !allowed.value) {
+    return allowed.ok ? { ok: true, value: undefined } : allowed;
   }
   if (mode === "keep") {
     const remote = await CloudBackupClient_download();
@@ -86,10 +141,11 @@ async function backUp(mode: ICloudBackupMode, getState: () => IState): Promise<I
       return { ok: false, error: CloudBackup_offerPendingError };
     }
   }
-  const { text, now } = await FullBackupFile_build(() => getState().storage);
+  const { text, now, stores } = await FullBackupFile_build(() => getState().storage);
   const result = await CloudBackupClient_upload(text, {
     exportedAt: new Date(now).toISOString(),
     workouts: CloudBackup_workoutsMark(getState().storage.history),
+    stores: CloudBackup_storesMark(stores),
   });
   if (result.ok) {
     BackupReminderMarks_recordBackup(result.value);
@@ -107,6 +163,9 @@ export function Thunk_cloudBackup(
       result = await backUp(mode, getState);
     } catch (error) {
       result = { ok: false, error: errorText(error, "Could not save cloud backup") };
+    }
+    if (result.ok) {
+      await ProgressPhotoCloud_sync().catch(() => undefined);
     }
     if (onResult != null) {
       onResult(result);
@@ -175,16 +234,21 @@ async function restore(
   if (!imported) {
     return { ok: true, value: false };
   }
+  // The phone now holds this account's data, so the next upload asks nothing.
+  await CloudStore.update((state) => CloudBackup_ownerAnswer(state, true));
+  await ProgressPhotoCloud_restore(cloud.photos ?? []).catch(() => undefined);
   if (copy !== "latest") {
     // An older copy becomes the cloud backup too, and keep saves the replaced latest.json first.
     const kept = await backUp("keep", getState);
     return kept.ok ? { ok: true, value: true } : kept;
   }
+  const stores = CloudBackup_storesMark(await storesNow());
   await CloudStore.update((state) => ({
     ...state,
     lastBackupAt: Date.now(),
     syncedExportedAt: cloud.summary.exportedAt,
     backedUpWorkouts: CloudBackup_workoutsMark(getState().storage.history),
+    backedUpStores: stores,
     restoreOffer: undefined,
   }));
   return { ok: true, value: true };

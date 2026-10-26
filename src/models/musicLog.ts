@@ -12,7 +12,8 @@ export interface IMusicLog {
   sessions: IMusicSession[];
 }
 
-const maxSessions = 60;
+// One year at 4 workouts a week.
+export const MusicLog_maxSessions = 210;
 
 export function MusicLog_empty(): IMusicLog {
   return { version: 1, sessions: [] };
@@ -112,7 +113,10 @@ export function MusicLog_workoutForSession<T extends IWorkoutTimes>(
 
 export function MusicLog_putSession(log: IMusicLog, session: IMusicSession): IMusicLog {
   const others = log.sessions.filter((s) => s.id !== session.id);
-  return { ...log, sessions: [session, ...others].sort((a, b) => b.startedAt - a.startedAt).slice(0, maxSessions) };
+  return {
+    ...log,
+    sessions: [session, ...others].sort((a, b) => b.startedAt - a.startedAt).slice(0, MusicLog_maxSessions),
+  };
 }
 
 export function MusicLog_reviewable(log: IMusicLog): IMusicSession[] {

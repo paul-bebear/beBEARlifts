@@ -6,13 +6,14 @@ export const FoodLogStore_key = "bebear_foodlog";
 const store = JsonStore_create(FoodLogStore_key, FoodLog_parse, FoodLog_empty);
 
 export const FoodLogStore_load = store.load;
+export const FoodLogStore_loadStrict = store.loadStrict;
 export const FoodLogStore_get = store.get;
 export const FoodLogStore_update = store.update;
 export const FoodLogStore_subscribe = store.subscribe;
 export const useFoodLog = store.use;
 
 export async function FoodLogStore_replace(log: IFoodLog): Promise<void> {
-  return FoodLogStore_update(() => log);
+  return store.replace(log);
 }
 
 export function FoodLogStore_newId(): string {
