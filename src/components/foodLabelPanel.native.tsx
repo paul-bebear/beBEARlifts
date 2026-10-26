@@ -8,7 +8,9 @@ import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore } from "../utils/aiConsentClient";
 import { NativeFoodCapture_label } from "../utils/nativeFoodCapture.native";
 import { FoodLabelForm } from "./foodLabelForm";
+import { CloudStore } from "../utils/supabaseClient";
 import { Button } from "./button";
+import { FoodAiSignIn } from "./foodAiSignIn";
 
 interface IProps {
   barcode?: string;
@@ -19,6 +21,7 @@ interface IProps {
 export function FoodLabelPanel(props: IProps): JSX.Element {
   const [state, emit] = useReducer(FoodLabel_reduce, undefined, FoodLabel_empty);
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
+  const hasSession = CloudStore.use().session != null;
   return (
     <View testID="food-label-panel">
       <Text className="pb-3 text-sm text-text-secondary">
@@ -43,7 +46,8 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
           <Text className="text-base text-text-link">Type it in instead</Text>
         </Pressable>
       )}
-      {!state.busy && showAi && (
+      {!state.busy && showAi && !hasSession && <FoodAiSignIn />}
+      {!state.busy && showAi && hasSession && (
         <View className="flex-row mt-3" style={{ gap: 8 }}>
           <Button
             name="food-label-camera"

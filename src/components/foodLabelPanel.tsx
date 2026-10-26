@@ -8,7 +8,9 @@ import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { Button } from "./button";
 import { FoodLabelForm } from "./foodLabelForm";
 import { AiConsent_showFeatures } from "../models/aiConsent";
-import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
+import { AiConsent_disabledMessage, AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
+import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
+import { FoodAiSignIn } from "./foodAiSignIn";
 
 interface IProps {
   barcode?: string;
@@ -20,14 +22,25 @@ const labelMaxSidePx = 1600;
 
 export function FoodLabelPanel(props: IProps): JSX.Element {
   const showAi = AiConsent_showFeatures(AiConsentStore.use());
+  const hasSession = CloudStore.use().session != null;
   const inputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<INutritionLabelForm | undefined>(undefined);
   const [isReading, setIsReading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
+  // iPhone Safari drops a file picker opened after an await, so the tap only clicks the input and the checks run here.
   const onFile = async (file: File): Promise<void> => {
-    setIsReading(true);
     setError(undefined);
+    if (!(await AiConsent_ensure())) {
+      setError(AiConsent_disabledMessage);
+      return;
+    }
+    const auth = await SupabaseClient_accessToken();
+    if (!auth.ok) {
+      setError(auth.error);
+      return;
+    }
+    setIsReading(true);
     const result = await ImageResize_toJpegDataUrl(file, labelMaxSidePx).then(FoodApi_readLabel, () => ({
       ok: false as const,
       error: "The photo could not be read. Try another one.",
@@ -95,20 +108,17 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
           <Text className="text-base text-text-link">Type it in instead</Text>
         </Pressable>
       )}
+      {!isReading && showAi && !hasSession && <FoodAiSignIn />}
       <View className="flex-row mt-5" style={{ gap: 8 }}>
         <Button name="food-label-panel-back" kind="pill-outline" className="flex-1" onPress={props.onBack}>
           Back
         </Button>
-        {!isReading && showAi && (
+        {!isReading && showAi && hasSession && (
           <Button
             name="food-label-photo"
             kind={form == null ? "pill" : "pill-outline"}
             className="flex-1"
-            onPress={async () => {
-              if (await AiConsent_ensure()) {
-                inputRef.current?.click();
-              }
-            }}
+            onPress={() => inputRef.current?.click()}
           >
             {form == null ? "Photo the label" : "New photo"}
           </Button>

@@ -3,7 +3,7 @@ import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { INutrients } from "../models/foodLog";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
-import { FoodScanSteps_modes, IScanMode } from "../models/foodScanSteps";
+import { FoodScanSteps_modes, IScanMode, IScanResume } from "../models/foodScanSteps";
 import { AiConsent_ensure } from "../utils/aiConsentClient";
 import { AiConsentGate } from "./aiConsentGate";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
@@ -16,10 +16,11 @@ interface IProps {
   day: string;
   mode: IScanMode;
   hasAi: boolean;
+  resume?: IScanResume;
   onMode: (mode: IScanMode) => void;
   onBarcode: (code: string) => void;
   onPhotoReviewed: (choices: IFoodPhotoChoice[], photo?: string) => void;
-  onDescribed: (choices: IFoodPhotoChoice[]) => void;
+  onDescribed: (choices: IFoodPhotoChoice[], text: string) => void;
   onQuick: (name: string, nutrients: INutrients) => void;
   onSearch: () => void;
   onCopied: () => void;
@@ -60,7 +61,7 @@ export function FoodScanCamera(props: IProps): JSX.Element {
   };
 
   if (isRepeating) {
-    return <FoodRepeatList onBack={() => setIsRepeating(false)} onCopied={props.onCopied} />;
+    return <FoodRepeatList day={props.day} onBack={() => setIsRepeating(false)} onCopied={props.onCopied} />;
   }
 
   return (
@@ -68,11 +69,16 @@ export function FoodScanCamera(props: IProps): JSX.Element {
       {props.mode === "barcode" && <FoodBarcodeScanner onDetected={props.onBarcode} />}
       {props.mode === "ai" && (
         <AiConsentGate>
-          <FoodPhotoPanel onAdd={props.onPhotoReviewed} />
+          <FoodPhotoPanel resume={props.resume} onAdd={props.onPhotoReviewed} />
         </AiConsentGate>
       )}
       {props.mode === "describe" && props.hasAi && (
-        <FoodDescribePanel onAdd={props.onDescribed} onCamera={() => pickMode("ai")} onPhoto={() => pickMode("ai")} />
+        <FoodDescribePanel
+          resume={props.resume}
+          onAdd={props.onDescribed}
+          onCamera={() => pickMode("ai")}
+          onPhoto={() => pickMode("ai")}
+        />
       )}
       {props.mode === "describe" && !props.hasAi && (
         <FoodQuickAddPanel onBack={() => props.onMode("barcode")} onSubmit={props.onQuick} />

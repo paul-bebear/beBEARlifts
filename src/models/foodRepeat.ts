@@ -1,6 +1,5 @@
 import {
   FoodLog_addAll,
-  FoodLog_dayKey,
   FoodLog_entriesFor,
   FoodLog_formatNumber,
   FoodLog_meals,
@@ -12,12 +11,17 @@ import {
 
 export interface IFoodRepeatState {
   day: string;
+  into: string;
   selected: string[];
   isSaving: boolean;
 }
 
-export function FoodRepeat_initial(today: string): IFoodRepeatState {
-  return { day: FoodLog_shiftDay(today, -1), selected: [], isSaving: false };
+export function FoodRepeat_initial(into: string): IFoodRepeatState {
+  return { day: FoodLog_shiftDay(into, -1), into, selected: [], isSaving: false };
+}
+
+export function FoodRepeat_showDay(state: IFoodRepeatState, day: string): IFoodRepeatState {
+  return { ...state, day, selected: [], isSaving: false };
 }
 
 export function FoodRepeat_toggle(state: IFoodRepeatState, id: string): IFoodRepeatState {
@@ -75,7 +79,7 @@ export function FoodRepeat_copy(
   newId: () => string,
   meal?: IFoodMeal
 ): IFoodLog {
-  const day = FoodLog_dayKey(new Date(now));
+  const day = state.into;
   const copies = FoodRepeat_selected(log, state).map((entry) => ({
     ...entry,
     id: newId(),

@@ -14,16 +14,23 @@ import {
 export type IScanMode = "barcode" | "ai" | "describe";
 export type IScanEntryMode = "barcode" | "photo" | "describe" | "quick" | undefined;
 
+export interface IScanResume {
+  choices: IFoodPhotoChoice[];
+  photo?: string;
+  text?: string;
+}
+
 export interface IScanServing {
   mode: IScanMode;
   items: IFoodBasketItem[];
   descriptionOverride?: string;
   photo?: string;
   isShared?: boolean;
+  resume?: IScanResume;
 }
 
 export type IScanStep =
-  | { kind: "camera"; mode: IScanMode }
+  | { kind: "camera"; mode: IScanMode; resume?: IScanResume }
   | { kind: "reading"; code: string }
   | { kind: "notFound"; code: string; error?: string }
   | { kind: "serving"; serving: IScanServing }
@@ -48,10 +55,10 @@ export type IScanEvent =
   | { type: "saveOpened"; group: "meal" | "recipe" }
   | { type: "catalogRecipeOpened"; recipeId: string }
   | { type: "barcodeRead"; code: string }
-  | { type: "barcodeFound"; pick: IFoodPick }
+  | { type: "barcodeFound"; code: string; pick: IFoodPick }
   | { type: "barcodeMissed"; code: string; error?: string }
   | { type: "photoReviewed"; choices: IFoodPhotoChoice[]; nonce: number; photo?: string }
-  | { type: "describeReviewed"; choices: IFoodPhotoChoice[]; nonce: number }
+  | { type: "describeReviewed"; choices: IFoodPhotoChoice[]; nonce: number; text?: string }
   | { type: "quickEntered"; name: string; nutrients: INutrients }
   | { type: "gramsChanged"; key: string; grams: number }
   | { type: "itemRemoved"; key: string }
@@ -114,18 +121,24 @@ export function FoodScanSteps_canAdd(serving: IScanServing): boolean {
   return serving.items.length > 0 && FoodScanSteps_description(serving).trim() !== "";
 }
 
-function servingOf(mode: IScanMode, items: IFoodBasketItem[]): IScanStep {
-  return { kind: "serving", serving: { mode, items } };
+function servingOf(mode: IScanMode, items: IFoodBasketItem[], resume?: IScanResume): IScanStep {
+  return { kind: "serving", serving: resume != null ? { mode, items, resume } : { mode, items } };
 }
 
 function mapServing(step: IScanStep, change: (serving: IScanServing) => IScanServing): IScanStep {
   return step.kind === "serving" ? { kind: "serving", serving: change(step.serving) } : step;
 }
 
+function isReadingCode(step: IScanStep, code: string): boolean {
+  return step.kind === "reading" && step.code === code;
+}
+
 function backFrom(step: IScanStep): IScanStep {
   switch (step.kind) {
     case "serving":
-      return { kind: "camera", mode: step.serving.mode };
+      return step.serving.resume != null
+        ? { kind: "camera", mode: step.serving.mode, resume: step.serving.resume }
+        : { kind: "camera", mode: step.serving.mode };
     case "reading":
     case "notFound":
       return { kind: "camera", mode: "barcode" };
@@ -161,18 +174,23 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
     case "barcodeRead":
       return { kind: "reading", code: event.code };
     case "barcodeFound":
-      return servingOf("barcode", FoodBasket_put([], event.pick));
+      return isReadingCode(step, event.code) ? servingOf("barcode", FoodBasket_put([], event.pick)) : step;
     case "barcodeMissed":
-      return { kind: "notFound", code: event.code, error: event.error };
+      return isReadingCode(step, event.code) ? { kind: "notFound", code: event.code, error: event.error } : step;
     case "photoReviewed": {
       const serving = servingOf(
         "ai",
-        FoodBasket_putAll([], FoodBasket_fromChoices(event.choices, "photo", event.nonce))
+        FoodBasket_putAll([], FoodBasket_fromChoices(event.choices, "photo", event.nonce)),
+        { choices: event.choices, photo: event.photo }
       );
       return event.photo != null ? mapServing(serving, (s) => ({ ...s, photo: event.photo })) : serving;
     }
     case "describeReviewed":
-      return servingOf("describe", FoodBasket_putAll([], FoodBasket_fromChoices(event.choices, "manual", event.nonce)));
+      return servingOf(
+        "describe",
+        FoodBasket_putAll([], FoodBasket_fromChoices(event.choices, "manual", event.nonce)),
+        { choices: event.choices, text: event.text }
+      );
     case "quickEntered":
       return servingOf("describe", FoodBasket_put([], FoodAddFlow_manualPick(event.name, event.nutrients), 0));
     case "gramsChanged":

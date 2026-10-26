@@ -1,5 +1,6 @@
 import type { ImagePickerResponse } from "react-native-image-picker";
 import { FoodAddFlow_photoChoices, IFoodPhotoChoice } from "./foodAddFlow";
+import type { IScanResume } from "./foodScanSteps";
 import { IFoodPhotoEstimate } from "./foodPhotoEstimate";
 import { INutritionLabel, INutritionLabelForm, NutritionLabel_toForm } from "./nutritionLabel";
 
@@ -68,8 +69,17 @@ export type IFoodPhotoEvent =
   | { type: "estimated"; photo: string; result: IFoodCaptureResult<IFoodPhotoEstimate> }
   | { type: "choices"; choices: IFoodPhotoChoice[] };
 
-export function FoodPhoto_empty(): IFoodPhotoState {
-  return { busy: false };
+export function FoodPhoto_empty(resume?: IScanResume): IFoodPhotoState {
+  if (resume == null) {
+    return { busy: false };
+  }
+  return resume.photo != null
+    ? { busy: false, choices: resume.choices, preview: resume.photo }
+    : { busy: false, choices: resume.choices };
+}
+
+export function FoodPhoto_shouldOpenCamera(hasSession: boolean, state: IFoodPhotoState): boolean {
+  return hasSession && !state.busy && (state.choices?.length ?? 0) === 0;
 }
 
 export function FoodPhoto_reduce(state: IFoodPhotoState, event: IFoodPhotoEvent): IFoodPhotoState {

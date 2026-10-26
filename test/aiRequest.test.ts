@@ -22,6 +22,14 @@ const signedIn: ICloudState = {
   session: { email: "paul@example.com", userId: "u1", accessToken: "a", refreshToken: "r", expiresAt: now + 3600000 },
 };
 
+describe("AiRequest sign-in message", () => {
+  it("points at the Settings gear and Cloud backup card on the bear's home", () => {
+    expect(AiRequest_signInMessage).to.contain("gear at the top right");
+    expect(AiRequest_signInMessage).to.contain("Cloud backup");
+    expect(AiRequest_signInMessage).to.not.contain("Progress");
+  });
+});
+
 describe("AiRequest", () => {
   let state: ICloudState;
   let fetchStub: sinon.SinonStub;
