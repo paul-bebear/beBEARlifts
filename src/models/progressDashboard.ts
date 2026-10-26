@@ -1,5 +1,5 @@
 import { IHistoryRecord, ISettings, IStats, IWeight } from "../types";
-import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
+import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_hasGoals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import { History_totalRecordWeight } from "./history";
 import { Weight_add, Weight_build, Weight_convertTo } from "./weight";
 import { LocalDay_between, LocalDay_ms, LocalDay_start } from "./localDay";
@@ -36,7 +36,7 @@ function latestWeight(stats: IStats, settings: ISettings, now: number): IProgres
 function caloriesStatus(log: IFoodLog, today: string): IProgressCaloriesStatus {
   const calories = FoodLog_dayTotals(log, today).calories;
   const target = log.goals.calories;
-  if (calories === 0) {
+  if (calories === 0 || !FoodLog_hasGoals(log.goals) || target.max <= 0) {
     return { kind: "none" };
   }
   if (calories < target.min) {

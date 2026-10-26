@@ -5195,7 +5195,10 @@ export function Exercise_applyCustomExerciseChange(
     .p("notes")
     .set({ ...settings, exercises }, notes);
   if (program && oldExercise && oldExercise.name !== exercise.name) {
-    return { settings: newSettings, program: Program_changeExerciseName(oldExercise.name, exercise.name, program, newSettings) };
+    return {
+      settings: newSettings,
+      program: Program_changeExerciseName(oldExercise.name, exercise.name, program, newSettings),
+    };
   }
   return { settings: newSettings };
 }

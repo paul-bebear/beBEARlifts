@@ -479,7 +479,10 @@ export function Settings_getNextTargetType(type: ITargetType, skipPlatesCalculat
   return nextTargetType;
 }
 
-export function Settings_toggleStarred(starred: ISettings["starredExercises"], key: string): ISettings["starredExercises"] {
+export function Settings_toggleStarred(
+  starred: ISettings["starredExercises"],
+  key: string
+): ISettings["starredExercises"] {
   if (starred?.[key]) {
     const next = { ...starred };
     delete next[key];

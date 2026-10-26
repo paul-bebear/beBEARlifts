@@ -54,7 +54,7 @@ describe("Onboarding API", () => {
   });
   it("sends image parts, references and one correction to the authenticated provider", async () => {
     const fetchStub = sinon.stub(globalThis, "fetch");
-    fetchStub.onFirstCall().resolves(new Response("1"));
+    fetchStub.onFirstCall().resolves(new Response(JSON.stringify({ plan: "free", lifetime: 0 })));
     fetchStub
       .onSecondCall()
       .resolves(new Response(JSON.stringify({ choices: [{ message: { content: '{"builtin":"fierce-5"}' } }] })));
@@ -71,10 +71,10 @@ describe("Onboarding API", () => {
   });
   it("reports auth limits, provider errors and unreachable services", async () => {
     const fetchStub = sinon.stub(globalThis, "fetch");
-    fetchStub.resolves(new Response("61"));
+    fetchStub.resolves(new Response("{}", { status: 429 }));
     expect((await POST(request(payload, true))).status).to.equal(429);
     fetchStub.reset();
-    fetchStub.onFirstCall().resolves(new Response("1"));
+    fetchStub.onFirstCall().resolves(new Response(JSON.stringify({ plan: "free", lifetime: 0 })));
     fetchStub.onSecondCall().rejects(new Error("network"));
     expect((await POST(request(payload, true))).status).to.equal(504);
   });

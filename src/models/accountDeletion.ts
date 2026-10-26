@@ -1,3 +1,5 @@
+import { IAccountPlanState } from "./accountPlan";
+
 export const AccountDeletion_confirmWord = "DELETE";
 export const AccountDeletion_signInMessage = "Sign in again, then delete the account.";
 export const AccountDeletion_doneMessage = "Account deleted. Your workouts and settings are still on this phone.";
@@ -17,4 +19,16 @@ export function AccountDeletion_result(status: number, body: unknown): IAccountD
   }
   const error = (body as { error?: unknown } | undefined)?.error;
   return { ok: false, error: typeof error === "string" ? error : `The server returned ${status}.` };
+}
+
+export const AccountDeletion_subscriptionLine =
+  "Your beBEAR+ subscription keeps renewing. Cancel it first in Settings → Apple ID → Subscriptions.";
+
+export function AccountDeletion_subscriptionNote(
+  plan: IAccountPlanState,
+  userId: string | undefined
+): string | undefined {
+  return plan.status === "known" && plan.userId === userId && plan.plan === "plus" && plan.grant === "subscription"
+    ? AccountDeletion_subscriptionLine
+    : undefined;
 }
