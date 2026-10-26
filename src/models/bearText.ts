@@ -68,6 +68,21 @@ export function BearText_honeyBreakdown(day: IHoneyDay | undefined): string {
   return day.isCapped ? [...parts, `Daily max ${BearHoney_dailyMax}`].join(" · ") : parts.join(" · ");
 }
 
+export function BearText_honeySaved(total: number): string {
+  return `Your bear saved ${Math.max(0, Math.round(total)).toLocaleString("en-US")} honey for you.`;
+}
+
+export function BearText_lockLine(atDays: number, toGo: number): string {
+  return `Opens at ${atDays} active ${atDays === 1 ? "day" : "days"} · ${toGo} to go`;
+}
+
+export const BearText_houseEmpty = {
+  tv: "No friends yet",
+  passport: "Stamp your first city",
+  scale: "Weigh in",
+  passportSoon: "City stamps come soon",
+} as const;
+
 export function BearText_finishLine(
   record: IHistoryRecord,
   workouts: readonly IBearCountedWorkout[],

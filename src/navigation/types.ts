@@ -162,6 +162,8 @@ export type IRootStackParamList = {
   nextWorkoutModal: undefined;
   plusSheetModal: undefined;
   bearPanelModal: undefined;
+  gymBagCheckModal: undefined;
+  gymExitModal: undefined;
   addFriendModal: undefined;
   noteEditorModal: { day: string; noteId?: string };
   whatsnewModal: undefined;

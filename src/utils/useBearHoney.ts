@@ -14,6 +14,7 @@ import { useFoodLog } from "./foodLogStore";
 import { useBear } from "./useBear";
 
 export interface IBearHoneyView {
+  earned: number;
   balance: number;
   today?: IHoneyDay;
   sources: IHoneySources;
@@ -33,6 +34,7 @@ export function useBearHoney(): IBearHoneyView {
     const now = Date.now();
     const earned = BearHoney_earned(sources, now);
     return {
+      earned: earned.total,
       balance: BearHoney_balance(earned.total, store.spent),
       today: BearHoney_day(earned, FoodLog_dayKey(new Date(now))),
       sources,

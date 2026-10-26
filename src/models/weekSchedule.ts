@@ -164,7 +164,7 @@ function weekIndexOf(program: IScheduleProgram, day: number): number {
   return 0;
 }
 
-function WeekSchedule_dayName(program: IScheduleProgram, day: number): string {
+export function WeekSchedule_dayName(program: IScheduleProgram, day: number): string {
   let left = day;
   for (const week of program.weeks) {
     if (left <= week.days.length) {

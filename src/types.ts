@@ -1663,6 +1663,7 @@ export interface ISettings {
   nickname?: string;
   alwaysOnDisplay?: boolean;
   vibration?: boolean;
+  skipBagCheck?: boolean;
   startWeekFromMonday?: boolean;
   textSize?: number;
   starredExercises?: Record<string, boolean | undefined>;
@@ -1717,6 +1718,7 @@ const _VSettings = v.object({
   nickname: v.optional(v.string()),
   alwaysOnDisplay: v.optional(v.boolean()),
   vibration: v.optional(v.boolean()),
+  skipBagCheck: v.optional(v.boolean()),
   startWeekFromMonday: v.optional(v.boolean()),
   textSize: v.optional(v.number()),
   starredExercises: v.optional(v.record(VExerciseId, v.optional(v.boolean()))),
