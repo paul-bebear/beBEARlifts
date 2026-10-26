@@ -1,4 +1,5 @@
 import { FeatureLayer_isFront, IFeature } from "./featureLayer";
+import { emptyProgramId } from "./program";
 
 export type IQuickActionId = "food" | "weight" | "run";
 
@@ -10,7 +11,7 @@ export interface IQuickAction {
 
 export interface IQuickActionsWorkout {
   label: string;
-  action: "resume" | "pick";
+  action: "resume" | "bagCheck" | "pick";
 }
 
 export interface IQuickActions {
@@ -21,6 +22,7 @@ export interface IQuickActions {
 export interface IQuickActionsInput {
   isOngoingProgress: boolean;
   canRecordRun: boolean;
+  isBagCheckOn?: boolean;
 }
 
 export const quickActionsSoon = "Soon";
@@ -37,11 +39,21 @@ export function QuickActions_list(input: IQuickActionsInput): IQuickActions {
   const front = squareCandidates.filter((c) => FeatureLayer_isFront(c.feature)).map((c) => c.action);
   return {
     squares: input.canRecordRun ? [...front, runSquare] : front,
-    workout: {
-      label: input.isOngoingProgress ? "Resume workout" : "Start workout",
-      action: input.isOngoingProgress ? "resume" : "pick",
-    },
+    workout: QuickActions_workout(input),
   };
+}
+
+// The bag check needs a program day to pack for. Without one the picker opens, as before the house.
+export function QuickActions_isBagCheckOn(skipBagCheck: boolean | undefined, currentProgramId?: string): boolean {
+  return skipBagCheck !== true && currentProgramId != null && currentProgramId !== emptyProgramId;
+}
+
+// The "+" bar and the house door both start a workout here, so the bag check sits on one path.
+export function QuickActions_workout(input: Omit<IQuickActionsInput, "canRecordRun">): IQuickActionsWorkout {
+  if (input.isOngoingProgress) {
+    return { label: "Resume workout", action: "resume" };
+  }
+  return { label: "Start workout", action: input.isBagCheckOn === true ? "bagCheck" : "pick" };
 }
 
 export function QuickActions_inProgressLine(elapsedMs: number): string {

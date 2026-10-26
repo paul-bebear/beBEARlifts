@@ -4,7 +4,9 @@ import {
   BearText_finishLine,
   BearText_honeyBreakdown,
   BearText_honeyLine,
+  BearText_honeySaved,
   BearText_levelLine,
+  BearText_lockLine,
   BearText_levelTitle,
   BearText_levelUp,
   BearText_status,
@@ -151,5 +153,11 @@ describe("BearText", () => {
     );
     expect(BearText_levelUp(4, "female").subtitle).to.equal("Your bear grew! You have lifted a humpback whale so far.");
     expect(BearText_levelUp(1, "female").subtitle).to.equal("Your bear grew!");
+  });
+
+  it("words the house lock line and the honey jar line", () => {
+    expect(BearText_lockLine(3, 2)).to.equal("Opens at 3 active days · 2 to go");
+    expect(BearText_lockLine(1, 1)).to.equal("Opens at 1 active day · 1 to go");
+    expect(BearText_honeySaved(1060.4)).to.equal("Your bear saved 1,060 honey for you.");
   });
 });

@@ -1,6 +1,11 @@
 import "mocha";
 import { expect } from "chai";
-import { QuickActions_inProgressLine, QuickActions_list } from "../src/models/quickActions";
+import {
+  QuickActions_inProgressLine,
+  QuickActions_isBagCheckOn,
+  QuickActions_list,
+  QuickActions_workout,
+} from "../src/models/quickActions";
 
 describe("QuickActions", () => {
   it("lists only Food and Weight, the front-layer squares", () => {
@@ -22,6 +27,22 @@ describe("QuickActions", () => {
     const list = QuickActions_list({ isOngoingProgress: false, canRecordRun: false });
     expect(list.workout.label).to.equal("Start workout");
     expect(list.workout.action).to.equal("pick");
+  });
+
+  it("opens the bag check first when it is on, and resumes past it", () => {
+    expect(QuickActions_workout({ isOngoingProgress: false, isBagCheckOn: true })).to.deep.equal({
+      label: "Start workout",
+      action: "bagCheck",
+    });
+    expect(QuickActions_workout({ isOngoingProgress: true, isBagCheckOn: true }).action).to.equal("resume");
+    expect(QuickActions_workout({ isOngoingProgress: false, isBagCheckOn: false }).action).to.equal("pick");
+  });
+
+  it("turns the bag check on for a real program unless the user skipped it", () => {
+    expect(QuickActions_isBagCheckOn(undefined, "abc")).to.equal(true);
+    expect(QuickActions_isBagCheckOn(true, "abc")).to.equal(false);
+    expect(QuickActions_isBagCheckOn(false, "emptyprogram")).to.equal(false);
+    expect(QuickActions_isBagCheckOn(false, undefined)).to.equal(false);
   });
 
   it("resumes the ongoing workout", () => {

@@ -1,22 +1,31 @@
-import { JSX, useMemo } from "react";
+import { JSX, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { navigateToModal } from "../navigation/navigationService";
 import { Thunk_pushScreen } from "../ducks/thunks";
+import { IDispatch } from "../ducks/types";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { IconCog2 } from "./icons/iconCog2";
 import { MyBearSections } from "./screenProgressDashboard";
 import { BearScene } from "./bearScene";
+import { BearHouseScene } from "./bearHouseScene";
+import { HoneySheet } from "./honeySheet";
 import { SeasonNudgeCard } from "./seasonNudgeCard";
 import { useBear } from "../utils/useBear";
+import { useBearHouse } from "../utils/useBearHouse";
 import { useFoodLog } from "../utils/foodLogStore";
 import { ProgramGoalStore } from "../utils/programGoalStore";
 import { WeekScheduleStore } from "../utils/weekScheduleStore";
 import { useFollowWeekSchedule } from "../utils/useFollowWeekSchedule";
+import { WorkoutStart_open } from "../utils/workoutStart";
 import { BearBoard_lines, IBearBoardTarget } from "../models/bearBoard";
+import { IBearHouseOpenTarget } from "../models/bearHouse";
+import { BearScene_place } from "../models/bearScene";
+import { BearText_honeySaved } from "../models/bearText";
 import { Program_evaluate, Program_getProgramDay } from "../models/program";
+import { QuickActions_isBagCheckOn, QuickActions_workout } from "../models/quickActions";
 import { TodayPill_dayName } from "../models/todayPill";
 import { WeekSchedule_todayFor } from "../models/weekSchedule";
 import { IHistoryRecord, IProgram } from "../types";
@@ -30,6 +39,40 @@ function openBoardTarget(target: IBearBoardTarget): void {
   navigateToModal(target === "plus" ? "plusSheetModal" : "bearPanelModal");
 }
 
+function openHouseTarget(
+  target: IBearHouseOpenTarget,
+  dispatch: IDispatch,
+  isBagCheckOn: boolean,
+  openHoney: () => void
+): void {
+  switch (target.kind) {
+    case "plus":
+      navigateToModal("plusSheetModal");
+      return;
+    case "door":
+      WorkoutStart_open(QuickActions_workout({ isOngoingProgress: false, isBagCheckOn }).action, dispatch);
+      return;
+    case "bearPanel":
+      navigateToModal("bearPanelModal");
+      return;
+    case "journal":
+      dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
+      return;
+    case "monthCalendar":
+      navigateToModal("monthCalendarModal");
+      return;
+    case "screen":
+      dispatch(Thunk_pushScreen(target.screen, undefined, target.tab != null ? { tab: target.tab } : undefined));
+      return;
+    case "addFriend":
+      navigateToModal("addFriendModal");
+      return;
+    case "honey":
+      openHoney();
+      return;
+  }
+}
+
 export function ScreenHome(props: IProps): JSX.Element {
   const dispatch = useTrackedDispatch();
   const tracked = useTrackedState();
@@ -37,6 +80,8 @@ export function ScreenHome(props: IProps): JSX.Element {
   const stats = untrack(tracked.storage.stats);
   const settings = untrack(tracked.storage.settings);
   const { state } = useBear();
+  const house = useBearHouse();
+  const [isHoneyOpen, setIsHoneyOpen] = useState(false);
   const foodLog = useFoodLog();
   const goalLog = ProgramGoalStore.use();
   const schedule = WeekScheduleStore.use();
@@ -63,6 +108,8 @@ export function ScreenHome(props: IProps): JSX.Element {
       }),
     [history, stats, foodLog, settings, dayName, goalLog, state]
   );
+  const isBagCheckOn = QuickActions_isBagCheckOn(settings.skipBagCheck, tracked.storage.currentProgramId);
+  const place = BearScene_place(props.progress != null);
   useNavOptions({
     navTitle: "My bear",
     navRightButtons: [
@@ -81,11 +128,35 @@ export function ScreenHome(props: IProps): JSX.Element {
     <NavScreenContent>
       <View testID="home" data-testid="home">
         <View testID="my-bear-head" data-testid="my-bear-head" className="pt-2 pb-3">
-          <BearScene state={state} lines={lines} onTarget={openBoardTarget} />
+          {place === "gym" ? (
+            <BearScene
+              state={state}
+              lines={lines}
+              onTarget={openBoardTarget}
+              onExit={() => navigateToModal("gymExitModal")}
+            />
+          ) : (
+            <BearHouseScene
+              state={state}
+              room={house.room}
+              lines={lines}
+              objects={house.objects}
+              onBoardTarget={openBoardTarget}
+              onTarget={(target) => openHouseTarget(target, dispatch, isBagCheckOn, () => setIsHoneyOpen(true))}
+            />
+          )}
         </View>
         <SeasonNudgeCard stats={stats} />
         <MyBearSections />
       </View>
+      {isHoneyOpen && (
+        <HoneySheet
+          balance={house.honey.balance}
+          today={house.honey.today}
+          saved={BearText_honeySaved(house.honey.earned)}
+          onClose={() => setIsHoneyOpen(false)}
+        />
+      )}
     </NavScreenContent>
   );
 }

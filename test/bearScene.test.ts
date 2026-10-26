@@ -22,6 +22,7 @@ import {
 } from "../src/models/bearScene";
 import { BearArt_sprite } from "../src/models/bearArt";
 import { BearTv_rect } from "../src/models/bearTv";
+import { BearHouse_floor } from "../src/models/bearHouse";
 import { IBearMood } from "../src/models/bear";
 import { IBearLine } from "../src/models/bearStoreData";
 
@@ -283,5 +284,18 @@ describe("BearScene_place", () => {
   it("puts the bear in the gym while a workout runs and at home the rest of the time", () => {
     expect(BearScene_place(true)).to.equal("gym");
     expect(BearScene_place(false)).to.equal("home");
+  });
+
+  it("stands the bear on the house floor below the board at every level", () => {
+    const unit = 390 / BearScene_canvas.width;
+    for (const level of [1, 6, 12]) {
+      const sprite = BearArt_sprite("male", level, "normal");
+      const layout = BearScene_layout(390, level, 1, sprite, 1.015, BearHouse_floor);
+      const [, y1, , y2] = BearScene_visibleBox(sprite);
+      const scale = layout.sprite.height / BearScene_canvas.height;
+      expect(layout.sprite.top + y2 * scale).to.be.closeTo(BearHouse_floor.foot.y * unit, 0.2);
+      expect(layout.sprite.top + y1 * scale).to.be.at.least(BearScene_boardInkBottom * unit - 0.2);
+    }
+    expect(BearScene_heightShare(1, 0, BearHouse_floor)).to.equal(0.26);
   });
 });

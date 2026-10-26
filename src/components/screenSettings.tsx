@@ -304,6 +304,20 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
           });
         }}
       />
+      <MenuItemEditable
+        type="boolean"
+        name="Bag check before a workout"
+        value={props.settings.skipBagCheck ? "false" : "true"}
+        onChange={(newValue) => {
+          props.dispatch({
+            type: "UpdateSettings",
+            lensRecording: lb<ISettings>()
+              .p("skipBagCheck")
+              .record(newValue !== "true"),
+            desc: "Toggle bag check",
+          });
+        }}
+      />
       {(Platform.OS === "ios" || Platform.OS === "android") && (
         <MenuItemEditable
           type="boolean"

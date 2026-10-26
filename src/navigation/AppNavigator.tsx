@@ -100,6 +100,8 @@ import { NavModalDayFromAdhoc } from "./modals/NavModalDayFromAdhoc";
 import { NavModalNextWorkout } from "./modals/NavModalNextWorkout";
 import { PlusSheetModal } from "../components/plusSheet";
 import { BearPanelSheetModal } from "../components/bearPanelSheet";
+import { GymBagCheckModal } from "../components/gymBagCheckSheet";
+import { GymExitModal } from "../components/gymExitSheet";
 import { AddFriendModal } from "../components/addFriendSheet";
 import { NoteEditorModal } from "../components/noteEditor";
 import { NavModalWhatsnew } from "./modals/NavModalWhatsnew";
@@ -439,6 +441,8 @@ export function AppNavigator(props: { initialScreen?: IScreen }): JSX.Element {
           <RootStack.Screen name="nextWorkoutModal" component={NavModalNextWorkout} />
           <RootStack.Screen name="plusSheetModal" component={PlusSheetModal} />
           <RootStack.Screen name="bearPanelModal" component={BearPanelSheetModal} />
+          <RootStack.Screen name="gymBagCheckModal" component={GymBagCheckModal} />
+          <RootStack.Screen name="gymExitModal" component={GymExitModal} />
           <RootStack.Screen name="addFriendModal" component={AddFriendModal} />
           <RootStack.Screen name="noteEditorModal" component={NoteEditorModal} />
           <RootStack.Screen name="whatsnewModal" component={NavModalWhatsnew} />

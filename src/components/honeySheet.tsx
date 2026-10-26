@@ -9,6 +9,7 @@ import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 interface IProps {
   balance: number;
   today?: IHoneyDay;
+  saved?: string;
   onClose: () => void;
 }
 
@@ -28,6 +29,16 @@ export function HoneySheet(props: IProps): JSX.Element {
             <Text className="text-2xl font-bold" style={{ color: T.greenDark }}>
               {BearText_honeyLine(props.balance)}
             </Text>
+            {props.saved != null && (
+              <Text
+                className="mt-1 text-base"
+                style={{ color: T.greenDark }}
+                testID="honey-saved"
+                data-testid="honey-saved"
+              >
+                {props.saved}
+              </Text>
+            )}
             <Text className="mt-3 text-sm font-bold tracking-wide uppercase" style={{ color: T.greenDark }}>
               Today
             </Text>

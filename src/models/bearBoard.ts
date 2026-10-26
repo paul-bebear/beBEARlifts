@@ -1,4 +1,4 @@
-import { IHistoryRecord, IStats, IUnit } from "../types";
+import { IHistoryRecord, IStats, IStatsWeightValue, IUnit } from "../types";
 import { BearText_kg } from "./bearText";
 import { IBearTierProgress } from "./bearTier";
 import {
@@ -60,10 +60,20 @@ function foodText(input: IBearBoardInput, today: string): string {
   return target > 0 ? `Eat · ${eaten} of ${formatCount(target)} kcal` : `Eat · ${eaten} kcal`;
 }
 
-function weightLine(input: IBearBoardInput): IBearBoardLine {
-  const entries = (input.stats.weight.weight ?? [])
-    .filter((e) => e.timestamp <= input.now && Number.isFinite(e.value.value) && e.value.value > 0)
+function weightEntries(stats: IStats, now: number): IStatsWeightValue[] {
+  return (stats.weight.weight ?? [])
+    .filter((e) => e.timestamp <= now && Number.isFinite(e.value.value) && e.value.value > 0)
     .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+export function BearBoard_latestWeight(stats: IStats, units: IUnit, now: number): string | undefined {
+  const entries = weightEntries(stats, now);
+  const latest = entries[entries.length - 1];
+  return latest == null ? undefined : oneDecimal(Weight_convertTo(latest.value, units).value);
+}
+
+function weightLine(input: IBearBoardInput): IBearBoardLine {
+  const entries = weightEntries(input.stats, input.now);
   const latest = entries[entries.length - 1];
   if (latest == null) {
     return { id: "weight", text: "Weight · not logged yet", isDone: false, target: "bear" };
