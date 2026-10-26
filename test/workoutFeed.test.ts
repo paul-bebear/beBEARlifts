@@ -377,7 +377,10 @@ describe("Feed", () => {
   });
 
   it("merges lifts and meals newest first, and gives a meal the author's newest bear", () => {
-    const bearSummary = { ...summary, bear: { level: 5, mood: "normal" as const, countedKg: 900 } };
+    const bearSummary = {
+      ...summary,
+      bear: { level: 5, mood: "normal" as const, countedKg: 900, fur: "brown" as const },
+    };
     let state = Feed_withServerPosts(
       Feed_empty(),
       "me",
