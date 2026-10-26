@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   AiConsent_decide,
+  AiConsent_disclosure,
   AiConsent_empty,
   AiConsent_isFoodAi,
   AiConsent_maySend,
@@ -37,5 +38,13 @@ describe("AI consent", () => {
     expect(AiConsent_showFeatures(AiConsent_empty())).to.equal(true);
     expect(["photo", "describe", "label"].every(AiConsent_isFoodAi)).to.equal(true);
     expect(["barcode", "quick", "browse"].some(AiConsent_isFoodAi)).to.equal(false);
+  });
+});
+
+describe("AI consent disclosure", () => {
+  it("names the provider, the gateway and that nothing is kept", () => {
+    expect(AiConsent_disclosure).to.contain("Anthropic");
+    expect(AiConsent_disclosure).to.contain("Vercel's AI Gateway");
+    expect(AiConsent_disclosure).to.contain("are not kept");
   });
 });

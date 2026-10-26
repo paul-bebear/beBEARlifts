@@ -33,6 +33,7 @@ import {
   FoodScanSteps_title,
   IScanServing,
 } from "../models/foodScanSteps";
+import { FoodSaveGuard_run } from "../models/foodSaveGuard";
 import { FoodSuggestions_forMeal } from "../models/foodSuggestions";
 import { Recipes_fromBasket, Recipes_servingPick, SavedMeals_fromBasket, SavedMeals_items } from "../models/savedMeals";
 import { FoodApi_lookupBarcode } from "../utils/foodApi";
@@ -114,6 +115,7 @@ function ReviewBar(props: { basket: IFoodBasketItem[]; onPress: () => void }): J
 export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Element {
   const navigation = useNavigation();
   const isLoggingRef = useRef(false);
+  const isSavingGroupRef = useRef(false);
   const log = useFoodLog();
   const hasAi = AiConsent_showFeatures(AiConsentStore.use());
   const [step, send] = useReducer(FoodScanSteps_reduce, undefined, () =>
@@ -156,7 +158,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
     send({ type: "barcodeRead", code });
     const result = await FoodApi_lookupBarcode(code, log.savedFoods);
     if (result.ok && result.value != null) {
-      send({ type: "barcodeFound", pick: FoodAddFlow_pickFromProduct(result.value, "barcode") });
+      send({ type: "barcodeFound", code, pick: FoodAddFlow_pickFromProduct(result.value, "barcode") });
     } else {
       send({ type: "barcodeMissed", code, error: result.ok ? undefined : result.error });
     }
@@ -164,34 +166,36 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
 
   const saveGroup = async (group: "meal" | "recipe", name: string, servings: number): Promise<void> => {
     if (group === "meal") {
-      await FoodLogStore_update((l) => FoodLog_saveMeal(l, SavedMeals_fromBasket(name, basket, FoodLogStore_newId())));
-      setBrowseTab("meals");
-      browse();
+      const saved = SavedMeals_fromBasket(name, basket, FoodLogStore_newId());
+      const save = (): Promise<void> => FoodLogStore_update((l) => FoodLog_saveMeal(l, saved));
+      if (await FoodSaveGuard_run(isSavingGroupRef, save, false)) {
+        setBrowseTab("meals");
+        browse();
+      }
       return;
     }
     const recipe = Recipes_fromBasket(name, servings, basket, FoodLogStore_newId());
-    await FoodLogStore_update((l) => FoodLog_saveRecipe(l, recipe));
-    setBasket(FoodBasket_put([], Recipes_servingPick(recipe)));
-    send({ type: "basketOpened" });
+    if (
+      await FoodSaveGuard_run(isSavingGroupRef, () => FoodLogStore_update((l) => FoodLog_saveRecipe(l, recipe)), false)
+    ) {
+      setBasket(FoodBasket_put([], Recipes_servingPick(recipe)));
+      send({ type: "basketOpened" });
+    }
   };
 
   const logBasket = async (): Promise<void> => {
-    if (isLoggingRef.current) {
-      return;
-    }
-    isLoggingRef.current = true;
     const entries = FoodBasket_entries(basket, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
-    await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
-    navigation.goBack();
+    if (await FoodSaveGuard_run(isLoggingRef, () => FoodLogStore_update((l) => FoodLog_addAll(l, entries)), true)) {
+      navigation.goBack();
+    }
   };
 
   const logServing = async (serving: IScanServing): Promise<void> => {
-    if (isLoggingRef.current) {
+    const entries = FoodScanSteps_entries(serving, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
+    const save = (): Promise<void> => FoodLogStore_update((l) => FoodLog_addAll(l, entries));
+    if (!(await FoodSaveGuard_run(isLoggingRef, save, true))) {
       return;
     }
-    isLoggingRef.current = true;
-    const entries = FoodScanSteps_entries(serving, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
-    await FoodLogStore_update((l) => FoodLog_addAll(l, entries));
     navigation.goBack();
     const post = MealPost_fromServing(serving, share, () => MealPost_newId(RandomBytes_get(16)));
     if (post != null) {
@@ -230,10 +234,11 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             day={props.params.day}
             mode={step.mode}
             hasAi={hasAi}
+            resume={step.resume}
             onMode={(mode) => send({ type: "modePicked", mode })}
             onBarcode={onBarcode}
             onPhotoReviewed={(choices, photo) => send({ type: "photoReviewed", choices, nonce: Date.now(), photo })}
-            onDescribed={(choices) => send({ type: "describeReviewed", choices, nonce: Date.now() })}
+            onDescribed={(choices, text) => send({ type: "describeReviewed", choices, nonce: Date.now(), text })}
             onQuick={(name, nutrients) => send({ type: "quickEntered", name, nutrients })}
             onSearch={browse}
             onCopied={() => navigation.goBack()}

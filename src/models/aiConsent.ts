@@ -5,7 +5,7 @@ export interface IAiConsent {
 }
 
 export const AiConsent_disclosure =
-  "AI features send your photo or text to Google Gemini or Anthropic Claude to get an answer. They are not used to identify you.";
+  "AI features send your photo or text to Google Gemini or Anthropic Claude to get an answer. Photos and text go to Anthropic through Vercel's AI Gateway and are not kept. They are not used to identify you.";
 
 export function AiConsent_empty(): IAiConsent {
   return { version: 1, choice: "unknown" };

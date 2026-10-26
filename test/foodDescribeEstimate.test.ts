@@ -84,3 +84,13 @@ describe("FoodDescribeEstimate", () => {
     expect(state).to.deep.equal(FoodDescribeEstimate_initial());
   });
 });
+
+describe("FoodDescribeEstimate resume", () => {
+  it("starts from the kept text and estimate after Back from Serving size", () => {
+    const choices = [{ ...eggs, isSelected: true }] as unknown as IFoodDescribeState["choices"];
+    const state = FoodDescribeEstimate_initial({ choices: choices!, text: "two eggs" });
+    expect(state).to.deep.equal({ text: "two eggs", isLoading: false, choices });
+    expect(FoodDescribeEstimate_hasChoices(state)).to.equal(true);
+    expect(FoodDescribeEstimate_initial({ choices: choices! }).text).to.equal("");
+  });
+});

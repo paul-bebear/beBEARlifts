@@ -1,5 +1,6 @@
 import { FoodAddFlow_photoChoices, IFoodPhotoChoice } from "./foodAddFlow";
 import { IFoodPhotoEstimate } from "./foodPhotoEstimate";
+import type { IScanResume } from "./foodScanSteps";
 
 export interface IFoodDescribeState {
   text: string;
@@ -19,8 +20,10 @@ export type IFoodDescribeEvent =
   | { type: "choicesChanged"; choices: IFoodPhotoChoice[] }
   | { type: "added" };
 
-export function FoodDescribeEstimate_initial(): IFoodDescribeState {
-  return { text: "", isLoading: false };
+export function FoodDescribeEstimate_initial(resume?: IScanResume): IFoodDescribeState {
+  return resume == null
+    ? { text: "", isLoading: false }
+    : { text: resume.text ?? "", isLoading: false, choices: resume.choices };
 }
 
 export function FoodDescribeEstimate_canSend(state: IFoodDescribeState): boolean {

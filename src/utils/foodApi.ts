@@ -20,19 +20,34 @@ import {
 export type IFoodApiResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
 const offlineError = "No connection. Food lookup needs a signal.";
+export const FoodApi_timeoutError = "The food lookup took too long. Try again.";
+export const FoodApi_requestTimeoutMs = 15_000;
 
 async function request(path: string, init?: RequestInit): Promise<IFoodApiResult<unknown>> {
-  let response: Response;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FoodApi_requestTimeoutMs);
   try {
-    response = await fetch(ApiUrl_for(path), init);
-  } catch {
-    return { ok: false, error: offlineError };
+    let response: Response;
+    try {
+      response = await fetch(ApiUrl_for(path), { ...init, signal: controller.signal });
+    } catch {
+      return { ok: false, error: controller.signal.aborted ? FoodApi_timeoutError : offlineError };
+    }
+    return await readResponse(response, controller.signal);
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+async function readResponse(response: Response, signal: AbortSignal): Promise<IFoodApiResult<unknown>> {
   let body: unknown;
   try {
     body = await response.json();
   } catch {
-    return { ok: false, error: `The server returned ${response.status}.` };
+    return {
+      ok: false,
+      error: signal.aborted ? FoodApi_timeoutError : `The server returned ${response.status}.`,
+    };
   }
   if (!response.ok) {
     const error = (body as { error?: unknown })?.error;
@@ -54,6 +69,9 @@ export async function FoodApi_lookupBarcode(
   const fromOpenFoodFacts = openFoodFacts.ok ? OpenFoodFacts_parseBarcodeResponse(openFoodFacts.value) : undefined;
   if (fromOpenFoodFacts != null) {
     return { ok: true, value: fromOpenFoodFacts };
+  }
+  if (!openFoodFacts.ok && openFoodFacts.error === FoodApi_timeoutError) {
+    return openFoodFacts;
   }
   const usda = await request(`/api/food/usda${path}`);
   const fromUsda = usda.ok ? UsdaFoodData_parseBarcodeResponse(usda.value, code) : undefined;

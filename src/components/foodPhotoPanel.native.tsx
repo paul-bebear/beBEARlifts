@@ -2,24 +2,34 @@ import { JSX, useEffect, useReducer, useState } from "react";
 import { ActivityIndicator, Image, View } from "react-native";
 import { Text } from "./primitives/text";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
-import { FoodPhoto_empty, FoodPhoto_reduce } from "../models/foodCapture";
+import { FoodPhoto_empty, FoodPhoto_reduce, FoodPhoto_shouldOpenCamera } from "../models/foodCapture";
+import type { IScanResume } from "../models/foodScanSteps";
 import { NativeFoodCapture_meal } from "../utils/nativeFoodCapture.native";
+import { CloudStore } from "../utils/supabaseClient";
+import { FoodAiSignIn } from "./foodAiSignIn";
 import { FoodChoicesReview } from "./foodChoicesReview";
 import { FoodTextInput } from "./foodUi";
 import { Button } from "./button";
 
 interface IProps {
   initialNote?: string;
+  resume?: IScanResume;
   onAdd: (choices: IFoodPhotoChoice[]) => void;
 }
 
 export function FoodPhotoPanel(props: IProps): JSX.Element {
-  const [state, emit] = useReducer(FoodPhoto_reduce, undefined, FoodPhoto_empty);
+  const hasSession = CloudStore.use().session != null;
+  const [state, emit] = useReducer(FoodPhoto_reduce, props.resume, FoodPhoto_empty);
   const [note, setNote] = useState(props.initialNote ?? "");
   useEffect(() => {
-    emit({ type: "start" });
-    NativeFoodCapture_meal("camera", props.initialNote ?? "").then(emit);
-  }, []);
+    if (FoodPhoto_shouldOpenCamera(hasSession, state)) {
+      emit({ type: "start" });
+      NativeFoodCapture_meal("camera", props.initialNote ?? "").then(emit);
+    }
+  }, [hasSession]);
+  if (!hasSession) {
+    return <FoodAiSignIn />;
+  }
   return (
     <View testID="food-photo-panel">
       {state.preview != null && (

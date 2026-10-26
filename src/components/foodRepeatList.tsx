@@ -1,6 +1,6 @@
 import { JSX, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
-import { FoodLog_dayKey, FoodLog_mealNames } from "../models/foodLog";
+import { FoodLog_mealNames } from "../models/foodLog";
 import {
   FoodRepeat_begin,
   FoodRepeat_copy,
@@ -11,19 +11,19 @@ import {
   FoodRepeat_offer,
   FoodRepeat_retry,
   FoodRepeat_selected,
+  FoodRepeat_showDay,
   FoodRepeat_toggle,
 } from "../models/foodRepeat";
 import { FoodLogStore_newId, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Button } from "./button";
 import { Text } from "./primitives/text";
 
-export function FoodRepeatList(props: { onBack: () => void; onCopied: () => void }): JSX.Element {
+export function FoodRepeatList(props: { day: string; onBack: () => void; onCopied: () => void }): JSX.Element {
   const log = useFoodLog();
-  const today = FoodLog_dayKey(new Date());
-  const [state, setState] = useState(() => FoodRepeat_initial(today));
+  const [state, setState] = useState(() => FoodRepeat_initial(props.day));
   const pending = useRef(state);
   const groups = FoodRepeat_groups(log, state.day);
-  const fallback = FoodRepeat_fallback(log, today);
+  const fallback = FoodRepeat_fallback(log, props.day);
   const count = FoodRepeat_selected(log, state).length;
 
   const save = async (): Promise<void> => {
@@ -51,7 +51,7 @@ export function FoodRepeatList(props: { onBack: () => void; onCopied: () => void
           testID="food-repeat-fallback"
           className="py-3"
           onPress={() => {
-            pending.current = { day: fallback, selected: [], isSaving: false };
+            pending.current = FoodRepeat_showDay(pending.current, fallback);
             setState(pending.current);
           }}
         >
