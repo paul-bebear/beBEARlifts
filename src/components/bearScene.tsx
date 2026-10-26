@@ -3,43 +3,83 @@ import { AccessibilityInfo, Animated, Easing, Image, LayoutChangeEvent, Platform
 import { Text } from "./primitives/text";
 import { IBearState } from "../models/bear";
 import { BearArt_gym, BearArt_sprite } from "../models/bearArt";
-import { IBearBoardTile } from "../models/bearBoard";
-import { BearScene_breathing, BearScene_breathingPivot, BearScene_layout } from "../models/bearScene";
+import { IBearBoardLine, IBearBoardTarget } from "../models/bearBoard";
+import {
+  BearScene_boardInkBottom,
+  BearScene_breathing,
+  BearScene_breathingPivot,
+  BearScene_dashboardRect,
+  BearScene_layout,
+} from "../models/bearScene";
 import { BearImage_uri } from "../utils/bearImage";
 
 const maxWidth = 480;
 const markerInk = "#1F3A5F";
+const boardTargets: IBearBoardTarget[] = ["plus", "bear"];
 
 interface IProps {
   state: IBearState;
-  tiles: IBearBoardTile[];
-  onTile: (tile: IBearBoardTile) => void;
+  lines: IBearBoardLine[];
+  onTarget: (target: IBearBoardTarget) => void;
 }
 
-function BoardTile(props: {
-  tile: IBearBoardTile;
-  isWide: boolean;
-  valueSize: number;
+function BoardLine(props: { line: IBearBoardLine; size: number }): JSX.Element {
+  const { line, size } = props;
+  const isTodo = line.target === "plus";
+  return (
+    <View
+      testID={`bear-board-${line.id}`}
+      data-testid={`bear-board-${line.id}`}
+      className="flex-row items-center"
+      style={{ height: size * 1.45 }}
+    >
+      {isTodo && (
+        <View
+          className="items-center justify-center mr-1.5 rounded"
+          style={{ width: size, height: size, borderWidth: 1.5, borderColor: markerInk }}
+        >
+          {line.isDone && (
+            <Text style={{ color: markerInk, fontSize: size * 0.85, lineHeight: size }} className="font-bold">
+              ✓
+            </Text>
+          )}
+        </View>
+      )}
+      <Text
+        numberOfLines={1}
+        className={isTodo ? "font-bold" : undefined}
+        style={{
+          flexShrink: 1,
+          color: markerInk,
+          opacity: isTodo ? 1 : 0.75,
+          fontSize: size,
+          lineHeight: size * 1.2,
+          textDecorationLine: line.isDone ? "line-through" : "none",
+        }}
+      >
+        {line.text}
+      </Text>
+    </View>
+  );
+}
+
+function BoardGroup(props: {
+  target: IBearBoardTarget;
+  lines: IBearBoardLine[];
+  size: number;
   onPress: () => void;
 }): JSX.Element {
   return (
     <Pressable
-      testID={`bear-board-${props.tile.id}`}
-      data-testid={`bear-board-${props.tile.id}`}
+      testID={`bear-board-${props.target}`}
+      data-testid={`bear-board-${props.target}`}
+      accessibilityRole="button"
+      accessibilityLabel={props.lines.map((l) => (l.isDone ? `${l.text}, done` : l.text)).join(". ")}
       onPress={props.onPress}
-      className="justify-center p-1"
-      style={{ width: props.isWide ? "100%" : "50%", height: "50%" }}
     >
-      <Text
-        className="font-bold"
-        numberOfLines={1}
-        style={{ color: markerInk, fontSize: props.valueSize, lineHeight: props.valueSize * 1.2 }}
-      >
-        {props.tile.value}
-      </Text>
-      <Text numberOfLines={1} style={{ color: markerInk, opacity: 0.7, fontSize: Math.max(10, props.valueSize * 0.5) }}>
-        {props.tile.label}
-      </Text>
+      {props.lines.map((line) => (
+        <BoardLine key={line.id} line={line} size={props.size} />
+      ))}
     </Pressable>
   );
 }
@@ -55,6 +95,9 @@ export function BearScene(props: IProps): JSX.Element {
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const onLayout = (e: LayoutChangeEvent): void => setWidth(Math.min(maxWidth, e.nativeEvent.layout.width));
   const pad = layout.board.width * 0.04;
+  const [, boardTop, , boardBottom] = BearScene_dashboardRect;
+  const inkHeight = layout.board.height * ((BearScene_boardInkBottom - boardTop) / (boardBottom - boardTop));
+  const lineSize = Math.max(11, Math.round(inkHeight * 0.085));
 
   useEffect(() => {
     let active = true;
@@ -115,26 +158,6 @@ export function BearScene(props: IProps): JSX.Element {
             style={{ position: "absolute", left: 0, top: 0, width: layout.width, height: layout.height }}
             resizeMode="cover"
           />
-          <View
-            className="flex-row flex-wrap"
-            style={{
-              position: "absolute",
-              left: layout.board.left + pad,
-              top: layout.board.top + pad,
-              width: layout.board.width - 2 * pad,
-              height: layout.board.height - 2 * pad,
-            }}
-          >
-            {props.tiles.map((tile, i) => (
-              <BoardTile
-                key={tile.id}
-                tile={tile}
-                isWide={i === props.tiles.length - 1 && props.tiles.length % 2 === 1}
-                valueSize={Math.round(layout.board.height * 0.12)}
-                onPress={() => props.onTile(tile)}
-              />
-            ))}
-          </View>
           <Animated.Image
             testID="bear-scene-sprite"
             source={{ uri: BearImage_uri(spritePath) }}
@@ -145,6 +168,26 @@ export function BearScene(props: IProps): JSX.Element {
             }}
             resizeMode="contain"
           />
+          <View
+            className="justify-between"
+            style={{
+              position: "absolute",
+              left: layout.board.left + pad,
+              top: layout.board.top + pad,
+              width: layout.board.width - 2 * pad,
+              height: inkHeight - pad,
+            }}
+          >
+            {boardTargets.map((target) => (
+              <BoardGroup
+                key={target}
+                target={target}
+                lines={props.lines.filter((l) => l.target === target)}
+                size={lineSize}
+                onPress={() => props.onTarget(target)}
+              />
+            ))}
+          </View>
         </View>
       )}
     </View>

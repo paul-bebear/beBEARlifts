@@ -1,136 +1,118 @@
 import { IHistoryRecord, IStats, IUnit } from "../types";
-import { IBearCountedWorkout } from "./bearGrowth";
 import { BearText_kg } from "./bearText";
-import { CheckInTrend_build } from "./checkInTrend";
-import { FeatureLayer_isFront, IFeature } from "./featureLayer";
+import { IBearTierProgress } from "./bearTier";
+import {
+  DailyChecklist_build,
+  DailyChecklist_goalTarget,
+  DailyChecklist_weighInDayName,
+  IChecklistItem,
+} from "./dailyChecklist";
 import { FoodLog_dayKey, FoodLog_dayTotals, IFoodLog } from "./foodLog";
-import { INotesLog } from "./notes";
+import { MonthCalendar_workoutDays } from "./monthCalendar";
+import { TodayPill_text } from "./todayPill";
 import { Weight_convertTo } from "./weight";
 
-export type IBearBoardTarget = "streak" | "stats" | "reportsHub" | "journal";
+export type IBearBoardTarget = "plus" | "bear";
 
-export interface IBearBoardTile {
-  id: "week" | "weight" | "food" | "perWorkout" | "energy";
-  value: string;
-  label: string;
+export interface IBearBoardLine {
+  id: "train" | "food" | "weighIn" | "weight" | "level" | "lifted";
+  text: string;
+  isDone: boolean;
   target: IBearBoardTarget;
 }
 
 export interface IBearBoardInput {
   history: readonly IHistoryRecord[];
-  workouts: readonly IBearCountedWorkout[];
   stats: IStats;
-  notes: INotesLog;
   foodLog: IFoodLog;
   units: IUnit;
-  plannedPerWeek: number;
-  weekStart: number;
+  dayName?: string;
+  goalStartedAt?: number;
+  startWeekFromMonday?: boolean;
+  level: IBearTierProgress;
+  countedKg: number;
   now: number;
 }
 
 const dayMs = 86400000;
 const trendDays = 30;
-const energyDays = 7;
 
 function oneDecimal(value: number): string {
   return (Math.round(value * 10) / 10).toFixed(1);
-}
-
-function weekTile(input: IBearBoardInput): IBearBoardTile {
-  const done = input.history.filter(
-    (record) => record.endTime != null && record.endTime >= input.weekStart && record.endTime <= input.now
-  ).length;
-  return { id: "week", value: `${done} of ${input.plannedPerWeek}`, label: "workouts this week", target: "streak" };
-}
-
-function weightTile(input: IBearBoardInput): IBearBoardTile {
-  const entries = (input.stats.weight.weight ?? [])
-    .filter((e) => e.timestamp <= input.now && Number.isFinite(e.value.value) && e.value.value > 0)
-    .sort((a, b) => a.timestamp - b.timestamp);
-  const latest = entries[entries.length - 1];
-  if (latest == null) {
-    return { id: "weight", value: "–", label: "log your weight", target: "stats" };
-  }
-  const inUnits = (e: (typeof entries)[number]): number => Weight_convertTo(e.value, input.units).value;
-  const windowStart = input.now - trendDays * dayMs;
-  const base = [...entries].reverse().find((e) => e.timestamp <= windowStart) ?? entries[0];
-  const value = `${oneDecimal(inUnits(latest))} ${input.units}`;
-  if (base === latest) {
-    return { id: "weight", value, label: "weight", target: "stats" };
-  }
-  const change = inUnits(latest) - inUnits(base);
-  const sign = change > 0 ? "+" : change < 0 ? "−" : "±";
-  return {
-    id: "weight",
-    value,
-    label: `weight · ${sign}${oneDecimal(Math.abs(change))} in ${trendDays} d`,
-    target: "stats",
-  };
-}
-
-function perWorkoutTile(input: IBearBoardInput): IBearBoardTile {
-  const windowStart = input.now - trendDays * dayMs;
-  const recent = input.workouts.filter(
-    (w) =>
-      w.countedKg > 0 && w.record.endTime != null && w.record.endTime >= windowStart && w.record.endTime <= input.now
-  );
-  const value =
-    recent.length === 0 ? "–" : BearText_kg(recent.reduce((sum, w) => sum + w.countedKg, 0) / recent.length);
-  return { id: "perWorkout", value, label: "per workout, 30 d", target: "reportsHub" };
-}
-
-function energyTile(input: IBearBoardInput): IBearBoardTile {
-  const trend = CheckInTrend_build({
-    notes: input.notes,
-    today: FoodLog_dayKey(new Date(input.now)),
-    length: energyDays,
-    workoutDays: new Set(),
-  });
-  const average = trend.lines.find((line) => line.field === "energy")?.average;
-  return average == null
-    ? { id: "energy", value: "–", label: "check in today", target: "journal" }
-    : { id: "energy", value: `${oneDecimal(average)} / 5`, label: "energy, 7 d", target: "journal" };
 }
 
 function formatCount(value: number): string {
   return Math.round(value).toLocaleString("en-US");
 }
 
-function proteinLabel(eaten: number, target: number): string {
-  return `${formatCount(eaten)} of ${formatCount(target)} g protein today`;
+function todo(id: IBearBoardLine["id"], text: string, item: IChecklistItem): IBearBoardLine {
+  return { id, text, isDone: item.isDone, target: "plus" };
 }
 
-function foodTile(input: IBearBoardInput): IBearBoardTile {
-  const { goals } = input.foodLog;
-  const totals = FoodLog_dayTotals(input.foodLog, FoodLog_dayKey(new Date(input.now)));
-  const eaten = formatCount(totals.calories);
-  const hasProteinTarget = goals.protein.max > 0;
-  if (goals.calories.max <= 0) {
-    return hasProteinTarget
-      ? {
-          id: "food",
-          value: `${eaten} kcal`,
-          label: proteinLabel(totals.protein, goals.protein.max),
-          target: "journal",
-        }
-      : { id: "food", value: eaten, label: "kcal today", target: "journal" };
+function trainText(input: IBearBoardInput): string {
+  const pill = TodayPill_text({ dayName: input.dayName, history: [...input.history], now: input.now });
+  return `Train · ${pill.replace(/!$/, "")}`;
+}
+
+function foodText(input: IBearBoardInput, today: string): string {
+  const eaten = formatCount(FoodLog_dayTotals(input.foodLog, today).calories);
+  const target = DailyChecklist_goalTarget(input.foodLog.goals.calories);
+  return target > 0 ? `Eat · ${eaten} of ${formatCount(target)} kcal` : `Eat · ${eaten} kcal`;
+}
+
+function weightLine(input: IBearBoardInput): IBearBoardLine {
+  const entries = (input.stats.weight.weight ?? [])
+    .filter((e) => e.timestamp <= input.now && Number.isFinite(e.value.value) && e.value.value > 0)
+    .sort((a, b) => a.timestamp - b.timestamp);
+  const latest = entries[entries.length - 1];
+  if (latest == null) {
+    return { id: "weight", text: "Weight · not logged yet", isDone: false, target: "bear" };
   }
+  const inUnits = (e: (typeof entries)[number]): number => Weight_convertTo(e.value, input.units).value;
+  const windowStart = input.now - trendDays * dayMs;
+  const base = [...entries].reverse().find((e) => e.timestamp <= windowStart) ?? entries[0];
+  const value = `${oneDecimal(inUnits(latest))} ${input.units}`;
+  if (base === latest) {
+    return { id: "weight", text: value, isDone: false, target: "bear" };
+  }
+  const change = inUnits(latest) - inUnits(base);
+  const sign = change > 0 ? "+" : change < 0 ? "−" : "±";
   return {
-    id: "food",
-    value: `${eaten} / ${formatCount(goals.calories.max)} kcal`,
-    label: hasProteinTarget ? proteinLabel(totals.protein, goals.protein.max) : "kcal today",
-    target: "journal",
+    id: "weight",
+    text: `${value} · ${sign}${oneDecimal(Math.abs(change))} in ${trendDays} d`,
+    isDone: false,
+    target: "bear",
   };
 }
 
-const candidates: { feature: IFeature; build: (input: IBearBoardInput) => IBearBoardTile }[] = [
-  { feature: "workout", build: weekTile },
-  { feature: "weight", build: weightTile },
-  { feature: "food", build: foodTile },
-  { feature: "volume", build: perWorkoutTile },
-  { feature: "checkIn", build: energyTile },
-];
+function levelText(level: IBearTierProgress): string {
+  const head = `Level ${level.tier.level}`;
+  return level.next == null ? `${head} · top level` : `${head} · ${BearText_kg(level.kgToNext)} to ${level.next.name}`;
+}
 
-export function BearBoard_tiles(input: IBearBoardInput): IBearBoardTile[] {
-  return candidates.filter((c) => FeatureLayer_isFront(c.feature)).map((c) => c.build(input));
+export function BearBoard_lines(input: IBearBoardInput): IBearBoardLine[] {
+  const today = FoodLog_dayKey(new Date(input.now));
+  const checklist = DailyChecklist_build({
+    day: today,
+    today,
+    stats: input.stats,
+    foodLog: input.foodLog,
+    units: input.units,
+    workoutDays: MonthCalendar_workoutDays([...input.history]),
+    goalStartedAt: input.goalStartedAt,
+    startWeekFromMonday: input.startWeekFromMonday,
+  });
+  const item = (key: IChecklistItem["key"]): IChecklistItem => checklist.items.find((i) => i.key === key)!;
+  return [
+    todo("train", trainText(input), item("train")),
+    todo("food", foodText(input, today), item("food")),
+    todo(
+      "weighIn",
+      `Weigh-in · ${DailyChecklist_weighInDayName(input.goalStartedAt, input.startWeekFromMonday)}`,
+      item("weight")
+    ),
+    weightLine(input),
+    { id: "level", text: levelText(input.level), isDone: false, target: "bear" },
+    { id: "lifted", text: `Lifted ${BearText_kg(input.countedKg)} since day one`, isDone: false, target: "bear" },
+  ];
 }

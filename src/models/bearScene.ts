@@ -109,6 +109,12 @@ export function BearScene_heightShare(level: number, fraction: number): number {
   return Math.min(last, first + step * index + inLevelGrowth * grown);
 }
 
+export type IBearScenePlace = "home" | "gym";
+
+export function BearScene_place(isOngoingProgress: boolean): IBearScenePlace {
+  return isOngoingProgress ? "gym" : "home";
+}
+
 export function BearScene_breathing(mood: IBearMood): { durationMs: number; scaleY: number } {
   const durations: Record<IBearMood, number> = { normal: 3500, hungry: 3500, tired: 7000, pumped: 2500 };
   return { durationMs: durations[mood], scaleY: 1.015 };

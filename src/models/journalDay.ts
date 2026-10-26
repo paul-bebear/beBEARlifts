@@ -21,6 +21,8 @@ import {
 } from "./notes";
 import { WorkoutPost_build, WorkoutPost_statsLine } from "./workoutPost";
 import { FeatureLayer_isFront, IFeature } from "./featureLayer";
+import { IWeekDot, WeekDots_build } from "./weekDots";
+import { HomeToday_historyLabel } from "./homeToday";
 
 export interface IJournalDayInput {
   day: string;
@@ -221,6 +223,30 @@ function weightOf(weights: IStatsWeightValue[], day: string): IWeight | undefine
     undefined
   );
   return latest?.value;
+}
+
+export interface IJournalHeaderInput {
+  history: { startTime: number }[];
+  food: IFoodLog;
+  now: number;
+  startWeekFromMonday?: boolean;
+}
+
+export interface IJournalHeader {
+  dots: IWeekDot[];
+  historyLabel?: string;
+}
+
+export function JournalDay_header(input: IJournalHeaderInput): IJournalHeader {
+  return {
+    dots: WeekDots_build({
+      history: input.history,
+      foodLog: input.food,
+      now: input.now,
+      startWeekFromMonday: input.startWeekFromMonday,
+    }),
+    historyLabel: HomeToday_historyLabel(input.history.length),
+  };
 }
 
 function mealsChip(count: number): string | undefined {

@@ -96,6 +96,13 @@ export function DailyChecklist_weighInWeekday(
   return startWeekFromMonday ? monday : 0;
 }
 
+export function DailyChecklist_weighInDayName(
+  goalStartedAt: number | undefined,
+  startWeekFromMonday?: boolean
+): string {
+  return weekdayNames[DailyChecklist_weighInWeekday(goalStartedAt, startWeekFromMonday)];
+}
+
 function trainItem(input: IChecklistDayInput): IChecklistItem {
   const isDone = input.workoutDays.has(input.day);
   const subtitle = isDone ? "Workout done" : input.day === input.today ? "Do today's workout" : "No workout";
@@ -126,7 +133,7 @@ function weightItem(input: IChecklistDayInput): IChecklistItem {
   return { key: "weight", title: "Weigh-in", subtitle, isDone };
 }
 
-function goalTarget(range: IFoodRange): number {
+export function DailyChecklist_goalTarget(range: IFoodRange): number {
   return range.min > 0 ? range.min : range.max;
 }
 
@@ -136,8 +143,8 @@ function foodItem(input: IChecklistDayInput): IChecklistItem {
   const totals = FoodLog_dayTotals(foodLog, day);
   const calories = Math.round(totals.calories);
   const protein = Math.round(totals.protein);
-  const calorieTarget = goalTarget(foodLog.goals.calories);
-  const proteinTarget = goalTarget(foodLog.goals.protein);
+  const calorieTarget = DailyChecklist_goalTarget(foodLog.goals.calories);
+  const proteinTarget = DailyChecklist_goalTarget(foodLog.goals.protein);
   if (count > 0 && (calorieTarget > 0 || proteinTarget > 0)) {
     const parts = [
       calorieTarget > 0 ? `${calories.toLocaleString("en-US")} / ${calorieTarget.toLocaleString("en-US")} Cal` : "",
