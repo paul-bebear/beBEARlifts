@@ -49,14 +49,14 @@ export function BearFinishBanner(props: { record: IHistoryRecord }): JSX.Element
       .then(() => setLevelUp(shown))
       .catch(() => undefined);
   }, []);
-  const sprite = BearArt_sprite(state.line, state.level.tier.level, state.mood);
+  const sprite = BearArt_sprite(state.line, state.fur, state.level.tier.level, state.mood);
   return (
     <View className="pb-2" testID="bear-finish" data-testid="bear-finish">
       {levelUp != null ? (
         <LevelUpCard
           levelUp={levelUp}
           tierSet={state.tierSet}
-          sprite={BearArt_sprite(state.line, levelUp.to, "normal")}
+          sprite={BearArt_sprite(state.line, state.fur, levelUp.to, "normal")}
         />
       ) : (
         <View className="items-center pb-2">

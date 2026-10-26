@@ -7,7 +7,7 @@ import { BearImage_uri } from "../utils/bearImage";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 
 export function BearAvatar(props: { state: IBearState; size: number }): JSX.Element {
-  const sprite = BearArt_sprite(props.state.line, props.state.level.tier.level, props.state.mood);
+  const sprite = BearArt_sprite(props.state.line, props.state.fur, props.state.level.tier.level, props.state.mood);
   const crop = BearScene_headCrop(sprite, props.size);
   return (
     <View

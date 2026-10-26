@@ -25,7 +25,7 @@ export function BearTv_box(sceneWidth: number): IBearBox {
 
 // A friend whose posts predate version 2 shows as a cub, the same bear every new account starts with.
 export function BearTv_sprite(bear: IPostBear | undefined): string {
-  return BearArt_sprite(bear?.line ?? "male", bear?.level ?? 1, bear?.mood ?? "normal");
+  return BearArt_sprite(bear?.line ?? "male", bear?.fur ?? "brown", bear?.level ?? 1, bear?.mood ?? "normal");
 }
 
 export function BearTv_screen(input: {

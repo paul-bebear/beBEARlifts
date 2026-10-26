@@ -1,7 +1,7 @@
 import { IHistoryRecord, ISettings, IStats } from "../types";
 import { IFoodLog } from "./foodLog";
 import { BearGrowth_history, IBearCountedWorkout } from "./bearGrowth";
-import { BearStoreData_empty, IBearLine, IBearStoreData } from "./bearStoreData";
+import { BearStoreData_empty, IBearFur, IBearLine, IBearStoreData } from "./bearStoreData";
 import { BearTier_all, BearTier_progress, BearTier_setFor, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { History_getPersonalRecords } from "./history";
 
@@ -19,6 +19,7 @@ export interface IBearSources {
 
 export interface IBearState {
   line: IBearLine;
+  fur: IBearFur;
   tierSet: IBearTierSet;
   level: IBearTierProgress;
   countedKg: number;
@@ -91,6 +92,7 @@ export function Bear_state(sources: IBearSources, now: number): IBearState {
   const line = store.line ?? sources.defaultLine ?? "male";
   return {
     line,
+    fur: store.fur ?? "brown",
     tierSet,
     level,
     countedKg: growth.countedKg,

@@ -20,6 +20,7 @@ const now = new Date(2026, 9, 22, 12).getTime();
 function state(overrides: Partial<IBearState>): IBearState {
   return {
     line: "male",
+    fur: "brown",
     tierSet: "male",
     level: BearTier_progress(0, 0, "male"),
     countedKg: 0,

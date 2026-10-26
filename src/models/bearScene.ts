@@ -17,8 +17,9 @@ export interface IBearSceneLayout {
   board: IBearBox;
 }
 
-// Copied from images/bear/<line>/manifest.json, in the 1024 by 1536 art canvas. test/bearScene.test.ts reads
-// both manifests and fails when the art is regenerated with other anchors.
+// Copied from images/bear/<line>/manifest.json, in the 1024 by 1536 art canvas. The black and polar recolours keep
+// the brown anchors, so the lookup keys by line only. test/bearScene.test.ts reads all six manifests and fails when
+// the art is regenerated with other anchors.
 export const BearScene_canvas = { width: 1024, height: 1536 };
 export const BearScene_spriteFoot = { x: 512, y: 1470 };
 export const BearScene_gymFoot = { x: 512, y: 1490 };
@@ -89,7 +90,10 @@ function round(value: number): number {
 }
 
 export function BearScene_visibleBox(spritePath: string): IBearRect {
-  const key = spritePath.replace(/^\/images\/bear\//, "").replace(/\.webp$/, "");
+  const key = spritePath
+    .replace(/^\/images\/bear\/(male|female)-(black|polar)\//, "$1/")
+    .replace(/^\/images\/bear\//, "")
+    .replace(/\.webp$/, "");
   return visibleBoxes[key] ?? [0, 0, BearScene_canvas.width, BearScene_canvas.height];
 }
 

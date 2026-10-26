@@ -50,7 +50,7 @@ export function BearScene(props: IProps): JSX.Element {
   const scaleY = useRef(new Animated.Value(1)).current;
   const { state } = props;
   const breathing = BearScene_breathing(state.mood);
-  const spritePath = BearArt_sprite(state.line, state.level.tier.level, state.mood);
+  const spritePath = BearArt_sprite(state.line, state.fur, state.level.tier.level, state.mood);
   const layout = BearScene_layout(width, state.level.tier.level, state.level.fraction, spritePath, breathing.scaleY);
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const onLayout = (e: LayoutChangeEvent): void => setWidth(Math.min(maxWidth, e.nativeEvent.layout.width));

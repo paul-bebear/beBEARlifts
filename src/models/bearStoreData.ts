@@ -1,9 +1,11 @@
 export type IBearLine = "male" | "female";
+export type IBearFur = "brown" | "black" | "polar";
 
 // line stays unset until the user picks one, so the onboarding sex answer can fill the default.
 // seeded is set the first time the bear renders, after celebratedLevel is raised to the level reached.
 export interface IBearStoreData {
   line?: IBearLine;
+  fur?: IBearFur;
   celebratedLevel: number;
   seenBadges: string[];
   spent: number;
@@ -22,6 +24,7 @@ export function BearStoreData_parse(raw: unknown): IBearStoreData {
   const r = raw as Record<string, unknown>;
   if (
     (r.line != null && r.line !== "male" && r.line !== "female") ||
+    (r.fur != null && r.fur !== "brown" && r.fur !== "black" && r.fur !== "polar") ||
     typeof r.celebratedLevel !== "number" ||
     !Number.isSafeInteger(r.celebratedLevel) ||
     r.celebratedLevel < 1 ||
@@ -32,6 +35,7 @@ export function BearStoreData_parse(raw: unknown): IBearStoreData {
   }
   return {
     ...(r.line === "male" || r.line === "female" ? { line: r.line } : {}),
+    ...(r.fur === "brown" || r.fur === "black" || r.fur === "polar" ? { fur: r.fur } : {}),
     celebratedLevel: r.celebratedLevel,
     seenBadges: [...r.seenBadges],
     spent: typeof r.spent === "number" && Number.isSafeInteger(r.spent) && r.spent > 0 ? r.spent : 0,

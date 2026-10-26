@@ -38,7 +38,7 @@ const firstPage: IShareCardPage[] = [WorkoutStoryCard_pages[0]];
 export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
-  const line = BearStore.use().line;
+  const { line, fur } = BearStore.use();
   const tierSet = BearTier_setFor(foodLog.profile.sex, line);
   const growth = useMemo(
     () => BearGrowth_history(props.history, props.settings, props.stats),
@@ -69,9 +69,10 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
         achievements,
         tierSet,
         line,
+        fur,
         seed,
       }),
-    [props.record, props.settings, prs, achievements, tierSet, line, seed]
+    [props.record, props.settings, prs, achievements, tierSet, line, fur, seed]
   );
   const frozen = exporter.job.frozen;
   const dataKey = JSON.stringify(data);

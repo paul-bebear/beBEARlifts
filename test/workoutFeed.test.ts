@@ -507,6 +507,15 @@ describe("BearTv", () => {
       label: "victor lifted: Push · 45 min · 1 set · +425 kg, 2 h ago. Open the feed.",
     });
     expect(BearTv_sprite(undefined)).to.equal("/images/bear/male/level-01.webp");
+    expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female" })).to.equal(
+      "/images/bear/female/mood-medium-hungry.webp"
+    );
+    expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female", fur: "black" })).to.equal(
+      "/images/bear/female-black/mood-medium-hungry.webp"
+    );
+    expect(BearTv_sprite({ level: 1, mood: "normal", countedKg: 1, fur: "polar" })).to.equal(
+      "/images/bear/male-polar/level-01.webp"
+    );
   });
 });
 
