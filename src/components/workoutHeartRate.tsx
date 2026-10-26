@@ -12,7 +12,10 @@ export function WorkoutHeartRate(): JSX.Element | null {
 }
 
 function WorkoutHeartRateValue(props: { store: IHeartRateStore }): JSX.Element | null {
-  const bpm = useSyncExternalStore(props.store.subscribe, props.store.getBpm);
+  const bpm = useSyncExternalStore(
+    (onChange) => props.store.subscribe(onChange),
+    () => props.store.getBpm()
+  );
   if (bpm == null) {
     return null;
   }

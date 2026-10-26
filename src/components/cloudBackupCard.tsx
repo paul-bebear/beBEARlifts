@@ -9,7 +9,12 @@ import {
   CloudBackupForm_resendNote,
   CloudBackupForm_resendRemainingMs,
 } from "../models/cloudBackupForm";
-import { AccountDeletion_confirmWord, AccountDeletion_isConfirmed } from "../models/accountDeletion";
+import {
+  AccountDeletion_confirmWord,
+  AccountDeletion_isConfirmed,
+  AccountDeletion_subscriptionNote,
+} from "../models/accountDeletion";
+import { Purchases_manage } from "../utils/purchases";
 import { CloudStore, SentCodeStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
 import { AiCaps_plusLine } from "../models/aiCaps";
@@ -31,6 +36,7 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
   const accountPlan = AccountPlanStore.use();
   const [form, emit] = useReducer(CloudBackupForm_reduce, undefined, CloudBackupForm_empty);
   const plus = AccountPlan_isPlus(accountPlan, cloud.session?.userId);
+  const subscriptionNote = AccountDeletion_subscriptionNote(accountPlan, cloud.session?.userId);
   const busy = form.command != null;
   const [oauth, setOAuth] = useState<{ busy: boolean; error?: string }>({ busy: false });
   const [showEmail, setShowEmail] = useState(false);
@@ -197,6 +203,23 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
               <Text className="text-sm">
                 Your workouts, settings and other data on this phone stay. Export them first if you want a copy.
               </Text>
+              {subscriptionNote != null && (
+                <View style={{ gap: 8 }}>
+                  <Text className="text-sm font-semibold" testID="cloud-delete-subscription-note">
+                    {subscriptionNote}
+                  </Text>
+                  <Button
+                    name="cloud-delete-manage-subscription"
+                    kind="lightpurple"
+                    disabled={busy}
+                    onClick={() => {
+                      Purchases_manage().catch(() => undefined);
+                    }}
+                  >
+                    Manage subscription
+                  </Button>
+                </View>
+              )}
               <Text className="text-sm">Type {AccountDeletion_confirmWord} to confirm.</Text>
               <TextInput
                 accessibilityLabel={`Type ${AccountDeletion_confirmWord} to confirm`}

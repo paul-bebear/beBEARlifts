@@ -84,7 +84,7 @@ function sources(
 
 const now = at(22, 20);
 
-function dayOf(s: IHoneySources, date: number) {
+function dayOf(s: IHoneySources, date: number): ReturnType<typeof BearHoney_day> {
   return BearHoney_day(BearHoney_earned(s, now), dayKey(date));
 }
 

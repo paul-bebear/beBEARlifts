@@ -1,6 +1,11 @@
 import "mocha";
 import { expect } from "chai";
-import { ReportsHub_groups, ReportsHub_rows, ReportsHub_title } from "../src/models/reportsHub";
+import {
+  ReportsHub_actionEffect,
+  ReportsHub_groups,
+  ReportsHub_rows,
+  ReportsHub_title,
+} from "../src/models/reportsHub";
 import { FeatureLayer_of } from "../src/models/featureLayer";
 
 const today = "2026-10-23";
@@ -80,5 +85,20 @@ describe("ReportsHub", () => {
     expect(action("check-ins")).to.deep.equal({ kind: "checkIn" });
     expect(action("runs")).to.deep.equal({ kind: "screen", screen: "runs", tab: undefined });
     expect(action("seasons")).to.deep.equal({ kind: "seasons" });
+  });
+
+  it("turns each row into the effect the screen applies", () => {
+    const rows = ReportsHub_rows({ isOffline: true, hasRunSensors: true, today });
+    const effect = (id: string): unknown => {
+      const row = rows.find((r) => r.id === id);
+      return row == null ? undefined : ReportsHub_actionEffect(row);
+    };
+    expect(effect("friends")).to.deep.equal({ type: "pushScreen", screen: "friends", opts: { tab: "friends" } });
+    expect(effect("badges")).to.deep.equal({ type: "pushScreen", screen: "streak", opts: undefined });
+    expect(effect("add-friend")).to.deep.equal({ type: "modal", name: "addFriendModal" });
+    expect(effect("seasons")).to.deep.equal({ type: "modal", name: "foodGoalsModal" });
+    expect(effect("notes")).to.deep.equal({ type: "noteModal", day: today });
+    expect(effect("honey")).to.deep.equal({ type: "openHoney" });
+    expect(effect("check-ins")).to.deep.equal({ type: "toggleCheckIn" });
   });
 });

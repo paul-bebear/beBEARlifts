@@ -52,6 +52,7 @@ function foodOn(days: string[], calories: number): IFoodLog {
   const log = FoodLog_empty();
   return {
     ...log,
+    goals: { ...log.goals, calories: { min: 2800, max: 3000 } },
     entries: days.map((d, i) => ({
       id: `${i}`,
       day: d,
@@ -126,6 +127,21 @@ describe("ProgressDashboard_build", () => {
     expect(
       ProgressDashboard_build({ history: [], stats: noStats, foodLog: log, settings, now }).nutrition.today
     ).to.deep.equal({ kind: "below", calories: 800 });
+  });
+
+  it("reports no calorie status when the user has set no goals", () => {
+    const log = { ...foodOn(["2026-10-19"], 2000), goals: FoodLog_empty().goals };
+    expect(
+      ProgressDashboard_build({ history: [], stats: noStats, foodLog: log, settings, now }).nutrition.today
+    ).to.deep.equal({ kind: "none" });
+  });
+
+  it("reports no calorie status when only other goals are set", () => {
+    const empty = FoodLog_empty();
+    const log = { ...foodOn(["2026-10-19"], 2000), goals: { ...empty.goals, protein: { min: 120, max: 160 } } };
+    expect(
+      ProgressDashboard_build({ history: [], stats: noStats, foodLog: log, settings, now }).nutrition.today
+    ).to.deep.equal({ kind: "none" });
   });
 
   it("counts workouts and volume in the last 7 days and the week streak", () => {

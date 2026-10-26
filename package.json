@@ -82,7 +82,8 @@
     "build:rn-bundle": "./scripts/build-rn-bundle.sh",
     "sync:updates-url": "npm run ensure:localdomain && TS_NODE_TRANSPILE_ONLY=1 ts-node scripts/syncUpdatesUrl.ts",
     "cdk-deploy": "npm run build:lambda && rm -rf ./dist-lambda/node_modules && cdk deploy --all",
-    "test": "mocha -r ts-node/register --timeout 0 test/*.test.ts test/**/*.test.ts",
+    "pretest": "npm run ensure:localdomain && npm run build:markdown && npm run build:programs && npm run build:exercises",
+    "test": "node scripts/run-tests.mjs",
     "playwright": "playwright test --retries 3",
     "onetest": "TS_NODE_TRANSPILE_ONLY=1 mocha -r ts-node/register --timeout 0",
     "test:render": "jest -c jest.render.config.js --testTimeout=5000",
@@ -94,6 +95,9 @@
     "rd": "IS_DEV=true TS_NODE_TRANSPILE_ONLY=1 npx ts-node ",
     "logs:build:tail:dev": "aws logs tail /aws/codebuild/LiftosaurBuildDev --follow",
     "logs:build:tail": "aws logs tail /aws/codebuild/LiftosaurBuild --follow"
+  },
+  "engines": {
+    "node": "22.x"
   },
   "author": "Anton Astashov",
   "license": "AGPL-3.0",

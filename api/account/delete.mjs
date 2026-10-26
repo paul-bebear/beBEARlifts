@@ -5,6 +5,7 @@ const buckets = [
   { bucket: "backups", label: "cloud backups" },
   { bucket: "meal-photos", label: "meal photos" },
 ];
+const revenueCatOrigin = "https://api.revenuecat.com";
 const listLimit = 1000;
 const timeoutMs = 10000;
 
@@ -27,6 +28,7 @@ export function AccountDelete_objectPaths(userId, listing) {
 
 // Every table that holds user rows references auth.users with on delete cascade, so removing the auth user removes the rest.
 // Storage objects have no such reference, so they go first, and a failure there leaves the account in place for a retry.
+// The RevenueCat customer goes just before the auth user, and without REVENUECAT_SECRET_KEY that step is skipped, as in the sync route.
 export async function POST(request) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceKey) {
@@ -72,6 +74,21 @@ export async function POST(request) {
         if (removed.status !== 200) {
           return json({ error: `Could not delete the ${label} (Supabase returned ${removed.status})` }, 502);
         }
+      }
+    }
+
+    const revenueCatKey = process.env.REVENUECAT_SECRET_KEY;
+    if (revenueCatKey) {
+      const customer = await fetchJson(
+        `${revenueCatOrigin}/v1/subscribers/${encodeURIComponent(userId)}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${revenueCatKey}`, "Content-Type": "application/json" } },
+        timeoutMs
+      );
+      if (customer.status !== 200 && customer.status !== 204 && customer.status !== 404) {
+        return json(
+          { error: `Could not delete the subscription record (RevenueCat returned ${customer.status})` },
+          502
+        );
       }
     }
 

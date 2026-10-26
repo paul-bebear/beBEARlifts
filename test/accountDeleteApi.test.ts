@@ -20,13 +20,20 @@ function reply(body: unknown, status = 200): Response {
 describe("api/account/delete", () => {
   let fetchStub: sinon.SinonStub;
   const savedKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const savedRevenueCatKey = process.env.REVENUECAT_SECRET_KEY;
 
   beforeEach(() => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "sb_secret_test";
+    delete process.env.REVENUECAT_SECRET_KEY;
     fetchStub = sinon.stub(globalThis, "fetch");
   });
   afterEach(() => {
     sinon.restore();
+    if (savedRevenueCatKey == null) {
+      delete process.env.REVENUECAT_SECRET_KEY;
+    } else {
+      process.env.REVENUECAT_SECRET_KEY = savedRevenueCatKey;
+    }
     if (savedKey == null) {
       delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     } else {
@@ -99,6 +106,45 @@ describe("api/account/delete", () => {
     expect(deleteUser.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
     expect(deleteUser.args[1].method).to.equal("DELETE");
     expect(deleteUser.args[1].headers.Authorization).to.equal("Bearer sb_secret_test");
+  });
+
+  it("deletes the RevenueCat customer after the storage and before the auth user", async () => {
+    process.env.REVENUECAT_SECRET_KEY = "sk_rc_test";
+    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(1).resolves(reply([]));
+    fetchStub.onCall(2).resolves(reply([]));
+    fetchStub.onCall(3).resolves(reply({ app_user_id: "u1" }));
+    fetchStub.onCall(4).resolves(reply({}));
+    const response = await POST(post());
+    expect(response.status).to.equal(200);
+    const customer = fetchStub.getCall(3);
+    expect(customer.args[0]).to.equal("https://api.revenuecat.com/v1/subscribers/u1");
+    expect(customer.args[1].method).to.equal("DELETE");
+    expect(customer.args[1].headers.Authorization).to.equal("Bearer sk_rc_test");
+    expect(fetchStub.getCall(4).args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
+  });
+
+  it("treats a RevenueCat 404 as already deleted", async () => {
+    process.env.REVENUECAT_SECRET_KEY = "sk_rc_test";
+    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(1).resolves(reply([]));
+    fetchStub.onCall(2).resolves(reply([]));
+    fetchStub.onCall(3).resolves(reply({ message: "not found" }, 404));
+    fetchStub.onCall(4).resolves(reply({}));
+    expect((await POST(post())).status).to.equal(200);
+    expect(fetchStub.callCount).to.equal(5);
+  });
+
+  it("keeps the account when RevenueCat cannot delete the customer", async () => {
+    process.env.REVENUECAT_SECRET_KEY = "sk_rc_test";
+    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(1).resolves(reply([]));
+    fetchStub.onCall(2).resolves(reply([]));
+    fetchStub.onCall(3).resolves(reply({ message: "boom" }, 500));
+    const response = await POST(post());
+    expect(response.status).to.equal(502);
+    expect((await response.json()).error).to.include("RevenueCat");
+    expect(fetchStub.callCount).to.equal(4);
   });
 
   it("skips the storage delete when the user has no stored files", async () => {

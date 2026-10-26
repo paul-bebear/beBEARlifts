@@ -67,20 +67,26 @@ function parseArgs(argv: string[]): IArgs {
   const args: IArgs = { sims: 1, skipBuild: false, android: false, avd: defaultAvd, firstAccount: 0 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    const value = argv[i + 1];
     if (a === "--sims") {
-      args.sims = parseInt(argv[++i], 10);
+      args.sims = parseInt(value, 10);
+      i += 1;
     } else if (a === "--udids") {
-      args.udids = argv[++i].split(",");
+      args.udids = value.split(",");
+      i += 1;
     } else if (a === "--flows") {
-      args.flows = argv[++i].split(",");
+      args.flows = value.split(",");
+      i += 1;
     } else if (a === "--skip-build") {
       args.skipBuild = true;
     } else if (a === "--android") {
       args.android = true;
     } else if (a === "--avd") {
-      args.avd = argv[++i];
+      args.avd = value;
+      i += 1;
     } else if (a === "--first-account") {
-      args.firstAccount = parseInt(argv[++i], 10);
+      args.firstAccount = parseInt(value, 10);
+      i += 1;
     } else {
       throw new Error(`Unknown argument ${a}`);
     }
@@ -646,7 +652,7 @@ async function main(): Promise<void> {
     const status = state.statusByFlow[flow];
     const count = status === "passed" ? await collect(flow, state.shotsByFlow[flow] ?? [], sizes) : 0;
     if (status === "failed") {
-      failed++;
+      failed += 1;
     }
     console.log(`${status === "passed" ? "PASS" : "FAIL"}  ${flow}  ${count} screenshot(s)`);
   }

@@ -139,3 +139,28 @@ export function ReportsHub_groups(input: IReportsHubInput): IReportsHubGroup[] {
     },
   ];
 }
+
+export type IReportsHubEffect =
+  | { type: "pushScreen"; screen: IReportsHubScreen; opts?: { tab: ITab } }
+  | { type: "modal"; name: "addFriendModal" | "foodGoalsModal" }
+  | { type: "noteModal"; day: string }
+  | { type: "openHoney" }
+  | { type: "toggleCheckIn" };
+
+export function ReportsHub_actionEffect(row: IReportsHubRow): IReportsHubEffect {
+  const action = row.action;
+  switch (action.kind) {
+    case "screen":
+      return { type: "pushScreen", screen: action.screen, opts: action.tab != null ? { tab: action.tab } : undefined };
+    case "addFriend":
+      return { type: "modal", name: "addFriendModal" };
+    case "newNote":
+      return { type: "noteModal", day: action.day };
+    case "seasons":
+      return { type: "modal", name: "foodGoalsModal" };
+    case "honey":
+      return { type: "openHoney" };
+    case "checkIn":
+      return { type: "toggleCheckIn" };
+  }
+}

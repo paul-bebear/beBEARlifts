@@ -2,7 +2,7 @@
 
 ## How to pick
 
-Follow these five questions in order. Keep only matching names from your shortlist at each step. These starting shortlists cover common needs; the entries below cover all 60 programs, including specialized plans.
+Follow these five questions in order. Keep only matching names from your shortlist at each step. These starting shortlists cover common needs; the entries below cover all 63 programs, including specialized plans.
 
 1. **How long have you trained?** Use the frontmatter groups to start with 1 to 3 options.
    - New lifter, under 3 months: Basic Beginner Routine, Fierce 5, r/bodyweightfitness Recommended Routine.
@@ -52,6 +52,15 @@ The level groups follow `age`, even when the prose gives a different experience 
 - Skip if: You need programmed arm or core isolation, or have outgrown its low volume.
 - Main lifts: Bent Over Row, Bench Press, Squat, Chin Up, Overhead Press, Deadlift.
 - Source: [Basic Beginner Routine](../programs/builtin/basicBeginner.md).
+
+### beBEAR 3-Day Full Body
+
+- Schedule and goal: 3 days/week; 45-60 minutes; muscle size.
+- Equipment: Barbell, dumbbells, cable station, leg press, leg curl and a bike. The beBEAR app builds a dumbbell-only, street-workout or no-equipment version.
+- Suits: Lifters in their first months who want full-body days A, B and C with double progression, a short run and a stretch block.
+- Skip if: You want heavy sets of 5 for a big squat number, or need more than one direct arm lift a week.
+- Main lifts: Squat, Bench Press, Bent Over Row, Deadlift, Overhead Press, Lat Pulldown, Leg Press, Hip Thrust.
+- Source: [beBEAR 3-Day Full Body](../programs/builtin/bebear-3day.md).
 
 ### Fierce 5
 
@@ -153,6 +162,15 @@ The level groups follow `age`, even when the prose gives a different experience 
 - Skip if: You want automatic weight progression; you must assess effort and choose loads yourself.
 - Main lifts: Squat, Bench Press variations, Deadlift variations, Overhead Press, Pendlay Row.
 - Source: [Barbell Medicine: The Bridge](../programs/builtin/barbell-medicine-the-bridge.md).
+
+### beBEAR 4-Day Upper/Lower
+
+- Schedule and goal: 4 days/week; 45-60 minutes; muscle size.
+- Equipment: Barbell, dumbbells, cable station, pull-up bar, and leg extension, leg curl and hip abductor machines. The beBEAR app builds a dumbbell-only, street-workout or no-equipment version.
+- Suits: Lifters with 3 to 12 months of training who want upper and lower body twice a week with direct arm work.
+- Skip if: You cannot train four days a week, or you want a strength or peaking goal. Upper days have 7 lifts and can pass an hour in a busy gym.
+- Main lifts: Bench Press, Bent Over Row, Overhead Press, Squat, Deadlift, Pull Up.
+- Source: [beBEAR 4-Day Upper/Lower](../programs/builtin/bebear-4day.md).
 
 ### Bro Split
 
@@ -362,6 +380,15 @@ The level groups follow `age`, even when the prose gives a different experience 
 - Source: [Westside for Skinny Bastards](../programs/builtin/westside-for-skinny-bastards.md).
 
 ## Over a year
+
+### beBEAR 5-Day Upper/Lower/Push/Pull/Lower
+
+- Schedule and goal: 5 days/week; 45-60 minutes; muscle size.
+- Equipment: Barbell, dumbbells, cable station, pull-up bar, and leg extension, leg curl, hip abductor and rear-delt machines. The beBEAR app builds a dumbbell-only, street-workout or no-equipment version.
+- Suits: Lifters with a year or more of training who can train five short days and want double progression with two hard sessions per muscle.
+- Skip if: You cannot train five days a week, since a missed day shifts the whole week, or you want a strength or peaking goal.
+- Main lifts: Squat, Bench Press, Overhead Press, Bent Over Row, Deadlift, Pull Up.
+- Source: [beBEAR 5-Day Upper/Lower/Push/Pull/Lower](../programs/builtin/bebear-ulppl.md).
 
 ### Bullmastiff
 
