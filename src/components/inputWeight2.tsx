@@ -18,6 +18,7 @@ import { IconBarbellSide } from "./icons/iconBarbellSide";
 import { Tailwind_colors } from "../utils/tailwindConfig";
 import { Subscriptions_hasSubscription } from "../utils/subscriptions";
 import { Equipment_getUnitOrDefaultForExerciseType } from "../models/equipment";
+import { PlatesLine_shouldShow } from "../utils/workoutSetPlates";
 
 interface IInputWeight2Props {
   value: IWeight | IPercentage | undefined;
@@ -142,6 +143,7 @@ function InputWeight2Inner(props: IInputWeight2Props): JSX.Element {
   const showPlates =
     props.subscription &&
     props.exerciseType &&
+    PlatesLine_shouldShow(props.exerciseType, props.settings) &&
     Subscriptions_hasSubscription(props.subscription) &&
     evaluatedWeight &&
     Weight_is(evaluatedWeight);

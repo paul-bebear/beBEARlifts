@@ -13,6 +13,7 @@ import {
 } from "../models/weight";
 import { Exercise_onerm, Exercise_defaultRounding } from "../models/exercise";
 import {
+  Equipment_exactWeightStep,
   Equipment_getEquipmentDataForExerciseType,
   Equipment_getEquipmentNameForExerciseType,
   Equipment_getUnitOrDefaultForExerciseType,
@@ -139,6 +140,20 @@ function WeightRoundingEquipmentExplanation(props: IWeightRoundingEquipmentExpla
         )}
         . The app picks the heaviest one that doesn't exceed the target — or the lightest one, if they're all heavier.
         You can edit the list in the equipment settings.
+      </Text>
+    );
+  }
+
+  const exactStep = Equipment_exactWeightStep(settings, exerciseType);
+  if (exactStep != null) {
+    return (
+      <Text className="text-sm">
+        {name} has no bar and plates, so the weight is rounded to the nearest{" "}
+        <Text className="text-sm font-semibold text-syntax-weight">
+          {n(exactStep)}
+          {unit}
+        </Text>
+        . You can change the rounding in the exercise settings.
       </Text>
     );
   }

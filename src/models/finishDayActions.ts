@@ -44,6 +44,14 @@ export function FinishDayActions_saveReport(
   return WorkoutReport_put(log, WorkoutReport_build(record, history, previous, settings));
 }
 
+export type IFinishStoryButton = "photo" | "share";
+
+export function FinishDayActions_storyButtons(
+  input: Pick<IFinishDayActionsInput, "exportAvailable">
+): IFinishStoryButton[] {
+  return input.exportAvailable ? ["photo", "share"] : ["photo"];
+}
+
 export function FinishDayActions_list(input: IFinishDayActionsInput): IFinishDayAction[] {
   const actions: IFinishDayAction[] = [];
   if (input.isOfflineBuild) {

@@ -1,8 +1,8 @@
 import { JSX, useState } from "react";
-import { Image, Platform, Pressable, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { Button } from "./button";
-import { ActionMenu } from "./actionMenu";
+import { PhotoSourceMenu } from "./photoSourceMenu";
 import { useNavOptions } from "../navigation/useNavOptions";
 import {
   ProgressPhotos_add,
@@ -66,34 +66,18 @@ export function ScreenProgressPhotos(): JSX.Element {
       <Text className="mb-3 text-sm text-text-secondary">
         Take one every 2 to 4 weeks, in the same light and pose. Photos stay on this phone and are not in backups.
       </Text>
-      {Platform.OS === "web" ? (
-        <View className="flex-row mb-4">
-          <Button
-            name="progress-photos-add"
-            kind="pill"
-            className="flex-1"
-            disabled={isBusy}
-            onPress={() => add("photo-library")}
-          >
-            {isBusy ? "Saving…" : "Add photo"}
-          </Button>
-        </View>
-      ) : (
-        <ActionMenu
-          title="Add a progress photo"
-          actions={[
-            { label: "Take photo", onPress: () => add("camera"), testID: "progress-photos-camera" },
-            { label: "Choose from library", onPress: () => add("photo-library"), testID: "progress-photos-library" },
-          ]}
-          renderTrigger={(open) => (
-            <View className="flex-row mb-4">
-              <Button name="progress-photos-add" kind="pill" className="flex-1" disabled={isBusy} onPress={open}>
-                {isBusy ? "Saving…" : "Add photo"}
-              </Button>
-            </View>
-          )}
-        />
-      )}
+      <PhotoSourceMenu
+        title="Add a progress photo"
+        testIDPrefix="progress-photos"
+        onPick={add}
+        renderTrigger={(open) => (
+          <View className="flex-row mb-4">
+            <Button name="progress-photos-add" kind="pill" className="flex-1" disabled={isBusy} onPress={open}>
+              {isBusy ? "Saving…" : "Add photo"}
+            </Button>
+          </View>
+        )}
+      />
       {selected == null ? (
         <Text className="text-sm text-text-secondary">No photos yet.</Text>
       ) : (
