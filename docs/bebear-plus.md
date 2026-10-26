@@ -36,6 +36,8 @@ store_entitlements  user_id, active, product_id, expires_at,   store_entitlement
 
 `ai_usage_take` calls `account_plan_effective`. Expiry is checked on every AI call, so a missed expiry webhook stops plus at the expiry date.
 
+`ai_usage_take` also refuses a "report" after 10 reports a day for one user. It refuses any user who holds 50 or more of the day's calls and more than a tenth of the app-wide 600. The API shows both as a 429 with reason `reportDay` or `share`.
+
 `store_entitlement_put` keeps a write only when its `snapshot_at` is newer than the row's. `snapshot_at` is RevenueCat's `request_date_ms`. The webhook and the app's sync can read RevenueCat at almost the same time, and the newer read is kept whatever order they commit in.
 
 Both functions are callable only by `service_role`. Signed-in users can read their own `store_entitlements` row.
@@ -68,7 +70,8 @@ RevenueCat webhook                            renewals, expiries, refunds, trans
 - Lifetime has `expires_date` null.
 - A billing grace period extends `expires_date` to `grace_period_expires_date`.
 - A cancelled subscription stays active until its end date.
-- A sandbox purchase counts only while `BILLING_ALLOW_SANDBOX=1`.
+- A sandbox purchase counts only while `BILLING_ALLOW_SANDBOX=1`. Keep it on, because App Review buys with sandbox money.
+- A sandbox grant always ends 7 days after the RevenueCat read, lifetime included. A free TestFlight purchase never becomes lifetime. Each app start or webhook renews it while the flag is on.
 - An answer it cannot read writes nothing, so a RevenueCat outage never turns a paying user into a free one.
 
 Without `REVENUECAT_SECRET_KEY`, the sync route skips RevenueCat and answers from `account_plan_effective`. The web app shows code grants this way before RevenueCat is set up.

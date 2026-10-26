@@ -97,6 +97,20 @@ export function AiAuth_decide(status, answer, kind, caps) {
   if (status === 401 || status === 403) {
     return { ok: false, status: 401, body: { error: AiAuth_signInMessage } };
   }
+  if (status === 429 && answer?.message === "Daily AI share reached") {
+    return {
+      ok: false,
+      status: 429,
+      body: { error: "You have used your share of today's AI. Try again tomorrow UTC.", reason: "share" },
+    };
+  }
+  if (status === 429 && answer?.message === "Daily AI report limit reached") {
+    return {
+      ok: false,
+      status: 429,
+      body: { error: "You have made 10 AI reports today. More tomorrow.", reason: "reportDay" },
+    };
+  }
   if (status === 429) {
     return {
       ok: false,

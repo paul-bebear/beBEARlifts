@@ -106,6 +106,23 @@ describe("AiAuth", () => {
     });
     expect(AiAuth_decide(403, undefined, "capped", caps)).to.include({ status: 401 });
     expect(AiAuth_decide(429, undefined, "capped", caps).body).to.include({ reason: "global" });
+    expect(
+      AiAuth_decide(429, { code: "PT429", message: "Daily AI allowance reached" }, "capped", caps).body
+    ).to.include({
+      reason: "global",
+    });
+    expect(AiAuth_decide(429, { code: "PT429", message: "Daily AI share reached" }, "capped", caps)).to.deep.equal({
+      ok: false,
+      status: 429,
+      body: { error: "You have used your share of today's AI. Try again tomorrow UTC.", reason: "share" },
+    });
+    expect(
+      AiAuth_decide(429, { code: "PT429", message: "Daily AI report limit reached" }, "report", caps)
+    ).to.deep.equal({
+      ok: false,
+      status: 429,
+      body: { error: "You have made 10 AI reports today. More tomorrow.", reason: "reportDay" },
+    });
     expect(AiAuth_decide(500, undefined, "capped", caps)).to.include({ status: 503 });
     expect(AiAuth_decide(200, 5, "capped", caps)).to.include({ status: 503 });
     expect(AiAuth_decide(200, { plan: "free", day: "2", week: 2 }, "capped", caps)).to.include({ status: 503 });

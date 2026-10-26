@@ -7,6 +7,8 @@ export const Billing_signInMessage = "Sign in with Apple or Google to use beBEAR
 
 const revenueCatOrigin = "https://api.revenuecat.com";
 const timeoutMs = 8000;
+// App Review and TestFlight buy with sandbox money. Each read of RevenueCat renews the grant, but a free test purchase never becomes lifetime.
+const sandboxGrantMs = 7 * 24 * 60 * 60 * 1000;
 const userIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function Billing_isUserId(value) {
@@ -86,7 +88,11 @@ export function Billing_entitlementRow(status, body, options) {
   const activeUntil = lifetime ? null : Math.max(expires, grace ?? expires);
   const sandbox = productId != null && isSandboxPurchase(subscriber, productId);
   const active = (lifetime || activeUntil > snapshot) && (!sandbox || options.allowSandbox);
-  const expiresAt = activeUntil == null ? null : new Date(activeUntil).toISOString();
+  const expiresAt = sandbox
+    ? new Date(snapshot + sandboxGrantMs).toISOString()
+    : activeUntil == null
+      ? null
+      : new Date(activeUntil).toISOString();
   return { ok: true, row: { active, productId, expiresAt, sandbox, snapshotAt } };
 }
 
