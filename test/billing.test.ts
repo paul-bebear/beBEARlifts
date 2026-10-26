@@ -131,6 +131,39 @@ describe("api/_billing", () => {
     expect(rowOf(body, { allowSandbox: true }).active).to.equal(true);
   });
 
+  it("ends a sandbox lifetime purchase 7 days after the snapshot", () => {
+    const body = subscriber(
+      { product_identifier: "bebear_plus_lifetime", expires_date: null },
+      { non_subscriptions: { bebear_plus_lifetime: [{ is_sandbox: true }] } }
+    );
+    expect(rowOf(body, { allowSandbox: true })).to.deep.include({
+      active: true,
+      sandbox: true,
+      expiresAt: "2026-10-31T12:00:00.000Z",
+    });
+    expect(rowOf(body, live)).to.deep.include({ active: false, expiresAt: "2026-10-31T12:00:00.000Z" });
+  });
+
+  it("ends a sandbox subscription 7 days after the snapshot, not at its own end date", () => {
+    const body = subscriber(
+      { product_identifier: "bebear_plus_monthly", expires_date: later },
+      { subscriptions: { bebear_plus_monthly: { is_sandbox: true } } }
+    );
+    expect(rowOf(body, { allowSandbox: true })).to.deep.include({
+      active: true,
+      sandbox: true,
+      expiresAt: "2026-10-31T12:00:00.000Z",
+    });
+  });
+
+  it("keeps a production lifetime purchase with no end date", () => {
+    const body = subscriber(
+      { product_identifier: "bebear_plus_lifetime", expires_date: null },
+      { non_subscriptions: { bebear_plus_lifetime: [{ is_sandbox: false }] } }
+    );
+    expect(rowOf(body, { allowSandbox: true })).to.deep.include({ active: true, sandbox: false, expiresAt: null });
+  });
+
   it("orders snapshots by milliseconds when RevenueCat sends them", () => {
     const first = rowOf({ ...subscriber(), request_date_ms: Date.parse(requestDate) + 100 });
     const second = rowOf({ ...subscriber(), request_date_ms: Date.parse(requestDate) + 900 });

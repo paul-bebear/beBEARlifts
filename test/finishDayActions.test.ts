@@ -4,6 +4,7 @@ import {
   FinishDayActions_hasFriends,
   FinishDayActions_list,
   FinishDayActions_saveReport,
+  FinishDayActions_storyButtons,
   IFinishDayActionsInput,
 } from "../src/models/finishDayActions";
 import { Friends_empty, IFriendsState } from "../src/models/friends";
@@ -29,7 +30,7 @@ const friends: IFriendsState = {
 };
 
 describe("FinishDayActions_list", () => {
-  it("keeps the bear, workout, one Share button and workout details in order", () => {
+  it("keeps the bear, workout, the share card pager and workout details in order", () => {
     expect(FinishDayActions_list(input())).to.eql([
       "cloudBackup",
       "bear",
@@ -89,6 +90,21 @@ describe("FinishDayActions_list", () => {
         }
       }
     }
+  });
+});
+
+describe("FinishDayActions_storyButtons", () => {
+  it("lists Add photo, Share and Music under the card pager", () => {
+    expect(FinishDayActions_storyButtons({ exportAvailable: true, musicEnabled: true })).to.eql([
+      "photo",
+      "share",
+      "music",
+    ]);
+  });
+
+  it("drops Share when export is unavailable and Music when it is off", () => {
+    expect(FinishDayActions_storyButtons({ exportAvailable: false, musicEnabled: true })).to.eql(["photo", "music"]);
+    expect(FinishDayActions_storyButtons({ exportAvailable: true, musicEnabled: false })).to.eql(["photo", "share"]);
   });
 });
 

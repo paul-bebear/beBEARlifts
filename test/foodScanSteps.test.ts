@@ -32,6 +32,12 @@ const plate = FoodAddFlow_photoChoices([
   { name: "Chicken", grams: 100, nutrients: { calories: 165, protein: 31, carbs: 0, fat: 3.6 } },
 ]);
 
+const nutellaCode = nutella.barcode as string;
+const scanNutella: IScanEvent[] = [
+  { type: "barcodeRead", code: nutellaCode },
+  { type: "barcodeFound", code: nutellaCode, pick: nutella },
+];
+
 function run(events: IScanEvent[], from: IScanStep = FoodScanSteps_initial(undefined, true)): IScanStep {
   return events.reduce(FoodScanSteps_reduce, from);
 }
@@ -77,7 +83,7 @@ describe("FoodScanSteps start", () => {
   it("leaves the screen only from the camera", () => {
     expect(FoodScanSteps_canLeave({ kind: "camera", mode: "barcode" })).to.equal(true);
     expect(FoodScanSteps_canLeave({ kind: "browse" })).to.equal(false);
-    expect(FoodScanSteps_canLeave(run([{ type: "barcodeFound", pick: nutella }]))).to.equal(false);
+    expect(FoodScanSteps_canLeave(run(scanNutella))).to.equal(false);
   });
 });
 
@@ -89,7 +95,9 @@ describe("FoodScanSteps camera to serving", () => {
   it("reads a barcode, then shows one item at its serving size", () => {
     const reading = run([{ type: "barcodeRead", code: "3017624010701" }]);
     expect(reading).to.deep.equal({ kind: "reading", code: "3017624010701" });
-    const serving = servingOf(FoodScanSteps_reduce(reading, { type: "barcodeFound", pick: nutella }));
+    const serving = servingOf(
+      FoodScanSteps_reduce(reading, { type: "barcodeFound", code: "3017624010701", pick: nutella })
+    );
     expect(serving.mode).to.equal("barcode");
     expect(serving.items.map((i) => [i.pick.name, i.grams])).to.deep.equal([["Nutella", 15]]);
     expect(FoodScanSteps_description(serving)).to.equal("Nutella");
@@ -101,6 +109,27 @@ describe("FoodScanSteps camera to serving", () => {
       { type: "barcodeMissed", code: "1", error: "Offline" },
     ]);
     expect(step).to.deep.equal({ kind: "notFound", code: "1", error: "Offline" });
+  });
+
+  it("ignores a late answer for a code the screen is no longer reading", () => {
+    const reading222 = run([
+      { type: "barcodeRead", code: "111" },
+      { type: "back" },
+      { type: "barcodeRead", code: "222" },
+    ]);
+    expect(FoodScanSteps_reduce(reading222, { type: "barcodeFound", code: "111", pick: nutella })).to.equal(reading222);
+    expect(FoodScanSteps_reduce(reading222, { type: "barcodeMissed", code: "111" })).to.equal(reading222);
+  });
+
+  it("ignores a barcode answer that arrives after the user went back to the camera", () => {
+    const camera = run([{ type: "barcodeRead", code: "111" }, { type: "back" }]);
+    expect(FoodScanSteps_reduce(camera, { type: "barcodeFound", code: "111", pick: nutella })).to.equal(camera);
+    expect(FoodScanSteps_reduce(camera, { type: "barcodeMissed", code: "111" })).to.equal(camera);
+  });
+
+  it("does not replace a serving the user is editing with a late barcode answer", () => {
+    const serving = run(scanNutella);
+    expect(FoodScanSteps_reduce(serving, { type: "barcodeFound", code: nutellaCode, pick: nutella })).to.equal(serving);
   });
 
   it("turns a reviewed photo into serving items, one per choice", () => {
@@ -122,8 +151,15 @@ describe("FoodScanSteps camera to serving", () => {
     expect(serving.mode).to.equal("describe");
     expect(serving.items.map((i) => i.pick.source)).to.deep.equal(["manual", "manual"]);
     expect(FoodScanSteps_description(serving)).to.equal("Rice, Chicken");
-    const back = run([{ type: "describeReviewed", choices: plate, nonce: 3 }, { type: "back" }]);
-    expect(back).to.deep.equal({ kind: "camera", mode: "describe" });
+    const back = run([
+      { type: "describeReviewed", choices: plate, nonce: 3, text: "rice and chicken" },
+      { type: "back" },
+    ]);
+    expect(back).to.deep.equal({
+      kind: "camera",
+      mode: "describe",
+      resume: { choices: plate, text: "rice and chicken" },
+    });
   });
 
   it("puts a typed quick entry on the serving step without a grams field", () => {
@@ -137,7 +173,8 @@ describe("FoodScanSteps camera to serving", () => {
 
   it("goes back from serving, notFound and reading to the camera in the same mode", () => {
     const afterPhoto = run([{ type: "photoReviewed", choices: plate, nonce: 1 }, { type: "back" }]);
-    expect(afterPhoto).to.deep.equal({ kind: "camera", mode: "ai" });
+    expect(afterPhoto).to.deep.equal({ kind: "camera", mode: "ai", resume: { choices: plate, photo: undefined } });
+    expect(run([...scanNutella, { type: "back" }])).to.deep.equal({ kind: "camera", mode: "barcode" });
     expect(run([{ type: "barcodeMissed", code: "1" }, { type: "back" }])).to.deep.equal({
       kind: "camera",
       mode: "barcode",
@@ -145,6 +182,26 @@ describe("FoodScanSteps camera to serving", () => {
     expect(run([{ type: "barcodeRead", code: "1" }, { type: "back" }])).to.deep.equal({
       kind: "camera",
       mode: "barcode",
+    });
+  });
+
+  it("keeps the scanned items and photo in the camera step when Back leaves Serving size", () => {
+    const back = run([
+      { type: "photoReviewed", choices: plate, nonce: 1, photo: "data:image/jpeg;base64,x" },
+      { type: "back" },
+    ]);
+    expect(back).to.deep.equal({
+      kind: "camera",
+      mode: "ai",
+      resume: { choices: plate, photo: "data:image/jpeg;base64,x" },
+    });
+  });
+
+  it("drops the kept scan when the user picks a mode again", () => {
+    const back = run([{ type: "photoReviewed", choices: plate, nonce: 1 }, { type: "back" }]);
+    expect(FoodScanSteps_reduce(back, { type: "modePicked", mode: "ai" })).to.deep.equal({
+      kind: "camera",
+      mode: "ai",
     });
   });
 
@@ -207,7 +264,7 @@ describe("FoodScanSteps_entries", () => {
 
   it("names a single item by the edited description and keeps its barcode and per-100g values", () => {
     const step = run([
-      { type: "barcodeFound", pick: nutella },
+      ...scanNutella,
       { type: "gramsChanged", key: nutella.barcode as string, grams: 30 },
       { type: "descriptionChanged", text: "Hazelnut spread on toast" },
     ]);
@@ -242,7 +299,7 @@ describe("FoodScanSteps_title", () => {
   it("names each camera mode and the serving step", () => {
     expect(FoodScanSteps_title({ kind: "camera", mode: "ai" })).to.equal("AI Scan");
     expect(FoodScanSteps_title({ kind: "camera", mode: "describe" })).to.equal("Describe");
-    expect(FoodScanSteps_title(run([{ type: "barcodeFound", pick: nutella }]))).to.equal("Serving size");
+    expect(FoodScanSteps_title(run(scanNutella))).to.equal("Serving size");
     expect(FoodScanSteps_title({ kind: "browse" })).to.equal(undefined);
   });
 });

@@ -1,19 +1,20 @@
 import { JSX, useState } from "react";
-import { Image, Platform, Pressable, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { Button } from "./button";
-import { ActionMenu } from "./actionMenu";
+import { PhotoSourceMenu } from "./photoSourceMenu";
 import { useNavOptions } from "../navigation/useNavOptions";
 import {
-  ProgressPhotos_add,
+  ProgressPhotos_base64,
   ProgressPhotos_fullMessage,
   ProgressPhotos_isFull,
-  ProgressPhotos_remove,
-  ProgressPhotos_removeTakenAt,
+  ProgressPhotos_nextId,
+  ProgressPhotos_uri,
 } from "../models/progressPhotos";
 import { ProgressHub_formatDate } from "../models/progressHub";
 import { ProgressPhotoStore } from "../utils/progressPhotoStore";
 import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
+import { ProgressPhotoFiles_delete, ProgressPhotoFiles_dir, ProgressPhotoFiles_put } from "../utils/progressPhotoFiles";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 
 export function ScreenProgressPhotos(): JSX.Element {
@@ -27,11 +28,12 @@ export function ScreenProgressPhotos(): JSX.Element {
 
   const save = async (dataUrl: string): Promise<void> => {
     const takenAt = Date.now();
-    try {
-      await ProgressPhotoStore.update((l) => ProgressPhotos_add(l, dataUrl, takenAt));
+    const id = ProgressPhotos_nextId(ProgressPhotoStore.get(), takenAt);
+    const base64 = ProgressPhotos_base64(dataUrl);
+    const added = base64 != null && (await ProgressPhotoFiles_put(id, takenAt, base64).catch(() => false));
+    if (added) {
       setSelectedId(undefined);
-    } catch (e) {
-      await ProgressPhotoStore.update((l) => ProgressPhotos_removeTakenAt(l, takenAt)).catch(() => undefined);
+    } else {
       Dialog_alert("The photo could not be saved. The phone may be out of space.");
     }
   };
@@ -56,7 +58,7 @@ export function ScreenProgressPhotos(): JSX.Element {
 
   const remove = async (id: number): Promise<void> => {
     if (await Dialog_confirm("Delete this photo?")) {
-      await ProgressPhotoStore.update((l) => ProgressPhotos_remove(l, id));
+      await ProgressPhotoFiles_delete(id);
       setSelectedId(undefined);
     }
   };
@@ -64,42 +66,27 @@ export function ScreenProgressPhotos(): JSX.Element {
   return (
     <View className="px-4 pt-2 pb-8" testID="progress-photos" data-testid="progress-photos">
       <Text className="mb-3 text-sm text-text-secondary">
-        Take one every 2 to 4 weeks, in the same light and pose. Photos stay on this phone and are not in backups.
+        Take one every 2 to 4 weeks, in the same light and pose. When you are signed in, the cloud backup keeps them
+        too.
       </Text>
-      {Platform.OS === "web" ? (
-        <View className="flex-row mb-4">
-          <Button
-            name="progress-photos-add"
-            kind="pill"
-            className="flex-1"
-            disabled={isBusy}
-            onPress={() => add("photo-library")}
-          >
-            {isBusy ? "Saving…" : "Add photo"}
-          </Button>
-        </View>
-      ) : (
-        <ActionMenu
-          title="Add a progress photo"
-          actions={[
-            { label: "Take photo", onPress: () => add("camera"), testID: "progress-photos-camera" },
-            { label: "Choose from library", onPress: () => add("photo-library"), testID: "progress-photos-library" },
-          ]}
-          renderTrigger={(open) => (
-            <View className="flex-row mb-4">
-              <Button name="progress-photos-add" kind="pill" className="flex-1" disabled={isBusy} onPress={open}>
-                {isBusy ? "Saving…" : "Add photo"}
-              </Button>
-            </View>
-          )}
-        />
-      )}
+      <PhotoSourceMenu
+        title="Add a progress photo"
+        testIDPrefix="progress-photos"
+        onPick={add}
+        renderTrigger={(open) => (
+          <View className="flex-row mb-4">
+            <Button name="progress-photos-add" kind="pill" className="flex-1" disabled={isBusy} onPress={open}>
+              {isBusy ? "Saving…" : "Add photo"}
+            </Button>
+          </View>
+        )}
+      />
       {selected == null ? (
         <Text className="text-sm text-text-secondary">No photos yet.</Text>
       ) : (
         <View className="mb-4">
           <Image
-            source={{ uri: selected.dataUrl }}
+            source={{ uri: ProgressPhotos_uri(selected, ProgressPhotoFiles_dir) }}
             style={{ width: "100%", aspectRatio: 3 / 4, borderRadius: 16 }}
             resizeMode="cover"
           />
@@ -124,7 +111,10 @@ export function ScreenProgressPhotos(): JSX.Element {
             onPress={() => setSelectedId(photo.id)}
             style={{ width: "23%", opacity: photo.id === selected?.id ? 1 : 0.75 }}
           >
-            <Image source={{ uri: photo.dataUrl }} style={{ width: "100%", aspectRatio: 3 / 4, borderRadius: 8 }} />
+            <Image
+              source={{ uri: ProgressPhotos_uri(photo, ProgressPhotoFiles_dir) }}
+              style={{ width: "100%", aspectRatio: 3 / 4, borderRadius: 8 }}
+            />
             <Text className="mt-0.5 text-xs text-center text-text-secondary">
               {ProgressHub_formatDate(photo.timestamp, now)}
             </Text>

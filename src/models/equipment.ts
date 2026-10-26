@@ -77,14 +77,31 @@ export function Equipment_getEquipmentIdForExerciseType(
   return exerciseEquipment[currentGym.id];
 }
 
-const exactWeightEquipment = ["dumbbell", "cable"];
+const barEquipment = ["barbell", "ezbar", "trapbar", "smith"];
+const nonBarEquipment = ["dumbbell", "cable", "leverageMachine", "kettlebell", "bodyweight"];
+
+export function Equipment_loadsPlatesOnBar(settings: ISettings, exerciseType?: IExerciseType): boolean {
+  const equipment = Equipment_getEquipmentIdForExerciseType(settings, exerciseType);
+  const equipmentData = Equipment_getEquipmentDataForExerciseType(settings, exerciseType);
+  if (exerciseType == null || equipment == null || equipmentData == null || equipmentData.isFixed) {
+    return false;
+  }
+  if (barEquipment.includes(equipment)) {
+    return true;
+  }
+  if (nonBarEquipment.includes(equipment)) {
+    return false;
+  }
+  const unit = equipmentData.unit ?? settings.units;
+  return equipmentData.bar[unit].value > 0;
+}
 
 export function Equipment_exactWeightStep(settings: ISettings, exerciseType?: IExerciseType): number | undefined {
-  const equipment = Equipment_getEquipmentIdForExerciseType(settings, exerciseType);
-  if (exerciseType == null || equipment == null || !exactWeightEquipment.includes(equipment)) {
+  const equipmentData = Equipment_getEquipmentDataForExerciseType(settings, exerciseType);
+  if (exerciseType == null || equipmentData == null || equipmentData.isFixed) {
     return undefined;
   }
-  if (Equipment_getEquipmentDataForExerciseType(settings, exerciseType)?.isFixed === true) {
+  if (Equipment_loadsPlatesOnBar(settings, exerciseType)) {
     return undefined;
   }
   const rounding = settings.exerciseData[Exercise_toKey(exerciseType)]?.rounding;

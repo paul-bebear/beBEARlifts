@@ -1,5 +1,5 @@
 import { JSX, useState } from "react";
-import { ISetClip, SetClips_savedLabel } from "../models/setClips";
+import { ISetClip, SetClips_keepNote, SetClips_savedLabel } from "../models/setClips";
 import { IconCamera } from "./icons/iconCamera";
 import { Modal } from "./modal";
 
@@ -22,6 +22,7 @@ export function SetClipMark(props: { clip: ISetClip }): JSX.Element {
           <div data-testid="set-clip-details" className="p-2 text-xs">
             {props.clip.thumbnail && <img src={props.clip.thumbnail} width={160} alt="Filmed set thumbnail" />}
             <div>{SetClips_savedLabel(props.clip)}</div>
+            <div className="mt-1 text-text-secondary">{SetClips_keepNote}</div>
           </div>
         </Modal>
       )}

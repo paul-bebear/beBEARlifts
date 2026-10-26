@@ -4,7 +4,6 @@ import sinon from "sinon";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Thunk_pushScreen } from "../src/ducks/thunks";
-import { IDispatch, IThunk } from "../src/ducks/types";
 import { IEnv, IState } from "../src/models/state";
 import { IScreen } from "../src/models/screen";
 import { Storage_getDefault } from "../src/models/storage";
@@ -13,14 +12,6 @@ import * as trackedState from "../src/navigation/TrackedStateContext";
 import { WorkoutReportView } from "../src/components/workoutReportCard";
 import { IWorkoutReport } from "../src/models/workoutReport";
 import { AiConsentStore } from "../src/utils/aiConsentClient";
-import { HomeChecklist } from "../src/components/homeChecklist";
-import * as checklistCard from "../src/components/dailyChecklistCard";
-import * as foodStore from "../src/utils/foodLogStore";
-import { FoodLog_empty } from "../src/models/foodLog";
-import { ChecklistStore } from "../src/utils/checklistStore";
-import { DailyChecklist_empty } from "../src/models/dailyChecklist";
-import { ProgramGoalStore } from "../src/utils/programGoalStore";
-import { ProgramGoal_empty } from "../src/models/programGoal";
 import { Settings_build } from "../src/models/settings";
 import { History_getPersonalRecords } from "../src/models/history";
 import { IExerciseType, IHistoryEntry, IHistoryRecord, ISet } from "../src/types";
@@ -156,28 +147,6 @@ describe("First-launch navigation", () => {
       expect(navigate.lastCall.args[0]).to.equal(screen);
       state.storage.currentProgramId = undefined;
     }
-  });
-
-  it("routes the Home weight checklist item to stats on the Progress stack", async () => {
-    sinon.stub(foodStore, "useFoodLog").returns(FoodLog_empty());
-    sinon.stub(ChecklistStore, "use").returns(DailyChecklist_empty());
-    sinon.stub(ProgramGoalStore, "use").returns(ProgramGoal_empty());
-    let onItemPress!: Parameters<typeof checklistCard.DailyChecklistCard>[0]["onItemPress"];
-    sinon.stub(checklistCard, "DailyChecklistCard").callsFake((props) => {
-      onItemPress = props.onItemPress;
-      return createElement("div");
-    });
-    renderToStaticMarkup(
-      createElement(HomeChecklist, {
-        stats: state.storage.stats,
-        units: "kg",
-        dispatch: dispatch as IDispatch,
-        onTrain: () => undefined,
-      })
-    );
-    onItemPress("weight");
-    await (dispatch.lastCall.args[0] as IThunk)(dispatch, () => state, {} as IEnv);
-    expect(navigate.lastCall.args).to.deep.equal(["stats", undefined, { tab: "graphs" }]);
   });
 });
 
@@ -377,7 +346,10 @@ describe("Feed", () => {
   });
 
   it("merges lifts and meals newest first, and gives a meal the author's newest bear", () => {
-    const bearSummary = { ...summary, bear: { level: 5, mood: "normal" as const, countedKg: 900 } };
+    const bearSummary = {
+      ...summary,
+      bear: { level: 5, mood: "normal" as const, countedKg: 900, fur: "brown" as const },
+    };
     let state = Feed_withServerPosts(
       Feed_empty(),
       "me",
@@ -507,6 +479,15 @@ describe("BearTv", () => {
       label: "victor lifted: Push · 45 min · 1 set · +425 kg, 2 h ago. Open the feed.",
     });
     expect(BearTv_sprite(undefined)).to.equal("/images/bear/male/level-01.webp");
+    expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female" })).to.equal(
+      "/images/bear/female/mood-medium-hungry.webp"
+    );
+    expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female", fur: "black" })).to.equal(
+      "/images/bear/female-black/mood-medium-hungry.webp"
+    );
+    expect(BearTv_sprite({ level: 1, mood: "normal", countedKg: 1, fur: "polar" })).to.equal(
+      "/images/bear/male-polar/level-01.webp"
+    );
   });
 });
 

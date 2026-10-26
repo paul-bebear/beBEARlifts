@@ -1,8 +1,6 @@
 import { JSX, useEffect } from "react";
-import { Image, Pressable, View } from "react-native";
+import { Image, View } from "react-native";
 import { Text } from "./primitives/text";
-import { useTrackedDispatch } from "../navigation/TrackedStateContext";
-import { Thunk_pushScreen } from "../ducks/thunks";
 import { BearScene_headCrop, IBearBox } from "../models/bearScene";
 import { BearTv_screen } from "../models/bearTv";
 import { Feed_items, Feed_needsRefresh } from "../models/feed";
@@ -33,8 +31,7 @@ export function BearHead(props: { sprite: string; size: number }): JSX.Element {
   );
 }
 
-export function BearTv(props: { box: IBearBox }): JSX.Element {
-  const dispatch = useTrackedDispatch();
+export function BearTv(props: { box: IBearBox }): JSX.Element | null {
   const userId = CloudStore.use().session?.userId;
   const friends = Friends_forUser(FriendsStore.use(), userId);
   const feed = FeedStore.use();
@@ -55,23 +52,24 @@ export function BearTv(props: { box: IBearBox }): JSX.Element {
 
   const { width, height } = props.box;
   const font = Math.max(7, Math.round(width * 0.15));
+  if (screen.kind !== "post") {
+    return null;
+  }
   return (
-    <Pressable
+    <View
       testID="bear-tv"
       data-testid="bear-tv"
-      accessibilityRole="button"
-      accessibilityLabel={screen.label}
-      onPress={() => dispatch(Thunk_pushScreen("friends", undefined, { tab: "friends" }))}
+      pointerEvents="none"
       className="items-center justify-center"
-      style={{ width, height, padding: 2, borderRadius: 4, backgroundColor: screenGlass, gap: 2 }}
+      style={{ ...props.box, position: "absolute", padding: 2, borderRadius: 4, backgroundColor: screenGlass, gap: 2 }}
     >
-      {screen.kind === "post" && <BearHead sprite={screen.sprite} size={Math.round(Math.min(width, height) * 0.62)} />}
+      <BearHead sprite={screen.sprite} size={Math.round(Math.min(width, height) * 0.62)} />
       <Text
-        numberOfLines={screen.kind === "post" ? 1 : 3}
+        numberOfLines={1}
         style={{ color: screenInk, fontSize: font, lineHeight: Math.round(font * 1.2), textAlign: "center" }}
       >
         {screen.text}
       </Text>
-    </Pressable>
+    </View>
   );
 }

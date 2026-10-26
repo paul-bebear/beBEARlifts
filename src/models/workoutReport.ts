@@ -39,7 +39,8 @@ interface IExerciseSession {
 
 const windowMs = 28 * 24 * 3600 * 1000;
 const maxPastSessions = 4;
-const maxReports = 200;
+// One year at 4 workouts a week.
+export const WorkoutReport_maxReports = 210;
 
 export const WorkoutReport_answerLabels: Record<IReportAnswer, string> = {
   onPurpose: "On purpose",
@@ -238,7 +239,10 @@ export function WorkoutReport_previous(log: IReportLog, timestamp: number): IWor
 
 export function WorkoutReport_put(log: IReportLog, report: IWorkoutReport): IReportLog {
   const others = log.reports.filter((r) => r.workoutId !== report.workoutId);
-  return { ...log, reports: [report, ...others].sort((a, b) => b.timestamp - a.timestamp).slice(0, maxReports) };
+  return {
+    ...log,
+    reports: [report, ...others].sort((a, b) => b.timestamp - a.timestamp).slice(0, WorkoutReport_maxReports),
+  };
 }
 
 const kinds: IReportItemKind[] = ["heavier", "lighter", "fewerReps", "missed", "tooHard", "tooEasy", "followUp"];

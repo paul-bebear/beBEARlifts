@@ -6,5 +6,7 @@ const BodyScanStore_key = "bebear_bodyscans";
 const store = JsonStore_create(BodyScanStore_key, BodyScans_parse, BodyScans_empty);
 
 export const BodyScanStore_load = store.load;
+export const BodyScanStore_loadStrict = store.loadStrict;
+export const BodyScanStore_replace = store.replace;
 export const BodyScanStore_update = store.update;
 export const useBodyScans = store.use;

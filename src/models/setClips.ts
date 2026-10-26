@@ -20,7 +20,9 @@ export interface ISetClipLog {
   clips: ISetClip[];
 }
 
-const SetClips_maxRecords = 300;
+// Each record carries a thumbnail of up to 30 KB, so 300 records can reach 9 MB. The cap stays and the screen says so.
+export const SetClips_maxRecords = 300;
+export const SetClips_keepNote = `beBEAR keeps the newest ${SetClips_maxRecords} filmed sets. Older clip records are removed. The videos stay in Photos or downloads.`;
 export const SetClips_thumbnailWidth = 160;
 export const SetClips_thumbnailMaxBytes = 30 * 1024;
 

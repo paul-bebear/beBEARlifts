@@ -8,7 +8,7 @@ import { navigateToModal } from "../navigation/navigationService";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { Notes_canEditCheckIn, Notes_checkIn } from "../models/notes";
-import { IReportsHubRow, ReportsHub_groups, ReportsHub_title } from "../models/reportsHub";
+import { IReportsHubRow, ReportsHub_actionEffect, ReportsHub_groups, ReportsHub_title } from "../models/reportsHub";
 import { NotesStore } from "../utils/notesStore";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { RunSensors_isAvailable } from "../utils/runSensors";
@@ -76,24 +76,21 @@ export function ScreenReportsHub(): JSX.Element {
   });
 
   const open = (row: IReportsHubRow): void => {
-    const action = row.action;
-    switch (action.kind) {
-      case "screen":
-        dispatch(Thunk_pushScreen(action.screen, undefined, action.tab != null ? { tab: action.tab } : undefined));
+    const effect = ReportsHub_actionEffect(row);
+    switch (effect.type) {
+      case "pushScreen":
+        dispatch(Thunk_pushScreen(effect.screen, undefined, effect.opts));
         return;
-      case "addFriend":
-        navigateToModal("addFriendModal");
+      case "modal":
+        navigateToModal(effect.name);
         return;
-      case "newNote":
-        navigateToModal("noteEditorModal", { day: action.day });
+      case "noteModal":
+        navigateToModal("noteEditorModal", { day: effect.day });
         return;
-      case "seasons":
-        navigateToModal("foodGoalsModal");
-        return;
-      case "honey":
+      case "openHoney":
         setIsHoneyOpen(true);
         return;
-      case "checkIn":
+      case "toggleCheckIn":
         setIsCheckInOpen(!isCheckInOpen);
         return;
     }

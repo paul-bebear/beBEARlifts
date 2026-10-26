@@ -3,10 +3,10 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BottomTabBarHeightCallbackContext, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { NavigationState } from "@react-navigation/native";
-import { useTrackedDispatch, useTrackedState } from "../TrackedStateContext";
+import { useTrackedState } from "../TrackedStateContext";
 import { Footer2View } from "../../components/footer2";
 import { TabBarLayout_compute } from "../../models/tabBarLayout";
-import type { IScreen, ITab } from "../../models/screen";
+import type { IScreen } from "../../models/screen";
 
 const screensWithoutFooter: string[] = ["subscription", "onerms"];
 
@@ -20,7 +20,6 @@ function getTopScreenOfActiveTab(tabState: BottomTabBarProps["state"]): IScreen 
 }
 
 export function Footer2Wrapper(props: BottomTabBarProps): JSX.Element | null {
-  const dispatch = useTrackedDispatch();
   // The bar reads its colours from Tailwind_semantic, so it repaints only when it subscribes to both switches.
   const settings = useTrackedState().storage.settings;
   // eslint-disable-next-line no-void
@@ -41,10 +40,9 @@ export function Footer2Wrapper(props: BottomTabBarProps): JSX.Element | null {
   if (isHidden) {
     return null;
   }
-  const currentTab = props.state.routes[props.state.index].name as ITab;
   return (
     <View className="absolute bottom-0 left-0 right-0" pointerEvents="box-none">
-      <Footer2View dispatch={dispatch} currentTab={currentTab} layout={layout} />
+      <Footer2View layout={layout} />
     </View>
   );
 }

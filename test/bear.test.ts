@@ -304,4 +304,40 @@ describe("BearStoreData", () => {
     }
     expect(BearStoreData_empty().seenBadges).not.to.equal(BearStoreData_empty().seenBadges);
   });
+
+  it("keeps the honey, the bear and the badges when one other field is broken", () => {
+    const saved = {
+      line: "female" as const,
+      celebratedLevel: 6,
+      seenBadges: ["first", "week"],
+      spent: 40,
+      seeded: true as const,
+      badgesSeeded: true as const,
+    };
+    expect(BearStoreData_parse({ ...saved, celebratedLevel: 2.5 })).to.deep.equal({
+      line: "female",
+      celebratedLevel: 1,
+      seenBadges: ["first", "week"],
+      spent: 40,
+      badgesSeeded: true,
+    });
+    expect(BearStoreData_parse({ ...saved, seenBadges: "first" })).to.deep.equal({
+      line: "female",
+      celebratedLevel: 6,
+      seenBadges: [],
+      spent: 40,
+      seeded: true,
+    });
+    expect(BearStoreData_parse({ ...saved, line: "panda", spent: -3 })).to.deep.equal({
+      celebratedLevel: 6,
+      seenBadges: ["first", "week"],
+      spent: 0,
+      seeded: true,
+      badgesSeeded: true,
+    });
+    expect(BearStoreData_parse({ ...saved, seenBadges: ["first", 2, "week"] }).seenBadges).to.deep.equal([
+      "first",
+      "week",
+    ]);
+  });
 });

@@ -15,16 +15,20 @@ import {
   BearScene_layout,
   BearScene_maxHeightShare,
   BearScene_minHeightShare,
+  BearScene_place,
   BearScene_spriteFoot,
   BearScene_visibleBox,
   IBearSceneLayout,
 } from "../src/models/bearScene";
 import { BearArt_sprite } from "../src/models/bearArt";
 import { BearTv_rect } from "../src/models/bearTv";
+import { BearHouse_floor } from "../src/models/bearHouse";
 import { IBearMood } from "../src/models/bear";
-import { IBearLine } from "../src/models/bearStoreData";
+import { IBearFur, IBearLine } from "../src/models/bearStoreData";
 
 const lines: IBearLine[] = ["male", "female"];
+const furs: IBearFur[] = ["brown", "black", "polar"];
+const folders = lines.flatMap((line) => furs.map((fur) => (fur === "brown" ? line : `${line}-${fur}`)));
 const moods: IBearMood[] = ["normal", "hungry", "tired", "pumped"];
 const iPhoneSeWidth = 343;
 
@@ -41,7 +45,7 @@ function placed(
   left: number;
   right: number;
 } {
-  const sprite = BearArt_sprite(line, level, mood);
+  const sprite = BearArt_sprite(line, "brown", level, mood);
   const layout = BearScene_layout(width, level, fraction, sprite);
   const [x1, y1, x2, y2] = BearScene_visibleBox(sprite);
   const scaleX = layout.sprite.width / BearScene_canvas.width;
@@ -87,7 +91,7 @@ describe("BearScene", () => {
     for (const line of lines) {
       for (let level = 1; level <= 12; level += 1) {
         for (const mood of moods) {
-          const spritePath = BearArt_sprite(line, level, mood);
+          const spritePath = BearArt_sprite(line, "brown", level, mood);
           const breathing = BearScene_breathing(mood);
           const layout = BearScene_layout(390, level, 1, spritePath, breathing.scaleY);
           const [, , , bottom] = BearScene_visibleBox(spritePath);
@@ -109,7 +113,7 @@ describe("BearScene", () => {
       for (let level = 1; level <= 12; level += 1) {
         for (const mood of moods) {
           for (const width of [iPhoneSeWidth, 390, 480]) {
-            const spritePath = BearArt_sprite(line, level, mood);
+            const spritePath = BearArt_sprite(line, "brown", level, mood);
             const breathing = BearScene_breathing(mood);
             const layout = BearScene_layout(width, level, 1, spritePath, breathing.scaleY);
             const [, top, , bottom] = BearScene_visibleBox(spritePath);
@@ -134,8 +138,8 @@ describe("BearScene", () => {
     expect(m.dashboard_safe_rect).to.deep.equal(BearScene_dashboardRect);
   });
 
-  it("matches the visible boxes in both manifests", () => {
-    for (const line of ["male", "female"]) {
+  it("matches the visible boxes in all six manifests", () => {
+    for (const line of folders) {
       const assets = manifest(line).assets;
       const list = Array.isArray(assets)
         ? assets.map((a) => [a.name!, a] as const)
@@ -149,10 +153,35 @@ describe("BearScene", () => {
   });
 
   it("has a box for every sprite path the app asks for", () => {
-    for (const line of ["male", "female"] as const) {
-      for (let level = 1; level <= 12; level += 1) {
-        for (const mood of ["normal", "hungry", "tired", "pumped"] as const) {
-          expect(BearScene_visibleBox(BearArt_sprite(line, level, mood))[2]).to.be.lessThan(1024);
+    for (const line of lines) {
+      for (const fur of furs) {
+        for (let level = 1; level <= 12; level += 1) {
+          for (const mood of ["normal", "hungry", "tired", "pumped"] as const) {
+            expect(BearScene_visibleBox(BearArt_sprite(line, fur, level, mood))[2]).to.be.lessThan(1024);
+          }
+        }
+      }
+    }
+  });
+
+  it("gives a black or polar sprite the box of the brown one", () => {
+    for (const line of lines) {
+      for (const fur of ["black", "polar"] as const) {
+        expect(BearScene_visibleBox(BearArt_sprite(line, fur, 7, "hungry"))).to.deep.equal(
+          BearScene_visibleBox(BearArt_sprite(line, "brown", 7, "hungry"))
+        );
+      }
+    }
+  });
+
+  it("keeps every anchor of the brown manifest in the black and polar manifests", () => {
+    const anchors = ["canvas", "bear_foot_anchor", "scene_placement", "dashboard_safe_rect", "tv_safe_rect"];
+    for (const line of lines) {
+      const brown = manifest(line);
+      for (const fur of ["black", "polar"] as const) {
+        const recolour = manifest(`${line}-${fur}`);
+        for (const key of anchors) {
+          expect(recolour[key], `${line}-${fur} ${key}`).to.deep.equal(brown[key]);
         }
       }
     }
@@ -249,8 +278,8 @@ describe("BearScene", () => {
   it("uses the tired sprite's own bounds, so its lower head still lands on the same foot line", () => {
     const tired = placed(390, 3, 0, "male", "tired");
     const normal = placed(390, 3, 0, "male", "normal");
-    expect(BearScene_visibleBox(BearArt_sprite("male", 3, "tired"))).to.not.deep.equal(
-      BearScene_visibleBox(BearArt_sprite("male", 3, "normal"))
+    expect(BearScene_visibleBox(BearArt_sprite("male", "brown", 3, "tired"))).to.not.deep.equal(
+      BearScene_visibleBox(BearArt_sprite("male", "brown", 3, "normal"))
     );
     expect(tired.bottom).to.be.closeTo(normal.bottom, 0.2);
     expect(tired.layout.sprite.width).to.not.equal(normal.layout.sprite.width);
@@ -275,5 +304,25 @@ describe("BearScene", () => {
     expect(crop.width).to.be.closeTo((1024 * 56) / side, 0.1);
     expect(crop.top).to.be.lessThan(0);
     expect(-crop.left + 28).to.be.closeTo(((261 + 763) / 2) * (56 / side), 0.2);
+  });
+});
+
+describe("BearScene_place", () => {
+  it("puts the bear in the gym while a workout runs and at home the rest of the time", () => {
+    expect(BearScene_place(true)).to.equal("gym");
+    expect(BearScene_place(false)).to.equal("home");
+  });
+
+  it("stands the bear on the house floor below the board at every level", () => {
+    const unit = 390 / BearScene_canvas.width;
+    for (const level of [1, 6, 12]) {
+      const sprite = BearArt_sprite("male", "brown", level, "normal");
+      const layout = BearScene_layout(390, level, 1, sprite, 1.015, BearHouse_floor);
+      const [, y1, , y2] = BearScene_visibleBox(sprite);
+      const scale = layout.sprite.height / BearScene_canvas.height;
+      expect(layout.sprite.top + y2 * scale).to.be.closeTo(BearHouse_floor.foot.y * unit, 0.2);
+      expect(layout.sprite.top + y1 * scale).to.be.at.least(BearScene_boardInkBottom * unit - 0.2);
+    }
+    expect(BearScene_heightShare(1, 0, BearHouse_floor)).to.equal(0.26);
   });
 });

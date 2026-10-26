@@ -1,6 +1,6 @@
 import { IHistoryRecord, ISettings, ISet, IUnit, IWeight } from "../types";
 import { IBearMood, IBearState } from "./bear";
-import { IBearLine } from "./bearStoreData";
+import { IBearFur, IBearLine } from "./bearStoreData";
 import { BearTier_byLevel } from "./bearTier";
 import { Exercise_get, Exercise_toKey } from "./exercise";
 import {
@@ -25,10 +25,11 @@ export interface IPostBear {
   mood: IBearMood;
   countedKg: number;
   line?: IBearLine;
+  fur?: IBearFur;
 }
 
 export interface IWorkoutPostSummary {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   programName?: string;
   dayName: string;
   startedAt: number;
@@ -78,7 +79,13 @@ function prsOf(record: IHistoryRecord, prs: IPersonalRecords, settings: ISetting
 
 function postBear(record: IHistoryRecord, bear: IBearState): IPostBear {
   const counted = bear.workouts.find((w) => w.record.id === record.id)?.countedKg ?? 0;
-  return { level: bear.level.tier.level, mood: bear.mood, countedKg: Math.round(counted), line: bear.line };
+  return {
+    level: bear.level.tier.level,
+    mood: bear.mood,
+    countedKg: Math.round(counted),
+    line: bear.line,
+    fur: bear.fur,
+  };
 }
 
 export function WorkoutPost_build(
@@ -96,7 +103,7 @@ export function WorkoutPost_build(
     }
   }
   return {
-    version: 2,
+    version: 3,
     programName: record.programName || undefined,
     dayName: record.dayName,
     startedAt: record.startTime,
@@ -198,7 +205,7 @@ function songTitles(raw: unknown): string[] {
   return result;
 }
 
-function parseBear(raw: unknown): IPostBear | undefined {
+function parseBear(raw: unknown, version: 2 | 3): IPostBear | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const level = num(r.level);
   const countedKg = num(r.countedKg);
@@ -207,7 +214,8 @@ function parseBear(raw: unknown): IPostBear | undefined {
     return undefined;
   }
   const line = r.line === "male" || r.line === "female" ? r.line : undefined;
-  return { level, mood, countedKg: Math.max(0, Math.round(countedKg)), ...(line != null ? { line } : {}) };
+  const fur = version === 3 && (r.fur === "black" || r.fur === "polar") ? r.fur : "brown";
+  return { level, mood, countedKg: Math.max(0, Math.round(countedKg)), ...(line != null ? { line } : {}), fur };
 }
 
 function parseWeight(raw: unknown): IWeight | undefined {
@@ -239,9 +247,9 @@ export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined
   if (dayName == null || startedAt == null || volume == null) {
     return undefined;
   }
-  const isVersion2 = r.version === 2;
+  const version = r.version === 2 || r.version === 3 ? r.version : 1;
   return {
-    version: isVersion2 ? 2 : 1,
+    version,
     programName: text(r.programName),
     dayName,
     startedAt,
@@ -251,7 +259,7 @@ export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined
     topSets: postSets(r.topSets),
     prs: postSets(r.prs),
     keptSongs: num(r.keptSongs),
-    bear: isVersion2 ? parseBear(r.bear) : undefined,
-    songs: isVersion2 ? songTitles(r.songs) : [],
+    bear: version !== 1 ? parseBear(r.bear, version) : undefined,
+    songs: version !== 1 ? songTitles(r.songs) : [],
   };
 }

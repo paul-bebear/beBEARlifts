@@ -10,6 +10,7 @@ import {
   IJournalDayInput,
   JournalDay_build,
   JournalDay_emptyRow,
+  JournalDay_header,
   JournalDay_hints,
   JournalDay_sectionFold,
   JournalDay_sectionSummary,
@@ -330,5 +331,43 @@ describe("JournalDay", () => {
     const day = JournalDay_build(input({ notes }));
     expect(day.checkIn?.energy).to.equal(3);
     expect(day.notes.map((n) => n.title)).to.eql(["Night", "Morning"]);
+  });
+});
+
+describe("JournalDay_header", () => {
+  const now = at(today, 12);
+
+  it("fills a week dot for each day with a workout or a meal and marks today", () => {
+    const header = JournalDay_header({
+      history: [workout(at("2026-10-19", 8), "Upper", [set(100, 5)])],
+      food: { ...FoodLog_empty(), entries: [food("a", "2026-10-21", 500, 20)] },
+      now,
+      startWeekFromMonday: true,
+    });
+    expect(header.dots.map((d) => d.day)).to.eql([
+      "2026-10-19",
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24",
+      "2026-10-25",
+    ]);
+    expect(header.dots.map((d) => d.filled)).to.eql([true, false, true, false, false, false, false]);
+    expect(header.dots.filter((d) => d.isToday).map((d) => d.day)).to.eql([today]);
+  });
+
+  it("starts the week on Sunday unless the user picked Monday", () => {
+    const header = JournalDay_header({ history: [], food: FoodLog_empty(), now });
+    expect(header.dots[0].day).to.equal("2026-10-18");
+  });
+
+  it("shows the History link with the workout count, and hides it before the first workout", () => {
+    const history = [
+      workout(at("2026-10-19", 8), "Upper", [set(100, 5)]),
+      workout(at("2026-10-21", 8), "Lower", [set(120, 5)]),
+    ];
+    expect(JournalDay_header({ history, food: FoodLog_empty(), now }).historyLabel).to.equal("History · 2 workouts");
+    expect(JournalDay_header({ history: [], food: FoodLog_empty(), now }).historyLabel).to.equal(undefined);
   });
 });

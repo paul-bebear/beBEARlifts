@@ -12,6 +12,9 @@ import { localdomain, localapidomain, localport, localapiport } from "./localdom
 import { ForkServices_hosts, ForkServices_plan } from "./utils/forkServices";
 import { ProgramsHost_fork } from "./utils/programsHost";
 import { OfflineOnly_isEnabled } from "./utils/offlineOnly";
+import { Thunk_cloudCatchUp } from "./ducks/cloudBackupThunks";
+import { StoreRecoveryWiring_start } from "./utils/storeRecoveryWiring";
+import { ProgressPhotoFiles_migrate } from "./utils/progressPhotoFiles";
 import { PlanFollowsSignIn_start } from "./utils/planFollowsSignIn";
 
 declare let Rollbar: RB;
@@ -327,6 +330,18 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
     return ScreenRemovalCleanup_subscribe(dispatch);
   }, []);
 
+  useEffect(() => {
+    const stopRecovery = StoreRecoveryWiring_start(dispatch);
+    ProgressPhotoFiles_migrate()
+      .catch(() => undefined)
+      .then(() => {
+        if (OfflineOnly_isEnabled()) {
+          dispatch(Thunk_cloudCatchUp());
+        }
+      });
+    return stopRecovery;
+  }, [dispatch]);
+
   const {
     workoutId: heartRateWorkoutId,
     status: heartRateWorkoutStatus,
@@ -503,6 +518,9 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
           env.push?.setIdentity(PushRegistration_identityOf(stateRef.current));
         }
         dispatch(Thunk_syncHealthKit());
+        if (OfflineOnly_isEnabled()) {
+          dispatch(Thunk_cloudCatchUp());
+        }
         // JS is suspended while backgrounded, so a set timer can overrun its target unprocessed. On wake,
         // catch the model up (auto-complete the timed set, backdating the rest it starts), then re-push the
         // live activity — it can't advance itself while suspended, so this is its source of truth.

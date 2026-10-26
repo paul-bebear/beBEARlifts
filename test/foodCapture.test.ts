@@ -1,6 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
+import type { IFoodPhotoChoice } from "../src/models/foodAddFlow";
 import {
   FoodCapture_options,
   FoodCapture_photo,
@@ -8,6 +9,7 @@ import {
   FoodLabel_reduce,
   FoodPhoto_empty,
   FoodPhoto_reduce,
+  FoodPhoto_shouldOpenCamera,
 } from "../src/models/foodCapture";
 import { FoodCapture_meal, FoodCapture_label, IFoodCaptureDependencies } from "../src/utils/foodCaptureRequest";
 import { NutritionLabel_toProduct } from "../src/models/nutritionLabel";
@@ -145,5 +147,22 @@ describe("Native food capture", () => {
       result: { ok: false, error: "offline" },
     });
     expect(failed).to.deep.equal({ busy: false, preview: "new", error: "offline" });
+  });
+});
+
+describe("FoodPhoto resume", () => {
+  const choices = [{ name: "Rice", grams: 150, nutrients, isSelected: true }] as unknown as IFoodPhotoChoice[];
+
+  it("starts from the kept estimate and photo", () => {
+    expect(FoodPhoto_empty({ choices, photo: "data:x" })).to.deep.equal({ busy: false, choices, preview: "data:x" });
+    expect(FoodPhoto_empty({ choices })).to.deep.equal({ busy: false, choices });
+    expect(FoodPhoto_empty()).to.deep.equal({ busy: false });
+  });
+
+  it("opens the camera only for a signed-in user with no kept estimate", () => {
+    expect(FoodPhoto_shouldOpenCamera(true, FoodPhoto_empty())).to.equal(true);
+    expect(FoodPhoto_shouldOpenCamera(true, FoodPhoto_empty({ choices }))).to.equal(false);
+    expect(FoodPhoto_shouldOpenCamera(false, FoodPhoto_empty())).to.equal(false);
+    expect(FoodPhoto_shouldOpenCamera(true, { busy: true })).to.equal(false);
   });
 });

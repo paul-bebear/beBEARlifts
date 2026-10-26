@@ -6,5 +6,7 @@ const WarmupStore_key = "bebear_warmups";
 const store = JsonStore_create(WarmupStore_key, WarmupPlan_parseLog, WarmupPlan_empty);
 
 export const WarmupStore_load = store.load;
+export const WarmupStore_loadStrict = store.loadStrict;
+export const WarmupStore_replace = store.replace;
 export const WarmupStore_update = store.update;
 export const useWarmupLog = store.use;

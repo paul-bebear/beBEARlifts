@@ -2,6 +2,7 @@ import { JSX, useReducer } from "react";
 import { View, ActivityIndicator, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
+import type { IScanResume } from "../models/foodScanSteps";
 import {
   FoodDescribeEstimate_canSend,
   FoodDescribeEstimate_hasChoices,
@@ -18,14 +19,15 @@ import { IconCamera } from "./icons/iconCamera";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
 interface IProps {
-  onAdd: (choices: IFoodPhotoChoice[]) => void;
+  resume?: IScanResume;
+  onAdd: (choices: IFoodPhotoChoice[], text: string) => void;
   onCamera: () => void;
   onPhoto: () => void;
 }
 
 export function FoodDescribePanel(props: IProps): JSX.Element {
   const session = CloudStore.use().session;
-  const [state, dispatch] = useReducer(FoodDescribeEstimate_reduce, undefined, FoodDescribeEstimate_initial);
+  const [state, dispatch] = useReducer(FoodDescribeEstimate_reduce, props.resume, FoodDescribeEstimate_initial);
   const canSend = FoodDescribeEstimate_canSend(state);
 
   const send = async (): Promise<void> => {
@@ -88,7 +90,7 @@ export function FoodDescribePanel(props: IProps): JSX.Element {
             choices={state.choices as IFoodPhotoChoice[]}
             onChange={(choices) => dispatch({ type: "choicesChanged", choices })}
             onAdd={(choices) => {
-              props.onAdd(choices);
+              props.onAdd(choices, state.text);
               dispatch({ type: "added" });
             }}
           />

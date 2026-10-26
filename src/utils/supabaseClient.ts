@@ -1,4 +1,5 @@
 import {
+  CloudBackup_afterSignIn,
   CloudBackup_empty,
   CloudBackup_needsRefresh,
   CloudBackup_parse,
@@ -67,9 +68,7 @@ export async function SupabaseClient_saveSession(response: Response): Promise<IC
   if (session == null) {
     return { ok: false, error: "The server sent an answer the app could not read." };
   }
-  await CloudStore.update((state) =>
-    state.session?.userId === session.userId ? { ...state, session } : { ...CloudBackup_empty(), session }
-  );
+  await CloudStore.update((state) => CloudBackup_afterSignIn(state, session));
   return { ok: true, value: session };
 }
 

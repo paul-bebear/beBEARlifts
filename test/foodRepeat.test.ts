@@ -11,6 +11,7 @@ import {
   FoodRepeat_offer,
   FoodRepeat_retry,
   FoodRepeat_selected,
+  FoodRepeat_showDay,
   FoodRepeat_toggle,
 } from "../src/models/foodRepeat";
 
@@ -34,8 +35,25 @@ describe("FoodRepeat", () => {
   const initial = FoodRepeat_initial(today);
 
   it("opens yesterday with nothing selected", () => {
-    expect(initial).to.deep.equal({ day: "2026-10-21", selected: [], isSaving: false });
+    expect(initial).to.deep.equal({ day: "2026-10-21", into: today, selected: [], isSaving: false });
     expect(FoodRepeat_initial("2027-01-01").day).to.equal("2026-12-31");
+  });
+
+  it("copies into the day the Journal shows, not the real today", () => {
+    const journalDay = "2026-10-20";
+    const state = { ...FoodRepeat_initial(journalDay), selected: ["a"] };
+    expect(state.day).to.equal("2026-10-19");
+    const log = { ...FoodLog_empty(), entries: [entry("a", { day: "2026-10-19" })] };
+    const result = FoodRepeat_copy(log, state, now, () => "new");
+    expect(result.entries.map((e) => [e.id, e.day])).to.deep.equal([
+      ["a", "2026-10-19"],
+      ["new", journalDay],
+    ]);
+  });
+
+  it("keeps the destination day when the fallback day is shown", () => {
+    const shown = FoodRepeat_showDay({ ...initial, selected: ["a"] }, "2026-10-18");
+    expect(shown).to.deep.equal({ day: "2026-10-18", into: today, selected: [], isSaving: false });
   });
 
   it("groups only the source day's entries in meal order", () => {

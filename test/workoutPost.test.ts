@@ -54,6 +54,7 @@ const workout = record(t0, [set(100, 5), set(100, 5), set(100, 5)]);
 function bear(countedKg: number): IBearState {
   return {
     line: "female",
+    fur: "polar",
     tierSet: "female",
     level: BearTier_progress(0, 70000, "female"),
     countedKg: 70000,
@@ -64,7 +65,7 @@ function bear(countedKg: number): IBearState {
   };
 }
 
-describe("WorkoutPost version 2", () => {
+describe("WorkoutPost version 3", () => {
   const settings = { ...Settings_build(), units: "kg" as const };
 
   it("adds the bear and up to three kept song titles", () => {
@@ -78,8 +79,8 @@ describe("WorkoutPost version 2", () => {
         bear: bear(1499.6),
       }
     );
-    expect(summary.version).to.equal(2);
-    expect(summary.bear).to.deep.equal({ level: 4, mood: "pumped", countedKg: 1500, line: "female" });
+    expect(summary.version).to.equal(3);
+    expect(summary.bear).to.deep.equal({ level: 4, mood: "pumped", countedKg: 1500, line: "female", fur: "polar" });
     expect(summary.songs).to.deep.equal(["One", "Two", "Three"]);
     expect(WorkoutPost_parse(JSON.parse(JSON.stringify(summary)))).to.deep.equal(summary);
   });
@@ -111,14 +112,30 @@ describe("WorkoutPost version 2", () => {
     expect(WorkoutPost_parse({ ...base, bear: { level: 2, mood: "angry", countedKg: 1 } })?.bear).to.equal(undefined);
     expect(
       WorkoutPost_parse({ ...base, bear: { level: 2, mood: "tired", countedKg: -5, line: "x" } })?.bear
-    ).to.deep.equal({ level: 2, mood: "tired", countedKg: 0 });
+    ).to.deep.equal({ level: 2, mood: "tired", countedKg: 0, fur: "brown" });
     expect(WorkoutPost_parse({ ...base, songs: [1, "", "Song", "x".repeat(300)] })?.songs).to.deep.equal([
       "Song",
       "x".repeat(80),
     ]);
     expect(
       WorkoutPost_parse({ ...base, bear: { level: 2, mood: "tired", countedKg: 1, equipped: ["hat"] } })?.bear
-    ).to.deep.equal({ level: 2, mood: "tired", countedKg: 1 });
+    ).to.deep.equal({ level: 2, mood: "tired", countedKg: 1, fur: "brown" });
+  });
+
+  it("keeps the fur of a version 3 bear and reads an unknown fur as brown", () => {
+    const base = WorkoutPost_build(workout, settings, {}, { bear: { ...bear(10), fur: "black" } });
+    expect(base.bear?.fur).to.equal("black");
+    expect(WorkoutPost_parse(JSON.parse(JSON.stringify(base)))?.bear?.fur).to.equal("black");
+    expect(WorkoutPost_parse({ ...base, bear: { ...base.bear, fur: "green" } })?.bear?.fur).to.equal("brown");
+    expect(WorkoutPost_parse({ ...base, bear: { ...base.bear, fur: undefined } })?.bear?.fur).to.equal("brown");
+  });
+
+  it("reads a version 2 post as a brown bear, even when the fur field is forged", () => {
+    const v2 = { ...WorkoutPost_build(workout, settings, {}, { bear: bear(10) }), version: 2 as const };
+    const parsed = WorkoutPost_parse(JSON.parse(JSON.stringify(v2)))!;
+    expect(parsed.version).to.equal(2);
+    expect(parsed.bear?.fur).to.equal("brown");
+    expect(parsed.bear?.line).to.equal("female");
   });
 
   it("writes the feed row with counted kg next to the duration", () => {

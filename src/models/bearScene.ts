@@ -17,17 +17,24 @@ export interface IBearSceneLayout {
   board: IBearBox;
 }
 
-// Copied from images/bear/<line>/manifest.json, in the 1024 by 1536 art canvas. test/bearScene.test.ts reads
-// both manifests and fails when the art is regenerated with other anchors.
+// Copied from images/bear/<line>/manifest.json, in the 1024 by 1536 art canvas. The black and polar recolours keep
+// the brown anchors, so the lookup keys by line only. test/bearScene.test.ts reads all six manifests and fails when
+// the art is regenerated with other anchors.
 export const BearScene_canvas = { width: 1024, height: 1536 };
 export const BearScene_spriteFoot = { x: 512, y: 1470 };
 export const BearScene_gymFoot = { x: 512, y: 1490 };
 export const BearScene_dashboardRect: IBearRect = [125, 195, 825, 675];
 
+export interface IBearFloor {
+  foot: { x: number; y: number };
+  minHeightShare: number;
+}
+
 // Lowest row of whiteboard ink in the art canvas. Measured on the owner's iPhone screenshot of level 3: the second
 // row of tiles ends 593 px down. The bear's head never goes above this line.
 export const BearScene_boardInkBottom = 593;
 export const BearScene_minHeightShare = 0.38;
+export const BearScene_gymFloor: IBearFloor = { foot: BearScene_gymFoot, minHeightShare: BearScene_minHeightShare };
 const inLevelGrowth = 0.005;
 const levelCount = 12;
 
@@ -56,6 +63,10 @@ const visibleBoxes: Record<string, IBearRect> = {
   "female/mood-space-hungry": [243, 152, 780, 1472],
   "female/mood-space-pumped": [184, 99, 840, 1472],
   "female/mood-space-tired": [196, 495, 828, 1472],
+  "female/lift-small": [234, 598, 790, 1472],
+  "female/lift-medium": [144, 340, 882, 1472],
+  "female/lift-big": [172, 328, 852, 1472],
+  "female/lift-space": [162, 326, 862, 1472],
   "male/level-01": [261, 890, 763, 1470],
   "male/level-02": [360, 750, 665, 1470],
   "male/level-03": [261, 670, 763, 1470],
@@ -80,6 +91,10 @@ const visibleBoxes: Record<string, IBearRect> = {
   "male/mood-space-hungry": [127, 151, 898, 1470],
   "male/mood-space-pumped": [66, 97, 957, 1470],
   "male/mood-space-tired": [147, 493, 877, 1470],
+  "male/lift-small": [196, 592, 828, 1470],
+  "male/lift-medium": [106, 294, 918, 1470],
+  "male/lift-big": [108, 258, 916, 1470],
+  "male/lift-space": [104, 230, 918, 1470],
 };
 
 const headShare = 0.42;
@@ -89,24 +104,33 @@ function round(value: number): number {
 }
 
 export function BearScene_visibleBox(spritePath: string): IBearRect {
-  const key = spritePath.replace(/^\/images\/bear\//, "").replace(/\.webp$/, "");
+  const key = spritePath
+    .replace(/^\/images\/bear\/(male|female)-(black|polar)\//, "$1/")
+    .replace(/^\/images\/bear\//, "")
+    .replace(/\.webp$/, "");
   return visibleBoxes[key] ?? [0, 0, BearScene_canvas.width, BearScene_canvas.height];
 }
 
-// The tallest the bear gets: its feet on the gym foot line and its head on the last row of whiteboard ink.
-export function BearScene_maxHeightShare(): number {
-  return (BearScene_gymFoot.y - BearScene_boardInkBottom) / BearScene_canvas.height;
+// The tallest the bear gets: its feet on the foot line and its head on the last row of whiteboard ink.
+export function BearScene_maxHeightShare(floor: IBearFloor = BearScene_gymFloor): number {
+  return (floor.foot.y - BearScene_boardInkBottom) / BearScene_canvas.height;
 }
 
 // The bear's visible height as a share of the scene height. Level 1 starts at the minimum and level 12 ends at
 // the maximum. BearArt_scale moves it a little inside a level, and never past the next level's start.
-export function BearScene_heightShare(level: number, fraction: number): number {
-  const first = BearScene_minHeightShare;
-  const last = BearScene_maxHeightShare();
+export function BearScene_heightShare(level: number, fraction: number, floor: IBearFloor = BearScene_gymFloor): number {
+  const first = floor.minHeightShare;
+  const last = BearScene_maxHeightShare(floor);
   const step = (last - first - inLevelGrowth) / (levelCount - 1);
   const index = Math.max(0, Math.min(levelCount - 1, Math.round(level) - 1));
   const grown = (BearArt_scale(fraction) - BearArt_scale(0)) / (BearArt_scale(1) - BearArt_scale(0));
   return Math.min(last, first + step * index + inLevelGrowth * grown);
+}
+
+export type IBearScenePlace = "home" | "gym";
+
+export function BearScene_place(isOngoingProgress: boolean): IBearScenePlace {
+  return isOngoingProgress ? "gym" : "home";
 }
 
 export function BearScene_breathing(mood: IBearMood): { durationMs: number; scaleY: number } {
@@ -124,19 +148,23 @@ export function BearScene_layout(
   level: number,
   fraction: number,
   spritePath: string,
-  maxScaleY: number = 1
+  maxScaleY: number = 1,
+  floor: IBearFloor = BearScene_gymFloor
 ): IBearSceneLayout {
   const unit = width / BearScene_canvas.width;
   const [x1, y1, x2, y2] = BearScene_dashboardRect;
   const [, boxTop, , boxBottom] = BearScene_visibleBox(spritePath);
-  const heightShare = Math.min(BearScene_heightShare(level, fraction), BearScene_maxHeightShare() / maxScaleY);
+  const heightShare = Math.min(
+    BearScene_heightShare(level, fraction, floor),
+    BearScene_maxHeightShare(floor) / maxScaleY
+  );
   const scale = (heightShare * BearScene_canvas.height) / Math.max(1, boxBottom - boxTop);
   return {
     width: round(width),
     height: round(BearScene_canvas.height * unit),
     sprite: {
-      left: round((BearScene_gymFoot.x - BearScene_spriteFoot.x * scale) * unit),
-      top: round((BearScene_gymFoot.y - boxBottom * scale) * unit),
+      left: round((floor.foot.x - BearScene_spriteFoot.x * scale) * unit),
+      top: round((floor.foot.y - boxBottom * scale) * unit),
       width: round(BearScene_canvas.width * scale * unit),
       height: round(BearScene_canvas.height * scale * unit),
     },

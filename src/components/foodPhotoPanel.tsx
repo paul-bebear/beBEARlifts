@@ -7,12 +7,14 @@ import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { FoodTextInput } from "./foodUi";
 import { Button } from "./button";
 import { FoodChoicesReview } from "./foodChoicesReview";
-import { AiConsent_ensure } from "../utils/aiConsentClient";
+import type { IScanResume } from "../models/foodScanSteps";
+import { AiConsent_disabledMessage, AiConsent_ensure } from "../utils/aiConsentClient";
 import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
 import { FoodAiSignIn } from "./foodAiSignIn";
 
 interface IProps {
   initialNote?: string;
+  resume?: IScanResume;
   onAdd: (choices: IFoodPhotoChoice[], photo?: string) => void;
 }
 
@@ -22,16 +24,21 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
   const session = CloudStore.use().session;
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<IStatus>({ kind: "idle" });
-  const [preview, setPreview] = useState<string | undefined>(undefined);
-  const [choices, setChoices] = useState<IFoodPhotoChoice[] | undefined>(undefined);
+  const [preview, setPreview] = useState<string | undefined>(props.resume?.photo);
+  const [choices, setChoices] = useState<IFoodPhotoChoice[] | undefined>(props.resume?.choices);
   const [aiNote, setAiNote] = useState<string | undefined>(undefined);
   const [userNote, setUserNote] = useState(props.initialNote ?? "");
   const [authError, setAuthError] = useState<string | undefined>(undefined);
 
+  // iPhone Safari drops a file picker opened after an await, so the tap only clicks the input and the checks run here.
   const onFile = async (file: File): Promise<void> => {
+    if (!(await AiConsent_ensure())) {
+      setStatus({ kind: "error", message: AiConsent_disabledMessage });
+      return;
+    }
     const auth = await SupabaseClient_accessToken();
+    setAuthError(auth.ok ? undefined : auth.error);
     if (!auth.ok) {
-      setAuthError(auth.error);
       return;
     }
     setChoices(undefined);
@@ -113,16 +120,7 @@ export function FoodPhotoPanel(props: IProps): JSX.Element {
             name="food-photo-pick"
             kind={choices != null && choices.length > 0 ? "pill-outline" : "pill"}
             className="flex-1"
-            onPress={async () => {
-              const auth = await SupabaseClient_accessToken();
-              setAuthError(auth.ok ? undefined : auth.error);
-              if (!auth.ok) {
-                return;
-              }
-              if (await AiConsent_ensure()) {
-                inputRef.current?.click();
-              }
-            }}
+            onPress={() => inputRef.current?.click()}
           >
             {preview == null ? "Take or choose a photo" : "New photo"}
           </Button>

@@ -28,7 +28,8 @@ export interface IWarmupExercise {
   sets: string;
 }
 
-const maxPlans = 60;
+// One year at 4 workouts a week.
+export const WarmupPlan_maxPlans = 210;
 const maxItems = 10;
 
 export function WarmupPlan_exercises(
@@ -162,7 +163,7 @@ export function WarmupPlan_find(log: IWarmupLog, workoutId: number): IWarmupPlan
 
 export function WarmupPlan_put(log: IWarmupLog, plan: IWarmupPlan): IWarmupLog {
   const others = log.plans.filter((p) => p.workoutId !== plan.workoutId);
-  return { ...log, plans: [plan, ...others].slice(0, maxPlans) };
+  return { ...log, plans: [plan, ...others].slice(0, WarmupPlan_maxPlans) };
 }
 
 function parsePlan(raw: unknown): IWarmupPlan | undefined {

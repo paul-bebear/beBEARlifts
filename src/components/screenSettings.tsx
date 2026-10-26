@@ -42,7 +42,7 @@ import { Slider } from "./primitives/slider";
 import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { ProgramsHost_fork } from "../utils/programsHost";
 import { AppStoreSettings } from "./appStoreSettings";
-import { SettingsBackupRows, SettingsRateEachSet } from "./settingsForkRows";
+import { SettingsBackupRows, SettingsBearRow, SettingsRateEachSet } from "./settingsForkRows";
 
 interface IProps {
   dispatch: IDispatch;
@@ -78,6 +78,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
   return (
     <View className="px-gutter">
       <AppStoreSettings />
+      <SettingsBearRow />
       <MenuItem
         shouldShowRightArrow={true}
         name="Program"
@@ -301,6 +302,20 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
               .p("startWeekFromMonday")
               .record(newValue === "true"),
             desc: "Toggle week start day",
+          });
+        }}
+      />
+      <MenuItemEditable
+        type="boolean"
+        name="Bag check before a workout"
+        value={props.settings.skipBagCheck ? "false" : "true"}
+        onChange={(newValue) => {
+          props.dispatch({
+            type: "UpdateSettings",
+            lensRecording: lb<ISettings>()
+              .p("skipBagCheck")
+              .record(newValue !== "true"),
+            desc: "Toggle bag check",
           });
         }}
       />

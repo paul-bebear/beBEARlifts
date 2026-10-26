@@ -12,13 +12,19 @@ import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { SheetScreenContainer } from "../navigation/SheetScreenContainer";
 import { FormSheet } from "../navigation/FormSheet";
-import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { buildNavCommon } from "../navigation/utils";
-import { Thunk_pushScreen, Thunk_startProgramDay } from "../ducks/thunks";
+import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { FoodMealForTime_pick } from "../models/foodMealForTime";
-import { IQuickAction, IQuickActionId, QuickActions_list, quickActionsSoon } from "../models/quickActions";
+import {
+  IQuickAction,
+  IQuickActionId,
+  QuickActions_isBagCheckOn,
+  QuickActions_list,
+  quickActionsSoon,
+} from "../models/quickActions";
+import { WorkoutStart_open } from "../utils/workoutStart";
 
 function SquareIcon(props: { id: IQuickActionId; color: string }): JSX.Element {
   switch (props.id) {
@@ -61,6 +67,7 @@ export function PlusSheetModal(): JSX.Element {
   const actions = QuickActions_list({
     isOngoingProgress: buildNavCommon(state).isOngoingProgress,
     canRecordRun: OfflineOnly_isEnabled() && RunSensors_isAvailable(),
+    isBagCheckOn: QuickActions_isBagCheckOn(state.storage.settings.skipBagCheck, state.storage.currentProgramId),
   });
   const close = (): void => navigation.goBack();
   const closeThen = (effect: () => void) => (): void => {
@@ -77,13 +84,7 @@ export function PlusSheetModal(): JSX.Element {
     weight: closeThen(() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))),
     run: closeThen(() => dispatch(Thunk_pushScreen("runs"))),
   };
-  const onWorkout = closeThen(() => {
-    if (actions.workout.action === "resume") {
-      dispatch(Thunk_startProgramDay());
-    } else {
-      navigateToModal("nextWorkoutModal");
-    }
-  });
+  const onWorkout = closeThen(() => WorkoutStart_open(actions.workout.action, dispatch));
 
   return (
     <SheetScreenContainer onClose={close} shouldShowClose={true}>

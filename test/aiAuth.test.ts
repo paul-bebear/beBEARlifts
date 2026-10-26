@@ -5,6 +5,7 @@ import {
   AiAuth_bearerToken,
   AiAuth_capValue,
   AiAuth_caps,
+  AiAuth_ceilingNotice,
   AiAuth_check,
   AiAuth_decide,
   AiAuth_decideUsage,
@@ -106,9 +107,44 @@ describe("AiAuth", () => {
     });
     expect(AiAuth_decide(403, undefined, "capped", caps)).to.include({ status: 401 });
     expect(AiAuth_decide(429, undefined, "capped", caps).body).to.include({ reason: "global" });
+    expect(
+      AiAuth_decide(429, { code: "PT429", message: "Daily AI allowance reached" }, "capped", caps).body
+    ).to.include({
+      reason: "global",
+    });
+    expect(AiAuth_decide(429, { code: "PT429", message: "Daily AI share reached" }, "capped", caps)).to.deep.equal({
+      ok: false,
+      status: 429,
+      body: { error: "You have used your share of today's AI. Try again tomorrow UTC.", reason: "share" },
+    });
+    expect(
+      AiAuth_decide(429, { code: "PT429", message: "Daily AI report limit reached" }, "report", caps)
+    ).to.deep.equal({
+      ok: false,
+      status: 429,
+      body: { error: "You have made 10 AI reports today. More tomorrow.", reason: "reportDay" },
+    });
     expect(AiAuth_decide(500, undefined, "capped", caps)).to.include({ status: 503 });
     expect(AiAuth_decide(200, 5, "capped", caps)).to.include({ status: 503 });
     expect(AiAuth_decide(200, { plan: "free", day: "2", week: 2 }, "capped", caps)).to.include({ status: 503 });
+  });
+
+  it("words the 80 percent notice only for the call that crossed it", () => {
+    expect(AiAuth_ceilingNotice({ ceilingWarn: true, dayTotal: 480, ceiling: 600 })).to.equal(
+      "AI allowance at 80 percent: 480 of 600 calls used today (UTC)"
+    );
+    expect(AiAuth_ceilingNotice({ ceilingWarn: false, dayTotal: 481, ceiling: 600 })).to.equal(undefined);
+    expect(AiAuth_ceilingNotice({ plan: "free" })).to.equal(undefined);
+    expect(AiAuth_ceilingNotice(undefined)).to.equal(undefined);
+  });
+
+  it("logs the notice once and still lets the call through", async () => {
+    const warn = sinon.stub(console, "warn");
+    sinon
+      .stub(globalThis, "fetch")
+      .resolves(answer({ day: 1, week: 1, dayTotal: 480, ceiling: 600, ceilingWarn: true }));
+    expect(await AiAuth_check(post({ Authorization: "Bearer t" }))).to.equal(undefined);
+    sinon.assert.calledOnceWithExactly(warn, "AI allowance at 80 percent: 480 of 600 calls used today (UTC)");
   });
 
   it("refuses a request with no token without calling Supabase", async () => {

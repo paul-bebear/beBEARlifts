@@ -10,7 +10,7 @@ import { Exercise_get, Exercise_synergistMusclesGroups, Exercise_targetMusclesGr
 import { Weight_convertTo } from "./weight";
 import { BearTier_progress, IBearLevel, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { BearArt_cardSprite } from "./bearArt";
-import { IBearLine } from "./bearStoreData";
+import { IBearFur, IBearLine } from "./bearStoreData";
 import { BearBadges_forRecord, IBearBadgeCard } from "./bearBadges";
 import { IShareAchievements } from "./shareAchievements";
 import { ILiftEquivalent, LiftEquivalents_pick } from "./liftEquivalents";
@@ -46,6 +46,7 @@ export interface IWorkoutReceipt {
 
 export interface IShareCardBear {
   sprite: string;
+  fur: IBearFur;
   size: IBearLevel["size"];
 }
 
@@ -68,6 +69,7 @@ export interface IWorkoutShareInput {
   achievements: IShareAchievements;
   tierSet: IBearTierSet;
   line?: IBearLine;
+  fur?: IBearFur;
   seed: number;
 }
 
@@ -242,10 +244,12 @@ export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShare
   const lifetime = achievements.lifetimeKg.get(record.id) ?? { beforeKg: 0, afterKg: stats.weightKg };
   const tier = BearTier_progress(lifetime.beforeKg, lifetime.afterKg, input.tierSet);
   const equivalent = LiftEquivalents_pick(stats.weightKg, input.seed);
+  const fur = input.fur ?? "brown";
   return {
     stats,
     bear: {
-      sprite: BearArt_cardSprite(input.line ?? input.tierSet, tier.tier.level),
+      sprite: BearArt_cardSprite(input.line ?? input.tierSet, fur, tier.tier.level),
+      fur,
       size: tier.tier.size,
     },
     tier: { ...tier, tier: { ...tier.tier, name: `Level ${tier.tier.level} · ${tier.tier.name}` } },

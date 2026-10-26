@@ -6,7 +6,13 @@ import { MenuItemWrapper } from "./menuItem";
 import { MenuItemEditable } from "./menuItemEditable";
 import { CloudBackupCard } from "./cloudBackupCard";
 import { JournalExportSheet } from "./journalExportSheet";
+import { BearLookSheet } from "./bearLookSheet";
+import { MenuItem } from "./menuItem";
 import { useJournalSources } from "../utils/useJournalSources";
+import { useBear } from "../utils/useBear";
+import { BearStore } from "../utils/bearStore";
+import { BearLook_setFur, BearLook_summary } from "../models/bearLook";
+import { BearCelebration_setLine } from "../models/bearCelebration";
 import { Thunk_exportEverything } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
 import { EffortRating_isEnabled } from "../models/effortRating";
@@ -95,6 +101,30 @@ function SettingsJournalExport(): JSX.Element {
         </View>
       </MenuItemWrapper>
       {isOpen && <SettingsJournalExportSheet onClose={() => setIsOpen(false)} />}
+    </>
+  );
+}
+
+export function SettingsBearRow(): JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
+  const { state } = useBear();
+  return (
+    <>
+      <MenuItem
+        name="Your bear"
+        value={BearLook_summary(state.line, state.fur)}
+        shouldShowRightArrow={true}
+        onClick={() => setIsOpen(true)}
+      />
+      {isOpen && (
+        <BearLookSheet
+          line={state.line}
+          fur={state.fur}
+          onLine={(line) => BearStore.update((saved) => BearCelebration_setLine(saved, line)).catch(() => undefined)}
+          onFur={(fur) => BearStore.update((saved) => BearLook_setFur(saved, fur)).catch(() => undefined)}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
     </>
   );
 }
