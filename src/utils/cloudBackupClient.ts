@@ -1,5 +1,6 @@
+import { ProgressPhotos_cloudPath } from "../models/progressPhotos";
 import {
-  CloudBackup_empty,
+  CloudBackup_afterSignOut,
   CloudBackup_path,
   CloudBackup_paths,
   ICloudCopy,
@@ -54,7 +55,7 @@ async function put(path: string, text: string): Promise<ICloudResult<string>> {
 
 export async function CloudBackupClient_upload(
   text: string,
-  marks: { exportedAt: string; workouts: string }
+  marks: { exportedAt: string; workouts: string; stores: string }
 ): Promise<ICloudResult<number>> {
   const session = (await CloudStore.load()).session;
   if (session == null) {
@@ -75,9 +76,49 @@ export async function CloudBackupClient_upload(
     lastBackupAt: now,
     syncedExportedAt: marks.exportedAt,
     backedUpWorkouts: marks.workouts,
+    backedUpStores: marks.stores,
+    ownerUserId: session.userId,
+    uploadDeclinedFor: undefined,
     restoreOffer: undefined,
   }));
   return { ok: true, value: now };
+}
+
+function photoUrl(userId: string, id: number): string {
+  return `/storage/v1/object/${bucket}/${ProgressPhotos_cloudPath(userId, id)}`;
+}
+
+export async function CloudBackupClient_putPhoto(
+  userId: string,
+  id: number,
+  bytes: Uint8Array
+): Promise<ICloudResult<undefined>> {
+  const result = await SupabaseClient_authed(photoUrl(userId, id), {
+    method: "POST",
+    headers: { "Content-Type": "image/jpeg", "x-upsert": "true" },
+    body: bytes,
+  });
+  return result.ok ? { ok: true, value: undefined } : result;
+}
+
+export async function CloudBackupClient_deletePhoto(userId: string, id: number): Promise<ICloudResult<undefined>> {
+  const result = await SupabaseClient_authed(photoUrl(userId, id), { method: "DELETE" });
+  if (!result.ok) {
+    return /^Object not found$/i.test(result.error) ? { ok: true, value: undefined } : result;
+  }
+  return { ok: true, value: undefined };
+}
+
+export async function CloudBackupClient_getPhoto(
+  userId: string,
+  id: number
+): Promise<ICloudResult<Uint8Array | undefined>> {
+  const path = ProgressPhotos_cloudPath(userId, id);
+  const result = await SupabaseClient_authed(`/storage/v1/object/authenticated/${bucket}/${path}`, { method: "GET" });
+  if (!result.ok) {
+    return /^Object not found$/i.test(result.error) ? { ok: true, value: undefined } : result;
+  }
+  return { ok: true, value: new Uint8Array(await result.value.response.arrayBuffer()) };
 }
 
 export async function CloudBackupClient_saveReplaced(text: string): Promise<ICloudResult<undefined>> {
@@ -106,7 +147,7 @@ export async function CloudBackupClient_download(
 
 async function clearAccountCaches(): Promise<void> {
   await Promise.all([
-    CloudStore.update(() => CloudBackup_empty()),
+    CloudStore.update((state) => CloudBackup_afterSignOut(state)),
     FriendsStore.update(() => Friends_empty()),
     BlocksStore.update(() => FeedModeration_empty()),
     FeedStore.update(() => Feed_empty()),

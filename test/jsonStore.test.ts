@@ -1,7 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { JsonStore_create } from "../src/utils/jsonStore";
+import { JsonStore_create, JsonStore_setRecovery } from "../src/utils/jsonStore";
 import * as indexeddb from "../src/utils/indexeddb";
 import * as dialogs from "../src/utils/dialog";
 import { FoodLogStore_load, FoodLogStore_update } from "../src/utils/foodLogStore";
@@ -168,6 +168,61 @@ describe("JsonStore", () => {
     expect(persist.calledOnceWithExactly("broken_unreadable", "{")).to.equal(true);
     expect(saved.get("broken")).to.equal("{");
     expect(store.get()).to.equal(0);
+  });
+
+  it("rejects a strict load when the read fails, where load falls back to the empty value", async () => {
+    saved.set("strict-load", "6");
+    const store = counter("strict-load");
+    expect(await store.loadStrict()).to.equal(6);
+    get.rejects(new Error("Read aborted"));
+    expect(await store.load()).to.equal(6);
+    expect(((await rejection(store.loadStrict())) as Error).message).to.equal("Could not read saved data");
+    const fresh = counter("strict-load");
+    expect(await fresh.load()).to.equal(0);
+    await rejection(fresh.loadStrict());
+  });
+
+  it("replaces a value without reading it, so a damaged store can be written again", async () => {
+    saved.set("damaged", "{");
+    const store = counter("damaged");
+    await store.replace(3);
+    expect(saved.get("damaged")).to.equal("3");
+    expect(store.get()).to.equal(3);
+    await store.update((value) => value + 1);
+    expect(saved.get("damaged")).to.equal("4");
+  });
+
+  it("offers to start a damaged log again after keeping its text", async () => {
+    saved.set("damaged-log", '{"entries":[');
+    const choice = sinon.stub(dialogs, "Dialog_choice").resolves(0);
+    const store = counter("damaged-log");
+    await rejection(store.update(() => 1));
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(choice.firstCall.args[0]).to.equal("Could not read saved data");
+    expect(choice.firstCall.args[2]).to.deep.equal(["Start this log again", "Not now"]);
+    expect(saved.get("damaged-log_unreadable")).to.equal('{"entries":[');
+    expect(saved.get("damaged-log")).to.equal("0");
+    expect(alert.called).to.equal(false);
+    await store.update((value) => value + 1);
+    expect(saved.get("damaged-log")).to.equal("1");
+  });
+
+  it("hands a damaged log to the cloud restore when signed in", async () => {
+    saved.set("damaged-cloud", "{");
+    sinon.stub(dialogs, "Dialog_choice").resolves(0);
+    const restoreFromCloud = sinon.spy();
+    JsonStore_setRecovery({ isSignedIn: async () => true, restoreFromCloud });
+    try {
+      const store = counter("damaged-cloud");
+      await store.load();
+      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(restoreFromCloud.calledOnce).to.equal(true);
+      expect(saved.get("damaged-cloud")).to.equal("{");
+    } finally {
+      JsonStore_setRecovery(undefined);
+    }
   });
 
   it("rejects a parser failure before applying the update", async () => {

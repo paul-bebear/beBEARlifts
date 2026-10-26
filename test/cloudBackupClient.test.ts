@@ -3,7 +3,10 @@ import { expect } from "chai";
 import sinon from "sinon";
 import {
   CloudBackupClient_deleteAccount,
+  CloudBackupClient_deletePhoto,
   CloudBackupClient_download,
+  CloudBackupClient_getPhoto,
+  CloudBackupClient_putPhoto,
   CloudBackupClient_saveReplaced,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
@@ -28,7 +31,7 @@ const session = {
   expiresAt: now + 3600000,
 };
 
-const marks = { exportedAt: "2026-10-20T18:00:00.000Z", workouts: "3:7" };
+const marks = { exportedAt: "2026-10-20T18:00:00.000Z", workouts: "3:7", stores: "food:1:9" };
 
 describe("CloudBackupClient", () => {
   let state: ICloudState;
@@ -97,6 +100,8 @@ describe("CloudBackupClient", () => {
     expect(await CloudBackupClient_upload("backup", marks)).to.deep.equal({ ok: true, value: now });
     expect(state.syncedExportedAt).to.equal(marks.exportedAt);
     expect(state.backedUpWorkouts).to.equal("3:7");
+    expect(state.backedUpStores).to.equal("food:1:9");
+    expect(state.ownerUserId).to.equal("u1");
     expect(state.restoreOffer).to.equal(undefined);
     expect(fetchStub.firstCall.args[0]).to.equal(`${CloudBackup_origin}/storage/v1/object/backups/u1/latest.json`);
     expect(fetchStub.secondCall.args[0]).to.match(/\/u1\/day-\d.json$/);
@@ -185,6 +190,34 @@ describe("CloudBackupClient", () => {
     expect(stores.invite.firstCall.args[0]({ handle: "x" })).to.deep.equal({});
     expect(stores.friends.calledOnce).to.equal(true);
     expect(stores.blocks.calledOnce).to.equal(true);
+  });
+
+  it("keeps the owner of this phone's data through sign-out", async () => {
+    state = { ...state, ownerUserId: "u1", lastBackupAt: now, syncedExportedAt: "x", uploadedPhotos: [5] };
+    fetchStub.resolves(new Response(null, { status: 204 }));
+    await CloudBackupClient_signOut();
+    expect(state).to.deep.equal({ version: 1, ownerUserId: "u1", uploadedPhotos: [5] });
+  });
+
+  it("uploads, downloads and deletes a progress photo under photos/", async () => {
+    fetchStub.resolves(new Response("{}"));
+    const bytes = new Uint8Array([255, 216, 255]);
+    expect(await CloudBackupClient_putPhoto("u1", 42, bytes)).to.deep.equal({ ok: true, value: undefined });
+    expect(fetchStub.firstCall.args[0]).to.equal(`${CloudBackup_origin}/storage/v1/object/backups/u1/photos/42.jpg`);
+    expect(fetchStub.firstCall.args[1].headers).to.include({ "Content-Type": "image/jpeg", "x-upsert": "true" });
+    expect(fetchStub.firstCall.args[1].body).to.equal(bytes);
+
+    fetchStub.resolves(new Response(bytes));
+    const got = await CloudBackupClient_getPhoto("u1", 42);
+    expect(got.ok && Array.from(got.value ?? [])).to.deep.equal([255, 216, 255]);
+    expect(fetchStub.secondCall.args[0]).to.equal(
+      `${CloudBackup_origin}/storage/v1/object/authenticated/backups/u1/photos/42.jpg`
+    );
+
+    fetchStub.callsFake(async () => new Response(JSON.stringify({ message: "Object not found" }), { status: 400 }));
+    expect(await CloudBackupClient_getPhoto("u1", 43)).to.deep.equal({ ok: true, value: undefined });
+    expect(await CloudBackupClient_deletePhoto("u1", 43)).to.deep.equal({ ok: true, value: undefined });
+    expect(fetchStub.lastCall.args[1].method).to.equal("DELETE");
   });
 
   it("deletes the account through the API and clears the cloud, friends and blocks caches only on success", async () => {

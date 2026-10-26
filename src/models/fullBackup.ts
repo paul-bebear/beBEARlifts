@@ -16,6 +16,7 @@ import { IWeekScheduleLog, WeekSchedule_empty, WeekSchedule_parse } from "./week
 import { JournalExport_files } from "./journalExport";
 import { FoodLog_dayKey } from "./foodLog";
 import { History_getPersonalRecords } from "./history";
+import { IProgressPhotoIndexEntry, ProgressPhotos_parseIndex } from "./progressPhotos";
 
 export const FullBackup_format = "bebearlifts-backup";
 
@@ -31,7 +32,8 @@ const readme = [
   "music.sessions: songs played during each workout, matched by session id to workouts.history id. startedAt is ms; heardMs is how long the song played; isKept false means skipped.",
   "clips.clips: filmed sets matched by workoutId, setId and exerciseId. timestamp is ms, size is bytes, duration is seconds. Includes small JPEG thumbnails; video files stay in Photos or downloads.",
   "goal.current: the training goal (buildMuscle, loseFat or maintain), its pace, daily step band, body fat % and start date (ms) and weight. goal.past: earlier goals, newest first.",
-  "steps.days: step count per local day (YYYY-MM-DD), from Apple Health or typed by hand. steps.goal: the daily step goal. Progress photos are not in this file.",
+  "steps.days: step count per local day (YYYY-MM-DD), from Apple Health or typed by hand. steps.goal: the daily step goal.",
+  "photos: progress photos, newest first, as id and timestamp (ms). The JPEGs are not in this file. The cloud backup keeps each one at photos/<id>.jpg next to it.",
   "checklist.checkIns: days (YYYY-MM-DD) with a nutrition check-in. checklist.committedAt: ms when the user tapped I'm Committed on the streak screen.",
   "notes.notes: the user's Journal notes, one per entry, with day (YYYY-MM-DD), title and a Markdown body. kind checkIn is the day's check-in: energy, soreness and mood from 1 (sad face) to 5 (happy face), and the reflection as the body.",
   "journal: one Markdown file per day, keyed by path journal/YYYY-MM-DD.md, written from the workouts, food, music, weigh-ins and notes above. It is a readable copy; restore reads the parts above.",
@@ -59,6 +61,7 @@ export interface IFullBackup {
   bear: IBearStoreData;
   notes?: INotesLog;
   schedule: IWeekScheduleLog;
+  photos: IProgressPhotoIndexEntry[];
   journal: Record<string, string>;
 }
 
@@ -77,6 +80,7 @@ export interface IFullBackupParts {
   bear?: IBearStoreData;
   notes?: INotesLog;
   schedule?: IWeekScheduleLog;
+  photos?: IProgressPhotoIndexEntry[];
 }
 
 export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBackup {
@@ -110,6 +114,7 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     bear: BearStoreData_parse(parts.bear ?? BearStoreData_empty()),
     notes,
     schedule: WeekSchedule_parse(parts.schedule ?? WeekSchedule_empty()),
+    photos: ProgressPhotos_parseIndex(parts.photos ?? []),
     journal,
   };
 }
@@ -133,6 +138,7 @@ export interface IFullBackupContents {
   bear?: IBearStoreData;
   notes?: INotesLog;
   schedule?: IWeekScheduleLog;
+  photos?: IProgressPhotoIndexEntry[];
 }
 
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
@@ -156,6 +162,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     bear: r.bear != null ? BearStoreData_parse(r.bear) : undefined,
     notes: r.notes != null ? Notes_parse(r.notes) : undefined,
     schedule: r.schedule != null ? WeekSchedule_parse(r.schedule) : undefined,
+    photos: r.photos != null ? ProgressPhotos_parseIndex(r.photos) : undefined,
   };
 }
 

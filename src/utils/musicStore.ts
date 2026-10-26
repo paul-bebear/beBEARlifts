@@ -6,5 +6,6 @@ const MusicStore_key = "bebear_music";
 const store = JsonStore_create(MusicStore_key, MusicLog_parse, MusicLog_empty);
 
 export const MusicStore_load = store.load;
+export const MusicStore_loadStrict = store.loadStrict;
 export const MusicStore_update = store.update;
 export const useMusicLog = store.use;

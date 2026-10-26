@@ -5,6 +5,7 @@ import {
   CloudBackupCompare_holdings,
   CloudBackupCompare_keepText,
   CloudBackupCompare_offerText,
+  CloudBackupCompare_offerTitle,
   CloudBackupCompare_read,
   CloudBackupCompare_restoreText,
 } from "../src/models/cloudBackupCompare";
@@ -61,10 +62,22 @@ describe("CloudBackupCompare", () => {
     expect(CloudBackupCompare_decide(cloud, phone, undefined).kind).to.equal("ask");
   });
 
-  it("uploads when the phone holds everything the cloud has", () => {
+  it("asks when another device wrote the cloud file, even if the phone holds every workout and food in it", () => {
     const cloud = CloudBackupCompare_read(cloudFile([1, 2], ["f1"]));
     const phone = CloudBackupCompare_holdings([{ id: 3 }, { id: 2 }, { id: 1 }], food(["f1", "f2"]));
-    expect(CloudBackupCompare_decide(cloud, phone, undefined).kind).to.equal("upload");
+    const decision = CloudBackupCompare_decide(cloud, phone, "2026-10-01T00:00:00.000Z");
+    expect(decision.kind).to.equal("ask");
+    const offer = decision.kind === "ask" ? decision.offer : undefined;
+    expect(offer?.otherDevice).to.equal(true);
+    expect(CloudBackupCompare_offerTitle(offer!)).to.equal("Another device changed your cloud backup");
+    expect(CloudBackupCompare_offerText(offer!, "Monday")).to.include("saved by another device");
+    expect(CloudBackupCompare_decide(cloud, phone, undefined).kind).to.equal("ask");
+  });
+
+  it("reads the photo index from a cloud file", () => {
+    const text = JSON.stringify({ ...JSON.parse(cloudFile([1], [])), photos: [{ id: 4, timestamp: 4 }, { id: "x" }] });
+    expect(CloudBackupCompare_read(text)?.photos).to.deep.equal([{ id: 4, timestamp: 4 }]);
+    expect(CloudBackupCompare_read(cloudFile([1], []))?.photos).to.equal(undefined);
   });
 
   it("uploads over a file this phone wrote, even after a workout was deleted here", () => {
