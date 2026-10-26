@@ -94,12 +94,17 @@ describe("FinishDayActions_list", () => {
 });
 
 describe("FinishDayActions_storyButtons", () => {
-  it("lists Add photo then Share under the card pager, with no music button", () => {
-    expect(FinishDayActions_storyButtons({ exportAvailable: true })).to.eql(["photo", "share"]);
+  it("lists Add photo, Share and Music under the card pager", () => {
+    expect(FinishDayActions_storyButtons({ exportAvailable: true, musicEnabled: true })).to.eql([
+      "photo",
+      "share",
+      "music",
+    ]);
   });
 
-  it("keeps only Add photo when export is unavailable", () => {
-    expect(FinishDayActions_storyButtons({ exportAvailable: false })).to.eql(["photo"]);
+  it("drops Share when export is unavailable and Music when it is off", () => {
+    expect(FinishDayActions_storyButtons({ exportAvailable: false, musicEnabled: true })).to.eql(["photo", "music"]);
+    expect(FinishDayActions_storyButtons({ exportAvailable: true, musicEnabled: false })).to.eql(["photo", "share"]);
   });
 });
 

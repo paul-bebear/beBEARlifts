@@ -22,6 +22,7 @@ import { ShareCardImage_prepareAhead } from "../utils/shareCardImage";
 import { Text } from "./primitives/text";
 import { IconCamera } from "./icons/iconCamera";
 import { IconShare } from "./icons/iconShare";
+import { IconSpeaker } from "./icons/iconSpeaker";
 import { FinishDayActions_storyButtons } from "../models/finishDayActions";
 import { IPhotoSource } from "../models/photoSourceChoice";
 import { GroupHeader } from "./groupHeader";
@@ -36,6 +37,8 @@ interface IProps {
   history: IHistoryRecord[];
   settings: ISettings;
   stats: IStats;
+  musicEnabled: boolean;
+  onMusic: () => void;
 }
 
 interface IFrozen {
@@ -83,7 +86,7 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
       }),
     [props.record, props.settings, prs, achievements, tierSet, line, seed]
   );
-  const buttons = FinishDayActions_storyButtons({ exportAvailable: true });
+  const buttons = FinishDayActions_storyButtons({ exportAvailable: true, musicEnabled: props.musicEnabled });
   const frozen = exporter.job.frozen;
   const dataKey = JSON.stringify(data);
   const { prepare } = exporter;
@@ -137,6 +140,14 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
                   onPress={open}
                 />
               )}
+            />
+          ) : button === "music" ? (
+            <FinishActionButton
+              key={button}
+              testID="finish-day-music"
+              label="Music"
+              icon={<IconSpeaker size={22} />}
+              onPress={props.onMusic}
             />
           ) : (
             <FinishActionButton

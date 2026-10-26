@@ -44,12 +44,19 @@ export function FinishDayActions_saveReport(
   return WorkoutReport_put(log, WorkoutReport_build(record, history, previous, settings));
 }
 
-export type IFinishStoryButton = "photo" | "share";
+export type IFinishStoryButton = "photo" | "share" | "music";
 
 export function FinishDayActions_storyButtons(
-  input: Pick<IFinishDayActionsInput, "exportAvailable">
+  input: Pick<IFinishDayActionsInput, "exportAvailable"> & { musicEnabled: boolean }
 ): IFinishStoryButton[] {
-  return input.exportAvailable ? ["photo", "share"] : ["photo"];
+  const buttons: IFinishStoryButton[] = ["photo"];
+  if (input.exportAvailable) {
+    buttons.push("share");
+  }
+  if (input.musicEnabled) {
+    buttons.push("music");
+  }
+  return buttons;
 }
 
 export function FinishDayActions_list(input: IFinishDayActionsInput): IFinishDayAction[] {

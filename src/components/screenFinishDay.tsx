@@ -121,7 +121,14 @@ export function ScreenFinishDay(props: IProps): JSX.Element {
       </View>
     ),
     share: (
-      <WorkoutStoryCardSection record={record} history={props.history} settings={props.settings} stats={props.stats} />
+      <WorkoutStoryCardSection
+        record={record}
+        history={props.history}
+        settings={props.settings}
+        stats={props.stats}
+        musicEnabled={true}
+        onMusic={() => props.dispatch(Thunk_pushScreen("music"))}
+      />
     ),
     feedShare: <FeedShareToggle record={record} history={props.history} settings={props.settings} />,
     totals: (
