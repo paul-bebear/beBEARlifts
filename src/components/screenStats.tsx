@@ -16,7 +16,9 @@ import {
   IPercentage,
   IPercentageUnit,
   IStatsKey,
+  statsPercentageDef,
 } from "../types";
+import { Stats_name } from "../models/stats";
 import { Button } from "./button";
 import { ObjectUtils_keys } from "../utils/object";
 import { Weight_convertTo, Weight_build } from "../models/weight";
@@ -229,19 +231,7 @@ export function ScreenStats(props: IProps): JSX.Element {
         <Text className="mr-2 text-xs text-text-secondary">Date</Text>
         <DatePicker testID="input-stats-add-date" value={pickedTimestamp ?? Date.now()} onChange={setPickedTimestamp} />
       </View>
-      {statsEnabled.length.neck && (
-        <SingleLine>
-          <StatInput
-            name="neck"
-            label="Neck"
-            defaultValue={lastLengthStats.neck?.value}
-            unit={lengthUnits}
-            clearKey={clearKey}
-            valuesRef={valuesRef}
-          />
-        </SingleLine>
-      )}
-      {statsEnabled.weight && (
+      {statsEnabled.weight.weight && (
         <SingleLine>
           <StatInput
             name="weight"
@@ -253,13 +243,28 @@ export function ScreenStats(props: IProps): JSX.Element {
           />
         </SingleLine>
       )}
-      {statsEnabled.percentage.bodyfat && (
+      {statsPercentageDef.map(
+        (key) =>
+          statsEnabled.percentage[key] && (
+            <SingleLine key={key}>
+              <StatInput
+                name={key}
+                label={Stats_name(key)}
+                defaultValue={lastPercentageStats[key]?.value}
+                unit="%"
+                clearKey={clearKey}
+                valuesRef={valuesRef}
+              />
+            </SingleLine>
+          )
+      )}
+      {statsEnabled.length.neck && (
         <SingleLine>
           <StatInput
-            name="bodyfat"
-            label="Bodyfat"
-            defaultValue={lastPercentageStats.bodyfat?.value}
-            unit="%"
+            name="neck"
+            label="Neck"
+            defaultValue={lastLengthStats.neck?.value}
+            unit={lengthUnits}
             clearKey={clearKey}
             valuesRef={valuesRef}
           />

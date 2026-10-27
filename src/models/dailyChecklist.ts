@@ -119,7 +119,9 @@ function weightItem(input: IChecklistDayInput): IChecklistItem {
       (best, w) => (best == null || w.timestamp > best.timestamp ? w : best),
       undefined
     )?.value;
-  const inWeek = upToDay.filter((w) => dayOf(w.timestamp) >= weekStart);
+  // Onboarding stamps the start weight with the goal's startedAt. The start weight is never a weigh-in.
+  // The web date picker stores local midnight, so a same-day weigh-in can sort before startedAt.
+  const inWeek = upToDay.filter((w) => dayOf(w.timestamp) >= weekStart && w.timestamp !== input.goalStartedAt);
   const weekWeight = latestOf(inWeek);
   const lastWeight = latestOf(upToDay);
   const isDone = weekWeight != null;

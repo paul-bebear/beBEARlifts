@@ -15,7 +15,7 @@ import {
   IUnit,
 } from "../types";
 import { Length_convertTo } from "../models/length";
-import { Stats_name } from "../models/stats";
+import { Stats_isPercentageKey, Stats_name } from "../models/stats";
 import { DateUtils_format } from "../utils/date";
 import { IPercentageUnit } from "../types";
 import { Tailwind_colors } from "../utils/tailwindConfig";
@@ -94,7 +94,7 @@ function GraphStatsInner(props: IGraphStatsProps): JSX.Element {
     const label =
       props.statsKey === "weight"
         ? "Weight"
-        : props.statsKey === "bodyfat"
+        : Stats_isPercentageKey(props.statsKey)
           ? "Percentage"
           : props.statsKey === "sleep" || props.statsKey === "calories" || props.statsKey === "protein"
             ? Stats_name(props.statsKey)

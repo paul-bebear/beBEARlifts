@@ -17,7 +17,7 @@ import {
   EditStats_deleteLengthStat,
 } from "../models/editStats";
 import { Length_is, Length_convertTo, Length_build } from "../models/length";
-import { Stats_name } from "../models/stats";
+import { Stats_isPercentageKey, Stats_name } from "../models/stats";
 import { Weight_is, Weight_convertTo, Weight_build } from "../models/weight";
 import { ILength, IPercentage, ISettings, IStats, IStatsKey, ISubscription, IWeight } from "../types";
 import { ObjectUtils_keys } from "../utils/object";
@@ -57,7 +57,7 @@ function getValues(stats: IStats, key: IStatsKey): IValue[] {
       memo.push({ timestamp: stat.timestamp, value: stat.value, index });
       return memo;
     }, []);
-  } else if (key === "bodyfat") {
+  } else if (Stats_isPercentageKey(key)) {
     const subset = stats.percentage[key] || [];
     return subset.reduce<IValue[]>((memo, stat, index) => {
       memo.push({ timestamp: stat.timestamp, value: stat.value, index });
@@ -121,16 +121,24 @@ export function StatsList(props: IProps): JSX.Element {
     );
   }
   const units =
-    selectedKey === "weight" ? props.settings.units : selectedKey === "bodyfat" ? "%" : props.settings.lengthUnits;
+    selectedKey === "weight"
+      ? props.settings.units
+      : Stats_isPercentageKey(selectedKey)
+        ? "%"
+        : props.settings.lengthUnits;
   const graphPoints =
     selectedKey === "weight"
       ? getWeightDataForGraph(props.stats.weight[selectedKey] || [], props.settings)
-      : selectedKey === "bodyfat"
+      : Stats_isPercentageKey(selectedKey)
         ? getPercentageDataForGraph(props.stats.percentage[selectedKey] || [], props.settings)
         : getLengthDataForGraph(props.stats.length[selectedKey] || [], props.settings);
 
   const graphUnit =
-    selectedKey === "weight" ? props.settings.units : selectedKey === "bodyfat" ? "%" : props.settings.lengthUnits;
+    selectedKey === "weight"
+      ? props.settings.units
+      : Stats_isPercentageKey(selectedKey)
+        ? "%"
+        : props.settings.lengthUnits;
 
   return (
     <View className="px-4" data-testid={`stats-list-${selectedKey}`} testID={`stats-list-${selectedKey}`}>
@@ -254,7 +262,7 @@ const MeasurementRow = reactMemo(function MeasurementRow(props: IMeasurementRowP
     (ts: number): void => {
       if (selectedKey === "weight") {
         EditStats_changeStatWeightTimestamp(dispatch, selectedKey, value.index, ts);
-      } else if (selectedKey === "bodyfat") {
+      } else if (Stats_isPercentageKey(selectedKey)) {
         EditStats_changeStatPercentageTimestamp(dispatch, selectedKey, value.index, ts);
       } else {
         EditStats_changeStatLengthTimestamp(dispatch, selectedKey, value.index, ts);
@@ -271,7 +279,7 @@ const MeasurementRow = reactMemo(function MeasurementRow(props: IMeasurementRowP
       }
       if (selectedKey === "weight") {
         EditStats_changeStatWeightValue(dispatch, selectedKey, value.index, Weight_build(num, settings.units));
-      } else if (selectedKey === "bodyfat") {
+      } else if (Stats_isPercentageKey(selectedKey)) {
         EditStats_changeStatPercentageValue(dispatch, selectedKey, value.index, { value: num, unit: "%" });
       } else {
         EditStats_changeStatLengthValue(dispatch, selectedKey, value.index, Length_build(num, settings.lengthUnits));
@@ -284,7 +292,7 @@ const MeasurementRow = reactMemo(function MeasurementRow(props: IMeasurementRowP
     if (await Dialog_confirm("Are you sure?")) {
       if (selectedKey === "weight") {
         EditStats_deleteWeightStat(dispatch, selectedKey, value.index, value.timestamp);
-      } else if (selectedKey === "bodyfat") {
+      } else if (Stats_isPercentageKey(selectedKey)) {
         EditStats_deletePercentageStat(dispatch, selectedKey, value.index, value.timestamp);
       } else {
         EditStats_deleteLengthStat(dispatch, selectedKey, value.index, value.timestamp);

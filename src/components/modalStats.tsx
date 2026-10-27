@@ -3,7 +3,8 @@ import { View } from "react-native";
 
 import { IDispatch } from "../ducks/types";
 import { MenuItemEditable } from "./menuItemEditable";
-import { ISettings, IStatsLength, IStatsPercentage, IStatsWeight } from "../types";
+import { ISettings, IStatsLength, IStatsPercentage, IStatsWeight, statsPercentageDef } from "../types";
+import { Stats_name } from "../models/stats";
 import {
   EditStats_toggleWeightStats,
   EditStats_toggleLengthStats,
@@ -49,12 +50,15 @@ export function ModalStatsContent(props: IModalStatsProps): JSX.Element {
           type="boolean"
           value={`${statsEnabled.weight.weight}`}
         />
-        <MenuItemEditable
-          onChange={savePercentage("bodyfat")}
-          name="Bodyfat"
-          type="boolean"
-          value={`${statsEnabled.percentage.bodyfat}`}
-        />
+        {statsPercentageDef.map((key) => (
+          <MenuItemEditable
+            key={key}
+            onChange={savePercentage(key)}
+            name={Stats_name(key)}
+            type="boolean"
+            value={`${statsEnabled.percentage[key]}`}
+          />
+        ))}
         <MenuItemEditable
           onChange={saveLength("neck")}
           name="Neck"

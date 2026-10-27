@@ -144,15 +144,15 @@ export function ScreenBodyScans(): JSX.Element {
     if (stats.weight != null) {
       EditStats_addWeightStats(dispatch, { weight: stats.weight }, scan.timestamp);
     }
-    if (stats.bodyfat != null) {
-      EditStats_addPercentageStats(dispatch, { bodyfat: stats.bodyfat }, scan.timestamp);
+    if (Object.keys(stats.percentage).length > 0) {
+      EditStats_addPercentageStats(dispatch, stats.percentage, scan.timestamp);
     }
     setForm({});
     setPickedModes({});
   };
 
   const remove = async (id: number): Promise<void> => {
-    if (await Dialog_confirm("Delete this scan? Weight and body fat stay in Body measurements.")) {
+    if (await Dialog_confirm("Delete this scan? Weight, body fat, water, bone and muscle stay in Body measurements.")) {
       await BodyScanStore_update((l) => BodyScans_remove(l, id));
     }
   };

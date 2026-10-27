@@ -1,4 +1,14 @@
-import { IPercentage, ISettings, IStats, IStatsHealthKey, IStatsKey, IWeight } from "../types";
+import {
+  IPercentage,
+  ISettings,
+  IStats,
+  IStatsEnabled,
+  IStatsHealthKey,
+  IStatsKey,
+  IStatsPercentageKey,
+  IWeight,
+  statsPercentageDef,
+} from "../types";
 import { CollectionUtils_sort, CollectionUtils_sortBy } from "../utils/collection";
 import { ObjectUtils_keys } from "../utils/object";
 import { Weight_add, Weight_build, Weight_divide } from "./weight";
@@ -35,6 +45,12 @@ export function Stats_name(key: IStatsKey | IStatsHealthKey): string {
       return "Bodyweight";
     case "bodyfat":
       return "Bodyfat";
+    case "water":
+      return "Body water";
+    case "bone":
+      return "Bone mass";
+    case "muscle":
+      return "Muscle mass";
     case "sleep":
       return "Sleep";
     case "calories":
@@ -42,6 +58,23 @@ export function Stats_name(key: IStatsKey | IStatsHealthKey): string {
     case "protein":
       return "Protein";
   }
+}
+
+export function Stats_isPercentageKey(key: string): key is IStatsPercentageKey {
+  return (statsPercentageDef as readonly string[]).includes(key);
+}
+
+// A reading the user switched off is saved as false and stays off.
+export function Stats_turnOnScaleReadings(enabled: IStatsEnabled): IStatsEnabled {
+  const percentage = { ...enabled.percentage };
+  for (const key of statsPercentageDef) {
+    percentage[key] = percentage[key] ?? true;
+  }
+  return {
+    ...enabled,
+    weight: { ...enabled.weight, weight: enabled.weight.weight ?? true },
+    percentage,
+  };
 }
 
 export function Stats_getCurrentBodyweight(stats: IStats): IWeight | undefined {

@@ -145,6 +145,44 @@ describe("DailyChecklist", () => {
     expect(weighIn("2026-10-29", thursdayWeight).done).to.equal(false);
   });
 
+  it("does not count the onboarding start weight as a weigh-in", () => {
+    const onboardedAt = at("2026-10-21", 19);
+    const onboarded: IStats = {
+      weight: { weight: [{ vtype: "stat", value: { value: 73, unit: "kg" }, timestamp: onboardedAt }] },
+      length: {},
+      percentage: {},
+    };
+    const weighIn = (day: string, withStats: IStats = onboarded): IChecklistDayInput =>
+      input({ day, today: day, stats: withStats, goalStartedAt: onboardedAt });
+    for (const day of ["2026-10-21", "2026-10-24", "2026-10-27"]) {
+      const item = DailyChecklist_build(weighIn(day)).items[2];
+      expect(item.isDone).to.equal(false);
+      expect(item.subtitle).to.equal("Weekly, every Wednesday · Last: 73 kg");
+    }
+    const logged: IStats = {
+      ...onboarded,
+      weight: {
+        weight: [
+          { vtype: "stat", value: { value: 73.4, unit: "kg" }, timestamp: at("2026-10-27", 7) },
+          ...onboarded.weight.weight!,
+        ],
+      },
+    };
+    const item = DailyChecklist_build(weighIn("2026-10-27", logged)).items[2];
+    expect(item.isDone).to.equal(true);
+    expect(item.subtitle).to.equal("Done this week · 73.4 kg");
+    const sameDayAtMidnight: IStats = {
+      ...onboarded,
+      weight: {
+        weight: [
+          { vtype: "stat", value: { value: 72.9, unit: "kg" }, timestamp: at("2026-10-21", 0) },
+          ...onboarded.weight.weight!,
+        ],
+      },
+    };
+    expect(DailyChecklist_build(weighIn("2026-10-21", sameDayAtMidnight)).items[2].isDone).to.equal(true);
+  });
+
   it("picks the weigh-in weekday from the goal, else the first day of the week", () => {
     expect(DailyChecklist_weighInWeekday(at("2026-10-01"), false)).to.equal(4);
     expect(DailyChecklist_weighInWeekday(undefined, false)).to.equal(0);
