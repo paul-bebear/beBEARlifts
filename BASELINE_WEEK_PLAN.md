@@ -13,6 +13,7 @@ Read-only findings come from the worktree at master `8bece8d0`. The owner's word
 - The baseline week is sunk cost. Use it, with leaderboards and other social data views, to keep users consistent.
 - Every new user is a cub and gets a number. The owner is admin, player 0.
 - A pool of bear GIFs for the share cards after a workout, like Liftoff's social cards.
+- Later the same day, on the house plan: "we can let them choose the pace, we'll develop the goals more individually later but that would be cool that after the baseline we can then break it down into tiny goals that is tailored to each person."
 
 ## 2. What the code does today
 
@@ -160,7 +161,7 @@ The regular plan also carries the user's `rm1` values, written by the tests, so 
 
 The owner's rule: the goal is always to gain weight. The food model keeps all three kinds, because `FoodTargets_fromCalories` and the pace maths are sound for all three, and old data must stay readable. The screens show one.
 
-- `ProgramGoal_kinds` keeps the three entries for parsing and labels. A new `ProgramGoal_offeredKinds` returns `buildMuscle` alone, and the goal wizard's "goal" step leaves `GoalWizard_steps`. The wizard opens on activity, then body fat, then the pace. `GoalWizard_start` sets `kind` to `buildMuscle` when there is no current goal.
+- `ProgramGoal_kinds` keeps the three entries for parsing and labels. A new `ProgramGoal_offeredKinds` returns `buildMuscle` alone, and the goal wizard's "goal" step leaves `GoalWizard_steps`. The wizard opens on activity, then body fat, then the pace. `GoalWizard_start` sets `kind` to `buildMuscle` when there is no current goal. The whiteboard's goal lines open it in pace mode only, as `HOUSE_HOME_PLAN.md` decided.
 - `OnboardingAnswers_goalKind` returns `buildMuscle` for every plan goal. A user who picks "Strength" still gets the heavy template; only the food side changes, and it was already gain in `OnboardingAnswers_body`.
 - `onboardingQuestions.tsx` and `.native.tsx` lose the "What is your weight goal?" fieldset. `foodGoal` in `IOnboardingAnswers` stays in the type for one release and is always `gain`.
 - An existing goal of kind `loseFat` or `maintain` stays as it is. The whiteboard shows it until the user taps the goal line and the wizard saves a `buildMuscle` goal. The owner decides whether the app changes them on its own in the open questions.
@@ -176,6 +177,15 @@ Ten days of the user's own numbers are the hook. Every view that shows a gain na
 - The leaderboard is batch L2 in `BEAR_WORLD_PLAN.md`, by lifetime kg, friends first, opt-in. It needs `counted_days` from U2. This plan adds nothing to it except the cub number on each row.
 - The cohort board. The cub number gives a cohort for nothing: "Cubs 400 to 420 · 14 of 21 trained this week". No name, no rank, one count. It is a security definer function `cohort_active(p_from bigint, p_to bigint)` over `workout_posts` in the week, returning two integers, and a line under the TV. It comes after U2 so it can read `counted_days` instead of posts, and it sits in the follow-up list.
 - The percentile line from the Liftoff teardown, "Top 28 percent of cubs this week by workouts", reads the same `counted_days` and sits in the same follow-up.
+
+Tiny goals after the baseline. The owner wants the one goal, gain weight, broken into small goals tailored to each person once the baseline is in. The pace stays the user's choice, as `HOUSE_HOME_PLAN.md` decided: the whiteboard's goal lines open the goal wizard in pace mode only. The tiny goals come after, and the owner said "later", so they are a follow-up with the shape fixed here.
+
+- The source is the baseline card. Every tiny goal is a number the baseline measured plus a step the plan can deliver in 2 to 4 weeks.
+- Four kinds. A lift: "Squat 110 → 120 lb by November 24", the `lp` or `dp` step times the planned sessions. Bodyweight: "61.0 → 61.5 kg by November 10", from the pace's weekly percent. Food: "Protein on target 5 days this week". Showing up: "4 workouts this week", from the plan's days.
+- At most three at a time, one of them always a lift. A done goal is replaced by the next step the same day, so the list never empties.
+- `src/models/tinyGoals.ts` owns it: `TinyGoals_from(result, goal, params, today)` builds the first three, `TinyGoals_progress(goals, history, stats, foodLog, today)` scores them, `TinyGoals_next(goals, progress, today)` replaces a done or expired one. `test/tinyGoals.test.ts` covers a gym week, a bodyweight-only week, a missed week and the replacement rule.
+- Where they show: a "Goals" section at the top of the bear panel, which the bed opens, and the share card when one is done. The whiteboard keeps its eight lines.
+- About 10 hours on Opus, after piece S, because it reads `BaselineResult_from`.
 
 ## 9. The cub number
 
@@ -267,6 +277,7 @@ Order: L now. W and C after their house dependencies merge, beside each other. S
 Not in the build split. Each names where it lands.
 
 - The bear GIFs for the share cards. A Codex art handoff plus a build batch, after the house. The art: one 24-frame loop at 12 frames a second of the pumped pose, for the four sizes small, medium, big and space, on the male and female lines, brown fur, 8 loops in all, each a PNG sequence at 1024 by 1536 with a transparent background and a `check-<size>.png` contact sheet, the character identical to `images/bear/male/pumped-big.png` and its siblings. Codex runs on Sol, never Astra. The prompt sketch: "Animate this exact bear. A short flex-and-breathe loop, 24 frames, the camera and the floor fixed, the first frame equal to the still so the loop can start from the card. Deliver the frames and a contact sheet." The build: `src/models/shareCardMotion.ts` picks the loop by size and line and gives the frame list, `test/shareCardMotion.test.ts`, a sprite sheet per loop under `images/bear/motion/` converted to webp, the card's bear slot plays the sheet in the pager, and the export writes a GIF through a JS encoder on web and through ImageIO's `CGImageDestination` with the GIF type in a small native module on iOS, with the still as the fallback. About 14 hours of code once the art is on disk. Black and polar fur and the other moods wait for the first loops to be seen.
+- Tiny goals, as shaped in "The sunk cost and the social views". `src/models/tinyGoals.ts` and its test, the bear panel section, the share card. About 10 hours on Opus, after piece S.
 - The cohort board and the percentile line, after U2 lands `counted_days`. One function, one line under the TV, about 5 hours.
 - The leaderboard L2 gains the cub number on each row. One line in its brief when it is written.
 - The age rating and the under-18 copy. A pass over every line a 15 year old reads, against App Store age ratings and the no-supplement rule. Half a day, in the App Store checklist in `docs/appstore-checklist.md`.
