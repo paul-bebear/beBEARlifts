@@ -4,10 +4,13 @@ import { IBearState } from "../models/bear";
 import { BearArt_sprite } from "../models/bearArt";
 import { IBearBoardLine, IBearBoardTarget } from "../models/bearBoard";
 import { BearHouse_art, BearHouse_tap, IBearHouseObject, IBearHouseOpenTarget } from "../models/bearHouse";
-import { BearScene_breathing, BearScene_breathingPivot, BearScene_layout } from "../models/bearScene";
+import { BearScene_breathing, BearScene_breathingPivot, BearScene_layout, IBearSceneArt } from "../models/bearScene";
+import { HouseArrange_initial, HouseArrange_scene, IHouseArrangeState } from "../models/houseArrange";
 import { BearImage_uri } from "../utils/bearImage";
+import { HouseArrangeFlag_isOn } from "../utils/houseArrangeFlag";
 import { useBearBreathing } from "../utils/useBearBreathing";
 import { BearSceneBoard, BearSprite, HouseObjectView, HousePill } from "./bearSceneParts";
+import { HouseArrange } from "./houseArrange";
 import { HouseFrameView } from "./houseFrameView";
 
 const noteMs = 3000;
@@ -31,14 +34,25 @@ interface INote {
 // The home: the room, its objects, the whiteboard and the bear, filling the screen. A padlocked object answers
 // with the day it opens, for three seconds, under the object.
 export function BearHouseScene(props: IProps): JSX.Element {
+  const [arrange, setArrange] = useState<IHouseArrangeState | undefined>(() =>
+    HouseArrangeFlag_isOn() ? HouseArrange_initial(props.room) : undefined
+  );
+  const shown = arrange != null ? HouseArrange_scene(arrange) : { ...props, art: BearHouse_art };
   return (
-    <HouseFrameView testID="bear-house" wall={props.wall}>
-      {(width) => <HouseArt {...props} width={width} />}
+    <HouseFrameView testID="bear-house" wall={shown.wall}>
+      {(width) => <HouseArt {...props} {...shown} width={width} arrange={arrange} onArrange={setArrange} />}
     </HouseFrameView>
   );
 }
 
-function HouseArt(props: IProps & { width: number }): JSX.Element {
+interface IArtProps extends IProps {
+  width: number;
+  art: IBearSceneArt;
+  arrange: IHouseArrangeState | undefined;
+  onArrange: (state: IHouseArrangeState) => void;
+}
+
+function HouseArt(props: IArtProps): JSX.Element {
   const [note, setNote] = useState<INote | undefined>(undefined);
   const { state } = props;
   const breathing = BearScene_breathing(state.mood);
@@ -46,14 +60,14 @@ function HouseArt(props: IProps & { width: number }): JSX.Element {
   const spritePath = BearArt_sprite(state.line, state.fur, state.level.tier.level, state.mood);
   const layout = BearScene_layout(
     props.width,
-    BearHouse_art,
+    props.art,
     state.level.tier.level,
     state.level.fraction,
     spritePath,
     breathing.scaleY
   );
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
-  const unit = layout.width / BearHouse_art.canvas.width;
+  const unit = layout.width / props.art.canvas.width;
 
   useEffect(() => {
     if (note == null) {
@@ -76,8 +90,8 @@ function HouseArt(props: IProps & { width: number }): JSX.Element {
       .filter((o) => o.layer === layer)
       .map((o) => <HouseObjectView key={o.id} object={o} unit={unit} onPress={press} />);
   const noteAt = props.objects.find((o) => o.id === note?.id)?.pillAt ?? {
-    x: BearHouse_art.canvas.width / 2,
-    y: BearHouse_art.foot.y,
+    x: props.art.canvas.width / 2,
+    y: props.art.foot.y,
   };
 
   return (
@@ -114,6 +128,9 @@ function HouseArt(props: IProps & { width: number }): JSX.Element {
           sceneWidth={layout.width}
           isNote={true}
         />
+      )}
+      {props.arrange != null && (
+        <HouseArrange state={props.arrange} objects={props.objects} unit={unit} onChange={props.onArrange} />
       )}
     </View>
   );
