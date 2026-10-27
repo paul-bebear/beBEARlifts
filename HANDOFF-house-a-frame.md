@@ -31,7 +31,7 @@ The views after that.
 
 ## What you do not decide
 
-The owner decided these on 2026-10-27, so build them as written. Full screen, no header, no scroll, nothing under the house. The phone opens Settings and More. The goal, the labels and the marker font are pieces B and C and you do not touch `BoardLine`, `pill`, or the fonts. The "+" footer stays unless the owner's answer in `HOUSE_HOME_PLAN.md` says it goes.
+The owner decided these on 2026-10-27, so build them as written. Full screen, no header, no scroll, nothing under the house. The phone opens Settings and More. The "+" footer stays. The rooms and the gyms both go tall. The goal, the labels and the marker font are pieces B and C and you do not touch `BoardLine`, `pill`, or the fonts.
 
 Change nothing about kg, levels, honey, badges or billing. Add no objects. Add no tab.
 

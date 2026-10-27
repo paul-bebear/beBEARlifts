@@ -39,19 +39,19 @@ Full screen.
 - On a 393 by 852 iPhone the art is 393 by 884 pt and loses 32 pt of ceiling. On a 375 by 667 iPhone SE it loses 177 pt of ceiling. On an iPad at 820 by 1180 pt the old region is whole, with 17 pt of wall colour on each side. On the web the same rule gives a centred column, which is how the owner tests on Safari.
 - `HouseFrame_safeRect(fit, insets)` returns the part of the canvas inside the safe area. `test/houseFrame.test.ts` checks the three devices above and that every object rect in `manifest.json` lies inside the safe rect on the iPhone with a 59 pt top inset and a 34 pt bottom inset.
 - The bear stands on `bearFoot`, moved down by 448 like everything else. `BearScene_layout` takes the canvas as an argument instead of reading `BearScene_canvas`, and the gym keeps its own.
-- During a workout the scene is the gym, as `BearScene_place` decides today. The gym goes full screen through the same `HouseFrame_fit`, with the seven gym pictures extended the same way. Until the tall gym art is on disk the gym scene shows the old picture at the screen's width, anchored to the floor, with the ceiling strip in the gym's wall colour. That is an open question below.
-- The "+" stays where it is, bottom right over the floor, unless the owner removes it in the open questions. It covers canvas x 826 to 982, y 2017 to 2304, which no object slot touches.
+- During a workout the scene is the gym, as `BearScene_place` decides today. The gym goes full screen through the same `HouseFrame_fit`, with the seven gym pictures extended the same way. The owner confirmed on 2026-10-27: everything extended, 14 Codex files. Until the tall gym art is on disk the gym scene shows the stopgap picture with the ceiling strip in the gym's wall colour.
+- The "+" stays where it is, bottom right over the floor. The owner's call on 2026-10-27: keep it for now, maybe remove it later. It covers canvas x 826 to 982, y 2017 to 2304, which no object slot touches.
 
 What leaves the screen, and where each thing goes.
 
 - The "My bear" title: gone. The bear's name shows in the bear panel, which the bed opens.
 - The gear: gone. Settings opens from the phone on the dock, below.
 - "Today's food" and `FoodSummaryCard`: gone. The bowl opens the Journal on today's meals, as it does now.
-- The goal card: the whiteboard's goal lines, below. A tap on them opens the goal wizard in goal mode, which includes the pace step. Change pace alone stays in the goal wizard and in More.
+- The goal card: the whiteboard's goal lines, below. A tap on them opens the goal wizard in pace mode, because the owner decided on 2026-10-27 that the goal is always to gain weight and the user picks only the pace. The card's Change menu never worked on iOS: `MyBearSections` pushes `goalWizard` with no tab, and only `GraphsStack` registers it, the same fault as the gear. The new tap passes `{ tab: "graphs" }`.
 - The reports link, "More": a row in the phone sheet.
 - `SeasonNudgeCard`: its line, "900 kcal left", goes on the bowl's pill in bulk season after 18:00, as `BEAR_WORLD_PLAN.md` already says. Its snack rows move to the top of the Journal's meals for today, so a tap on the bowl lands on them.
 - `CloudRestoreBanner`, offline builds only: the first row of the phone sheet while a restore is pending.
-- The "+": stays, with its four actions, unless the owner says no. If it goes, Food is the bowl, Weight is the scale, Start workout is the door, Resume workout is the bear in the gym scene, and Run becomes a second button on the door's bag check sheet.
+- The "+": stays, with its four actions. When the owner removes it later, Food is the bowl, Weight is the scale, Start workout is the door, Resume workout is the bear in the gym scene, and Run becomes a second button on the door's bag check sheet.
 
 The phone on the dock.
 
@@ -72,12 +72,12 @@ The lines, in order, from `BearBoard_lines`.
 - Level 5 · 48,000 kg to Strong. Target `bear`.
 - Lifted 310,000 kg since day one. Target `bear`.
 
-That is eight lines on a board that is 269 by 184 pt on the iPhone. The ink height stays 152 pt, so each line gets 19 pt and the font is 13 pt. The marker font is wider than Poppins, so the Eat line at 13 pt needs 230 pt and fits with 39 pt to spare. Dropping the weight trend line gives 15 pt type and is an open question.
+That is eight lines on a board that is 269 by 184 pt on the iPhone. The ink height stays 152 pt, so each line gets 19 pt and the font is 13 pt. Permanent Marker is about 30 percent wider than Poppins, so the Eat line at 13 pt needs about 265 pt of the 269 available. Each line therefore sets `adjustsFontSizeToFit` with `minimumFontScale: 0.8`, so a long line shrinks to 10.4 pt instead of cutting off. The owner keeps all eight lines.
 
 - `IBearBoardTarget` becomes `"plus" | "goal" | "bear"`. `BearBoard_goalLines(goal, units, now)` builds the two goal lines. The date format is the full month name and the day, "October 21", and gains the year when it is not this year, "October 21, 2025". `test/bearBoard.test.ts` covers a goal with a start weight, a goal without one, and no goal.
-- `openBoardTarget` in `screenHome.tsx` sends `goal` to `Thunk_pushScreen("goalWizard", { mode: "goal" }, { tab: "graphs" })`.
-- The marker font. Two candidates, both free to bundle. Kalam, SIL Open Font License 1.1, by the Indian Type Foundry, three weights, reads as a felt-tip marker and is narrow enough for eight lines. Permanent Marker, Apache License 2.0, by Font Diner, one weight, is the classic whiteboard marker and about 15 percent wider. The owner picks in the open questions. Kalam ships with Devanagari and is about 400 KB a weight, so the build subsets it to Latin with `pyftsubset` from fonttools, about 40 KB a weight. Permanent Marker is 70 KB as is.
-- The files go to `assets/fonts`, `ios/Fonts`, `android/app/src/main/assets/fonts`, and the names into `UIAppFonts` in `ios/Liftosaur/Info.plist`. The licence text goes next to the files as `OFL.txt` or `LICENSE.txt`. `BoardLine` draws with `TextRaw` and `fontFamily: "Kalam-Bold"` for the to-do lines and `"Kalam-Regular"` for the rest, or `"PermanentMarker-Regular"` for all. The check mark is drawn with two `View` strokes in the marker ink, because handwriting fonts have no check glyph.
+- `openBoardTarget` in `screenHome.tsx` sends `goal` to `Thunk_pushScreen("goalWizard", { mode: "pace" }, { tab: "graphs" })`. Without a goal it sends `{ mode: "goal" }`, so a new user can set one.
+- The marker font is Permanent Marker, Apache License 2.0, by Font Diner, one weight, 70 KB. The owner asked for "a whiteboard or permanent marker" look on 2026-10-27. Kalam, OFL, was the narrower alternative and is dropped. Before the font lands in a build, piece B renders the board at 393 pt width with Pillow and attaches the PNG to its PR, so the owner can veto the look from the PR page.
+- The file goes to `assets/fonts`, `ios/Fonts`, `android/app/src/main/assets/fonts`, and its name into `UIAppFonts` in `ios/Liftosaur/Info.plist`. The licence text goes next to it as `PermanentMarker-LICENSE.txt`. `BoardLine` draws with `TextRaw` and `fontFamily: "PermanentMarker-Regular"`. The to-do lines stay darker than the rest through opacity, as today, because the font has one weight. The check mark is drawn with two `View` strokes in the marker ink, because handwriting fonts have no check glyph.
 - The ink colour stays `markerInk`, `#1F3A5F`. A done line keeps the strike-through.
 
 ## 5. Labels
@@ -159,18 +159,20 @@ The owner added direction while this plan was in review. None of it changes piec
 - Every new user is a cub with a number, and the owner is player 0. In the house that is a number plate on the door, "Cub 412", drawn by the app over the door art the way the scale's number is. It needs a server counter in Supabase and a signed-in account, so it goes with the onboarding plan, and the door's slot in the arrange tool should leave room for it.
 - A pool of bear GIFs for the cards after a workout, in the style of Liftoff's social cards. The reference is the 71 Liftoff screenshots in `~/Downloads/Screenshots for gym app/Liftoff/` and the teardown in `docs/research/liftoff-in-app.md`, which is git-ignored. The share cards in `src/components/shareCards/` export a still through `shareCardExport.ts` today. An animated card needs the bear animated by Codex, one short loop per mood and size, and an export path that writes a GIF or a short MP4. That is a Codex art handoff and a build batch of its own, after the house, and it goes into `BASELINE_WEEK_PLAN.md`'s follow-up list so it is not lost.
 
-## 10. Open questions
+## 10. Decisions
 
-One decision each. The owner's own words already answer the title, the gear, "Today's food" and no scrolling.
+Answered by the owner on 2026-10-27, and now in the plan.
 
-- The "+" button. Keep it bottom right, as decided on 2026-10-26, or remove it with the rest of the bottom? If removed, Run moves to the door's bag check sheet and Resume workout to the bear in the gym.
-- Settings and More. The phone on the dock from day 0, opening a sheet with Settings, More and Friends. Yes, or a different object?
-- The goal card. Replaced by the two whiteboard lines, with a tap opening the goal wizard. Yes or no?
-- The season nudge card. Removed from the home; its line goes on the bowl's pill in bulk season after 18:00 and its snack rows into the Journal's meals. Yes or no?
-- The whiteboard's eight lines. Keep all eight at 13 pt, or drop the weight trend line for 15 pt type? The scale shows the weight and the goal line shows the start weight.
-- The marker font. Kalam, OFL, narrower, or Permanent Marker, Apache 2.0, the classic look?
-- Labels. No pill on open objects, only the three empty-state calls to action, "New", and the lock note, with a one-time tour. Yes, or keep a label on some objects?
-- The gym during a workout. Extend the seven gym pictures too, 14 Codex files in all, or leave the gym at the old size for now with a wall-colour strip above it?
-- The arrange tool. Build it now in piece D, or not yet?
+- The "+" stays for now. Maybe it goes later.
+- The phone on the dock is Settings, More and Friends from day 0.
+- The goal card goes. The board shows the goal lines, and a tap lets the user pick the pace. Goals get developed per person later: after the baseline week, the app breaks the goal into tiny goals tailored to each user. That belongs to `BASELINE_WEEK_PLAN.md` (PR 162).
+- The whiteboard keeps all eight lines, in Permanent Marker, shrinking a long line instead of cutting it.
+- No pill on open objects. The tour explains them once.
+- Everything extended: the seven rooms and the seven gyms.
 
-Next action: answer the nine questions in the session, then the plan PR opens.
+Still open, one decision each.
+
+- The season nudge card. It is the bulk-season helper from `src/models/seasonNudge.ts`: when the season changes it offers the new food targets, and late in a bulk day with kcal left it lists three one-tap snacks, the Bear shake, mixed nuts and a peanut butter sandwich, that add themselves to the food log. The plan removes it from the home, puts its "900 kcal left" line on the bowl's pill, and moves the snack rows into the Journal's meals for today. Yes or no?
+- The arrange tool. The owner asked to move objects around the house instead of describing positions. The tool is a web-only mode, `?arrange=1` on the preview URL in Safari on the iPhone, where every object drags, two buttons scale it, and "Copy manifest" puts the positions on the clipboard as text to paste into a session. It never ships in the iOS app. Build it now as piece D, 6 hours, or not yet?
+
+Next action: answer the two questions in the session, then the four build cards follow.
