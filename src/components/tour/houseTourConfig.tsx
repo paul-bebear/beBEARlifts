@@ -22,6 +22,8 @@ const dayZero = BearHouse_objects(
     honeyEarned: 0,
     badgeCount: 0,
     isOffline: false,
+    signedIn: true,
+    cubPlate: "?",
   },
   undefined
 );

@@ -5,6 +5,7 @@ import { ActiveSheetHeightProvider } from "../navigation/ActiveSheetHeightContex
 import { reducerWrapper, defaultOnActions, IAction } from "../ducks/reducer";
 import { Dialog_alert } from "../utils/dialog";
 import { PlanFollowsSignIn_start } from "../utils/planFollowsSignIn";
+import { CubClient_followSignIn } from "../utils/cubClient";
 import { Program_getProgram } from "../models/program";
 import { useThunkReducer } from "../utils/useThunkReducer";
 import {
@@ -336,6 +337,7 @@ export function AppView(props: IProps): JSX.Element | null {
   }, []);
 
   useEffect(() => PlanFollowsSignIn_start(), []);
+  useEffect(() => CubClient_followSignIn(), []);
 
   const onNavigationStateChange = useCallback((navState: NavigationState | undefined) => {
     const screenName = getScreenNameFromNavState(navState);

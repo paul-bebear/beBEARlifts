@@ -2,6 +2,7 @@ import { IHistoryRecord, ISettings, ISet, IUnit, IWeight } from "../types";
 import { IBearMood, IBearState } from "./bear";
 import { IBearFur, IBearLine } from "./bearStoreData";
 import { BearTier_byLevel } from "./bearTier";
+import { CubNumber_parseNumber } from "./cubNumber";
 import { Exercise_get, Exercise_toKey } from "./exercise";
 import {
   History_getMaxWeightSetFromEntry,
@@ -29,7 +30,7 @@ export interface IPostBear {
 }
 
 export interface IWorkoutPostSummary {
-  version: 1 | 2 | 3;
+  version: 1 | 2 | 3 | 4;
   programName?: string;
   dayName: string;
   startedAt: number;
@@ -41,12 +42,14 @@ export interface IWorkoutPostSummary {
   keptSongs?: number;
   bear?: IPostBear;
   songs: string[];
+  cub?: number;
 }
 
 export interface IWorkoutPostExtras {
   keptSongs?: number;
   songs?: string[];
   bear?: IBearState;
+  cub?: number;
 }
 
 const maxExercises = 20;
@@ -103,7 +106,7 @@ export function WorkoutPost_build(
     }
   }
   return {
-    version: 3,
+    version: 4,
     programName: record.programName || undefined,
     dayName: record.dayName,
     startedAt: record.startTime,
@@ -115,6 +118,7 @@ export function WorkoutPost_build(
     keptSongs: keptSongs != null && keptSongs > 0 ? keptSongs : undefined,
     bear: extras?.bear != null ? postBear(record, extras.bear) : undefined,
     songs: songTitles(extras?.songs),
+    cub: extras?.cub,
   };
 }
 
@@ -205,7 +209,7 @@ function songTitles(raw: unknown): string[] {
   return result;
 }
 
-function parseBear(raw: unknown, version: 2 | 3): IPostBear | undefined {
+function parseBear(raw: unknown, version: 2 | 3 | 4): IPostBear | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const level = num(r.level);
   const countedKg = num(r.countedKg);
@@ -214,7 +218,7 @@ function parseBear(raw: unknown, version: 2 | 3): IPostBear | undefined {
     return undefined;
   }
   const line = r.line === "male" || r.line === "female" ? r.line : undefined;
-  const fur = version === 3 && (r.fur === "black" || r.fur === "polar") ? r.fur : "brown";
+  const fur = version >= 3 && (r.fur === "black" || r.fur === "polar") ? r.fur : "brown";
   return { level, mood, countedKg: Math.max(0, Math.round(countedKg)), ...(line != null ? { line } : {}), fur };
 }
 
@@ -238,6 +242,15 @@ function postSets(raw: unknown): IPostSet[] {
   return result;
 }
 
+// An app before version 4 reads a version 4 post as version 1, without the bear. Reading every later
+// version as 4 keeps this app's bears when a newer app bumps the version again.
+function postVersion(raw: unknown): IWorkoutPostSummary["version"] {
+  if (typeof raw === "number" && raw >= 4) {
+    return 4;
+  }
+  return raw === 2 || raw === 3 ? raw : 1;
+}
+
 // A friend's app writes the summary, so every field is checked before the feed shows it.
 export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -247,7 +260,7 @@ export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined
   if (dayName == null || startedAt == null || volume == null) {
     return undefined;
   }
-  const version = r.version === 2 || r.version === 3 ? r.version : 1;
+  const version = postVersion(r.version);
   return {
     version,
     programName: text(r.programName),
@@ -261,5 +274,6 @@ export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined
     keptSongs: num(r.keptSongs),
     bear: version !== 1 ? parseBear(r.bear, version) : undefined,
     songs: version !== 1 ? songTitles(r.songs) : [],
+    cub: version >= 4 ? CubNumber_parseNumber(r.cub) : undefined,
   };
 }

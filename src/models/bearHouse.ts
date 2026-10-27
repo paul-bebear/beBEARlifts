@@ -33,6 +33,7 @@ export type IBearHouseScreen = "friends" | "stats" | "music" | "streak" | "progr
 export type IBearHouseTarget =
   | { kind: "plus" }
   | { kind: "door" }
+  | { kind: "signIn" }
   | { kind: "bearPanel" }
   | { kind: "journal" }
   | { kind: "monthCalendar" }
@@ -45,7 +46,7 @@ export type IBearHouseTarget =
 export type IBearHouseOpenTarget = Exclude<IBearHouseTarget, { kind: "line" }>;
 
 export interface IBearHouseOverlay {
-  kind: "tv" | "number" | "badge";
+  kind: "tv" | "number" | "badge" | "plate";
   rect: IBearRect;
   text?: string;
 }
@@ -80,6 +81,8 @@ export interface IBearHouseSources {
   honeyEarned: number;
   badgeCount: number;
   isOffline: boolean;
+  signedIn: boolean;
+  cubPlate: string;
 }
 
 export interface IBearHouseSourcesInput {
@@ -93,6 +96,8 @@ export interface IBearHouseSourcesInput {
   honeyEarned: number;
   badgeCount: number;
   isOffline: boolean;
+  signedIn: boolean;
+  cubPlate: string;
   now: number;
 }
 
@@ -121,6 +126,19 @@ const tvScreens: Record<string, IBearRect> = {
 const scaleDisplay: IBearRect = [0.36, 0.04, 0.64, 0.17];
 const calendarGrid: IBearRect = [0.2, 0.3, 0.8, 0.9];
 const phoneBadge: IBearRect = [0.7, -0.04, 1.02, 0.2];
+
+// Where a house number sits on each door, as a share of the trimmed image: eye height, centred, clear of the
+// handle, the mansion's lintel and the space door's lock. The plate keeps one size on every door, so a number
+// on the small round space door reads as well as on the trailer's. 26 canvas units is the pills' font size.
+const doorPlateCenters: Record<string, [number, number]> = {
+  "door-home-trailer": [0.5, 0.25],
+  "door-home-apartment": [0.5, 0.22],
+  "door-home-loft": [0.5, 0.25],
+  "door-home-mansion": [0.5, 0.27],
+  "door-home-space": [0.5, 0.3],
+};
+const plateFont = 26;
+const plateHeight = 38;
 
 const arrivals: Partial<Record<IBearHouseObjectId, number>> = {
   calendar: 3,
@@ -191,6 +209,8 @@ export function BearHouse_sources(input: IBearHouseSourcesInput): IBearHouseSour
     honeyEarned: input.honeyEarned,
     badgeCount: input.badgeCount,
     isOffline: input.isOffline,
+    signedIn: input.signedIn,
+    cubPlate: input.cubPlate,
   };
 }
 
@@ -237,21 +257,47 @@ function inside(box: IBearRect, share: IBearRect): IBearRect {
   return [round(x1 + share[0] * w), round(y1 + share[1] * h), round(x1 + share[2] * w), round(y1 + share[3] * h)];
 }
 
+export function BearHouse_plateWidth(text: string): number {
+  return Math.max(58, Math.round(text.length * plateFont * 0.62 + 30));
+}
+
+function plateRect(door: IBearRect, image: string, text: string): IBearRect {
+  const [x1, y1, x2, y2] = door;
+  const [cx, cy] = doorPlateCenters[image] ?? [0.5, 0.25];
+  const x = x1 + cx * (x2 - x1);
+  const y = y1 + cy * (y2 - y1);
+  const halfWidth = BearHouse_plateWidth(text) / 2;
+  return [round(x - halfWidth), round(y - plateHeight / 2), round(x + halfWidth), round(y + plateHeight / 2)];
+}
+
+type IOverlaySpec = Omit<IBearHouseOverlay, "rect"> & ({ share: IBearRect } | { plateOn: string });
+
 interface IObjectSpec {
   id: IBearHouseObjectId;
   image?: string;
   label: string;
   pill?: string;
   target: IBearHouseTarget;
-  overlay?: Omit<IBearHouseOverlay, "rect"> & { share: IBearRect };
+  overlay?: IOverlaySpec;
+}
+
+function overlayRect(spec: IOverlaySpec, rect: IBearRect): IBearRect {
+  return "share" in spec ? inside(rect, spec.share) : plateRect(rect, spec.plateOn, spec.text ?? "");
 }
 
 function specs(tier: IBearHouseTier, sources: IBearHouseSources): IObjectSpec[] {
   const tv = tvImage(tier);
+  const door = manifest.rooms[tier].door;
   const hasFriends = sources.friendCount > 0;
   const list: IObjectSpec[] = [
     { id: "whiteboard", label: "To-do", target: { kind: "plus" } },
-    { id: "door", image: manifest.rooms[tier].door, label: "Gym", target: { kind: "door" } },
+    {
+      id: "door",
+      image: door,
+      label: "Gym",
+      target: sources.signedIn ? { kind: "door" } : { kind: "signIn" },
+      overlay: { kind: "plate", plateOn: door, text: sources.cubPlate },
+    },
     { id: "bowl", image: bowlImage(sources), label: "Food", target: { kind: "journal" } },
     {
       id: "bed",
@@ -349,7 +395,7 @@ export function BearHouse_objects(
       overlay:
         spec.overlay == null || lock != null
           ? undefined
-          : { kind: spec.overlay.kind, text: spec.overlay.text, rect: inside(rect, spec.overlay.share) },
+          : { kind: spec.overlay.kind, text: spec.overlay.text, rect: overlayRect(spec.overlay, rect) },
     };
   });
 }

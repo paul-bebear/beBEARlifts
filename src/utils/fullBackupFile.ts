@@ -21,6 +21,7 @@ import { BearStore } from "./bearStore";
 import { NotesStore } from "./notesStore";
 import { WeekScheduleStore } from "./weekScheduleStore";
 import { ProgressPhotoStore } from "./progressPhotoStore";
+import { CubStore } from "./cubStore";
 
 export function FullBackupFile_stores(parts: {
   food: IFoodLog;
@@ -44,7 +45,7 @@ export function FullBackupFile_stores(parts: {
 export async function FullBackupFile_build(
   getStorage: () => IStorage
 ): Promise<{ text: string; now: number; stores: ICloudStoresInput }> {
-  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes, schedule, photos] =
+  const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes, schedule, photos, cub] =
     await Promise.all([
       FoodLogStore_loadStrict(),
       MusicStore_loadStrict(),
@@ -60,6 +61,7 @@ export async function FullBackupFile_build(
       NotesStore.loadStrict(),
       WeekScheduleStore.loadStrict(),
       ProgressPhotoStore.loadStrict(),
+      CubStore.loadStrict(),
     ]);
   const now = Date.now();
   const backup = FullBackup_build(
@@ -78,6 +80,7 @@ export async function FullBackupFile_build(
       bear,
       notes,
       schedule,
+      cub,
       photos: ProgressPhotos_index(photos),
     },
     now
@@ -125,6 +128,7 @@ export async function FullBackupFile_restore(contents: IFullBackupContents): Pro
     step(contents.bear, BearStore.load, BearStore.replace),
     step(contents.notes, NotesStore.load, NotesStore.replace),
     step(contents.schedule, WeekScheduleStore.load, WeekScheduleStore.replace),
+    step(contents.cub, CubStore.load, CubStore.replace),
   ]);
   const done: IRestoreStep[] = [];
   for (const s of steps) {

@@ -17,6 +17,7 @@ import { JournalExport_files } from "./journalExport";
 import { FoodLog_dayKey } from "./foodLog";
 import { History_getPersonalRecords } from "./history";
 import { IProgressPhotoIndexEntry, ProgressPhotos_parseIndex } from "./progressPhotos";
+import { CubNumber_empty, CubNumber_parse, ICubState } from "./cubNumber";
 
 export const FullBackup_format = "bebearlifts-backup";
 
@@ -40,6 +41,7 @@ const readme = [
   "runs.runs: GPS runs, newest first. startedAt and endedAt are ms; distanceM is metres; movingMs leaves out pauses; elevationGainM is metres climbed. splits: moving ms for each full km. route: simplified [lat, lon] lines, one per stretch between pauses.",
   "bear: the bebear_bear store. line is male or female. celebratedLevel is the highest level-up shown. seenBadges lists badge ids already shown. spent is the honey spent in the shop.",
   "schedule: the bebear_schedule store. programs maps a program id to 7 entries, Monday first. Each entry is the position of a program day in its week (0 is the first day), or null for a rest day.",
+  "cub: the bebear_cub store. number is the account's cub number in sign-up order, from the server; userId is the account it belongs to; fetchedAt is ms.",
 ].join("\n");
 
 export interface IFullBackup {
@@ -61,6 +63,7 @@ export interface IFullBackup {
   bear: IBearStoreData;
   notes?: INotesLog;
   schedule: IWeekScheduleLog;
+  cub: ICubState;
   photos: IProgressPhotoIndexEntry[];
   journal: Record<string, string>;
 }
@@ -80,6 +83,7 @@ export interface IFullBackupParts {
   bear?: IBearStoreData;
   notes?: INotesLog;
   schedule?: IWeekScheduleLog;
+  cub?: ICubState;
   photos?: IProgressPhotoIndexEntry[];
 }
 
@@ -114,6 +118,7 @@ export function FullBackup_build(parts: IFullBackupParts, now: number): IFullBac
     bear: BearStoreData_parse(parts.bear ?? BearStoreData_empty()),
     notes,
     schedule: WeekSchedule_parse(parts.schedule ?? WeekSchedule_empty()),
+    cub: CubNumber_parse(parts.cub ?? CubNumber_empty()),
     photos: ProgressPhotos_parseIndex(parts.photos ?? []),
     journal,
   };
@@ -138,6 +143,7 @@ export interface IFullBackupContents {
   bear?: IBearStoreData;
   notes?: INotesLog;
   schedule?: IWeekScheduleLog;
+  cub?: ICubState;
   photos?: IProgressPhotoIndexEntry[];
 }
 
@@ -162,6 +168,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
     bear: r.bear != null ? BearStoreData_parse(r.bear) : undefined,
     notes: r.notes != null ? Notes_parse(r.notes) : undefined,
     schedule: r.schedule != null ? WeekSchedule_parse(r.schedule) : undefined,
+    cub: r.cub != null ? CubNumber_parse(r.cub) : undefined,
     photos: r.photos != null ? ProgressPhotos_parseIndex(r.photos) : undefined,
   };
 }

@@ -4,11 +4,13 @@ import { Text } from "./primitives/text";
 import { IBearState } from "../models/bear";
 import { IBearLine } from "../models/bearStoreData";
 import { BearText_levelLine, BearText_levelTitle, BearText_status } from "../models/bearText";
+import { CubNumber_label } from "../models/cubNumber";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 
 interface IProps {
   state: IBearState;
   now: number;
+  cub?: number;
   onLine: (line: IBearLine) => void;
 }
 
@@ -59,6 +61,11 @@ export function BearPanel(props: IProps): JSX.Element {
   const { state } = props;
   return (
     <View className="px-4 pt-3 pb-2" testID="bear-panel" data-testid="bear-panel">
+      {props.cub != null && (
+        <Text className="text-sm font-bold tracking-widest uppercase" testID="bear-cub" data-testid="bear-cub">
+          {CubNumber_label(props.cub)}
+        </Text>
+      )}
       <Text className="text-2xl font-bold" testID="bear-level" data-testid="bear-level">
         {BearText_levelTitle(state.level)}
       </Text>

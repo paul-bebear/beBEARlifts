@@ -70,6 +70,14 @@ export function BearTv(props: { box: IBearBox }): JSX.Element | null {
       >
         {screen.text}
       </Text>
+      {screen.cub != null && (
+        <Text
+          numberOfLines={1}
+          style={{ color: screenInk, fontSize: font * 0.85, lineHeight: Math.round(font * 1.05), textAlign: "center" }}
+        >
+          {screen.cub}
+        </Text>
+      )}
     </View>
   );
 }

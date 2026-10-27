@@ -58,6 +58,8 @@ import { IWeekScheduleLog, WeekSchedule_empty, WeekSchedule_save } from "../src/
 import { IProgressPhotoLog, ProgressPhotos_empty } from "../src/models/progressPhotos";
 import { ProgressPhotoStore } from "../src/utils/progressPhotoStore";
 import * as photoCloud from "../src/utils/progressPhotoCloud";
+import { CubStore } from "../src/utils/cubStore";
+import { CubNumber_empty } from "../src/models/cubNumber";
 
 const now = Date.UTC(2026, 9, 20, 18);
 const session = {
@@ -200,6 +202,9 @@ describe("Cloud backup thunks", () => {
     sinon.stub(WeekScheduleStore, "replace").callsFake(async (value) => {
       schedule = value;
     });
+    sinon.stub(CubStore, "load").resolves(CubNumber_empty());
+    sinon.stub(CubStore, "loadStrict").resolves(CubNumber_empty());
+    sinon.stub(CubStore, "replace").resolves();
   });
 
   function stubRestoreWrites(): void {
@@ -370,6 +375,7 @@ describe("Cloud backup thunks", () => {
       "bear",
       "notes",
       "schedule",
+      "cub",
       "photos",
       "journal"
     );

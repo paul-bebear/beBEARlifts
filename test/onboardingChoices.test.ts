@@ -4,13 +4,16 @@ import {
   OnboardingChoices_dayLabel,
   OnboardingChoices_days,
   OnboardingChoices_places,
-  OnboardingChoices_welcomeLabel,
+  OnboardingChoices_welcomeLine,
 } from "../src/models/onboardingChoices";
 
 describe("OnboardingChoices", () => {
-  it("labels the welcome button Start when signed out and Continue when signed in", () => {
-    expect(OnboardingChoices_welcomeLabel(false)).to.equal("Start");
-    expect(OnboardingChoices_welcomeLabel(true)).to.equal("Continue");
+  it("gives the cub number as the reason to sign in, then names the number", () => {
+    expect(OnboardingChoices_welcomeLine(false, undefined)).to.equal("Sign in to get your cub number");
+    expect(OnboardingChoices_welcomeLine(false, 412)).to.equal("Sign in to get your cub number");
+    expect(OnboardingChoices_welcomeLine(true, undefined)).to.equal("Getting your cub number…");
+    expect(OnboardingChoices_welcomeLine(true, 412)).to.equal("You are Cub 412.");
+    expect(OnboardingChoices_welcomeLine(true, 0)).to.equal("You are Cub 0.");
   });
 
   it("shows the last day count as 6+", () => {

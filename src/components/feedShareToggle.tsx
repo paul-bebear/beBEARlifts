@@ -7,6 +7,8 @@ import { Friends_forUser } from "../models/friends";
 import { MusicLog_sessionForWorkout } from "../models/musicLog";
 import { MusicSession_counts, MusicSession_keptTracks } from "../models/musicSession";
 import { IWorkoutPostSummary, WorkoutPost_build } from "../models/workoutPost";
+import { CubNumber_mine } from "../models/cubNumber";
+import { CubStore } from "../utils/cubStore";
 import { FeedClient_flush, FeedClient_setShared, FeedStore } from "../utils/feedClient";
 import { FriendsStore } from "../utils/friendsClient";
 import { MusicStore_load } from "../utils/musicStore";
@@ -28,7 +30,9 @@ const statusText = {
 };
 
 export function FeedShareToggle(props: IProps): JSX.Element | null {
-  const userId = CloudStore.use().session?.userId;
+  const cloudSession = CloudStore.use().session;
+  const userId = cloudSession?.userId;
+  const cub = CubNumber_mine(CubStore.use(), cloudSession);
   const me = Friends_forUser(FriendsStore.use(), userId).me;
   const feed = FeedStore.use();
   const bear = useBear().state;
@@ -40,6 +44,7 @@ export function FeedShareToggle(props: IProps): JSX.Element | null {
       keptSongs: session != null ? MusicSession_counts(session).kept : undefined,
       songs: session != null ? MusicSession_keptTracks(session).map((track) => track.name) : [],
       bear,
+      cub,
     });
   };
   const report = (result: ICloudResult<undefined>): void => setError(result.ok ? undefined : result.error);

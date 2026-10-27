@@ -2,6 +2,7 @@ import { JSX } from "react";
 import { Image, Linking, Pressable, View } from "react-native";
 import { Feed_ago, Feed_itemKey, IFeedItem, IFeedPost } from "../models/feed";
 import { BearTv_sprite } from "../models/bearTv";
+import { CubNumber_label } from "../models/cubNumber";
 import { IMealPost, MealPost_macrosCard } from "../models/mealPost";
 import { WorkoutPost_feedLine, WorkoutPost_levelText, WorkoutPost_setText } from "../models/workoutPost";
 import { Text } from "./primitives/text";
@@ -17,7 +18,7 @@ interface IProps {
 }
 
 function PostHeader(props: { item: IFeedItem; now: number }): JSX.Element {
-  const { author, isMine, bear, post } = props.item;
+  const { author, isMine, bear, post, cub } = props.item;
   return (
     <View className="flex-row items-center" style={{ gap: 10 }}>
       <BearHead sprite={BearTv_sprite(bear)} size={40} />
@@ -28,6 +29,7 @@ function PostHeader(props: { item: IFeedItem; now: number }): JSX.Element {
         </Text>
         <Text className="text-xs text-text-secondary">
           {isMine ? "" : `@${author.handle} · `}
+          {isMine || cub == null ? "" : `${CubNumber_label(cub)} · `}
           {Feed_ago(post.postedAt, props.now)}
         </Text>
       </View>

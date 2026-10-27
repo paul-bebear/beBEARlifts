@@ -13,6 +13,7 @@ import {
   BearHouse_padlock,
   BearHouse_pillLeft,
   BearHouse_pillWidth,
+  BearHouse_plateWidth,
   BearHouse_sources,
   BearHouse_tap,
   BearHouse_wallColor,
@@ -54,6 +55,8 @@ const empty: IBearHouseSources = {
   honeyEarned: 0,
   badgeCount: 0,
   isOffline: true,
+  signedIn: true,
+  cubPlate: "412",
 };
 
 function byId(objects: IBearHouseObject[], id: IBearHouseObjectId): IBearHouseObject {
@@ -306,9 +309,45 @@ describe("BearHouse", () => {
       honeyEarned: 10,
       badgeCount: 1,
       isOffline: false,
+      signedIn: true,
+      cubPlate: "412",
       now,
     });
     expect(sources).to.deep.include({ kcal: 900, kcalTarget: 2800, hasNoteToday: true, weight: "72.4", streak: 1 });
+    expect(sources).to.deep.include({ signedIn: true, cubPlate: "412" });
+  });
+
+  it("puts the cub number on the door plate, and ? before the number arrives", () => {
+    const door = (sources: IBearHouseSources): IBearHouseObject =>
+      byId(BearHouse_objects("trailer", 0, sources, undefined), "door");
+    expect(door(empty).overlay?.kind).to.equal("plate");
+    expect(door(empty).overlay?.text).to.equal("412");
+    expect(door({ ...empty, cubPlate: "?" }).overlay?.text).to.equal("?");
+    expect(door({ ...empty, cubPlate: "0" }).overlay?.text).to.equal("0");
+  });
+
+  it("opens the gym from a signed-in door and sign-in from a signed-out one", () => {
+    const tap = (signedIn: boolean): ReturnType<typeof BearHouse_tap> =>
+      BearHouse_tap(byId(BearHouse_objects("trailer", 0, { ...empty, signedIn, cubPlate: "?" }, undefined), "door"));
+    expect(tap(true)).to.deep.equal({ kind: "open", target: { kind: "door" } });
+    expect(tap(false)).to.deep.equal({ kind: "open", target: { kind: "signIn" } });
+  });
+
+  it("keeps the plate inside the door on every tier and widens it for a long number", () => {
+    for (const tier of tiers) {
+      for (const cubPlate of ["?", "412", "12345"]) {
+        const door = byId(BearHouse_objects(tier, 0, { ...empty, cubPlate }, undefined), "door");
+        const [x1, y1, x2, y2] = door.overlay!.rect;
+        expect(x1, `${tier} ${cubPlate}`).to.be.greaterThan(door.rect[0]);
+        expect(x2, `${tier} ${cubPlate}`).to.be.lessThan(door.rect[2]);
+        expect(y1, tier).to.be.greaterThan(door.rect[1]);
+        expect(y2, tier).to.be.lessThan((door.rect[1] + door.rect[3]) / 2);
+        expect(Math.round(x2 - x1)).to.equal(BearHouse_plateWidth(cubPlate));
+        expect(y2 - y1).to.equal(38);
+      }
+    }
+    expect(BearHouse_plateWidth("412")).to.be.greaterThan(BearHouse_plateWidth("?"));
+    expect(BearHouse_plateWidth("12345")).to.be.greaterThan(BearHouse_plateWidth("412"));
   });
 
   it("answers a padlocked object and the passport with a line and opens the rest", () => {

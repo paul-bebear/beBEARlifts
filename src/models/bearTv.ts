@@ -1,5 +1,6 @@
 import { BearArt_sprite } from "./bearArt";
 import { BearScene_canvas, IBearBox, IBearRect } from "./bearScene";
+import { CubNumber_label } from "./cubNumber";
 import { Feed_ago, IFeedItem } from "./feed";
 import { IPostBear, WorkoutPost_feedLine } from "./workoutPost";
 
@@ -9,7 +10,7 @@ export const BearTv_rect: IBearRect = [875, 345, 1000, 530];
 
 export type IBearTvScreen =
   | { kind: "empty"; text: string; label: string }
-  | { kind: "post"; sprite: string; text: string; label: string };
+  | { kind: "post"; sprite: string; text: string; cub?: string; label: string };
 
 export function BearTv_box(sceneWidth: number): IBearBox {
   const unit = sceneWidth / BearScene_canvas.width;
@@ -41,7 +42,8 @@ export function BearTv_screen(input: {
   if (item == null) {
     return { kind: "empty", text: "No posts yet", label: "No posts from friends yet. Open the feed." };
   }
-  const name = item.author.displayName;
+  const cub = item.cub == null ? undefined : CubNumber_label(item.cub);
+  const name = cub == null ? item.author.displayName : `${item.author.displayName}, ${cub},`;
   const ago = Feed_ago(item.post.postedAt, input.now);
   const label =
     item.kind === "workout"
@@ -50,7 +52,8 @@ export function BearTv_screen(input: {
   return {
     kind: "post",
     sprite: BearTv_sprite(item.bear),
-    text: `${item.kind === "workout" ? "\u{1F3CB}" : "\u{1F37D}"} ${name}`,
+    text: `${item.kind === "workout" ? "\u{1F3CB}" : "\u{1F37D}"} ${item.author.displayName}`,
+    ...(cub != null ? { cub } : {}),
     label,
   };
 }
