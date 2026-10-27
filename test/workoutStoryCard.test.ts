@@ -144,6 +144,7 @@ describe("WorkoutStoryCard", () => {
       prs: {},
       achievements,
       tierSet: "male",
+      celebratedLevel: 1,
       seed: 1,
     });
     for (const page of ["photo", "count", "rank", "receipt"] as const) {
@@ -293,28 +294,94 @@ describe("WorkoutStoryCard share data", () => {
 
   it("builds the rank from the lifetime totals around this workout", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 11000, afterKg: 12980 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements,
+      tierSet: "male",
+      celebratedLevel: 1,
+      seed: 1,
+    });
     expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 3 · Amateur", true]);
     expect(data.equivalent).to.not.equal(undefined);
   });
 
   it("ranks the same lifetime total by the women's numbers", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 21000, afterKg: 22980 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "female", seed: 1 });
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements,
+      tierSet: "female",
+      celebratedLevel: 1,
+      seed: 1,
+    });
     expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 4 · Rookie", true]);
     expect(data.toNext).to.equal("25,020 kg to Level 5 · Regular");
   });
 
+  describe("a level the user already celebrated", () => {
+    const build = (
+      beforeKg: number,
+      afterKg: number,
+      celebratedLevel: number
+    ): ReturnType<typeof WorkoutStoryCard_build> =>
+      WorkoutStoryCard_build({
+        record,
+        settings,
+        prs,
+        achievements: { lifetimeKg: new Map([[1, { beforeKg, afterKg }]]), badges: [] },
+        tierSet: "male",
+        celebratedLevel,
+        seed: 1,
+      });
+
+    it("ranks at the celebrated level when the new table puts the kg lower", () => {
+      const data = build(400000, 401000, 7);
+      expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 7 · Athlete", false]);
+      expect(data.toNext).to.equal("360,000 kg to Level 8 · Power");
+      expect(build(400000, 401000, 1).tier.tier.name).to.equal("Level 6 · Strong");
+    });
+
+    it("shows no new rank for a crossing that was already celebrated", () => {
+      expect(build(450000, 470000, 7).tier.isTierUp).to.equal(false);
+      expect(build(450000, 470000, 6).tier.isTierUp).to.equal(true);
+    });
+
+    it("shows a new rank when the workout passes the celebrated level", () => {
+      const data = build(819000, 821000, 7);
+      expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 8 · Power", true]);
+    });
+  });
+
   it("renders a numbered level name on the shared rank card", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements,
+      tierSet: "male",
+      celebratedLevel: 1,
+      seed: 1,
+    });
     const html = renderToStaticMarkup(createElement(WorkoutSharePage, { page: "rank", data }));
     expect(html).to.contain("LEVEL 3 · AMATEUR");
   });
 
   it("puts the bear of the level after this workout and the chosen line on the card", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
-    const male = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
+    const male = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements,
+      tierSet: "male",
+      celebratedLevel: 1,
+      seed: 1,
+    });
     expect(male.bear).to.deep.equal({ sprite: "/images/bear/male/lift-small.webp", fur: "brown", size: "small" });
     const female = WorkoutStoryCard_build({
       record,
@@ -322,6 +389,7 @@ describe("WorkoutStoryCard share data", () => {
       prs,
       achievements,
       tierSet: "male",
+      celebratedLevel: 1,
       line: "female",
       seed: 1,
     });
@@ -336,6 +404,7 @@ describe("WorkoutStoryCard share data", () => {
       prs,
       achievements,
       tierSet: "male",
+      celebratedLevel: 1,
       line: "female",
       fur: "polar",
       seed: 1,
@@ -349,7 +418,15 @@ describe("WorkoutStoryCard share data", () => {
 
   it("draws the bear on every card the export captures, and four times on the collage", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements,
+      tierSet: "male",
+      celebratedLevel: 1,
+      seed: 1,
+    });
     const bears = WorkoutStoryCard_pages.map(
       (page) =>
         renderToStaticMarkup(createElement(WorkoutSharePage, { page, data })).split('data-testid="share-card-bear"')
@@ -360,7 +437,15 @@ describe("WorkoutStoryCard share data", () => {
 
   it("makes the export wait for the bear, and for the photo only on cards that show it", () => {
     const achievements = { lifetimeKg: new Map(), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements,
+      tierSet: "male",
+      celebratedLevel: 1,
+      seed: 1,
+    });
     expect(WorkoutStoryCard_exportImages(data, ["rank"], "p")).to.deep.equal([data.bear.sprite]);
     expect(WorkoutStoryCard_exportImages(data, ["receipt", "collage"], "p")).to.deep.equal([data.bear.sprite, "p"]);
     expect(WorkoutStoryCard_exportImages(data, ["photo"])).to.deep.equal([data.bear.sprite]);
@@ -368,7 +453,15 @@ describe("WorkoutStoryCard share data", () => {
 
   it("shows the lifetime total when the final level has no countdown", () => {
     const achievements = { lifetimeKg: new Map([[1, { beforeKg: 6998020, afterKg: 7000000 }]]), badges: [] };
-    const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
+    const data = WorkoutStoryCard_build({
+      record,
+      settings,
+      prs,
+      achievements,
+      tierSet: "male",
+      celebratedLevel: 1,
+      seed: 1,
+    });
     expect(data.tier.next).to.equal(undefined);
     expect(data.toNext).to.equal("7,000,000 kg lifetime");
   });

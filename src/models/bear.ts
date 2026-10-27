@@ -2,7 +2,7 @@ import { IHistoryRecord, ISettings, IStats } from "../types";
 import { IFoodLog } from "./foodLog";
 import { BearGrowth_history, IBearCountedWorkout } from "./bearGrowth";
 import { BearStoreData_empty, IBearFur, IBearLine, IBearStoreData } from "./bearStoreData";
-import { BearTier_all, BearTier_progress, BearTier_setFor, IBearTierProgress, IBearTierSet } from "./bearTier";
+import { BearTier_floorKg, BearTier_progress, BearTier_setFor, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { History_getPersonalRecords } from "./history";
 
 export type IBearMood = "pumped" | "tired" | "hungry" | "normal";
@@ -53,10 +53,7 @@ export function Bear_state(sources: IBearSources, now: number): IBearState {
   const growth = BearGrowth_history(history, sources.settings, sources.stats);
   const store = sources.bear ?? BearStoreData_empty();
   const tierSet = BearTier_setFor(sources.foodLog.profile.sex, store.line);
-  const reached = BearTier_all(tierSet)
-    .filter((tier) => tier.level <= store.celebratedLevel)
-    .slice(-1)[0];
-  const level = BearTier_progress(reached?.minKg ?? 0, growth.countedKg, tierSet);
+  const level = BearTier_progress(BearTier_floorKg(store.celebratedLevel, tierSet), growth.countedKg, tierSet);
   const fadeHours = Math.max(18, 36 - 2 * (level.tier.level - 1));
   const fullness = Math.min(
     100,

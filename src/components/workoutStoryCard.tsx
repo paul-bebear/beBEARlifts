@@ -51,7 +51,8 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [photo, setPhoto] = useState<string | undefined>(undefined);
   const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
-  const { line, fur } = BearStore.use();
+  const { line, fur, celebratedLevel: liveCelebratedLevel } = BearStore.use();
+  const [celebratedLevel] = useState(liveCelebratedLevel);
   const tierSet = BearTier_setFor(foodLog.profile.sex, line);
   const growth = useMemo(
     () => BearGrowth_history(props.history, props.settings, props.stats),
@@ -70,8 +71,9 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
         workouts: growth.workouts,
         settings: props.settings,
         tierSet,
+        celebratedLevel,
       }),
-    [props.history, prs, growth, foodLog, props.settings, tierSet]
+    [props.history, prs, growth, foodLog, props.settings, tierSet, celebratedLevel]
   );
   const data = useMemo(
     () =>
@@ -81,11 +83,12 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
         prs,
         achievements,
         tierSet,
+        celebratedLevel,
         line,
         fur,
         seed,
       }),
-    [props.record, props.settings, prs, achievements, tierSet, line, fur, seed]
+    [props.record, props.settings, prs, achievements, tierSet, celebratedLevel, line, fur, seed]
   );
   const buttons = FinishDayActions_storyButtons({ exportAvailable: true, musicEnabled: props.musicEnabled });
   const frozen = exporter.job.frozen;

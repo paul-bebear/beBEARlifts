@@ -87,6 +87,10 @@ export function BearTier_for(totalKg: number, set: IBearTierSet): IBearTier {
   return tiers[indexFor(tiers, totalKg)];
 }
 
+export function BearTier_floorKg(level: number, set: IBearTierSet): number {
+  return tiersBySet[set].filter((tier) => tier.level <= level).slice(-1)[0]?.minKg ?? 0;
+}
+
 export function BearTier_progress(beforeKg: number, afterKg: number, set: IBearTierSet): IBearTierProgress {
   const tiers = tiersBySet[set];
   const totalKg = Math.max(0, beforeKg, afterKg);

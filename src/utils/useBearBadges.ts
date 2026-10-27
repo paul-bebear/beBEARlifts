@@ -32,7 +32,8 @@ export function useBearBadges(): IBearBadgesView {
   const tracked = useTrackedState();
   const history = untrack(tracked.storage.history);
   const foodLog = useFoodLog();
-  const { state } = useBear();
+  const { state, store } = useBear();
+  const celebratedLevel = store.celebratedLevel;
   const today = FoodLog_dayKey(new Date());
   const prs = useMemo(() => History_getPersonalRecords(history), [history]);
   const doneDays = useMemo(
@@ -40,8 +41,17 @@ export function useBearBadges(): IBearBadgesView {
     [foodLog, state.workouts]
   );
   const badges = useMemo(
-    () => BearBadges_compute({ history, prs, doneDays, foodLog, workouts: state.workouts, tierSet: state.tierSet }),
-    [history, prs, doneDays, foodLog, state.workouts, state.tierSet]
+    () =>
+      BearBadges_compute({
+        history,
+        prs,
+        doneDays,
+        foodLog,
+        workouts: state.workouts,
+        tierSet: state.tierSet,
+        celebratedLevel,
+      }),
+    [history, prs, doneDays, foodLog, state.workouts, state.tierSet, celebratedLevel]
   );
   const grid = useMemo(() => BearBadges_grid(badges), [badges]);
   const streak = useMemo(() => DailyChecklist_streak(doneDays, today), [doneDays, today]);

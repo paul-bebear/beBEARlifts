@@ -8,7 +8,7 @@ import {
 } from "./history";
 import { Exercise_get, Exercise_synergistMusclesGroups, Exercise_targetMusclesGroups } from "./exercise";
 import { Weight_convertTo } from "./weight";
-import { BearTier_progress, IBearLevel, IBearTierProgress, IBearTierSet } from "./bearTier";
+import { BearTier_floorKg, BearTier_progress, IBearLevel, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { BearArt_cardSprite } from "./bearArt";
 import { IBearFur, IBearLine } from "./bearStoreData";
 import { BearBadges_forRecord, IBearBadgeCard } from "./bearBadges";
@@ -68,6 +68,7 @@ export interface IWorkoutShareInput {
   prs: IPersonalRecords;
   achievements: IShareAchievements;
   tierSet: IBearTierSet;
+  celebratedLevel: number;
   line?: IBearLine;
   fur?: IBearFur;
   seed: number;
@@ -242,7 +243,12 @@ export function WorkoutStoryCard_build(input: IWorkoutShareInput): IWorkoutShare
   const { record, settings, prs, achievements } = input;
   const stats = WorkoutStoryCard_stats(record, settings);
   const lifetime = achievements.lifetimeKg.get(record.id) ?? { beforeKg: 0, afterKg: stats.weightKg };
-  const tier = BearTier_progress(lifetime.beforeKg, lifetime.afterKg, input.tierSet);
+  const floorKg = BearTier_floorKg(input.celebratedLevel, input.tierSet);
+  const tier = BearTier_progress(
+    Math.max(lifetime.beforeKg, floorKg),
+    Math.max(lifetime.afterKg, floorKg),
+    input.tierSet
+  );
   const equivalent = LiftEquivalents_pick(stats.weightKg, input.seed);
   const fur = input.fur ?? "brown";
   return {
