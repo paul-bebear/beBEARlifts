@@ -98,18 +98,32 @@ export interface IBearHouseSourcesInput {
 
 type IManifestSlot = { rect: number[]; pill: number[] };
 
+export interface IBearHouseManifest {
+  canvas: number[];
+  whiteboard: number[];
+  bearFoot: number[];
+  gymExit: IManifestSlot;
+  images: Record<string, number[]>;
+  rooms: Record<string, { room: string; door: string; wall: string; objects: Record<string, IManifestSlot> }>;
+  gymWalls: Record<string, string>;
+}
+
 const images: Record<string, number[]> = manifest.images;
 const imageDir = "/images/bear/house";
 
 // The house is the bear's own floor. Its feet stand further back than in the gym, so the cub reads smaller.
 // The room paints the whiteboard where the gym does, so the ink ends the same rows below the board's top edge.
-export const BearHouse_art: IBearSceneArt = {
-  canvas: { width: manifest.canvas[0], height: manifest.canvas[1] },
-  foot: { x: manifest.bearFoot[0], y: manifest.bearFoot[1] },
-  minHeightShare: 0.26,
-  board: [manifest.whiteboard[0], manifest.whiteboard[1], manifest.whiteboard[2], manifest.whiteboard[3]],
-  inkBottom: manifest.whiteboard[1] + BearScene_boardInkBottom - BearScene_dashboardRect[1],
-};
+export function BearHouse_artOf(source: IBearHouseManifest): IBearSceneArt {
+  return {
+    canvas: { width: source.canvas[0], height: source.canvas[1] },
+    foot: { x: source.bearFoot[0], y: source.bearFoot[1] },
+    minHeightShare: 0.26,
+    board: [source.whiteboard[0], source.whiteboard[1], source.whiteboard[2], source.whiteboard[3]],
+    inkBottom: source.whiteboard[1] + BearScene_boardInkBottom - BearScene_dashboardRect[1],
+  };
+}
+
+export const BearHouse_art: IBearSceneArt = BearHouse_artOf(manifest);
 
 // Screen area of each TV sprite as a share of the trimmed image, measured on the art in handoff 07.
 const tvScreens: Record<string, IBearRect> = {
@@ -325,14 +339,15 @@ export function BearHouse_objects(
   houseTier: IBearHouseTier,
   activeDays: number,
   sources: IBearHouseSources,
-  seen: ReadonlySet<IBearHouseObjectId> | undefined
+  seen: ReadonlySet<IBearHouseObjectId> | undefined,
+  source: IBearHouseManifest = manifest
 ): IBearHouseObject[] {
-  const slots: Record<string, IManifestSlot> = manifest.rooms[houseTier].objects;
+  const slots: Record<string, IManifestSlot> = source.rooms[houseTier].objects;
   return specs(houseTier, sources).map((spec) => {
     const atDays = arrivals[spec.id] ?? 0;
     const lock = atDays > activeDays ? { atDays, toGo: atDays - activeDays } : undefined;
     const isNew = seen != null && lock == null && !seen.has(spec.id);
-    const slot: IManifestSlot = spec.id === "whiteboard" ? { rect: manifest.whiteboard, pill: [0, 0] } : slots[spec.id];
+    const slot: IManifestSlot = spec.id === "whiteboard" ? { rect: source.whiteboard, pill: [0, 0] } : slots[spec.id];
     const rect: IBearRect =
       spec.image == null ? [slot.rect[0], slot.rect[1], slot.rect[2], slot.rect[3]] : fit(slot.rect, spec.image);
     return {
