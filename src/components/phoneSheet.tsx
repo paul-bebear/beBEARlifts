@@ -54,6 +54,7 @@ export function PhoneSheetModal(): JSX.Element {
   const friends = Friends_lists(Friends_forUser(FriendsStore.use(), cloud.session?.userId));
   const rows = PhoneSheet_rows({
     friendCount: friends.friends.length,
+    pendingRequests: friends.incoming.length,
     isOffline: OfflineOnly_isEnabled(),
     hasPendingRestore: cloud.restoreOffer != null,
   });

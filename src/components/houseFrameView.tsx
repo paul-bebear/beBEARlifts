@@ -1,10 +1,10 @@
 import { JSX, ReactNode, useState } from "react";
 import { LayoutChangeEvent, StatusBar, View } from "react-native";
-import { useIsFocused } from "@react-navigation/native";
 import { HouseFrame_fit, HouseFrame_statusBarStyle, IHouseFrameBox } from "../models/houseFrame";
+import { useIsShownUnderSheets } from "../navigation/useIsShownUnderSheets";
 
 // Fills its parent with the wall colour and places the tall art in it. The children draw at the art's width.
-// The status bar sits over the ceiling while the screen is in front.
+// The status bar sits over the ceiling while the house is in sight, sheets on top included.
 export function HouseFrameView(props: {
   testID: string;
   wall: string;
@@ -15,11 +15,11 @@ export function HouseFrameView(props: {
     const { width, height } = e.nativeEvent.layout;
     setBox({ width, height });
   };
-  const isFocused = useIsFocused();
+  const isShown = useIsShownUnderSheets();
   const fit = box != null && box.width > 0 && box.height > 0 ? HouseFrame_fit(box) : undefined;
   return (
     <View style={{ flex: 1, overflow: "hidden", backgroundColor: props.wall }} onLayout={onLayout}>
-      {isFocused && <StatusBar barStyle={HouseFrame_statusBarStyle(props.wall)} animated={true} />}
+      {isShown && <StatusBar barStyle={HouseFrame_statusBarStyle(props.wall)} animated={true} />}
       {fit != null && (
         <View
           testID={props.testID}
