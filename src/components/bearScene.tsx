@@ -57,7 +57,7 @@ function GymArt(props: IProps & { gym: string; width: number }): JSX.Element {
       <HouseObjectView object={exit} unit={unit} onPress={props.onExit} />
       <HousePill
         testID="house-door-pill"
-        text={exit.pill}
+        text={exit.pill ?? exit.label}
         center={exit.pillAt}
         unit={unit}
         sceneWidth={layout.width}
