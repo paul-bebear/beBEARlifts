@@ -229,19 +229,19 @@ describe("Bear_state", () => {
     });
 
     it("measures the same counted kg against the women's thresholds", () => {
-      const history = [0, 24, 48].map((hours) => workout(now - hours * hourMs, 100));
+      const history = [workout(now, 100)];
       const female = { ...FoodLog_empty(), profile: { ...FoodLog_empty().profile, sex: "female" as const } };
       const men = Bear_state(sources({ history }), now);
       const women = Bear_state(sources({ history, foodLog: female }), now);
-      expect([men.countedKg, men.level.tier.name]).to.deep.equal([3000, "Cub"]);
-      expect([women.countedKg, women.level.tier.name]).to.deep.equal([3000, "Teen"]);
+      expect([men.countedKg, men.level.tier.name]).to.deep.equal([1000, "Cub"]);
+      expect([women.countedKg, women.level.tier.name]).to.deep.equal([1000, "Teen"]);
     });
 
     it("keeps a level already celebrated when the new numbers put the total lower", () => {
-      const bear = { ...BearStoreData_empty(), celebratedLevel: 3 };
+      const bear = { ...BearStoreData_empty(), celebratedLevel: 4 };
       const state = Bear_state(sources({ history: eighteenThousandKg, bear }), now);
-      expect([state.countedKg, state.level.tier.name, state.level.isTierUp]).to.deep.equal([18000, "Amateur", false]);
-      expect(Bear_state(sources({ history: eighteenThousandKg }), now).level.tier.name).to.equal("Teen");
+      expect([state.countedKg, state.level.tier.name, state.level.isTierUp]).to.deep.equal([18000, "Rookie", false]);
+      expect(Bear_state(sources({ history: eighteenThousandKg }), now).level.tier.name).to.equal("Amateur");
     });
   });
 

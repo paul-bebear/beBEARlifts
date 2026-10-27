@@ -51,12 +51,10 @@ function record(id: number, endTime: number): IHistoryRecord {
 
 describe("BearText", () => {
   it("names the next level, the kg left and its comparison", () => {
-    const progress = BearTier_progress(0, 12000, "male");
+    const progress = BearTier_progress(0, 4000, "male");
     expect(BearText_levelTitle(progress)).to.equal("Level 2 · Teen");
-    expect(BearText_levelLine(progress)).to.equal("13,000 kg to Amateur · a school bus");
-    expect(BearText_levelLine(BearTier_progress(0, 20000, "female"))).to.equal(
-      "16,000 kg to Rookie · a humpback whale"
-    );
+    expect(BearText_levelLine(progress)).to.equal("8,000 kg to Amateur · a school bus");
+    expect(BearText_levelLine(BearTier_progress(0, 10000, "female"))).to.equal("12,000 kg to Rookie · a school bus");
   });
 
   it("says top level at Mars", () => {
@@ -86,17 +84,17 @@ describe("BearText", () => {
 
   it("shows the kg added and the next level on the finish screen", () => {
     const today = record(2, now);
-    const progress = BearTier_progress(0, 12000, "male");
+    const progress = BearTier_progress(0, 4000, "male");
     expect(BearText_finishLine(today, [{ record: today, countedKg: 1840 }], progress)).to.equal(
-      "+1,840 kg · Amateur in 13,000 kg"
+      "+1,840 kg · Amateur in 8,000 kg"
     );
   });
 
   it("keeps the kg and top level without honey", () => {
     const today = record(2, now);
-    const progress = BearTier_progress(0, 12000, "male");
+    const progress = BearTier_progress(0, 4000, "male");
     const workouts = [{ record: today, countedKg: 1840 }];
-    expect(BearText_finishLine(today, workouts, progress)).to.equal("+1,840 kg · Amateur in 13,000 kg");
+    expect(BearText_finishLine(today, workouts, progress)).to.equal("+1,840 kg · Amateur in 8,000 kg");
     expect(BearText_finishLine(today, workouts, BearTier_progress(0, 7000000, "male"))).to.equal(
       "+1,840 kg · Top level"
     );
@@ -145,15 +143,40 @@ describe("BearText", () => {
     expect(BearText_levelUp(3, "male")).to.deep.equal({
       title: "Level 3 · Amateur",
       subtitle: "Your bear grew! You have lifted a school bus so far.",
+      milestone: "Ten days in. Every lift has your own number now.",
     });
   });
 
   it("words the level-up line from the set's own threshold", () => {
-    expect(BearText_levelUp(4, "male").subtitle).to.equal(
-      "Your bear grew! You have lifted an empty Boeing 737 so far."
-    );
-    expect(BearText_levelUp(4, "female").subtitle).to.equal("Your bear grew! You have lifted a humpback whale so far.");
+    expect(BearText_levelUp(4, "male").subtitle).to.equal("Your bear grew! You have lifted a humpback whale so far.");
+    expect(BearText_levelUp(4, "female").subtitle).to.equal("Your bear grew! You have lifted a school bus so far.");
     expect(BearText_levelUp(1, "female").subtitle).to.equal("Your bear grew!");
+  });
+
+  describe("level-up milestone", () => {
+    const milestones: [number, string][] = [
+      [2, "Your first pump."],
+      [3, "Ten days in. Every lift has your own number now."],
+      [4, "Week 3. The bar starts to feel lighter."],
+      [5, "Six weeks in. This is when the mirror starts to agree."],
+      [6, "Three months. Friends notice before you do."],
+      [7, "Six months. Time for a bigger shirt."],
+      [8, "Nine months. Most of your lifts have doubled."],
+      [9, "One year. The beginner year is done."],
+      [10, "Year two. Half as much again, and it shows."],
+      [11, "Year three. A lifter, not a beginner."],
+      [12, "Year four. You lifted your way to Mars."],
+    ];
+    milestones.forEach(([level, text]) => {
+      it(`words level ${level}`, () => {
+        expect(BearText_levelUp(level, "male").milestone).to.equal(text);
+        expect(BearText_levelUp(level, "female").milestone).to.equal(text);
+      });
+    });
+
+    it("has none for level 1", () => {
+      expect(BearText_levelUp(1, "male").milestone).to.equal(undefined);
+    });
   });
 
   it("words the house lock line and the honey jar line", () => {

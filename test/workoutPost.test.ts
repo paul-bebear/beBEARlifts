@@ -80,7 +80,7 @@ describe("WorkoutPost version 3", () => {
       }
     );
     expect(summary.version).to.equal(3);
-    expect(summary.bear).to.deep.equal({ level: 4, mood: "pumped", countedKg: 1500, line: "female", fur: "polar" });
+    expect(summary.bear).to.deep.equal({ level: 5, mood: "pumped", countedKg: 1500, line: "female", fur: "polar" });
     expect(summary.songs).to.deep.equal(["One", "Two", "Three"]);
     expect(WorkoutPost_parse(JSON.parse(JSON.stringify(summary)))).to.deep.equal(summary);
   });
@@ -141,7 +141,7 @@ describe("WorkoutPost version 3", () => {
   it("writes the feed row with counted kg next to the duration", () => {
     const summary = WorkoutPost_build(workout, settings, {}, { songs: ["One", "Two", "Three"], bear: bear(3100) });
     const withBear = { ...summary, sets: 12 };
-    expect(WorkoutPost_levelText(withBear.bear!)).to.equal("Level 4 Rookie");
+    expect(WorkoutPost_levelText(withBear.bear!)).to.equal("Level 5 Regular");
     expect(WorkoutPost_levelText({ level: 40 })).to.equal("Level 40");
     expect(WorkoutPost_feedLine(withBear)).to.equal("Push day · 48 min · 12 sets · +3,100 kg · 🎵 3 songs");
     const v1 = { ...withBear, version: 1 as const, bear: undefined, songs: [], keptSongs: 1 };

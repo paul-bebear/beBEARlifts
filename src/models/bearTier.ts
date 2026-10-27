@@ -30,16 +30,16 @@ const femaleStepKg = 1000;
 
 const levels: readonly IBearLevelDef[] = [
   { id: "cub", name: "Cub", level: 1, maleMinKg: 0, size: "small", gym: "trailer-park" },
-  { id: "teen", name: "Teen", level: 2, maleMinKg: 5000, size: "small", gym: "trailer-park" },
-  { id: "amateur", name: "Amateur", level: 3, maleMinKg: 25000, size: "small", gym: "trailer-park" },
-  { id: "rookie", name: "Rookie", level: 4, maleMinKg: 60000, size: "medium", gym: "discount-gym" },
-  { id: "regular", name: "Regular", level: 5, maleMinKg: 120000, size: "medium", gym: "discount-gym" },
-  { id: "strong", name: "Strong", level: 6, maleMinKg: 220000, size: "medium", gym: "luxury-club" },
-  { id: "athlete", name: "Athlete", level: 7, maleMinKg: 380000, size: "big", gym: "luxury-club" },
-  { id: "power", name: "Power", level: 8, maleMinKg: 600000, size: "big", gym: "mansion-gym" },
-  { id: "titan", name: "Titan", level: 9, maleMinKg: 900000, size: "big", gym: "mansion-gym" },
-  { id: "astronaut", name: "Astronaut", level: 10, maleMinKg: 1400000, size: "space", gym: "spaceship" },
-  { id: "lunar", name: "Lunar", level: 11, maleMinKg: 3500000, size: "space", gym: "moon" },
+  { id: "teen", name: "Teen", level: 2, maleMinKg: 2000, size: "small", gym: "trailer-park" },
+  { id: "amateur", name: "Amateur", level: 3, maleMinKg: 12000, size: "small", gym: "trailer-park" },
+  { id: "rookie", name: "Rookie", level: 4, maleMinKg: 36000, size: "medium", gym: "discount-gym" },
+  { id: "regular", name: "Regular", level: 5, maleMinKg: 80000, size: "medium", gym: "discount-gym" },
+  { id: "strong", name: "Strong", level: 6, maleMinKg: 175000, size: "medium", gym: "luxury-club" },
+  { id: "athlete", name: "Athlete", level: 7, maleMinKg: 460000, size: "big", gym: "luxury-club" },
+  { id: "power", name: "Power", level: 8, maleMinKg: 820000, size: "big", gym: "mansion-gym" },
+  { id: "titan", name: "Titan", level: 9, maleMinKg: 1250000, size: "big", gym: "mansion-gym" },
+  { id: "astronaut", name: "Astronaut", level: 10, maleMinKg: 3100000, size: "space", gym: "spaceship" },
+  { id: "lunar", name: "Lunar", level: 11, maleMinKg: 5000000, size: "space", gym: "moon" },
   { id: "mars", name: "Mars", level: 12, maleMinKg: 7000000, size: "space", gym: "mars" },
 ];
 
@@ -85,6 +85,10 @@ function indexFor(tiers: readonly IBearTier[], totalKg: number): number {
 export function BearTier_for(totalKg: number, set: IBearTierSet): IBearTier {
   const tiers = tiersBySet[set];
   return tiers[indexFor(tiers, totalKg)];
+}
+
+export function BearTier_floorKg(level: number, set: IBearTierSet): number {
+  return tiersBySet[set].filter((tier) => tier.level <= level).slice(-1)[0]?.minKg ?? 0;
 }
 
 export function BearTier_progress(beforeKg: number, afterKg: number, set: IBearTierSet): IBearTierProgress {

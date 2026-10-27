@@ -45,7 +45,15 @@ const set: ISet = {
 };
 
 function sources(history: IHistoryRecord[], extra: Partial<IBearBadgeSources> = {}): IBearBadgeSources {
-  return { history, prs: {}, doneDays: new Set(), foodLog: FoodLog_empty(), tierSet: "male", ...extra };
+  return {
+    history,
+    prs: {},
+    doneDays: new Set(),
+    foodLog: FoodLog_empty(),
+    tierSet: "male",
+    celebratedLevel: 1,
+    ...extra,
+  };
 }
 
 function ids(s: IBearBadgeSources): string[] {
@@ -119,7 +127,7 @@ describe("BearBadges", () => {
       workout(3, at("2026-10-03", 12)),
     ];
     const workouts = [
-      { record: history[0], countedKg: 4000 },
+      { record: history[0], countedKg: 1500 },
       { record: history[1], countedKg: 1200 },
       { record: history[2], countedKg: 20000 },
     ];
@@ -133,8 +141,8 @@ describe("BearBadges", () => {
   it("crosses the women's level badges at the women's thresholds", () => {
     const history = [workout(1, at("2026-10-01", 12)), workout(2, at("2026-10-02", 12))];
     const workouts = [
-      { record: history[0], countedKg: 3500 },
-      { record: history[1], countedKg: 12000 },
+      { record: history[0], countedKg: 1500 },
+      { record: history[1], countedKg: 7000 },
     ];
     const levels = (side: "male" | "female"): unknown[] =>
       BearBadges_compute(sources(history, { workouts, tierSet: side })).filter((b) => b.id.startsWith("level"));
@@ -143,6 +151,47 @@ describe("BearBadges", () => {
       { id: "level3", recordId: 2, at: history[1].endTime },
     ]);
     expect(levels("male")).to.deep.equal([{ id: "level2", recordId: 2, at: history[1].endTime }]);
+  });
+
+  describe("a level the user already celebrated", () => {
+    const history = [
+      workout(1, at("2026-10-01", 12)),
+      workout(2, at("2026-10-02", 12)),
+      workout(3, at("2026-10-03", 12)),
+    ];
+    const workouts = [
+      { record: history[0], countedKg: 200000 },
+      { record: history[1], countedKg: 100000 },
+      { record: history[2], countedKg: 100000 },
+    ];
+    const levelIds = (celebratedLevel: number): string[] =>
+      BearBadges_compute(sources(history, { workouts, celebratedLevel }))
+        .filter((b) => b.id.startsWith("level"))
+        .map((b) => b.id);
+
+    it("keeps its badge when the new threshold is higher than the kg", () => {
+      expect(levelIds(1)).to.deep.equal(["level2", "level3", "level4", "level5", "level6"]);
+      expect(levelIds(7)).to.deep.equal(["level2", "level3", "level4", "level5", "level6", "level7"]);
+    });
+
+    it("dates the kept badge with the level below it", () => {
+      const badges = BearBadges_compute(sources(history, { workouts, celebratedLevel: 8 }));
+      const level6 = badges.find((b) => b.id === "level6");
+      expect(badges.find((b) => b.id === "level7")).to.deep.equal({ ...level6, id: "level7" });
+      expect(badges.find((b) => b.id === "level8")).to.deep.equal({ ...level6, id: "level8" });
+    });
+
+    it("keeps the earned count at the bear's level", () => {
+      const grid = BearBadges_grid(BearBadges_compute(sources(history, { workouts, celebratedLevel: 7 })));
+      expect(grid.entries.filter((e) => e.info.id.startsWith("level") && e.badge != null)).to.have.length(6);
+    });
+
+    it("never invents a badge above Mars or without a workout", () => {
+      expect(levelIds(99)).to.have.length(11);
+      expect(BearBadges_compute(sources([], { celebratedLevel: 7 })).filter((b) => b.id.startsWith("level"))).to.eql(
+        []
+      );
+    });
   });
 
   it("lists the old seven, five streak badges and 11 level badges from Teen to Mars", () => {

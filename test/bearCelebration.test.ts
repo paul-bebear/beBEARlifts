@@ -37,10 +37,10 @@ describe("BearCelebration", () => {
 
   it("reaches each level at the set's own threshold", () => {
     const store = { ...BearStoreData_empty(), seeded: true as const };
-    expect(BearCelebration_step(store, 3000, "female").levelUp).to.deep.equal({ from: 1, to: 2 });
-    expect(BearCelebration_step(store, 3000, "male").levelUp).to.equal(undefined);
-    expect(BearCelebration_seed(BearStoreData_empty(), 15000, "female").celebratedLevel).to.equal(3);
-    expect(BearCelebration_seed(BearStoreData_empty(), 15000, "male").celebratedLevel).to.equal(2);
+    expect(BearCelebration_step(store, 1000, "female").levelUp).to.deep.equal({ from: 1, to: 2 });
+    expect(BearCelebration_step(store, 1000, "male").levelUp).to.equal(undefined);
+    expect(BearCelebration_seed(BearStoreData_empty(), 10000, "female").celebratedLevel).to.equal(3);
+    expect(BearCelebration_seed(BearStoreData_empty(), 10000, "male").celebratedLevel).to.equal(2);
   });
 
   it("sets the line the user picks", () => {

@@ -36,6 +36,7 @@ export interface IBearBadgeSources {
   foodLog: IFoodLog;
   workouts?: readonly IBearCountedWorkout[];
   tierSet: IBearTierSet;
+  celebratedLevel: number;
 }
 
 export interface IBearBadgeEntry {
@@ -204,14 +205,15 @@ export function BearBadges_compute(sources: IBearBadgeSources): IBearBadge[] {
       earned.set(streak.id, { id: streak.id, day });
     }
   }
-  addLevelBadges(earned, sources.workouts ?? [], sources.tierSet);
+  addLevelBadges(earned, sources.workouts ?? [], sources.tierSet, sources.celebratedLevel);
   return Array.from(earned.values()).sort((a, b) => sortKey(a) - sortKey(b));
 }
 
 function addLevelBadges(
   earned: Map<IBearBadgeId, IBearBadge>,
   workouts: readonly IBearCountedWorkout[],
-  set: IBearTierSet
+  set: IBearTierSet,
+  celebratedLevel: number
 ): void {
   const thresholds = levelBadges(set);
   let totalKg = 0;
@@ -225,6 +227,20 @@ function addLevelBadges(
       const id = thresholds[next].id;
       earned.set(id, { id, recordId: record.id, at: recordTime(record) });
       next += 1;
+    }
+  }
+  if (ordered.length === 0) {
+    return;
+  }
+  // A threshold that rose after a level was celebrated must not take its badge back. It keeps the date of the level below.
+  let anchor = { recordId: ordered[0].record.id, at: recordTime(ordered[0].record) };
+  for (let level = 2; level <= Math.min(celebratedLevel, thresholds.length + 1); level += 1) {
+    const id = levelId(level);
+    const existing = earned.get(id);
+    if (existing != null && "recordId" in existing) {
+      anchor = { recordId: existing.recordId, at: existing.at };
+    } else {
+      earned.set(id, { id, ...anchor });
     }
   }
 }
