@@ -1,18 +1,13 @@
 import { JSX, useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
-import { NavScreenContent } from "../navigation/NavScreenContent";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { navigateToModal } from "../navigation/navigationService";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
-import { Tailwind_semantic } from "../utils/tailwindConfig";
-import { IconCog2 } from "./icons/iconCog2";
-import { MyBearSections } from "./screenProgressDashboard";
 import { BearScene } from "./bearScene";
 import { BearHouseScene } from "./bearHouseScene";
 import { HoneySheet } from "./honeySheet";
-import { SeasonNudgeCard } from "./seasonNudgeCard";
 import { useBear } from "../utils/useBear";
 import { useBearHouse } from "../utils/useBearHouse";
 import { useFoodLog } from "../utils/foodLogStore";
@@ -70,6 +65,9 @@ function openHouseTarget(
     case "honey":
       openHoney();
       return;
+    case "phone":
+      navigateToModal("phoneSheetModal");
+      return;
   }
 }
 
@@ -110,45 +108,27 @@ export function ScreenHome(props: IProps): JSX.Element {
   );
   const isBagCheckOn = QuickActions_isBagCheckOn(settings.skipBagCheck, tracked.storage.currentProgramId);
   const place = BearScene_place(props.progress != null);
-  useNavOptions({
-    navTitle: "My bear",
-    navRightButtons: [
-      <Pressable
-        key="settings"
-        className="p-2"
-        testID="progress-settings"
-        data-testid="progress-settings"
-        onPress={() => dispatch(Thunk_pushScreen("settings"))}
-      >
-        <IconCog2 color={Tailwind_semantic().icon.neutral} size={22} />
-      </Pressable>,
-    ],
-  });
+  useNavOptions({ navHidden: true });
   return (
-    <NavScreenContent>
-      <View testID="home" data-testid="home">
-        <View testID="my-bear-head" data-testid="my-bear-head" className="pt-2 pb-3">
-          {place === "gym" ? (
-            <BearScene
-              state={state}
-              lines={lines}
-              onTarget={openBoardTarget}
-              onExit={() => navigateToModal("gymExitModal")}
-            />
-          ) : (
-            <BearHouseScene
-              state={state}
-              room={house.room}
-              lines={lines}
-              objects={house.objects}
-              onBoardTarget={openBoardTarget}
-              onTarget={(target) => openHouseTarget(target, dispatch, isBagCheckOn, () => setIsHoneyOpen(true))}
-            />
-          )}
-        </View>
-        <SeasonNudgeCard stats={stats} />
-        <MyBearSections />
-      </View>
+    <View style={{ flex: 1 }} testID="home" data-testid="home">
+      {place === "gym" ? (
+        <BearScene
+          state={state}
+          lines={lines}
+          onTarget={openBoardTarget}
+          onExit={() => navigateToModal("gymExitModal")}
+        />
+      ) : (
+        <BearHouseScene
+          state={state}
+          room={house.room}
+          wall={house.wall}
+          lines={lines}
+          objects={house.objects}
+          onBoardTarget={openBoardTarget}
+          onTarget={(target) => openHouseTarget(target, dispatch, isBagCheckOn, () => setIsHoneyOpen(true))}
+        />
+      )}
       {isHoneyOpen && (
         <HoneySheet
           balance={house.honey.balance}
@@ -157,6 +137,6 @@ export function ScreenHome(props: IProps): JSX.Element {
           onClose={() => setIsHoneyOpen(false)}
         />
       )}
-    </NavScreenContent>
+    </View>
   );
 }

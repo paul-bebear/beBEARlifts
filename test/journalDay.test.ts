@@ -14,6 +14,7 @@ import {
   JournalDay_hints,
   JournalDay_sectionFold,
   JournalDay_sectionSummary,
+  JournalDay_showsSeasonNudge,
 } from "../src/models/journalDay";
 import { IExerciseType, IHistoryEntry, IHistoryRecord, ISet, IStatsWeightValue } from "../src/types";
 
@@ -258,6 +259,12 @@ describe("JournalDay", () => {
     for (const section of ["checkIn", "workouts", "meals", "songs", "weight", "notes"] as const) {
       expect(JournalDay_emptyRow(day, section), section).to.equal(undefined);
     }
+  });
+
+  it("shows the season's snacks above today's meals and on no other day", () => {
+    expect(JournalDay_showsSeasonNudge(JournalDay_build(input({ day: today })))).to.equal(true);
+    expect(JournalDay_showsSeasonNudge(JournalDay_build(input({ day: "2026-10-21" })))).to.equal(false);
+    expect(JournalDay_showsSeasonNudge(JournalDay_build(input({ day: "2026-10-23" })))).to.equal(false);
   });
 
   it("adds food only to past days, never today or a future day", () => {

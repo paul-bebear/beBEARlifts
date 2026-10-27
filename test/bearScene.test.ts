@@ -9,6 +9,7 @@ import {
   BearScene_boardInkBottom,
   BearScene_canvas,
   BearScene_dashboardRect,
+  BearScene_gymArt,
   BearScene_gymFoot,
   BearScene_headCrop,
   BearScene_heightShare,
@@ -22,7 +23,8 @@ import {
 } from "../src/models/bearScene";
 import { BearArt_sprite } from "../src/models/bearArt";
 import { BearTv_rect } from "../src/models/bearTv";
-import { BearHouse_floor } from "../src/models/bearHouse";
+import { BearHouse_art } from "../src/models/bearHouse";
+import { HouseFrame_gymArt, HouseFrame_oldTop } from "../src/models/houseFrame";
 import { IBearMood } from "../src/models/bear";
 import { IBearFur, IBearLine } from "../src/models/bearStoreData";
 
@@ -46,7 +48,7 @@ function placed(
   right: number;
 } {
   const sprite = BearArt_sprite(line, "brown", level, mood);
-  const layout = BearScene_layout(width, level, fraction, sprite);
+  const layout = BearScene_layout(width, BearScene_gymArt, level, fraction, sprite);
   const [x1, y1, x2, y2] = BearScene_visibleBox(sprite);
   const scaleX = layout.sprite.width / BearScene_canvas.width;
   const scaleY = layout.sprite.height / BearScene_canvas.height;
@@ -93,7 +95,7 @@ describe("BearScene", () => {
         for (const mood of moods) {
           const spritePath = BearArt_sprite(line, "brown", level, mood);
           const breathing = BearScene_breathing(mood);
-          const layout = BearScene_layout(390, level, 1, spritePath, breathing.scaleY);
+          const layout = BearScene_layout(390, BearScene_gymArt, level, 1, spritePath, breathing.scaleY);
           const [, , , bottom] = BearScene_visibleBox(spritePath);
           const foot = (bottom / BearScene_canvas.height) * layout.sprite.height;
           const center = layout.sprite.height / 2;
@@ -115,7 +117,7 @@ describe("BearScene", () => {
           for (const width of [iPhoneSeWidth, 390, 480]) {
             const spritePath = BearArt_sprite(line, "brown", level, mood);
             const breathing = BearScene_breathing(mood);
-            const layout = BearScene_layout(width, level, 1, spritePath, breathing.scaleY);
+            const layout = BearScene_layout(width, BearScene_gymArt, level, 1, spritePath, breathing.scaleY);
             const [, top, , bottom] = BearScene_visibleBox(spritePath);
             const foot = (bottom / BearScene_canvas.height) * layout.sprite.height;
             const visibleHeight = ((bottom - top) / BearScene_canvas.height) * layout.sprite.height;
@@ -188,7 +190,7 @@ describe("BearScene", () => {
   });
 
   it("sizes the bear from its visible height, not from the full canvas", () => {
-    const layout = BearScene_layout(1024, 1, 0, "/images/bear/male/level-01.webp");
+    const layout = BearScene_layout(1024, BearScene_gymArt, 1, 0, "/images/bear/male/level-01.webp");
     expect([layout.width, layout.height]).to.deep.equal([1024, 1536]);
     expect(layout.sprite.width / layout.sprite.height).to.be.closeTo(1024 / 1536, 0.001);
     expect(layout.board).to.deep.equal({ left: 125, top: 195, width: 700, height: 480 });
@@ -314,15 +316,45 @@ describe("BearScene_place", () => {
   });
 
   it("stands the bear on the house floor below the board at every level", () => {
-    const unit = 390 / BearScene_canvas.width;
+    const unit = 390 / BearHouse_art.canvas.width;
     for (const level of [1, 6, 12]) {
       const sprite = BearArt_sprite("male", "brown", level, "normal");
-      const layout = BearScene_layout(390, level, 1, sprite, 1.015, BearHouse_floor);
+      const layout = BearScene_layout(390, BearHouse_art, level, 1, sprite, 1.015);
       const [, y1, , y2] = BearScene_visibleBox(sprite);
       const scale = layout.sprite.height / BearScene_canvas.height;
-      expect(layout.sprite.top + y2 * scale).to.be.closeTo(BearHouse_floor.foot.y * unit, 0.2);
-      expect(layout.sprite.top + y1 * scale).to.be.at.least(BearScene_boardInkBottom * unit - 0.2);
+      expect(layout.height).to.be.closeTo(877.5, 0.1);
+      expect(layout.sprite.top + y2 * scale).to.be.closeTo(BearHouse_art.foot.y * unit, 0.2);
+      expect(layout.sprite.top + y1 * scale).to.be.at.least(BearHouse_art.inkBottom * unit - 0.2);
     }
-    expect(BearScene_heightShare(1, 0, BearHouse_floor)).to.equal(0.26);
+    expect(BearScene_heightShare(1, 0, BearHouse_art)).to.equal(0.26);
+  });
+});
+
+describe("BearScene on the tall canvas", () => {
+  it("draws the bear at the same size and 448 rows lower than on the old gym picture", () => {
+    for (const line of lines) {
+      for (const level of [1, 6, 12]) {
+        for (const mood of moods) {
+          const sprite = BearArt_sprite(line, "brown", level, mood);
+          const old = BearScene_layout(1024, BearScene_gymArt, level, 0.5, sprite, 1.015);
+          const tall = BearScene_layout(1024, HouseFrame_gymArt, level, 0.5, sprite, 1.015);
+          const label = `${line} ${level} ${mood}`;
+          expect(tall.height, label).to.equal(2304);
+          expect(tall.sprite.width, label).to.equal(old.sprite.width);
+          expect(tall.sprite.height, label).to.equal(old.sprite.height);
+          expect(tall.sprite.left, label).to.equal(old.sprite.left);
+          expect(tall.sprite.top, label).to.be.closeTo(old.sprite.top + HouseFrame_oldTop, 0.1);
+          expect(tall.board.top, label).to.equal(old.board.top + HouseFrame_oldTop);
+        }
+      }
+    }
+  });
+
+  it("scales the tall scene to the width the frame gives it", () => {
+    const sprite = BearArt_sprite("male", "brown", 6, "normal");
+    const layout = BearScene_layout(393, HouseFrame_gymArt, 6, 0, sprite);
+    expect(layout.width).to.equal(393);
+    expect(layout.height).to.be.closeTo((2304 * 393) / 1024, 0.1);
+    expect(layout.board.top).to.be.closeTo((643 * 393) / 1024, 0.1);
   });
 });
