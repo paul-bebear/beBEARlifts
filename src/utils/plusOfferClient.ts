@@ -105,9 +105,25 @@ async function runEffects(effects: IPlusOfferEffect[]): Promise<void> {
   }
 }
 
+const idleListeners = new Set<() => void>();
+
+export function PlusOfferClient_isBusy(): boolean {
+  return flow.step !== "idle";
+}
+
+export function PlusOfferClient_onIdle(listener: () => void): () => void {
+  idleListeners.add(listener);
+  return () => {
+    idleListeners.delete(listener);
+  };
+}
+
 function dispatch(event: IPlusOfferEvent): void {
   const step = PlusOffer_reduce(flow, event);
   flow = step.state;
+  if (flow.step === "idle") {
+    idleListeners.forEach((listener) => listener());
+  }
   if (step.effects.length > 0) {
     runEffects(step.effects).catch(() => dispatch({ type: "failed" }));
   }

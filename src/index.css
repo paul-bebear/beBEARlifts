@@ -179,6 +179,11 @@ html.liftosaur-app #app {
   .planner-editor-view * {
     font-family: "Iosevka Web" !important;
   }
+
+  [data-testid^="bear-board-"],
+  [data-testid^="bear-board-"] * {
+    font-family: "PermanentMarker-Regular", cursive !important;
+  }
 }
 
 .cm-gutters {

@@ -198,6 +198,7 @@ import { IAuthToken } from "./utils/keychain";
 import { lb } from "lens-shmens";
 import { updateState } from "./models/state";
 import { TourConfigs_findTourId, TourConfigs_imagesForCurrentScreen } from "./components/tour/tourConfigs";
+import { PlusOfferClient_onIdle } from "./utils/plusOfferClient";
 import { ImagePreloader_preload } from "./utils/imagePreloader";
 import { RestTimer } from "./components/restTimer";
 import { MusicTracker } from "./components/musicTracker";
@@ -704,14 +705,18 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
     if (!isNavReady || !currentScreenName) {
       return;
     }
-    const tourId = TourConfigs_findTourId(stateRef.current, true);
-    if (tourId && tourId !== stateRef.current.tour?.id) {
-      updateState(
-        dispatch,
-        [lb<IState>().p("tour").record({ id: tourId, enforced: false, screenData: getCurrentScreenData() })],
-        "Auto-start a tour"
-      );
-    }
+    const startDueTour = (): void => {
+      const tourId = TourConfigs_findTourId(stateRef.current, true);
+      if (tourId && tourId !== stateRef.current.tour?.id) {
+        updateState(
+          dispatch,
+          [lb<IState>().p("tour").record({ id: tourId, enforced: false, screenData: getCurrentScreenData() })],
+          "Auto-start a tour"
+        );
+      }
+    };
+    startDueTour();
+    return PlusOfferClient_onIdle(startDueTour);
   }, [isNavReady, currentScreenName, dispatch]);
 
   useEffect(() => {
