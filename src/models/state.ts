@@ -129,7 +129,7 @@ export interface IAttributionData {
   ad: string;
 }
 
-export type ITourId = "workout" | "program";
+export type ITourId = "workout" | "program" | "house";
 
 export interface IStateTour {
   id: ITourId;

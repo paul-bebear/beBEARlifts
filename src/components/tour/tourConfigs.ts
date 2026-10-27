@@ -5,10 +5,12 @@ import { getCurrentScreenData } from "../../navigation/navigationService";
 import { Tour_stepHelpFlag } from "./tourTypes";
 import { workoutTourConfig } from "./workoutTourConfig";
 import { programTourConfig } from "./programTourConfig";
+import { houseTourConfig } from "./houseTourConfig";
 
 export const tourConfigs: Record<ITourId, import("./tourTypes").ITourConfig> = {
   workout: workoutTourConfig,
   program: programTourConfig,
+  house: houseTourConfig,
 };
 
 export function Tour_start(dispatch: IDispatch, tourId: ITourId): void {
