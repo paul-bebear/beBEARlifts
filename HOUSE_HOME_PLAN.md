@@ -171,8 +171,8 @@ Answered by the owner on 2026-10-27, and now in the plan.
 - Everything extended: the seven rooms and the seven gyms.
 - The season nudge card goes. Its "900 kcal left" line moves to the bowl's pill and its three snacks to the Journal's meals for today. The owner's reason: the season becomes a theme of the house, winter is bulk and hibernate, not a card. That theme is a later art round, after the house ladder.
 
-Still open, one decision.
+- The arrange tool is built now as piece D, after A merges. The owner confirmed on 2026-10-27.
 
-- The arrange tool. The owner asked to move objects around the house instead of describing positions. The tool is a web-only mode, `?arrange=1` on the preview URL in Safari on the iPhone, where every object drags, two buttons scale it, and "Copy manifest" puts the positions on the clipboard as text to paste into a session. It never ships in the iOS app. Build it now as piece D, 6 hours, or not yet?
+No question is open. Cards A, B, C and D are proposed.
 
-Next action: answer the arrange tool question in the session. Cards A, B and C are proposed; D follows the answer.
+Next action: paste `HANDOFF-codex-tall-rooms.md` into Codex, then start card A.
