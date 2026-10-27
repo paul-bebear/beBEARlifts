@@ -100,12 +100,30 @@ export function BearText_finishLine(
   return `+${BearText_kg(counted.countedKg)} · ${next}`;
 }
 
-export function BearText_levelUp(level: number, set: IBearTierSet): { title: string; subtitle: string } {
+const levelMilestones: Record<number, string> = {
+  2: "Your first pump.",
+  3: "Ten days in. Every lift has your own number now.",
+  4: "Week 3. The bar starts to feel lighter.",
+  5: "Six weeks in. This is when the mirror starts to agree.",
+  6: "Three months. Friends notice before you do.",
+  7: "Six months. Time for a bigger shirt.",
+  8: "Nine months. Most of your lifts have doubled.",
+  9: "One year. The beginner year is done.",
+  10: "Year two. Half as much again, and it shows.",
+  11: "Year three. A lifter, not a beginner.",
+  12: "Year four. You lifted your way to Mars.",
+};
+
+export function BearText_levelUp(
+  level: number,
+  set: IBearTierSet
+): { title: string; subtitle: string; milestone?: string } {
   const tiers = BearTier_all(set);
   const tier = tiers.find((t) => t.level === level) ?? tiers[0];
   const comparison = BearComparison_for(tier.minKg);
   return {
     title: `Level ${tier.level} · ${tier.name}`,
     subtitle: comparison != null ? `Your bear grew! You have lifted ${comparison} so far.` : "Your bear grew!",
+    milestone: levelMilestones[tier.level],
   };
 }

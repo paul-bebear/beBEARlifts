@@ -4,6 +4,8 @@ Planning pass of 2026-10-26, revised the same day with the owner's answers. Noth
 
 Every pace below assumes the owner's pace for `src/models/bearTier.ts`: 6,000 kg counted per workout, 3 workouts a week, 18,000 kg a week. The female thresholds are 60 percent of the male ones. A female bear at 3,600 kg a workout reaches each level in the same week.
 
+The thresholds were retuned on 2026-10-27 in `BASELINE_WEEK_PLAN.md`; the weeks named in this file follow the old table.
+
 None of the Codex art existed when this was written. `~/Documents/Codex/bebear-art/` is missing. Every art count below comes from the handoffs.
 
 ## 1. Frame

@@ -78,7 +78,7 @@ describe("BearBoard_lines", () => {
       ["Eat · 0 of 2,800 kcal", "plus", false],
       ["Weigh-in · Sunday", "plus", false],
       ["Weight · not logged yet", "bear", false],
-      ["Level 1 · 5,000 kg to Teen", "bear", false],
+      ["Level 1 · 2,000 kg to Teen", "bear", false],
       ["Lifted 0 kg since day one", "bear", false],
     ]);
   });
@@ -103,7 +103,7 @@ describe("BearBoard_lines", () => {
       ["Eat · 2,900 of 2,800 kcal", "plus", true],
       ["Weigh-in · Sunday", "plus", true],
       ["72.4 kg · +0.8 in 30 d", "bear", false],
-      ["Level 6 · 70,000 kg to Athlete", "bear", false],
+      ["Level 6 · 150,000 kg to Athlete", "bear", false],
       ["Lifted 310,000 kg since day one", "bear", false],
     ]);
   });

@@ -9,8 +9,8 @@ import {
   IBearTierSet,
 } from "../src/models/bearTier";
 
-const maleThresholds = [0, 5000, 25000, 60000, 120000, 220000, 380000, 600000, 900000, 1400000, 3500000, 7000000];
-const femaleThresholds = [0, 3000, 15000, 36000, 72000, 132000, 228000, 360000, 540000, 840000, 2100000, 4200000];
+const maleThresholds = [0, 2000, 12000, 36000, 80000, 175000, 460000, 820000, 1250000, 3100000, 5000000, 7000000];
+const femaleThresholds = [0, 1000, 7000, 22000, 48000, 105000, 276000, 492000, 750000, 1860000, 3000000, 4200000];
 const thresholds: Record<IBearTierSet, number[]> = { male: maleThresholds, female: femaleThresholds };
 const names = [
   "Cub",
@@ -100,22 +100,22 @@ describe("BearTier", () => {
   });
 
   it("measures progress and marks only an increase across a level", () => {
-    const progress = BearTier_progress(4000, 15000, "male");
+    const progress = BearTier_progress(4000, 24000, "male");
     expect([
       progress.tier.level,
       progress.next?.level,
       progress.kgToNext,
       progress.fraction,
       progress.isTierUp,
-    ]).to.deep.equal([2, 3, 10000, 0.5, true]);
+    ]).to.deep.equal([3, 4, 12000, 0.5, true]);
     expect(BearTier_progress(15000, 16000, "male").isTierUp).to.equal(false);
   });
 
   it("measures the same kg against each set's own thresholds", () => {
-    const male = BearTier_progress(0, 18000, "male");
-    const female = BearTier_progress(0, 18000, "female");
-    expect([male.tier.name, male.next?.name, male.kgToNext]).to.deep.equal(["Teen", "Amateur", 7000]);
-    expect([female.tier.name, female.next?.name, female.kgToNext]).to.deep.equal(["Amateur", "Rookie", 18000]);
+    const male = BearTier_progress(0, 10000, "male");
+    const female = BearTier_progress(0, 10000, "female");
+    expect([male.tier.name, male.next?.name, male.kgToNext]).to.deep.equal(["Teen", "Amateur", 2000]);
+    expect([female.tier.name, female.next?.name, female.kgToNext]).to.deep.equal(["Amateur", "Rookie", 12000]);
   });
 
   it("has no next level at Mars", () => {

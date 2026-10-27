@@ -119,7 +119,7 @@ describe("BearBadges", () => {
       workout(3, at("2026-10-03", 12)),
     ];
     const workouts = [
-      { record: history[0], countedKg: 4000 },
+      { record: history[0], countedKg: 1500 },
       { record: history[1], countedKg: 1200 },
       { record: history[2], countedKg: 20000 },
     ];
@@ -133,8 +133,8 @@ describe("BearBadges", () => {
   it("crosses the women's level badges at the women's thresholds", () => {
     const history = [workout(1, at("2026-10-01", 12)), workout(2, at("2026-10-02", 12))];
     const workouts = [
-      { record: history[0], countedKg: 3500 },
-      { record: history[1], countedKg: 12000 },
+      { record: history[0], countedKg: 1500 },
+      { record: history[1], countedKg: 7000 },
     ];
     const levels = (side: "male" | "female"): unknown[] =>
       BearBadges_compute(sources(history, { workouts, tierSet: side })).filter((b) => b.id.startsWith("level"));

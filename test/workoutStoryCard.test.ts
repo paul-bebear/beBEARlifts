@@ -281,7 +281,7 @@ describe("WorkoutStoryCard share data", () => {
   });
 
   it("says how far the next tier is, in the user's units", () => {
-    const tier = BearTier_progress(0, 24420, "male");
+    const tier = BearTier_progress(0, 11420, "male");
     expect(WorkoutStoryCard_toNext(tier, settings)).to.equal("580 kg to Level 3 · Amateur");
     expect(WorkoutStoryCard_toNext(tier, { ...settings, units: "lb" })).to.equal("1,279 lb to Level 3 · Amateur");
     expect(WorkoutStoryCard_toNext(BearTier_progress(0, 9e6, "male"), settings, 9e6)).to.equal("9,000,000 kg lifetime");
@@ -292,17 +292,17 @@ describe("WorkoutStoryCard share data", () => {
   });
 
   it("builds the rank from the lifetime totals around this workout", () => {
-    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 24000, afterKg: 25980 }]]), badges: [] };
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 11000, afterKg: 12980 }]]), badges: [] };
     const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "male", seed: 1 });
     expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 3 · Amateur", true]);
     expect(data.equivalent).to.not.equal(undefined);
   });
 
   it("ranks the same lifetime total by the women's numbers", () => {
-    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 35000, afterKg: 36980 }]]), badges: [] };
+    const achievements = { lifetimeKg: new Map([[1, { beforeKg: 21000, afterKg: 22980 }]]), badges: [] };
     const data = WorkoutStoryCard_build({ record, settings, prs, achievements, tierSet: "female", seed: 1 });
     expect([data.tier.tier.name, data.tier.isTierUp]).to.deep.equal(["Level 4 · Rookie", true]);
-    expect(data.toNext).to.equal("35,020 kg to Level 5 · Regular");
+    expect(data.toNext).to.equal("25,020 kg to Level 5 · Regular");
   });
 
   it("renders a numbered level name on the shared rank card", () => {

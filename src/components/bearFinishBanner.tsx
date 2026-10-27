@@ -32,6 +32,11 @@ function LevelUpCard(props: { levelUp: IBearLevelUp; tierSet: IBearTierSet; spri
       <Text className="mt-1 text-base text-center" style={{ color: T.greenDark }}>
         {text.subtitle}
       </Text>
+      {text.milestone != null ? (
+        <Text className="mt-1 text-base text-center" style={{ color: T.greenDark }}>
+          {text.milestone}
+        </Text>
+      ) : null}
     </View>
   );
 }
