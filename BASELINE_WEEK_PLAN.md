@@ -84,7 +84,7 @@ Ten days: a rest phase of 1 to 3 days, then a test week of 7 days with 4 test se
 
 Day 0, the install.
 
-- Welcome. The bear, "Meet your bear", and sign-in: Apple, Google, email code. After sign-in the app reads the cub number and shows "You are Cub 412." The sign-in rule is an open question.
+- Welcome. The first page is sign-in, the owner's call: the bear, "Meet your bear", Sign in with Apple and Sign in with Google, and a small "Use email instead" link for the web test bed. Nothing continues without an account. After sign-in the app reads the cub number, shows "You are Cub 412." and offers the cub share card, below.
 - Place, unchanged: full gym, only dumbbells, street workout, no equipment.
 - About: height, weight, age, sex. Weight becomes required, because the baseline compares it on day 10. The "What is your weight goal?" question goes. The food goal is gain for everyone.
 - Want, unchanged: size, strength or both, days a week, more agile. The app picks the plan as today, through `BearPlan_recommend`, and keeps it as `pendingPlan` in the baseline state instead of installing it.
@@ -113,14 +113,14 @@ The test days. Each test session lists the compound lifts of the user's pending 
 What one test looks like in Liftoscript, written by `BaselineProgram_text`.
 
 ```text
-Squat / 1x5 65lb, 1x5 95lb, 1x5+ 110lb / progress: custom() {~
-  rm1 = calculate1RM(completedWeights[3], completedReps[3])
+Squat / 1x5 55lb, 1x3 75lb, 1x2 95lb, 1x2+ 110lb / progress: custom() {~
+  rm1 = calculate1RM(completedWeights[4], completedReps[4])
 ~}
 ```
 
-- Three work-up sets. Set 1 at 0.7 times the pick's `lb`, set 2 at the pick's `lb`, set 3 at 1.15 times, rounded with `Weight_round`. The user changes the top set's weight on the workout screen as today, and the set is an AMRAP, "5+".
-- The top set's coaching line, shown as the exercise note: "Stop with 2 reps left in you. Never grind."
-- Under 18: the top set is "8+" and the first two sets are 8 reps. A 15 year old never tests a set of 5. This is the one place age changes a number.
+- The owner wants a real PR, so the top set is a max, and the age sets how many reps: "for over 18 PR is 1-2 rep max while under 18 is 3-4 rep max". The plan takes the top of each range. An adult works up to a 2-rep max, "2+". Under 18 works up to a 4-rep max, "4+". A single is never asked for on a first baseline: Epley from 2 reps is within 3 percent of a true single, and a beginner's fourth day in the gym is where a missed single hurts.
+- Four work-up sets. Set 1 is 5 reps at 0.6 times the pick's `lb`, set 2 is 3 reps at 0.8, set 3 is 2 reps at `lb`, set 4 is the max at 1.15 times `lb`, rounded with `Weight_round`. Under 18 the reps read 6, 4, 4 and "4+". The user raises the top set's weight on the workout screen as today, as far as a clean max goes.
+- The top set's coaching line, shown as the exercise note: "Add weight until the next one would fail. Never grind a rep."
 - Bodyweight picks: one set, "1x1+", as many reps as possible. There is no `rm1` for a push-up; the result keeps the reps.
 - The `rm1` line writes the Epley estimate into `settings.exerciseData[key].rm1`, so the exercise stats screen and any `%` weight read it from day 11.
 
@@ -139,7 +139,7 @@ Day 10, the baseline card. `BaselineResult_from` reads the history, the stats, t
 - Food: the average kcal and protein a day over the ten days, against the target.
 - Check-ins: the average energy, soreness and mood.
 - The photo and the tape, when taken.
-- A share card, "Cub 412 · baseline done · 12 lifts measured", with the bear at Amateur. Whether the card offers to share by itself is an open question.
+- A share card, "Cub 412 · baseline done · 12 lifts measured", with the bear at Amateur, behind a Share button. The owner asked why wait until day 10 to share, and the answer is that nobody waits: the cub card is offered on day 0, and the existing workout share cards open after every test day from day 4, each with the records it set. The day-10 card is one more.
 - One button, "Start my plan". `BaselineResult_startLb` turns the estimates into start weights and `BearPlan_text` takes them, below. The beBEAR+ offer shows after this card and never before, because `PlusOffer_afterFirstProgram` reads `hasProgram` as false while the baseline runs.
 
 ## 6. From the baseline to the plan
@@ -156,6 +156,14 @@ Day 10, the baseline card. `BaselineResult_from` reads the history, the stats, t
 `BearPlan_text(params, starts?)` gains the optional second argument. `exerciseLines` reads `starts[pick.name]` before `pick.lb`, and a bodyweight start replaces `pick.sets`. The golden files in `test/fixtures/bearPlan/` do not change, because they call with no starts. `test/bearPlan.test.ts` gains one case with starts and evaluates it like the others.
 
 The regular plan also carries the user's `rm1` values, written by the tests, so a later program with `%` weights reads real numbers.
+
+Max day, once a month. The owner's rule: "we need to have pr squat/DL/BP/SP and those need to be tracked with users maxing out once a month. the rest establishes a baseline so that we can accurately reccomend the weights each time." The first weights may be a bit off, and the app learns from the workouts.
+
+- The big four are the slots `squat`, `hinge`, `horizontalPush` and `verticalPush`, mapped to the user's place through `BearPlanSlots_pick`, so a dumbbells-only user maxes the goblet squat and a floor user counts reps.
+- Every 28 days after the baseline's last test day, the whiteboard's Train line reads "Max day" and the door opens a one-off workout from `MaxDay_program(params, settings)`, the four tests with the same work-up and the same 2-rep or 4-rep rule. It replaces that day's planned workout and counts kg like any workout. Skipped, it comes back the next training day until done or 7 days pass.
+- After a max day, `MaxDay_reanchor(result, program)` sets each big-four working weight to the larger of the current weight and 80 percent of the new estimate. `lp` and `dp` keep adding between max days, so a user who progressed faster than the plan is never set back, and a user whose plan stalled is lifted to the number the max says.
+- The records live in the history already, through `History_getPersonalRecords`. The bear panel gains a "Records" section with the four estimates and a small line per lift across the max days, from `MaxDay_history(history)`.
+- `src/models/maxDay.ts` owns the rule, with `MaxDay_due(state, today)`, `MaxDay_program`, `MaxDay_reanchor` and `MaxDay_history`, and `test/maxDay.test.ts` covers due dates, a skipped max day, the re-anchor floor and a bodyweight place.
 
 ## 7. The goal is gain
 
@@ -207,7 +215,9 @@ The phone.
 - Where it shows. The door plate: `bearHouse.ts` gives the door `overlay: { kind: "number", share: doorPlate, text }`, drawn over the door art like the scale's number, with the plate rect measured on the door and kept clear in the arrange tool. The bear panel header: "Cub 412 · Paul's bear". Every share card's footer in `cardParts.tsx`: "Cub 412". The baseline card. The friends list and the TV rows: a friend's number from the `cubs` read under the friends policy, carried in the post summary as `cub` in version 4 of `workoutPost.ts`, so an old post reads with no number. Leaderboard rows when L2 lands.
 - Cub 0 shows as "Cub 0" and nothing else in this plan. Admin tools for the owner are SQL in the Supabase dashboard today, as `pro_codes` already is, and an in-app admin screen is a later plan.
 
-Sign-in. The number needs an account, so the welcome puts sign-in first, with the number as the reason: "Sign in to get your cub number." Whether a "Not now" link stays is an open question. With the link, the plate reads "?" and a tap on it opens sign-in; the baseline runs the same either way, and the trigger numbers the account whenever it is created.
+Sign-in. The owner's call: the first page is sign in or sign up with Apple or Google, then the short onboarding, then the baseline. There is no way past it. The App Store review risk under guideline 5.1.1 is accepted. The app has account features, sync, friends and the number, which make the requirement defensible. The plate reads "?" only while the first fetch has not answered, for example offline right after sign-up.
+
+The cub share card. Right after sign-in the welcome offers "I'm Cub 412 on beBEAR" with the bear and the user's invite handle, behind a Share button. The number spreads on day 0. `src/components/shareCards/cubCard.tsx`, text from `CubNumber_shareText(number, handle)`.
 
 ## 10. Modules and tests
 
@@ -225,7 +235,8 @@ Every rule below lives in a pure module with a mocha test, per the "Where logic 
 - `src/models/onboarding.ts`: the step `baseline` with the last-trained answer, `done` renamed to the card, `pendingPlan` in the result. `test/onboarding.test.ts`.
 - `src/models/onboardingAnswers.ts`: `goalKind` always `buildMuscle`, weight required, `foodGoal` fixed to gain, `lastTrained` in the answers. `test/onboardingAnswers.test.ts`.
 - `src/models/programGoal.ts` and `src/models/goalWizard.ts`: `ProgramGoal_offeredKinds`, no "goal" step. `test/programGoal.test.ts`, `test/goalWizard.test.ts`.
-- New `src/models/cubNumber.ts`: parse, label, plate, `needsFetch`. New `test/cubNumber.test.ts`.
+- New `src/models/cubNumber.ts`: parse, label, plate, `needsFetch`, `shareText`. New `test/cubNumber.test.ts`.
+- New `src/models/maxDay.ts`: `MaxDay_due`, `MaxDay_program`, `MaxDay_reanchor`, `MaxDay_history`. New `test/maxDay.test.ts`.
 - `src/models/bearHouse.ts`: the door plate overlay. `test/bearHouse.test.ts`.
 - `src/models/workoutPost.ts`: `cub` in summary version 4. `test/workoutPost.test.ts`.
 - `src/models/fullBackup.ts`: the baseline and cub stores. `test/fullBackup.test.ts`.
@@ -259,18 +270,25 @@ Piece S, the baseline screens and the goal wizard. Sonnet. 12 hours. The onboard
 - Views: `src/components/onboardingChat.tsx` and `.native.tsx` (the baseline step, the card step), `src/components/onboardingQuestions.tsx` and `.native.tsx` (weight required, no weight-goal fieldset, the last-trained question), new `src/components/baselineSheet.tsx` (the day's line, opened from the board), new `src/components/baselineCard.tsx` (the day-10 card, also opened from the Journal's Day 0), new `src/components/shareCards/baselineCard.tsx` (the share card), `src/components/screenHome.tsx` (the `baseline` board target opens the sheet), `src/components/goalWizardSteps.tsx` and `src/components/screenGoalWizard.tsx` (no goal step), `src/components/screenJournal.tsx` (the Day 0 entry).
 - The web first run and the native first run both change, because `onboardingChat.tsx` and `.native.tsx` are separate files.
 
-Piece C, the cub number. Opus. 10 hours. The brief is `HANDOFF-baseline-cub.md`.
+Piece C, the cub number. Opus. 11 hours. The brief is `HANDOFF-baseline-cub.md`.
 
-- Hours: the migration and its SQL test 3, the store and the client 2, the plate, the panel and the share footer 3, the welcome 2.
+- Hours: the migration and its SQL test 3, the store and the client 2, the plate, the panel and the share footer 3, the welcome 2, the cub share card 1.
 - Order: after `HOUSE_HOME_PLAN.md` piece C merges, because both change `bearHouse.ts` and `bearHouseScene.tsx`. Beside piece W.
 
 - Server: `supabase/migrations/20261028000000_cubs.sql`, `supabase/tests/cubs.sql`.
 - Modules with tests: new `src/models/cubNumber.ts`, `src/models/bearHouse.ts`, `src/models/workoutPost.ts`, `src/models/fullBackup.ts`, `src/models/onboardingChoices.ts` (the welcome label).
 - Utils: new `src/utils/cubStore.ts`, new `src/utils/cubClient.ts`, `src/utils/supabaseClient.ts` only if a helper is missing.
-- Views: `src/components/onboardingWelcome.tsx` and `.native.tsx` (sign-in first), `src/components/bearHouseScene.tsx` (the plate reads the overlay as the scale does), `src/components/bearPanelSheet.tsx` (the header), `src/components/shareCards/cardParts.tsx` (the footer), `src/components/screenFriends.tsx` and `src/components/bearTv.tsx` (a friend's number).
+- Views: `src/components/onboardingWelcome.tsx` and `.native.tsx` (sign-in first, no way past), new `src/components/shareCards/cubCard.tsx`, `src/components/bearHouseScene.tsx` (the plate reads the overlay as the scale does), `src/components/bearPanelSheet.tsx` (the header), `src/components/shareCards/cardParts.tsx` (the footer), `src/components/screenFriends.tsx` and `src/components/bearTv.tsx` (a friend's number).
 - Design calls: the plate's place and type on the door art, the welcome's layout with three sign-in buttons and the number as the reason.
 
-Order: L now. W and C after their house dependencies merge, beside each other. S after W. Total 39 hours of code.
+Piece M, the monthly max day. Opus. 10 hours. The brief is `HANDOFF-baseline-maxday.md`.
+
+- Hours: the due rule and the program 3, the re-anchor 3, the Records panel 2, the whiteboard and door wiring 2.
+- Modules with tests: new `src/models/maxDay.ts`, `src/models/bearBoard.ts` (the Train line reads "Max day"), `src/models/gymBagCheck.ts` (the door starts the max day's workout when due).
+- Views: `src/components/bearPanelSheet.tsx` (the Records section), `src/components/screenHome.tsx` and `src/components/gymBagCheckSheet.tsx` (one line each to start the one-off workout).
+- Order: after piece S merges, because it reads `BaselineResult_from` and `baselineProgram.ts`.
+
+Order: L now. W and C after their house dependencies merge, beside each other. S after W. M after S. Total 50 hours of code, with piece C at 11 hours for the cub share card.
 
 ## 12. Follow-ups
 
@@ -286,16 +304,20 @@ Not in the build split. Each names where it lands.
 
 ## 13. Open questions
 
-One decision each. The owner's own words already answer the ten-day shape, the gain-only goal and the number plate on the door.
+Answered by the owner on 2026-10-27, and now in the plan.
 
-- The rest length. Fixed at 3 days for everyone, or the "When did you last train hard?" question that gives 1 to 3 days? The plan writes the question.
-- Sign-in. Required before the baseline starts, or with a "Not now" link and a "?" on the plate until the user signs in? The plan writes the link, because an account that is forced on the first screen is a review risk under App Store guideline 5.1.1 and the offline-only build has no server.
-- Cub 0. Which account is the owner's, by email, so the migration sets its number to 0?
-- Old goals. Leave `loseFat` and `maintain` goals as they are until the user changes them, or switch them to `buildMuscle` on the next app start?
-- The under-18 rule. Top sets of 8 or more for users under 18, never 5. Yes or no?
-- The test week. Four test sessions for every user, including the 3-day plan, or three sessions for the 3-day plan?
-- The share card. On day 10, open the share sheet by itself, or show the card with a share button and leave the tap to the user?
-- The thresholds. Accept the table in the retune, or move Mars from year 4?
-- The audience. One product, two ages, the fork in marketing only. Agree?
+- Sign-in is the first page, Apple or Google, then the short onboarding, then the baseline.
+- Cub 0 is the owner's `pbebear@icloud.com` account.
+- Old `loseFat` and `maintain` goals stay until the user changes them.
+- The max: over 18 a 1 to 2 rep max, under 18 a 3 to 4 rep max. The plan takes 2 and 4.
+- Four test sessions. The big four, squat, deadlift, bench and press, are tracked and maxed once a month, and the app learns the weights from the workouts.
+- A Share button, and sharing from day 0, never only on day 10.
+- The thresholds stand for now.
+- One product, two ages.
 
-Next action: answer the nine questions in the session. The build cards for pieces L, W, S and C follow the answers.
+Still open, one decision each.
+
+- The rest length. The owner said rest 3 or 4 days before the tests. Does everyone rest 3 days, even someone who has not trained for a week, or does the app ask "When did you last train hard?" and rest only the days missing to make 3? The plan writes the question.
+- The four-day split. The owner will read "The baseline, day by day" and say whether Lower A, Upper A, Lower B and Upper B is the right way to split the lifts.
+
+Next action: answer the two questions in the session. The build cards for pieces L and C are proposed already; W, S and M follow the rest-length answer.
