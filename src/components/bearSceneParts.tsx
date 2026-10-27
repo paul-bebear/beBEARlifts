@@ -207,7 +207,7 @@ export function HouseObjectView(props: {
   }
   const box = BearHouse_box(object.rect, unit);
   const padlock = BearHouse_box(BearHouse_padlock(object.rect), unit);
-  const label = object.lock == null ? object.pill : `${object.label}, ${BearHouse_lockLine(object.lock)}`;
+  const label = object.lock == null ? object.label : `${object.label}, ${BearHouse_lockLine(object.lock)}`;
   return (
     <>
       <Pressable

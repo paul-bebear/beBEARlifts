@@ -107,14 +107,30 @@ describe("BearHouse", () => {
     }
   });
 
-  it("gives every object a label and a target, and every open one a pill", () => {
+  it("gives every object a label and a target", () => {
     for (const object of BearHouse_objects("trailer", 0, empty, undefined)) {
       expect(object.label, object.id).to.not.equal("");
       expect(object.target.kind, object.id).to.be.a("string");
-      if (object.lock == null) {
-        expect(object.pill, object.id).to.not.equal("");
-      }
     }
+  });
+
+  it("draws no pill on a day-0 room that has a weight, a friend and a note, except the passport", () => {
+    const objects = BearHouse_objects(
+      "trailer",
+      0,
+      { ...empty, weight: "72.4", friendCount: 1, hasNoteToday: true },
+      undefined
+    );
+    expect(objects.filter((o) => o.pill != null).map((o) => o.id)).to.deep.equal(["passport"]);
+  });
+
+  it("draws exactly the three empty-state pills on an empty day-0 room", () => {
+    const objects = BearHouse_objects("trailer", 0, empty, undefined);
+    expect(objects.filter((o) => o.pill != null).map((o) => [o.id, o.pill])).to.deep.equal([
+      ["tv", "No friends yet"],
+      ["passport", "Stamp your first city"],
+      ["scale", "Weigh in"],
+    ]);
   });
 
   it("labels and targets the day-0 room like the picked mockup", () => {
@@ -182,7 +198,7 @@ describe("BearHouse", () => {
       byId(BearHouse_objects("trailer", 0, { ...empty, friendCount }, undefined), "tv");
     expect(tv(0).pill).to.equal("No friends yet");
     expect(tv(0).target).to.deep.equal({ kind: "addFriend" });
-    expect(tv(1).pill).to.equal("TV");
+    expect(tv(1).pill).to.equal(undefined);
     expect(tv(1).target).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
     expect(tv(1).overlay?.kind).to.equal("tv");
   });
@@ -192,7 +208,7 @@ describe("BearHouse", () => {
       byId(BearHouse_objects("trailer", 0, { ...empty, weight }, undefined), "scale");
     expect(scale().pill).to.equal("Weigh in");
     expect(scale().overlay).to.equal(undefined);
-    expect(scale("72.4").pill).to.equal("Scale");
+    expect(scale("72.4").pill).to.equal(undefined);
     expect(scale("72.4").overlay?.text).to.equal("72.4");
   });
 
@@ -222,6 +238,7 @@ describe("BearHouse", () => {
     const seen = new Set<IBearHouseObjectId>(dayZeroOpen);
     const objects = BearHouse_objects("trailer", 3, empty, seen);
     expect(objects.filter((o) => o.isNew).map((o) => o.id)).to.deep.equal(["calendar"]);
+    expect(byId(objects, "calendar").pill).to.equal("New");
   });
 
   it("keeps every drawn object inside its room and standing on its slot", () => {

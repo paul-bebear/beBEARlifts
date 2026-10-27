@@ -91,19 +91,19 @@ function HouseArt(props: IProps & { width: number }): JSX.Element {
       <BearSprite spritePath={spritePath} box={layout.sprite} pivot={pivot} scaleY={scaleY} />
       {drawn("front")}
       <BearSceneBoard board={layout.board} lines={props.lines} onTarget={props.onBoardTarget} />
-      {props.objects
-        .filter((o) => o.image != null && o.lock == null && note?.id !== o.id)
-        .map((o) => (
+      {props.objects.map((o) =>
+        o.image == null || o.pill == null || o.lock != null || note?.id === o.id ? null : (
           <HousePill
             key={o.id}
             testID={`house-${o.id}-pill`}
-            text={o.isNew ? "New" : o.pill}
+            text={o.pill}
             center={o.pillAt}
             unit={unit}
             sceneWidth={layout.width}
             onPress={() => press(o)}
           />
-        ))}
+        )
+      )}
       {note != null && (
         <HousePill
           key={note.at}

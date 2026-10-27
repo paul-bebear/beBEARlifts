@@ -9,7 +9,7 @@ import { IconPlus2 } from "./icons/iconPlus2";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import { navigateToModal } from "../navigation/navigationService";
-import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
+import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { Thunk_editHistoryRecord, Thunk_pushScreen } from "../ducks/thunks";
 import {
   IJournalDay,
@@ -242,7 +242,7 @@ function JournalWeek(props: {
 export function ScreenJournal(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const sources = useJournalSources();
-  const stats = useTrackedState().storage.stats;
+  const stats = untrack(useTrackedState().storage.stats);
   const { today, history, food } = sources;
   const { state: bear } = useBear();
   const [day, setDay] = useState(today);

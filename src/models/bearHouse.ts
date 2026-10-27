@@ -59,7 +59,7 @@ export interface IBearHouseObject {
   id: IBearHouseObjectId;
   image?: string;
   label: string;
-  pill: string;
+  pill?: string;
   target: IBearHouseTarget;
   rect: IBearRect;
   pillAt: { x: number; y: number };
@@ -331,6 +331,7 @@ export function BearHouse_objects(
   return specs(houseTier, sources).map((spec) => {
     const atDays = arrivals[spec.id] ?? 0;
     const lock = atDays > activeDays ? { atDays, toGo: atDays - activeDays } : undefined;
+    const isNew = seen != null && lock == null && !seen.has(spec.id);
     const slot: IManifestSlot = spec.id === "whiteboard" ? { rect: manifest.whiteboard, pill: [0, 0] } : slots[spec.id];
     const rect: IBearRect =
       spec.image == null ? [slot.rect[0], slot.rect[1], slot.rect[2], slot.rect[3]] : fit(slot.rect, spec.image);
@@ -338,13 +339,13 @@ export function BearHouse_objects(
       id: spec.id,
       image: spec.image == null ? undefined : BearHouse_image(spec.image),
       label: spec.label,
-      pill: spec.pill ?? spec.label,
+      pill: isNew ? "New" : spec.pill,
       target: spec.target,
       rect,
       pillAt: { x: slot.pill[0], y: slot.pill[1] },
       layer: backLayer.has(spec.id) ? "back" : "front",
       lock,
-      isNew: seen != null && lock == null && !seen.has(spec.id),
+      isNew,
       overlay:
         spec.overlay == null || lock != null
           ? undefined
