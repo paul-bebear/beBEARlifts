@@ -19,6 +19,19 @@ export const HouseTour_lines: ReadonlyArray<readonly [IBearHouseObjectId, string
   ["passport", "A stamp for every city you train in. Coming soon."],
 ];
 
+export interface IHouseTourGate {
+  screen: string | undefined;
+  hasProgram: boolean;
+  hasWorkoutInProgress: boolean;
+  isOfferBusy: boolean;
+}
+
+// The seen flags decide who has met the tour, so the history count is not part of the gate.
+// A Plus offer in flight goes first. The tour starts when the offer ends.
+export function HouseTour_canStart(gate: IHouseTourGate): boolean {
+  return gate.screen === "main" && gate.hasProgram && !gate.hasWorkoutInProgress && !gate.isOfferBusy;
+}
+
 // The whiteboard is painted into the room and has no sprite, so its step shows the room picture.
 export function HouseTour_steps(objects: readonly IBearHouseObject[], roomImage: string): IHouseTourStep[] {
   const steps: IHouseTourStep[] = [];

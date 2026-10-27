@@ -1,7 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import { BearHouse_objects, BearHouse_room, IBearHouseObjectId, IBearHouseSources } from "../src/models/bearHouse";
-import { HouseTour_lines, HouseTour_steps } from "../src/models/houseTour";
+import { HouseTour_canStart, HouseTour_lines, HouseTour_steps } from "../src/models/houseTour";
 
 const sources: IBearHouseSources = {
   kcal: 0,
@@ -59,5 +59,27 @@ describe("HouseTour_steps", () => {
       o.id === "bed" ? { ...o, lock: { atDays: 5, toGo: 5 } } : o
     );
     expect(HouseTour_steps(objects, room).map((s) => s.id)).to.not.include("bed");
+  });
+});
+
+describe("HouseTour_canStart", () => {
+  const ready = { screen: "main", hasProgram: true, hasWorkoutInProgress: false, isOfferBusy: false };
+
+  it("starts on the home with a program, whatever the history count", () => {
+    expect(HouseTour_canStart(ready)).to.equal(true);
+  });
+
+  it("waits for a Plus offer in flight", () => {
+    expect(HouseTour_canStart({ ...ready, isOfferBusy: true })).to.equal(false);
+  });
+
+  it("waits while another screen or modal is open", () => {
+    expect(HouseTour_canStart({ ...ready, screen: "tourModal" })).to.equal(false);
+    expect(HouseTour_canStart({ ...ready, screen: undefined })).to.equal(false);
+  });
+
+  it("stays out of a workout in progress and of a home with no program", () => {
+    expect(HouseTour_canStart({ ...ready, hasWorkoutInProgress: true })).to.equal(false);
+    expect(HouseTour_canStart({ ...ready, hasProgram: false })).to.equal(false);
   });
 });

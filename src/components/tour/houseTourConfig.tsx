@@ -1,6 +1,7 @@
 import { TextRaw as Text } from "../primitives/text";
 import { BearHouse_objects, BearHouse_room } from "../../models/bearHouse";
-import { HouseTour_steps } from "../../models/houseTour";
+import { HouseTour_canStart, HouseTour_steps } from "../../models/houseTour";
+import { PlusOfferClient_isBusy } from "../../utils/plusOfferClient";
 import { Program_getEvaluatedProgramFromState, Program_isEmpty } from "../../models/program";
 import { Progress_getCurrentProgress } from "../../models/progress";
 import { getCurrentScreenData } from "../../navigation/navigationService";
@@ -29,14 +30,13 @@ const dayZero = BearHouse_objects(
 export const houseTourConfig: ITourConfig = {
   id: "house",
   shouldStart: (state) => {
-    if (getCurrentScreenData()?.name !== "main") {
-      return false;
-    }
-    if (Progress_getCurrentProgress(state) != null || state.storage.history.length >= 4) {
-      return false;
-    }
     const evaluatedProgram = Program_getEvaluatedProgramFromState(state);
-    return evaluatedProgram != null && !Program_isEmpty(evaluatedProgram);
+    return HouseTour_canStart({
+      screen: getCurrentScreenData()?.name,
+      hasProgram: evaluatedProgram != null && !Program_isEmpty(evaluatedProgram),
+      hasWorkoutInProgress: Progress_getCurrentProgress(state) != null,
+      isOfferBusy: PlusOfferClient_isBusy(),
+    });
   },
   steps: HouseTour_steps(dayZero, BearHouse_room("trailer")).map((step) => ({
     id: step.id,
