@@ -13,7 +13,8 @@ import {
   BearHouse_pillWidth,
   IBearHouseObject,
 } from "../models/bearHouse";
-import { BearScene_boardInkBottom, BearScene_dashboardRect, IBearBox } from "../models/bearScene";
+import { BearBoardSize_layout, BearBoardSize_rowRatio } from "../models/bearBoardSize";
+import { IBearBox } from "../models/bearScene";
 import { BearImage_uri } from "../utils/bearImage";
 
 const markerInk = "#1F3A5F";
@@ -58,7 +59,7 @@ function BoardLine(props: { line: IBearBoardLine; size: number }): JSX.Element {
       testID={`bear-board-${line.id}`}
       data-testid={`bear-board-${line.id}`}
       className="flex-row items-center"
-      style={{ height: size * 1.45 }}
+      style={{ height: size * BearBoardSize_rowRatio }}
     >
       {isTodo && (
         <View
@@ -115,20 +116,11 @@ export function BearSceneBoard(props: {
   onTarget: (target: IBearBoardTarget) => void;
 }): JSX.Element {
   const { board } = props;
-  const pad = board.width * 0.04;
-  const [, boardTop, , boardBottom] = BearScene_dashboardRect;
-  const inkHeight = board.height * ((BearScene_boardInkBottom - boardTop) / (boardBottom - boardTop));
-  const lineSize = Math.max(11, Math.round(inkHeight * 0.085));
+  const { pad, width, height, lineSize } = BearBoardSize_layout(board);
   return (
     <View
       className="justify-between"
-      style={{
-        position: "absolute",
-        left: board.left + pad,
-        top: board.top + pad,
-        width: board.width - 2 * pad,
-        height: inkHeight - pad,
-      }}
+      style={{ position: "absolute", left: board.left + pad, top: board.top + pad, width, height }}
     >
       {boardTargets.map((target) => (
         <BoardGroup
