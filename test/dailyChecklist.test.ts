@@ -171,6 +171,16 @@ describe("DailyChecklist", () => {
     const item = DailyChecklist_build(weighIn("2026-10-27", logged)).items[2];
     expect(item.isDone).to.equal(true);
     expect(item.subtitle).to.equal("Done this week · 73.4 kg");
+    const sameDayAtMidnight: IStats = {
+      ...onboarded,
+      weight: {
+        weight: [
+          { vtype: "stat", value: { value: 72.9, unit: "kg" }, timestamp: at("2026-10-21", 0) },
+          ...onboarded.weight.weight!,
+        ],
+      },
+    };
+    expect(DailyChecklist_build(weighIn("2026-10-21", sameDayAtMidnight)).items[2].isDone).to.equal(true);
   });
 
   it("picks the weigh-in weekday from the goal, else the first day of the week", () => {
