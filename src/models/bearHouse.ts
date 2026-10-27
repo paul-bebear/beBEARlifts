@@ -2,7 +2,7 @@ import manifest from "../../images/bear/house/manifest.json";
 import { IStats, IUnit } from "../types";
 import { BearBoard_latestWeight } from "./bearBoard";
 import { IBearCountedWorkout } from "./bearGrowth";
-import { IBearBox, IBearFloor, IBearRect } from "./bearScene";
+import { BearScene_boardInkBottom, BearScene_dashboardRect, IBearBox, IBearRect, IBearSceneArt } from "./bearScene";
 import { BearText_houseEmpty, BearText_lockLine } from "./bearText";
 import { DailyChecklist_doneDays, DailyChecklist_goalTarget, DailyChecklist_streak } from "./dailyChecklist";
 import { FoodLog_dayKey, FoodLog_dayTotals, IFoodLog } from "./foodLog";
@@ -39,6 +39,7 @@ export type IBearHouseTarget =
   | { kind: "screen"; screen: IBearHouseScreen; tab?: ITab }
   | { kind: "addFriend" }
   | { kind: "honey" }
+  | { kind: "phone" }
   | { kind: "line"; text: string };
 
 export type IBearHouseOpenTarget = Exclude<IBearHouseTarget, { kind: "line" }>;
@@ -101,9 +102,13 @@ const images: Record<string, number[]> = manifest.images;
 const imageDir = "/images/bear/house";
 
 // The house is the bear's own floor. Its feet stand further back than in the gym, so the cub reads smaller.
-export const BearHouse_floor: IBearFloor = {
+// The room paints the whiteboard where the gym does, so the ink ends the same rows below the board's top edge.
+export const BearHouse_art: IBearSceneArt = {
+  canvas: { width: manifest.canvas[0], height: manifest.canvas[1] },
   foot: { x: manifest.bearFoot[0], y: manifest.bearFoot[1] },
   minHeightShare: 0.26,
+  board: [manifest.whiteboard[0], manifest.whiteboard[1], manifest.whiteboard[2], manifest.whiteboard[3]],
+  inkBottom: manifest.whiteboard[1] + BearScene_boardInkBottom - BearScene_dashboardRect[1],
 };
 
 // Screen area of each TV sprite as a share of the trimmed image, measured on the art in handoff 07.
@@ -120,7 +125,6 @@ const phoneBadge: IBearRect = [0.7, -0.04, 1.02, 0.2];
 const arrivals: Partial<Record<IBearHouseObjectId, number>> = {
   calendar: 3,
   boombox: 7,
-  phone: 7,
   honey: 14,
   shelf: 30,
   wardrobe: 30,
@@ -136,6 +140,17 @@ export function BearHouse_image(name: string): string {
 
 export function BearHouse_room(tier: IBearHouseTier): string {
   return BearHouse_image(manifest.rooms[tier].room);
+}
+
+// The colour beside the art on a screen wider than the picture, measured from the picture's top rows.
+export function BearHouse_wallColor(tier: IBearHouseTier): string {
+  return manifest.rooms[tier].wall;
+}
+
+export function BearHouse_gymWallColor(gymImage: string): string {
+  const walls: Record<string, string> = manifest.gymWalls;
+  const name = gymImage.replace(/^.*\//, "").replace(/\.webp$/, "");
+  return walls[name] ?? manifest.rooms.trailer.wall;
 }
 
 export const BearHouse_images: readonly string[] = [
@@ -283,8 +298,8 @@ function specs(tier: IBearHouseTier, sources: IBearHouseSources): IObjectSpec[] 
     {
       id: "phone",
       image: "phone-dock",
-      label: "Friends",
-      target: { kind: "addFriend" },
+      label: "Phone",
+      target: { kind: "phone" },
       overlay:
         sources.pendingRequests > 0
           ? { kind: "badge", share: phoneBadge, text: `${sources.pendingRequests}` }

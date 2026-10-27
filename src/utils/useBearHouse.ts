@@ -5,6 +5,7 @@ import {
   BearHouse_objects,
   BearHouse_room,
   BearHouse_sources,
+  BearHouse_wallColor,
   IBearHouseObject,
   IBearHouseTier,
 } from "../models/bearHouse";
@@ -20,6 +21,7 @@ import { IBearHoneyView, useBearHoney } from "./useBearHoney";
 
 export interface IBearHouseView {
   room: string;
+  wall: string;
   objects: IBearHouseObject[];
   honey: IBearHoneyView;
 }
@@ -58,5 +60,5 @@ export function useBearHouse(): IBearHouseView {
     const activeDays = BearHouse_activeDays({ workouts: state.workouts, foodLog, stats });
     return BearHouse_objects(houseTier, activeDays, sources, undefined);
   }, [state.workouts, foodLog, stats, notes, units, friendCount, pendingRequests, honey.earned, badges.length]);
-  return { room: BearHouse_room(houseTier), objects, honey };
+  return { room: BearHouse_room(houseTier), wall: BearHouse_wallColor(houseTier), objects, honey };
 }

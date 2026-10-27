@@ -1,7 +1,6 @@
 import { JSX, ReactNode, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
-import { ActionMenu } from "./actionMenu";
 import { IconChevronRight } from "./icons/iconFoodUi";
 import { IProgressHub, IProgressHubTone } from "../models/progressHub";
 import { Steps_format } from "../models/steps";
@@ -12,72 +11,6 @@ const pillColors: Record<IProgressHubTone, string> = {
   good: "rgba(34, 197, 94, 0.22)",
   warn: "rgba(234, 179, 8, 0.28)",
 };
-
-function GoalFact(props: { label: string; value: string }): JSX.Element {
-  return (
-    <View className="flex-1">
-      <Text className="text-xs text-text-secondary">{props.label}</Text>
-      <Text className="text-base font-semibold" numberOfLines={1}>
-        {props.value}
-      </Text>
-    </View>
-  );
-}
-
-export function ProgressGoalCard(props: {
-  goal: IProgressHub["goal"];
-  onChangeGoal: () => void;
-  onChangePace: () => void;
-}): JSX.Element {
-  const { goal } = props;
-  if (goal == null) {
-    return (
-      <Pressable
-        testID="progress-goal-set"
-        data-testid="progress-goal-set"
-        onPress={props.onChangeGoal}
-        className="p-4 mx-4 mb-3 border rounded-2xl border-border-neutral"
-      >
-        <Text className="text-xs font-semibold tracking-wide uppercase text-text-secondary">Current goal</Text>
-        <Text className="mt-1 text-xl font-bold">Set your goal</Text>
-        <Text className="text-sm text-text-secondary">Build muscle, lose fat or maintain. Takes a minute.</Text>
-      </Pressable>
-    );
-  }
-  const actions = [
-    ...(goal.canChangePace
-      ? [{ label: "Change my pace", onPress: props.onChangePace, testID: "progress-goal-pace" }]
-      : []),
-    { label: "Change my goal", onPress: props.onChangeGoal, testID: "progress-goal-change-goal" },
-  ];
-  return (
-    <View testID="progress-goal" data-testid="progress-goal" className="p-4 mx-4 mb-3 rounded-2xl bg-background-subtle">
-      <View className="flex-row items-center">
-        <Text className="flex-1 text-xs font-semibold tracking-wide uppercase text-text-secondary">Current goal</Text>
-        <ActionMenu
-          title="Change"
-          actions={actions}
-          renderTrigger={(open) => (
-            <Pressable
-              testID="progress-goal-change"
-              data-testid="progress-goal-change"
-              onPress={open}
-              className="py-1 pl-3"
-            >
-              <Text className="text-sm font-semibold text-text-link">Change</Text>
-            </Pressable>
-          )}
-        />
-      </View>
-      <Text className="mt-1 text-2xl font-bold">{goal.title}</Text>
-      <View className="flex-row mt-3" style={{ gap: 8 }}>
-        <GoalFact label="Pace" value={goal.pace} />
-        <GoalFact label="Started" value={goal.started} />
-        <GoalFact label="Start weight" value={goal.startWeight ?? "–"} />
-      </View>
-    </View>
-  );
-}
 
 export function ProgressExpandRow(props: {
   testID: string;

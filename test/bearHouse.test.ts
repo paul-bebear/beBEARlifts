@@ -5,6 +5,7 @@ import * as path from "path";
 import {
   BearHouse_activeDays,
   BearHouse_gymExit,
+  BearHouse_gymWallColor,
   BearHouse_hitSlop,
   BearHouse_images,
   BearHouse_lockLine,
@@ -14,12 +15,14 @@ import {
   BearHouse_pillWidth,
   BearHouse_sources,
   BearHouse_tap,
+  BearHouse_wallColor,
   IBearHouseObject,
   IBearHouseObjectId,
   IBearHouseSources,
   IBearHouseTier,
 } from "../src/models/bearHouse";
 import { FoodLog_dayKey, FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
+import { HouseFrame_canvas, HouseFrame_oldTop } from "../src/models/houseFrame";
 import { Notes_empty, Notes_new, Notes_save } from "../src/models/notes";
 import { Weight_build } from "../src/models/weight";
 import { IHistoryRecord, IStats } from "../src/types";
@@ -29,7 +32,17 @@ const dayMs = 24 * hourMs;
 const now = new Date(2026, 9, 26, 12).getTime();
 const today = FoodLog_dayKey(new Date(now));
 const tiers: IBearHouseTier[] = ["trailer", "apartment", "loft", "mansion", "spaceship", "moon", "mars"];
-const dayZeroOpen: IBearHouseObjectId[] = ["whiteboard", "door", "bowl", "bed", "notebook", "tv", "passport", "scale"];
+const dayZeroOpen: IBearHouseObjectId[] = [
+  "whiteboard",
+  "door",
+  "bowl",
+  "bed",
+  "notebook",
+  "tv",
+  "passport",
+  "scale",
+  "phone",
+];
 
 const empty: IBearHouseSources = {
   kcal: 0,
@@ -83,11 +96,11 @@ function stats(weights: { at: number; kg: number }[]): IStats {
 }
 
 describe("BearHouse", () => {
-  it("opens exactly the eight day-0 objects and locks every later one at 0 active days", () => {
+  it("opens exactly the nine day-0 objects and locks every later one at 0 active days", () => {
     const objects = BearHouse_objects("trailer", 0, empty, undefined);
     const open = objects.filter((o) => o.lock == null).map((o) => o.id);
     expect(open).to.have.members(dayZeroOpen);
-    expect(open).to.have.length(8);
+    expect(open).to.have.length(9);
     for (const object of objects.filter((o) => !dayZeroOpen.includes(o.id))) {
       expect(object.lock, object.id).to.not.equal(undefined);
       expect(object.lock!.toGo).to.equal(object.lock!.atDays);
@@ -118,7 +131,7 @@ describe("BearHouse", () => {
       scale: ["Scale", "screen"],
       calendar: ["Calendar", "monthCalendar"],
       boombox: ["Music", "screen"],
-      phone: ["Friends", "addFriend"],
+      phone: ["Phone", "phone"],
       honey: ["Honey", "honey"],
       shelf: ["Trophies", "screen"],
       wardrobe: ["Wardrobe", "honey"],
@@ -130,7 +143,7 @@ describe("BearHouse", () => {
     const at = (days: number): IBearHouseObject[] => BearHouse_objects("trailer", days, empty, undefined);
     expect(byId(at(2), "calendar").lock).to.deep.equal({ atDays: 3, toGo: 1 });
     expect(byId(at(3), "calendar").lock).to.equal(undefined);
-    expect(byId(at(6), "phone").lock).to.deep.equal({ atDays: 7, toGo: 1 });
+    expect(byId(at(0), "phone").lock).to.equal(undefined);
     expect(byId(at(13), "honey").lock).to.deep.equal({ atDays: 14, toGo: 1 });
     expect(byId(at(30), "shelf").lock).to.equal(undefined);
     expect(byId(at(30), "wardrobe").lock).to.equal(undefined);
@@ -143,7 +156,7 @@ describe("BearHouse", () => {
     const sources = { ...empty, streak: 4, pendingRequests: 2 };
     expect(byId(BearHouse_objects("trailer", 0, sources, undefined), "calendar").overlay).to.equal(undefined);
     expect(byId(BearHouse_objects("trailer", 7, sources, undefined), "calendar").overlay?.text).to.equal("4");
-    expect(byId(BearHouse_objects("trailer", 7, sources, undefined), "phone").overlay?.kind).to.equal("badge");
+    expect(byId(BearHouse_objects("trailer", 0, sources, undefined), "phone").overlay?.text).to.equal("2");
   });
 
   it("draws the music boombox only in the offline build", () => {
@@ -218,13 +231,28 @@ describe("BearHouse", () => {
         expect(x1, `${tier} ${object.id}`).to.be.at.least(0);
         expect(y1).to.be.at.least(0);
         expect(x2).to.be.at.most(1024);
-        expect(y2).to.be.at.most(1536);
+        expect(y2).to.be.at.most(HouseFrame_canvas.height);
+        expect(y1, `${tier} ${object.id} sits in the old picture`).to.be.at.least(HouseFrame_oldTop);
         expect(x2 - x1).to.be.above(0);
       }
     }
     const exit = BearHouse_gymExit("/images/bear/gyms/garage.webp");
     expect(exit.image).to.equal("/images/bear/house/door-exit-gym.webp");
     expect(BearHouse_gymExit("/images/bear/gyms/moon.webp").image).to.equal("/images/bear/house/door-exit-space.webp");
+  });
+
+  it("gives every room and every gym a wall colour", () => {
+    for (const tier of tiers) {
+      expect(BearHouse_wallColor(tier), tier).to.match(/^#[0-9a-f]{6}$/);
+    }
+    const gyms = fs
+      .readdirSync(path.join(__dirname, "..", "images", "bear", "gyms"))
+      .filter((f) => f.endsWith(".webp"));
+    expect(gyms.length).to.be.above(0);
+    for (const gym of gyms) {
+      expect(BearHouse_gymWallColor(`/images/bear/gyms/${gym}`), gym).to.match(/^#[0-9a-f]{6}$/);
+    }
+    expect(BearHouse_gymWallColor("/images/bear/gyms/garage.webp")).to.equal("#532b11");
   });
 
   it("ships every image the house draws", () => {

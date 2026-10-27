@@ -1,6 +1,4 @@
-import { JSX, ReactNode, useMemo, useState } from "react";
-import { FoodLog_dayKey, FoodLog_dayTotals, IFoodProgressMode } from "../models/foodLog";
-import { FoodSummaryCard } from "./foodSummaryCard";
+import { JSX, useMemo } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useTrackedState, useTrackedDispatch, untrack } from "../navigation/TrackedStateContext";
@@ -13,15 +11,14 @@ import {
   ProgressDashboard_days,
   ProgressDashboard_workoutsLine,
 } from "../models/progressDashboard";
-import { ProgressHub_build, ProgressHub_goal, ProgressHub_plannedPerWeek } from "../models/progressHub";
-import { ReportsHub_title } from "../models/reportsHub";
+import { ProgressHub_build, ProgressHub_plannedPerWeek } from "../models/progressHub";
 import { Program_evaluate, Program_isEmpty } from "../models/program";
 import { ProgramGoalStore } from "../utils/programGoalStore";
 import { StepsStore } from "../utils/stepsStore";
 import { useStepsHealthSync } from "../utils/useStepsHealthSync";
 import { useIsFocused } from "@react-navigation/native";
 import { ProgressPhotoStore } from "../utils/progressPhotoStore";
-import { ProgressDetailLine, ProgressDetailLink, ProgressExpandRow, ProgressGoalCard } from "./progressHubCards";
+import { ProgressDetailLine, ProgressDetailLink, ProgressExpandRow } from "./progressHubCards";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
 import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 import { WeekInsights } from "./weekInsights";
@@ -30,10 +27,7 @@ import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { IconStats } from "./icons/iconStats";
 import { IconFood } from "./icons/iconFood";
 import { IconBarbell2 } from "./icons/iconBarbell2";
-import { IconGraphs } from "./icons/iconGraphs";
 import { IconChevronRight } from "./icons/iconFoodUi";
-import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
-import { CloudRestoreBanner } from "./cloudRestoreBanner";
 
 function ProgramCardView(props: { card: IProgramCard; onPress: () => void }): JSX.Element {
   return (
@@ -68,21 +62,6 @@ function ProgramCardView(props: { card: IProgramCard; onPress: () => void }): JS
   );
 }
 
-function LinkRow(props: { testID: string; icon: ReactNode; title: string; onPress: () => void }): JSX.Element {
-  return (
-    <Pressable
-      testID={props.testID}
-      data-testid={props.testID}
-      onPress={props.onPress}
-      className="flex-row items-center px-4 py-3.5 mx-4 mb-2 rounded-2xl bg-background-subtle"
-    >
-      <View className="w-6 mr-3">{props.icon}</View>
-      <Text className="flex-1 text-base">{props.title}</Text>
-      <IconChevronRight size={16} color={Tailwind_semantic().icon.neutral} />
-    </Pressable>
-  );
-}
-
 export function ProgramCardSection(): JSX.Element {
   const state = useTrackedState();
   const dispatch = useTrackedDispatch();
@@ -93,54 +72,6 @@ export function ProgramCardSection(): JSX.Element {
   );
   const programCard = useMemo(() => ProgramCard_build(program, settings), [program, settings]);
   return <ProgramCardView card={programCard} onPress={() => dispatch(Thunk_pushToEditProgram())} />;
-}
-
-function TodayMacros(): JSX.Element {
-  const dispatch = useTrackedDispatch();
-  const foodLog = useFoodLog();
-  const [mode, setMode] = useState<IFoodProgressMode>("consumed");
-  const today = FoodLog_dayKey(new Date());
-  return (
-    <View testID="my-bear-macros" data-testid="my-bear-macros">
-      <Pressable
-        className="flex-row items-center px-4 pb-1"
-        onPress={() => dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }))}
-      >
-        <Text className="flex-1 text-xl font-bold">Today's food</Text>
-        <Text className="text-sm text-text-link">Journal</Text>
-      </Pressable>
-      <FoodSummaryCard
-        totals={FoodLog_dayTotals(foodLog, today)}
-        goals={foodLog.goals}
-        mode={mode}
-        onModeChange={setMode}
-      />
-    </View>
-  );
-}
-
-export function MyBearSections(): JSX.Element {
-  const state = useTrackedState();
-  const dispatch = useTrackedDispatch();
-  const settings = untrack(state.storage.settings);
-  const goal = ProgressHub_goal(ProgramGoalStore.use(), settings, Date.now());
-  return (
-    <View className="pt-2 pb-6" testID="progress-dashboard" data-testid="progress-dashboard">
-      {OfflineOnly_isEnabled() && <CloudRestoreBanner dispatch={dispatch} />}
-      <TodayMacros />
-      <ProgressGoalCard
-        goal={goal}
-        onChangeGoal={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "goal" }))}
-        onChangePace={() => dispatch(Thunk_pushScreen("goalWizard", { mode: "pace" }))}
-      />
-      <LinkRow
-        testID="progress-all-stats"
-        icon={<IconGraphs color={Tailwind_semantic().icon.neutral} />}
-        title={ReportsHub_title}
-        onPress={() => dispatch(Thunk_pushScreen("reportsHub"))}
-      />
-    </View>
-  );
 }
 
 export function StatsSections(): JSX.Element {

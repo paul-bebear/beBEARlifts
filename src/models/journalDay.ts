@@ -156,6 +156,11 @@ export function JournalDay_emptyRow(day: IJournalDay, section: IJournalSection):
   }
 }
 
+// The season's snack rows left the home screen for today's meals, where a tap on the bowl lands.
+export function JournalDay_showsSeasonNudge(day: IJournalDay): boolean {
+  return day.isToday;
+}
+
 export interface IJournalSectionFold {
   isHidden?: boolean;
   summary?: string;

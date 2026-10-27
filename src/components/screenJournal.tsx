@@ -18,7 +18,9 @@ import {
   JournalDay_build,
   JournalDay_header,
   JournalDay_sectionFold,
+  JournalDay_showsSeasonNudge,
 } from "../models/journalDay";
+import { SeasonNudgeCard } from "./seasonNudgeCard";
 import { IconChevronRight } from "./icons/iconFoodUi";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { Notes_firstLine, Notes_preview } from "../models/notes";
@@ -240,6 +242,7 @@ function JournalWeek(props: {
 export function ScreenJournal(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const sources = useJournalSources();
+  const stats = useTrackedState().storage.stats;
   const { today, history, food } = sources;
   const { state: bear } = useBear();
   const [day, setDay] = useState(today);
@@ -332,6 +335,11 @@ export function ScreenJournal(): JSX.Element {
         <FoldableSection key={`${day}-workouts`} journal={journal} section="workouts" emptyAction={allWorkouts}>
           <WorkoutSection journal={journal} allWorkouts={allWorkouts} />
         </FoldableSection>
+        {JournalDay_showsSeasonNudge(journal) && (
+          <View className="pt-4">
+            <SeasonNudgeCard stats={stats} />
+          </View>
+        )}
         <FoldableSection key={`${day}-meals`} journal={journal} section="meals" emptyAction={addFood}>
           <Section title="Meals" testID="journal-meals-section">
             <View className="-mx-4">
