@@ -1,4 +1,4 @@
-import { IPercentage, IWeight } from "../types";
+import { IPercentage, IStatsPercentageKey, IWeight } from "../types";
 
 export type IBodyScanUnit = "kg" | "lb";
 
@@ -141,11 +141,37 @@ export function BodyScans_fromForm(
   return { kind: "ok", scan: { id: now, timestamp: now, unit, ...result.values } };
 }
 
-// Weight and body fat also go into the app's own measurements, so graphs and the food targets see them.
-export function BodyScans_toStats(scan: IBodyScan): { weight?: IWeight; bodyfat?: IPercentage } {
+export interface IBodyScanStats {
+  weight?: IWeight;
+  percentage: Partial<Record<IStatsPercentageKey, IPercentage>>;
+}
+
+function percent(value: number): IPercentage {
+  return { value: Math.round(value * 10) / 10, unit: "%" };
+}
+
+// Body measurements hold the scale's five readings, so the scale form and a scan write the same series.
+// Masses become a share of the scan's body weight. Without a body weight they stay in the scan only.
+export function BodyScans_toStats(scan: IBodyScan): IBodyScanStats {
+  const percentage: IBodyScanStats["percentage"] = {};
+  if (scan.bodyFatPct != null) {
+    percentage.bodyfat = percent(scan.bodyFatPct);
+  }
+  if (scan.waterPct != null) {
+    percentage.water = percent(scan.waterPct);
+  }
+  const bodyWeight = scan.weight ?? scan.basisWeight;
+  if (bodyWeight != null) {
+    if (scan.boneMass != null) {
+      percentage.bone = percent((scan.boneMass / bodyWeight) * 100);
+    }
+    if (scan.muscleMass != null) {
+      percentage.muscle = percent((scan.muscleMass / bodyWeight) * 100);
+    }
+  }
   return {
     weight: scan.weight != null ? { value: scan.weight, unit: scan.unit } : undefined,
-    bodyfat: scan.bodyFatPct != null ? { value: scan.bodyFatPct, unit: "%" } : undefined,
+    percentage,
   };
 }
 

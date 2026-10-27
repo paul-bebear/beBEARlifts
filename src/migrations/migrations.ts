@@ -10,6 +10,7 @@ import { IVersions } from "../models/versionTracker";
 import { Settings_build } from "../models/settings";
 import { Progress_getEntryId } from "../models/progress";
 import { EffortRating_moveLegacyRatings } from "../models/effortRating";
+import { Stats_turnOnScaleReadings } from "../models/stats";
 
 let latestMigrationVersion: number | undefined;
 export function getLatestMigrationVersion(): string {
@@ -478,6 +479,16 @@ export const migrations = {
     const storage: IStorage = JSON.parse(JSON.stringify(aStorage));
     storage.progress = (storage.progress || []).map(EffortRating_moveLegacyRatings);
     storage.history = (storage.history || []).map(EffortRating_moveLegacyRatings);
+    return storage;
+  },
+  "20261027120000_turn_on_scale_readings": (aStorage: IStorage): IStorage => {
+    const storage: IStorage = JSON.parse(JSON.stringify(aStorage));
+    const enabled = storage.settings.statsEnabled;
+    storage.settings.statsEnabled = Stats_turnOnScaleReadings({
+      weight: enabled?.weight ?? {},
+      length: enabled?.length ?? {},
+      percentage: enabled?.percentage ?? {},
+    });
     return storage;
   },
 };

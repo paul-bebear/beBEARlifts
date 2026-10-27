@@ -76,9 +76,27 @@ describe("BodyScans", () => {
     expect(BodyScans_formatDelta(field("muscleMass"), change, "lb")).to.equal("+1 lb");
   });
 
-  it("hands weight and body fat to the app's measurements", () => {
-    const scan: IBodyScan = { id: 1, timestamp: day, unit: "lb", weight: 180, waterPct: 55 };
-    expect(BodyScans_toStats(scan)).to.deep.equal({ weight: { value: 180, unit: "lb" }, bodyfat: undefined });
+  it("hands weight, body fat and water to the app's measurements", () => {
+    const scan: IBodyScan = { id: 1, timestamp: day, unit: "lb", weight: 180, waterPct: 55, bodyFatPct: 18.2 };
+    expect(BodyScans_toStats(scan)).to.deep.equal({
+      weight: { value: 180, unit: "lb" },
+      percentage: { bodyfat: { value: 18.2, unit: "%" }, water: { value: 55, unit: "%" } },
+    });
+  });
+
+  it("hands bone and muscle mass over as a share of body weight", () => {
+    const scan: IBodyScan = { id: 1, timestamp: day, unit: "kg", weight: 73, boneMass: 3.1, muscleMass: 33.6 };
+    expect(BodyScans_toStats(scan).percentage).to.deep.equal({
+      bone: { value: 4.2, unit: "%" },
+      muscle: { value: 46, unit: "%" },
+    });
+    const typedAsPercent: IBodyScan = { id: 2, timestamp: day, unit: "kg", basisWeight: 80, boneMass: 4 };
+    expect(BodyScans_toStats(typedAsPercent).percentage).to.deep.equal({ bone: { value: 5, unit: "%" } });
+  });
+
+  it("keeps bone and muscle in the scan when there is no body weight to share them by", () => {
+    const scan: IBodyScan = { id: 1, timestamp: day, unit: "kg", boneMass: 3.1, muscleMass: 33.6 };
+    expect(BodyScans_toStats(scan)).to.deep.equal({ weight: undefined, percentage: {} });
   });
 
   it("gives weight no good or bad colour", () => {

@@ -11,6 +11,7 @@ import {
   IWebEditorSettings,
 } from "../types";
 import { Weight_build, Weight_print } from "./weight";
+import { Stats_turnOnScaleReadings } from "./stats";
 import { IExportedProgram, Program_evaluate, Program_getAllUsedProgramExercises } from "./program";
 import { ObjectUtils_filter, ObjectUtils_pick } from "../utils/object";
 import { lb } from "lens-shmens";
@@ -276,7 +277,7 @@ export function Settings_build(): ISettings {
     workoutSettings: {
       targetType: "target",
     },
-    statsEnabled: { weight: { weight: true }, length: {}, percentage: {} },
+    statsEnabled: Stats_turnOnScaleReadings({ weight: {}, length: {}, percentage: {} }),
     exercises: {},
     graphs: { graphs: [], vtype: "graphs" },
     planner: Settings_buildPlannerSettings(),

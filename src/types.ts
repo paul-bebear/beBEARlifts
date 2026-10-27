@@ -280,7 +280,7 @@ export const statsLengthDef = [
   "calfLeft",
   "calfRight",
 ] as const;
-export const statsPercentageDef = ["bodyfat"] as const;
+export const statsPercentageDef = ["bodyfat", "water", "bone", "muscle"] as const;
 export const statsHealthDef = ["sleep", "calories", "protein"] as const;
 
 export const VUnit = v.picklist(units);
@@ -1319,10 +1319,14 @@ const _VStatsPercentageValueMatches: IEquals<
 void _VStatsPercentageValueMatches;
 export const VStatsPercentageValue: v.GenericSchema<IStatsPercentageValue> = _VStatsPercentageValue;
 
-export const VStatsPercentage = v.object({
-  bodyfat: v.optional(v.array(VStatsPercentageValue)),
-});
-export type IStatsPercentage = v.InferOutput<typeof VStatsPercentage>;
+export type IStatsPercentageKey = (typeof statsPercentageDef)[number];
+export type IStatsPercentage = Partial<Record<IStatsPercentageKey, IStatsPercentageValue[]>>;
+export const VStatsPercentage: v.GenericSchema<IStatsPercentage> = v.object(
+  statsPercentageDef.reduce<Record<string, v.GenericSchema<IStatsPercentageValue[] | undefined>>>((memo, key) => {
+    memo[key] = v.optional(v.array(VStatsPercentageValue));
+    return memo;
+  }, {})
+);
 
 // Read-only daily metrics imported from Apple Health / Health Connect (sleep minutes, dietary
 // calories, protein grams). Unlike body measurements these are daily aggregates, keyed by the
