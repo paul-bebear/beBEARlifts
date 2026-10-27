@@ -4,6 +4,7 @@ export interface IBearComparison {
 }
 
 const objects: readonly IBearComparison[] = [
+  { name: "a bison", kg: 900 },
   { name: "a car", kg: 1500 },
   { name: "a rhino", kg: 2300 },
   { name: "an elephant", kg: 6000 },
@@ -23,6 +24,7 @@ const objects: readonly IBearComparison[] = [
   { name: "a Falcon Heavy", kg: 1420000 },
   { name: "a Saturn V", kg: 2970000 },
   { name: "a full Starship", kg: 5000000 },
+  { name: "the Eiffel Tower", kg: 10100000 },
 ];
 
 export function BearComparison_all(): readonly IBearComparison[] {

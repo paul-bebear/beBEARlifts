@@ -19,7 +19,7 @@ const maleLines = [
 ];
 const femaleLines = [
   undefined,
-  undefined,
+  "a bison",
   "an elephant",
   "a school bus",
   "an empty Boeing 737",
@@ -47,11 +47,15 @@ describe("BearComparison", () => {
     expect(BearComparison_for(419999)).to.equal("a fully loaded Boeing 747");
     expect(BearComparison_for(420000)).to.equal("the ISS");
     expect(BearComparison_for(5000000)).to.equal("a full Starship");
-    expect(BearComparison_for(99000000)).to.equal("a full Starship");
+    expect(BearComparison_for(10099999)).to.equal("a full Starship");
+    expect(BearComparison_for(10100000)).to.equal("the Eiffel Tower");
+    expect(BearComparison_for(99000000)).to.equal("the Eiffel Tower");
   });
 
   it("gives no line below the lightest object or for a bad number", () => {
-    expect(BearComparison_for(1499)).to.equal(undefined);
+    expect(BearComparison_for(899)).to.equal(undefined);
+    expect(BearComparison_for(900)).to.equal("a bison");
+    expect(BearComparison_for(1499)).to.equal("a bison");
     expect(BearComparison_for(0)).to.equal(undefined);
     expect(BearComparison_for(-5)).to.equal(undefined);
     expect(BearComparison_for(NaN)).to.equal(undefined);
