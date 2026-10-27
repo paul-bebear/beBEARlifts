@@ -169,10 +169,10 @@ Answered by the owner on 2026-10-27, and now in the plan.
 - The whiteboard keeps all eight lines, in Permanent Marker, shrinking a long line instead of cutting it.
 - No pill on open objects. The tour explains them once.
 - Everything extended: the seven rooms and the seven gyms.
+- The season nudge card goes. Its "900 kcal left" line moves to the bowl's pill and its three snacks to the Journal's meals for today. The owner's reason: the season becomes a theme of the house, winter is bulk and hibernate, not a card. That theme is a later art round, after the house ladder.
 
-Still open, one decision each.
+Still open, one decision.
 
-- The season nudge card. It is the bulk-season helper from `src/models/seasonNudge.ts`: when the season changes it offers the new food targets, and late in a bulk day with kcal left it lists three one-tap snacks, the Bear shake, mixed nuts and a peanut butter sandwich, that add themselves to the food log. The plan removes it from the home, puts its "900 kcal left" line on the bowl's pill, and moves the snack rows into the Journal's meals for today. Yes or no?
 - The arrange tool. The owner asked to move objects around the house instead of describing positions. The tool is a web-only mode, `?arrange=1` on the preview URL in Safari on the iPhone, where every object drags, two buttons scale it, and "Copy manifest" puts the positions on the clipboard as text to paste into a session. It never ships in the iOS app. Build it now as piece D, 6 hours, or not yet?
 
-Next action: answer the two questions in the session, then the four build cards follow.
+Next action: answer the arrange tool question in the session. Cards A, B and C are proposed; D follows the answer.
