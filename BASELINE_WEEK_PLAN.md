@@ -215,7 +215,9 @@ The phone.
 - Where it shows. The door plate: `bearHouse.ts` gives the door `overlay: { kind: "number", share: doorPlate, text }`, drawn over the door art like the scale's number, with the plate rect measured on the door and kept clear in the arrange tool. The bear panel header: "Cub 412 · Paul's bear". Every share card's footer in `cardParts.tsx`: "Cub 412". The baseline card. The friends list and the TV rows: a friend's number from the `cubs` read under the friends policy, carried in the post summary as `cub` in version 4 of `workoutPost.ts`, so an old post reads with no number. Leaderboard rows when L2 lands.
 - Cub 0 shows as "Cub 0" and nothing else in this plan. Admin tools for the owner are SQL in the Supabase dashboard today, as `pro_codes` already is, and an in-app admin screen is a later plan.
 
-Sign-in. The owner's call: the first page is sign in or sign up with Apple or Google, then the short onboarding, then the baseline. There is no way past it. The App Store review risk under guideline 5.1.1 is accepted. The app has account features, sync, friends and the number, which make the requirement defensible. The plate reads "?" only while the first fetch has not answered, for example offline right after sign-up.
+Sign-in. The owner's call: the first page is sign in or sign up with Apple or Google, then the short onboarding, then the baseline. There is no way past it.
+
+The App Store review risk under guideline 5.1.1 is accepted. The app has account features, sync, friends and the number, which make the requirement defensible. The plate reads "?" only while the first fetch has not answered, for example offline right after sign-up.
 
 The cub share card. Right after sign-in the welcome offers "I'm Cub 412 on beBEAR" with the bear and the user's invite handle, behind a Share button. The number spreads on day 0. `src/components/shareCards/cubCard.tsx`, text from `CubNumber_shareText(number, handle)`.
 
