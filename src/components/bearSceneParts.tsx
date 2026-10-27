@@ -1,6 +1,6 @@
 import { JSX } from "react";
-import { Animated, Image, Pressable, View } from "react-native";
-import { Text } from "./primitives/text";
+import { Animated, Image, Pressable, View, ViewStyle } from "react-native";
+import { Text, TextRaw } from "./primitives/text";
 import { BearTv } from "./bearTv";
 import { IBearBoardLine, IBearBoardTarget } from "../models/bearBoard";
 import {
@@ -13,14 +13,43 @@ import {
   BearHouse_pillWidth,
   IBearHouseObject,
 } from "../models/bearHouse";
-import { BearScene_boardInkBottom, BearScene_dashboardRect, IBearBox } from "../models/bearScene";
+import { BearBoardSize_layout, BearBoardSize_rowRatio } from "../models/bearBoardSize";
+import { IBearBox } from "../models/bearScene";
 import { BearImage_uri } from "../utils/bearImage";
 
 const markerInk = "#1F3A5F";
 const pillInk = "#3B2414";
 const pillPaper = "rgba(255, 250, 240, 0.94)";
-const boardTargets: IBearBoardTarget[] = ["plus", "bear"];
+const markerFont = "PermanentMarker-Regular";
+const boardTargets: IBearBoardTarget[] = ["plus", "goal", "bear"];
 const padlockImage = BearHouse_image("padlock");
+
+interface ITickStroke {
+  centerX: number;
+  centerY: number;
+  length: number;
+  degrees: number;
+}
+
+const tickStrokes: ITickStroke[] = [
+  { centerX: 0.32, centerY: 0.62, length: 0.28, degrees: -45 },
+  { centerX: 0.61, centerY: 0.5, length: 0.58, degrees: 45 },
+];
+
+function tickStrokeStyle(stroke: ITickStroke, size: number): ViewStyle {
+  const width = Math.max(2, size * 0.14);
+  const length = stroke.length * size;
+  return {
+    position: "absolute",
+    left: stroke.centerX * size - width / 2,
+    top: stroke.centerY * size - length / 2,
+    width,
+    height: length,
+    borderRadius: width / 2,
+    backgroundColor: markerInk,
+    transform: [{ rotate: `${stroke.degrees}deg` }],
+  };
+}
 
 function BoardLine(props: { line: IBearBoardLine; size: number }): JSX.Element {
   const { line, size } = props;
@@ -30,25 +59,23 @@ function BoardLine(props: { line: IBearBoardLine; size: number }): JSX.Element {
       testID={`bear-board-${line.id}`}
       data-testid={`bear-board-${line.id}`}
       className="flex-row items-center"
-      style={{ height: size * 1.45 }}
+      style={{ height: size * BearBoardSize_rowRatio }}
     >
       {isTodo && (
         <View
           className="items-center justify-center mr-1.5 rounded"
           style={{ width: size, height: size, borderWidth: 1.5, borderColor: markerInk }}
         >
-          {line.isDone && (
-            <Text style={{ color: markerInk, fontSize: size * 0.85, lineHeight: size }} className="font-bold">
-              ✓
-            </Text>
-          )}
+          {line.isDone && tickStrokes.map((stroke, i) => <View key={i} style={tickStrokeStyle(stroke, size)} />)}
         </View>
       )}
-      <Text
+      <TextRaw
         numberOfLines={1}
-        className={isTodo ? "font-bold" : undefined}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
         style={{
-          flexShrink: 1,
+          flex: 1,
+          fontFamily: markerFont,
           color: markerInk,
           opacity: isTodo ? 1 : 0.75,
           fontSize: size,
@@ -57,7 +84,7 @@ function BoardLine(props: { line: IBearBoardLine; size: number }): JSX.Element {
         }}
       >
         {line.text}
-      </Text>
+      </TextRaw>
     </View>
   );
 }
@@ -89,20 +116,11 @@ export function BearSceneBoard(props: {
   onTarget: (target: IBearBoardTarget) => void;
 }): JSX.Element {
   const { board } = props;
-  const pad = board.width * 0.04;
-  const [, boardTop, , boardBottom] = BearScene_dashboardRect;
-  const inkHeight = board.height * ((BearScene_boardInkBottom - boardTop) / (boardBottom - boardTop));
-  const lineSize = Math.max(11, Math.round(inkHeight * 0.085));
+  const { pad, width, height, lineSize } = BearBoardSize_layout(board);
   return (
     <View
       className="justify-between"
-      style={{
-        position: "absolute",
-        left: board.left + pad,
-        top: board.top + pad,
-        width: board.width - 2 * pad,
-        height: inkHeight - pad,
-      }}
+      style={{ position: "absolute", left: board.left + pad, top: board.top + pad, width, height }}
     >
       {boardTargets.map((target) => (
         <BoardGroup

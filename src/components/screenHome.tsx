@@ -30,7 +30,11 @@ interface IProps {
   progress?: IHistoryRecord;
 }
 
-function openBoardTarget(target: IBearBoardTarget): void {
+function openBoardTarget(target: IBearBoardTarget, dispatch: IDispatch, hasGoal: boolean): void {
+  if (target === "goal") {
+    dispatch(Thunk_pushScreen("goalWizard", { mode: hasGoal ? "pace" : "goal" }, { tab: "graphs" }));
+    return;
+  }
   navigateToModal(target === "plus" ? "plusSheetModal" : "bearPanelModal");
 }
 
@@ -98,7 +102,7 @@ export function ScreenHome(props: IProps): JSX.Element {
         foodLog,
         units: settings.units,
         dayName,
-        goalStartedAt: goalLog.current?.startedAt,
+        goal: goalLog.current,
         startWeekFromMonday: settings.startWeekFromMonday,
         level: state.level,
         countedKg: state.countedKg,
@@ -115,7 +119,7 @@ export function ScreenHome(props: IProps): JSX.Element {
         <BearScene
           state={state}
           lines={lines}
-          onTarget={openBoardTarget}
+          onTarget={(target) => openBoardTarget(target, dispatch, goalLog.current != null)}
           onExit={() => navigateToModal("gymExitModal")}
         />
       ) : (
@@ -125,7 +129,7 @@ export function ScreenHome(props: IProps): JSX.Element {
           wall={house.wall}
           lines={lines}
           objects={house.objects}
-          onBoardTarget={openBoardTarget}
+          onBoardTarget={(target) => openBoardTarget(target, dispatch, goalLog.current != null)}
           onTarget={(target) => openHouseTarget(target, dispatch, isBagCheckOn, () => setIsHoneyOpen(true))}
         />
       )}
