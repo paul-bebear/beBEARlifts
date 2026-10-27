@@ -16,6 +16,7 @@ import { Thunk_cloudCatchUp } from "./ducks/cloudBackupThunks";
 import { StoreRecoveryWiring_start } from "./utils/storeRecoveryWiring";
 import { ProgressPhotoFiles_migrate } from "./utils/progressPhotoFiles";
 import { PlanFollowsSignIn_start } from "./utils/planFollowsSignIn";
+import { CubClient_followSignIn } from "./utils/cubClient";
 
 declare let Rollbar: RB;
 
@@ -538,6 +539,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
   }, [dispatch, env]);
 
   useEffect(() => PlanFollowsSignIn_start(), []);
+  useEffect(() => CubClient_followSignIn(), []);
 
   useEffect(() => {
     const iap = env.iap;

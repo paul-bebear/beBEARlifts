@@ -39,6 +39,8 @@ const openSources: IBearHouseSources = {
   honeyEarned: 0,
   badgeCount: 1,
   isOffline: true,
+  signedIn: true,
+  cubPlate: "412",
 };
 
 export function HouseArrange_isOn(search: string): boolean {

@@ -26,6 +26,7 @@ import {
 } from "../src/models/dailyChecklist";
 import { Notes_empty, Notes_new, Notes_save } from "../src/models/notes";
 import { WeekSchedule_empty, WeekSchedule_save } from "../src/models/weekSchedule";
+import { CubNumber_empty, CubNumber_parse } from "../src/models/cubNumber";
 
 const now = Date.UTC(2026, 9, 20, 18, 0, 0);
 
@@ -220,6 +221,17 @@ describe("FullBackup", () => {
     const { schedule: empty, ...older } = FullBackup_build(parts({}), now);
     expect(empty).to.deep.equal(WeekSchedule_empty());
     expect(FullBackup_unwrap(older).schedule).to.equal(undefined);
+  });
+
+  it("round-trips the bebear_cub store and reads an older file without it", () => {
+    const cub = { version: 1 as const, userId: "u1", number: 412, fetchedAt: now };
+    const backup = FullBackup_build(parts({ cub }), now);
+    expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).cub).to.deep.equal(cub);
+    expect(backup.readme).to.include("bebear_cub");
+    const { cub: empty, ...older } = FullBackup_build(parts({}), now);
+    expect(empty).to.deep.equal(CubNumber_parse(CubNumber_empty()));
+    expect(FullBackup_unwrap(older).cub).to.equal(undefined);
+    expect(FullBackup_unwrap({ ...backup, cub: { number: 3 } }).cub).to.deep.equal(CubNumber_empty());
   });
 
   it("parses a broken bear in a backup to the empty value", () => {

@@ -1,5 +1,6 @@
 import { IBearPlacePick } from "./bearPlace";
 import { IBearGoal } from "./bearPlan";
+import { CubNumber_label } from "./cubNumber";
 import { IOnboardingAnswers } from "./onboardingAnswers";
 
 export const OnboardingChoices_places: { pick: IBearPlacePick; label: string }[] = [
@@ -27,6 +28,9 @@ export function OnboardingChoices_dayLabel(days: number): string {
   return days === 6 ? "6+" : `${days}`;
 }
 
-export function OnboardingChoices_welcomeLabel(signedIn: boolean): string {
-  return signedIn ? "Continue" : "Start";
+export function OnboardingChoices_welcomeLine(signedIn: boolean, cub: number | undefined): string {
+  if (!signedIn) {
+    return "Sign in to get your cub number";
+  }
+  return cub == null ? "Getting your cub number…" : `You are ${CubNumber_label(cub)}.`;
 }
