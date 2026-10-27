@@ -316,10 +316,9 @@ Answered by the owner on 2026-10-27, and now in the plan.
 - A Share button, and sharing from day 0, never only on day 10.
 - The thresholds stand for now.
 - One product, two ages.
+- The rest length: the app asks "When did you last train hard?" and rests only the days missing to make 3.
+- Four test sessions, split Lower A, Upper A, Lower B and Upper B. The owner may still move a lift between days after reading "The baseline, day by day".
 
-Still open, one decision each.
+No question is open. The build cards for all five pieces are proposed.
 
-- The rest length. The owner said rest 3 or 4 days before the tests. Does everyone rest 3 days, even someone who has not trained for a week, or does the app ask "When did you last train hard?" and rest only the days missing to make 3? The plan writes the question.
-- The four-day split. The owner will read "The baseline, day by day" and say whether Lower A, Upper A, Lower B and Upper B is the right way to split the lifts.
-
-Next action: answer the two questions in the session. The build cards for pieces L and C are proposed already; W, S and M follow the rest-length answer.
+Next action: start piece L's card, then piece C's once `HOUSE_HOME_PLAN.md` piece C is on master.
