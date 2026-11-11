@@ -1,39 +1,48 @@
-import { JSX } from "react";
+import { JSX, useEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useAppState } from "../StateContext";
 import { SheetScreenContainer } from "../SheetScreenContainer";
 import { FormSheet } from "../FormSheet";
-import { WorkoutSocialShareSheet } from "../../components/workoutSocialShareSheet";
+import { WorkoutStoryCardSection } from "../../components/workoutStoryCard";
+import { WorkoutShareMenu_record } from "../../models/workoutShareMenu";
 import type { IRootStackParamList } from "../types";
 
 export function NavModalSocialShare(): JSX.Element {
   const { state } = useAppState();
   const navigation = useNavigation();
   const route = useRoute<{ key: string; name: "socialShareModal"; params: IRootStackParamList["socialShareModal"] }>();
-  const { type, progressId, historyRecordId } = route.params;
+  const { progressId, historyRecordId } = route.params;
 
-  const record =
-    historyRecordId != null
-      ? state.storage.history.find((h) => h.id === historyRecordId)
-      : progressId == null
-        ? state.storage.history[0]
-        : progressId === 0
-          ? state.storage.progress?.[0]
-          : state.progress[progressId];
+  const record = WorkoutShareMenu_record({
+    progressId,
+    historyRecordId,
+    history: state.storage.history,
+    storedProgress: state.storage.progress?.[0],
+    progress: state.progress,
+  });
 
-  const content = (
-    <WorkoutSocialShareSheet
-      history={state.storage.history}
-      record={record}
-      settings={state.storage.settings}
-      type={type}
-      isHidden={false}
-    />
-  );
+  const shouldGoBack = record == null;
+  useEffect(() => {
+    if (shouldGoBack) {
+      navigation.goBack();
+    }
+  }, [shouldGoBack]);
+
+  if (record == null) {
+    return <></>;
+  }
 
   return (
     <SheetScreenContainer onClose={() => navigation.goBack()} shouldShowClose={true}>
-      <FormSheet noPadding>{content}</FormSheet>
+      <FormSheet>
+        <WorkoutStoryCardSection
+          record={record}
+          history={state.storage.history}
+          settings={state.storage.settings}
+          stats={state.storage.stats}
+          musicEnabled={false}
+        />
+      </FormSheet>
     </SheetScreenContainer>
   );
 }
