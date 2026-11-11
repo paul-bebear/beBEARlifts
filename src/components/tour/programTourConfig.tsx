@@ -80,7 +80,7 @@ export const programTourConfig: ITourConfig = {
         <>
           <Text className={`mb-2 ${paraCn}`}>
             Under the hood, programs are just text using a special syntax called{" "}
-            <Text className="font-bold">Liftoscript</Text>.
+            <Text className="font-bold">BearScript</Text>.
           </Text>
           <View className="flex-row flex-wrap items-center">
             <Text className={paraCn}>You can use the UI to create and edit them, or use the </Text>
@@ -89,7 +89,7 @@ export const programTourConfig: ITourConfig = {
             </View>
             <Text className={`${paraCn} font-bold`}>mode</Text>
             <Text className={paraCn}> to edit that </Text>
-            <Text className={`${paraCn} font-bold`}>Liftoscript</Text>
+            <Text className={`${paraCn} font-bold`}>BearScript</Text>
             <Text className={paraCn}> text on a phone, or edit the text in the </Text>
             <Text className={`${paraCn} font-bold`}>web editor</Text>
             <Text className={paraCn}> on your laptop for more control.</Text>
@@ -99,12 +99,12 @@ export const programTourConfig: ITourConfig = {
     },
     {
       id: "liftoscript",
-      title: "Liftoscript",
+      title: "BearScript",
       dino: "programtourliftoscript.png",
       content: () => (
         <>
           <Text className={`mb-2 ${paraCn}`}>
-            <Text className="font-bold">Liftoscript</Text> is a simple declarative language that controls your program
+            <Text className="font-bold">BearScript</Text> is a simple declarative language that controls your program
             logic - progression, deloads, rep schemes, and more.
           </Text>
           <Text className={`mb-2 ${paraCn}`}>A simple example:</Text>
@@ -115,7 +115,7 @@ export const programTourConfig: ITourConfig = {
             This defines Squat for 3 sets of 8 reps at 100lb, with linear progression adding 5lb when you hit all reps.
           </Text>
           <Text className={paraCn}>
-            <Link href={Support_docsUrl}>Read the full Liftoscript docs</Link> to learn more.
+            <Link href={Support_docsUrl}>Read the full BearScript docs</Link> to learn more.
           </Text>
         </>
       ),

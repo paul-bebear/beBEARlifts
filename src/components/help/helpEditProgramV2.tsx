@@ -27,7 +27,7 @@ export function HelpEditProgramV2(): JSX.Element {
       <View className="flex-row flex-wrap items-center mb-2">
         <Text className="text-sm">
           The source of truth for a program is the program text. It uses a special syntax to describe programs called{" "}
-          <Text className="text-sm font-bold">Liftoscript</Text>, which looks kinda similar to how you would write a
+          <Text className="text-sm font-bold">BearScript</Text>, which looks kinda similar to how you would write a
           program on paper. By default, in the app there's UI to edit the program, but it really just edits the program
           text under the hood. To access all the features (editing progressions, descriptions, etc) - you can switch to
           the plain text mode (by clicking on{" "}

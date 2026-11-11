@@ -5,14 +5,20 @@ import { LiftoscriptDocs_getMainDoc } from "../src/models/liftoscriptDocs";
 import { WhatsNewParser_parseAll } from "../src/models/whatsnewParser";
 
 describe("Visible app branding", () => {
-  it("renames prose while preserving URLs, code identifiers, and the Liftoscript language", () => {
+  it("renames prose while preserving URLs and code identifiers", () => {
     const source =
       "Liftosaur and beBEARlifts use Liftoscript. https://example.com/@Liftosaur `Liftosaur` LiftosaurWatch";
     expect(AppBrand_text(source)).to.equal(
-      "beBEAR and beBEAR use Liftoscript. https://example.com/@Liftosaur `Liftosaur` LiftosaurWatch"
+      "beBEAR and beBEAR use BearScript. https://example.com/@Liftosaur `Liftosaur` LiftosaurWatch"
     );
     expect(AppBrand_text("```js\nglobalThis.Liftosaur = LiftosaurWatch;\n```\nLiftosaur")).to.equal(
       "```js\nglobalThis.Liftosaur = LiftosaurWatch;\n```\nbeBEAR"
+    );
+  });
+
+  it("renames the language in prose but not in code or inside longer names", () => {
+    expect(AppBrand_text("Write Liftoscript. `Liftoscript` LiftoscriptSyntaxError")).to.equal(
+      "Write BearScript. `Liftoscript` LiftoscriptSyntaxError"
     );
   });
 

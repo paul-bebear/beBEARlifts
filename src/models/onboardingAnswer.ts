@@ -32,7 +32,7 @@ export function OnboardingAnswer_parse(raw: unknown, builtinIds: string[]): IOnb
     (r.builtin != null && builtin == null) ||
     (r.builtin != null && r.liftoscript != null)
   ) {
-    throw new Error("The AI must send one known built-in program or one Liftoscript program.");
+    throw new Error("The AI must send one known built-in program or one BearScript program.");
   }
   if (r.historyCsv != null && (typeof r.historyCsv !== "string" || r.historyCsv.length > 400_000)) {
     throw new Error("The AI sent unreadable history.");
