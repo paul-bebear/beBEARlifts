@@ -28,7 +28,7 @@ export function HelpChooseProgram(): JSX.Element {
         After you clone a program, you can modify it in any way you want. The app is very flexible, you can change the
         reps/weights logic, using a special scripting language called{" "}
         <Link className="text-sm" href="/doc">
-          Liftoscript
+          BearScript
         </Link>
       </Text>
     </View>

@@ -64,7 +64,7 @@ export function ExerciseRM(props: IExerciseRMProps): JSX.Element {
       />
       <View>
         <Text className="text-xs italic font-normal text-right">
-          Available in Liftoscript as <Text className="font-bold">{props.rmKey}</Text> variable
+          Available in BearScript as <Text className="font-bold">{props.rmKey}</Text> variable
         </Text>
       </View>
     </View>
