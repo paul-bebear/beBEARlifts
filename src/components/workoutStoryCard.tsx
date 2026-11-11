@@ -38,7 +38,7 @@ interface IProps {
   settings: ISettings;
   stats: IStats;
   musicEnabled: boolean;
-  onMusic: () => void;
+  onMusic?: () => void;
 }
 
 interface IFrozen {
@@ -151,7 +151,7 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
               testID="finish-day-music"
               label="Music"
               icon={<IconSpeaker size={22} />}
-              onPress={props.onMusic}
+              onPress={() => props.onMusic?.()}
             />
           ) : (
             <FinishActionButton
