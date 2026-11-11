@@ -8,6 +8,7 @@ import { IMusicPlay } from "../src/models/musicSession";
 import { Notes_empty, Notes_new, Notes_save, Notes_updateCheckIn } from "../src/models/notes";
 import {
   IJournalDayInput,
+  IJournalSectionFold,
   JournalDay_build,
   JournalDay_emptyRow,
   JournalDay_header,
@@ -133,7 +134,8 @@ describe("JournalDay", () => {
     for (const section of ["checkIn", "songs", "notes"] as const) {
       const fold = JournalDay_sectionFold(day, section, undefined);
       expect(fold.isHidden, section).to.not.equal(true);
-      expect(fold.summary, section).to.be.a("string");
+      expect(fold.title, section).to.be.a("string");
+      expect(fold.detail, section).to.be.a("string");
       expect(fold.empty, section).to.equal(undefined);
       expect(JournalDay_sectionFold(day, section, true).canHide, section).to.equal(true);
     }
@@ -142,7 +144,8 @@ describe("JournalDay", () => {
   it("keeps a half-done check-in open until all three faces are picked", () => {
     let notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
     expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", undefined)).to.eql({
-      summary: "Check-in · Energy 4",
+      title: "Check-in",
+      detail: "Energy 4",
       isCollapsed: false,
       canHide: true,
     });
@@ -165,12 +168,14 @@ describe("JournalDay", () => {
     notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 3, field: "mood", value: 4 });
     const day = JournalDay_build(input({ notes }));
     expect(JournalDay_sectionFold(day, "checkIn", undefined)).to.eql({
-      summary: "Check-in · Energy 4 · Soreness 4 · Mood 4",
+      title: "Check-in",
+      detail: "Energy 4 · Soreness 4 · Mood 4",
       isCollapsed: true,
       canHide: false,
     });
     expect(JournalDay_sectionFold(day, "checkIn", true)).to.eql({
-      summary: "Check-in · Energy 4 · Soreness 4 · Mood 4",
+      title: "Check-in",
+      detail: "Energy 4 · Soreness 4 · Mood 4",
       isCollapsed: false,
       canHide: true,
     });
@@ -211,6 +216,23 @@ describe("JournalDay", () => {
     expect(
       JournalDay_sectionSummary({ ...day, songs: [{ id: "s", name: "Song", artists: "Artist" }] }, "songs")
     ).to.equal("Songs · 1 logged");
+  });
+
+  it("splits a collapsed row into the section title and its detail", () => {
+    const day = {
+      ...JournalDay_build(
+        input({
+          food: { ...FoodLog_empty(), entries: [food("a", today, 1850, 40)] },
+          history: [workout(at(today, 18), "Legs", [set(100, 5)])],
+        })
+      ),
+      songs: [{ id: "s", name: "Song", artists: "Artist" }],
+    };
+    const parts = (section: "workouts" | "meals" | "songs"): IJournalSectionFold =>
+      JournalDay_sectionFold(day, section, false);
+    expect(parts("workouts")).to.include({ title: "Workout", detail: "Legs · 48 min", isCollapsed: true });
+    expect(parts("meals")).to.include({ title: "Meals", detail: "1 logged · 1,850 kcal", isCollapsed: true });
+    expect(parts("songs")).to.include({ title: "Songs", detail: "1 logged", isCollapsed: true });
   });
 
   it("points today's empty sections at the +", () => {
@@ -342,39 +364,12 @@ describe("JournalDay", () => {
 });
 
 describe("JournalDay_header", () => {
-  const now = at(today, 12);
-
-  it("fills a week dot for each day with a workout or a meal and marks today", () => {
-    const header = JournalDay_header({
-      history: [workout(at("2026-10-19", 8), "Upper", [set(100, 5)])],
-      food: { ...FoodLog_empty(), entries: [food("a", "2026-10-21", 500, 20)] },
-      now,
-      startWeekFromMonday: true,
-    });
-    expect(header.dots.map((d) => d.day)).to.eql([
-      "2026-10-19",
-      "2026-10-20",
-      "2026-10-21",
-      "2026-10-22",
-      "2026-10-23",
-      "2026-10-24",
-      "2026-10-25",
-    ]);
-    expect(header.dots.map((d) => d.filled)).to.eql([true, false, true, false, false, false, false]);
-    expect(header.dots.filter((d) => d.isToday).map((d) => d.day)).to.eql([today]);
-  });
-
-  it("starts the week on Sunday unless the user picked Monday", () => {
-    const header = JournalDay_header({ history: [], food: FoodLog_empty(), now });
-    expect(header.dots[0].day).to.equal("2026-10-18");
-  });
-
   it("shows the History link with the workout count, and hides it before the first workout", () => {
     const history = [
       workout(at("2026-10-19", 8), "Upper", [set(100, 5)]),
       workout(at("2026-10-21", 8), "Lower", [set(120, 5)]),
     ];
-    expect(JournalDay_header({ history, food: FoodLog_empty(), now }).historyLabel).to.equal("History · 2 workouts");
-    expect(JournalDay_header({ history: [], food: FoodLog_empty(), now }).historyLabel).to.equal(undefined);
+    expect(JournalDay_header({ history }).historyLabel).to.equal("History · 2 workouts");
+    expect(JournalDay_header({ history: [] }).historyLabel).to.equal(undefined);
   });
 });

@@ -21,7 +21,6 @@ import {
 } from "./notes";
 import { WorkoutPost_build, WorkoutPost_statsLine } from "./workoutPost";
 import { FeatureLayer_isFront, IFeature } from "./featureLayer";
-import { IWeekDot, WeekDots_build } from "./weekDots";
 import { HomeToday_historyLabel } from "./homeToday";
 
 export interface IJournalDayInput {
@@ -77,7 +76,12 @@ const sectionFeatures: Record<IJournalSection, IFeature> = {
   notes: "notes",
 };
 
-export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSection): string | undefined {
+export interface IJournalSectionParts {
+  title: string;
+  detail: string;
+}
+
+export function JournalDay_sectionParts(day: IJournalDay, section: IJournalSection): IJournalSectionParts | undefined {
   switch (section) {
     case "checkIn": {
       const checkIn = day.checkIn;
@@ -87,21 +91,31 @@ export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSec
       const scores = Notes_checkInScales.filter(({ field }) => checkIn[field] != null).map(
         ({ field, label }) => `${label} ${checkIn[field]}`
       );
-      return ["Check-in", ...scores, ...(scores.length === 0 ? ["Reflection logged"] : [])].join(" · ");
+      return { title: "Check-in", detail: (scores.length === 0 ? ["Reflection logged"] : scores).join(" · ") };
     }
     case "workouts":
-      return day.workouts.length > 0 ? ["Workout", ...day.workouts.map((w) => w.chip)].join(" · ") : undefined;
+      return day.workouts.length > 0
+        ? { title: "Workout", detail: day.workouts.map((w) => w.chip).join(" · ") }
+        : undefined;
     case "meals":
       return day.mealCount > 0
-        ? `Meals · ${day.mealCount} logged · ${Math.round(day.totals.calories).toLocaleString("en-US")} kcal`
+        ? {
+            title: "Meals",
+            detail: `${day.mealCount} logged · ${Math.round(day.totals.calories).toLocaleString("en-US")} kcal`,
+          }
         : undefined;
     case "songs":
-      return day.songs.length > 0 ? `Songs · ${day.songs.length} logged` : undefined;
+      return day.songs.length > 0 ? { title: "Songs", detail: `${day.songs.length} logged` } : undefined;
     case "weight":
-      return day.weight != null ? `Weigh-in · ${day.weight.value} ${day.weight.unit}` : undefined;
+      return day.weight != null ? { title: "Weigh-in", detail: `${day.weight.value} ${day.weight.unit}` } : undefined;
     case "notes":
-      return day.notes.length > 0 ? `Notes · ${day.notes.length} logged` : undefined;
+      return day.notes.length > 0 ? { title: "Notes", detail: `${day.notes.length} logged` } : undefined;
   }
+}
+
+export function JournalDay_sectionSummary(day: IJournalDay, section: IJournalSection): string | undefined {
+  const parts = JournalDay_sectionParts(day, section);
+  return parts != null ? `${parts.title} · ${parts.detail}` : undefined;
 }
 
 // A check-in with one or two faces picked is still being filled in, so it stays open.
@@ -163,7 +177,8 @@ export function JournalDay_showsSeasonNudge(day: IJournalDay): boolean {
 
 export interface IJournalSectionFold {
   isHidden?: boolean;
-  summary?: string;
+  title?: string;
+  detail?: string;
   isCollapsed: boolean;
   canHide: boolean;
   empty?: IJournalEmptyRow;
@@ -174,8 +189,8 @@ export function JournalDay_sectionFold(
   section: IJournalSection,
   isOpenByUser: boolean | undefined
 ): IJournalSectionFold {
-  const summary = JournalDay_sectionSummary(day, section);
-  if (!FeatureLayer_isFront(sectionFeatures[section]) && summary == null) {
+  const parts = JournalDay_sectionParts(day, section);
+  if (!FeatureLayer_isFront(sectionFeatures[section]) && parts == null) {
     return { isHidden: true, isCollapsed: false, canHide: false };
   }
   const empty = JournalDay_emptyRow(day, section);
@@ -183,8 +198,8 @@ export function JournalDay_sectionFold(
     return { isCollapsed: false, canHide: false, empty };
   }
   const isOpen = isOpenByUser ?? !isSectionDone(day, section);
-  const isCollapsed = summary != null && !isOpen;
-  return { summary, isCollapsed, canHide: summary != null && !isCollapsed };
+  const isCollapsed = parts != null && !isOpen;
+  return { title: parts?.title, detail: parts?.detail, isCollapsed, canHide: parts != null && !isCollapsed };
 }
 
 function dayOf(timestamp: number): string {
@@ -232,26 +247,14 @@ function weightOf(weights: IStatsWeightValue[], day: string): IWeight | undefine
 
 export interface IJournalHeaderInput {
   history: { startTime: number }[];
-  food: IFoodLog;
-  now: number;
-  startWeekFromMonday?: boolean;
 }
 
 export interface IJournalHeader {
-  dots: IWeekDot[];
   historyLabel?: string;
 }
 
 export function JournalDay_header(input: IJournalHeaderInput): IJournalHeader {
-  return {
-    dots: WeekDots_build({
-      history: input.history,
-      foodLog: input.food,
-      now: input.now,
-      startWeekFromMonday: input.startWeekFromMonday,
-    }),
-    historyLabel: HomeToday_historyLabel(input.history.length),
-  };
+  return { historyLabel: HomeToday_historyLabel(input.history.length) };
 }
 
 function mealsChip(count: number): string | undefined {
