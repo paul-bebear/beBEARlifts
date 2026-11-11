@@ -10,6 +10,8 @@ import {
   IBearHouseTier,
 } from "../models/bearHouse";
 import { Friends_forUser, Friends_lists } from "../models/friends";
+import { CubNumber_plate } from "../models/cubNumber";
+import { CubStore } from "./cubStore";
 import { useFoodLog } from "./foodLogStore";
 import { FriendsStore } from "./friendsClient";
 import { NotesStore } from "./notesStore";
@@ -38,7 +40,9 @@ export function useBearHouse(): IBearHouseView {
   const { state } = useBear();
   const honey = useBearHoney();
   const { badges } = useBearBadges();
-  const userId = CloudStore.use().session?.userId;
+  const session = CloudStore.use().session;
+  const userId = session?.userId;
+  const cubPlate = CubNumber_plate(CubStore.use(), session);
   const friends = Friends_lists(Friends_forUser(FriendsStore.use(), userId));
   const friendCount = friends.friends.length;
   const pendingRequests = friends.incoming.length;
@@ -55,10 +59,24 @@ export function useBearHouse(): IBearHouseView {
       honeyEarned: honey.earned,
       badgeCount: badges.length,
       isOffline: OfflineOnly_isEnabled(),
+      signedIn: userId != null,
+      cubPlate,
       now,
     });
     const activeDays = BearHouse_activeDays({ workouts: state.workouts, foodLog, stats });
     return BearHouse_objects(houseTier, activeDays, sources, undefined);
-  }, [state.workouts, foodLog, stats, notes, units, friendCount, pendingRequests, honey.earned, badges.length]);
+  }, [
+    state.workouts,
+    foodLog,
+    stats,
+    notes,
+    units,
+    friendCount,
+    pendingRequests,
+    honey.earned,
+    badges.length,
+    userId,
+    cubPlate,
+  ]);
   return { room: BearHouse_room(houseTier), wall: BearHouse_wallColor(houseTier), objects, honey };
 }

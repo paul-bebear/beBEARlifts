@@ -28,6 +28,7 @@ interface IFeedItemBase {
   author: IProfile;
   isMine: boolean;
   bear?: IPostBear;
+  cub?: number;
 }
 
 export type IFeedItem =
@@ -169,6 +170,17 @@ export function Feed_shareStatus(state: IFeedState, userId: string, workoutId: n
     : "notShared";
 }
 
+// A user's number never changes, so any of their version 4 posts gives it, also to their meals and older posts.
+export function Feed_cubs(state: IFeedState): Map<string, number> {
+  const cubs = new Map<string, number>();
+  for (const post of state.posts) {
+    if (post.summary.cub != null && !cubs.has(post.userId)) {
+      cubs.set(post.userId, post.summary.cub);
+    }
+  }
+  return cubs;
+}
+
 // Posts from someone no longer a friend can stay in the cache until the next refresh. The feed hides them at once.
 // A meal row carries no bear, so it borrows the bear from the author's newest workout post.
 export function Feed_items(state: IFeedState, friends: IFriendsState): IFeedItem[] {
@@ -187,6 +199,7 @@ export function Feed_items(state: IFeedState, friends: IFriendsState): IFeedItem
       bears.set(post.userId, post.summary.bear);
     }
   }
+  const cubs = Feed_cubs(state);
   const authorOf = (userId: string): IProfile | undefined =>
     userId === state.userId ? friends.me : authors.get(userId);
   const result: IFeedItem[] = [];
@@ -195,14 +208,14 @@ export function Feed_items(state: IFeedState, friends: IFriendsState): IFeedItem
     if (author != null) {
       const isMine = post.userId === state.userId;
       const bear = post.summary.bear ?? bears.get(post.userId);
-      result.push({ kind: "workout", post, author, isMine, bear });
+      result.push({ kind: "workout", post, author, isMine, bear, cub: cubs.get(post.userId) });
     }
   }
   for (const post of state.meals) {
     const author = authorOf(post.userId);
     if (author != null) {
       const isMine = post.userId === state.userId;
-      result.push({ kind: "meal", post, author, isMine, bear: bears.get(post.userId) });
+      result.push({ kind: "meal", post, author, isMine, bear: bears.get(post.userId), cub: cubs.get(post.userId) });
     }
   }
   return result.sort((a, b) => b.post.postedAt - a.post.postedAt);

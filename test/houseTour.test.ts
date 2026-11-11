@@ -13,6 +13,8 @@ const sources: IBearHouseSources = {
   honeyEarned: 0,
   badgeCount: 0,
   isOffline: false,
+  signedIn: true,
+  cubPlate: "412",
 };
 const room = BearHouse_room("trailer");
 const order: IBearHouseObjectId[] = [

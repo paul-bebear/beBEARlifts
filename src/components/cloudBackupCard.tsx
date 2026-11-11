@@ -279,7 +279,7 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
           {!showEmail && form.step !== "code" ? (
             <View className="items-center">
               <LinkButton name="cloud-use-email-code" className="font-normal" onClick={() => setShowEmail(true)}>
-                Use an email code
+                Use email instead
               </LinkButton>
             </View>
           ) : form.step === "code" ? (

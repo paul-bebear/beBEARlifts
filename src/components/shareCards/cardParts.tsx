@@ -3,6 +3,9 @@ import { StyleProp, TextStyle, View, ViewStyle } from "react-native";
 import { TextRaw, Text_resolveFontFamily } from "../primitives/text";
 import { Svg, Defs, LinearGradient, Rect, Stop } from "../primitives/svg";
 import { IBearFur } from "../../models/bearStoreData";
+import { CubNumber_label, CubNumber_mine } from "../../models/cubNumber";
+import { CubStore } from "../../utils/cubStore";
+import { CloudStore } from "../../utils/supabaseClient";
 import { IShareCardBear } from "../../models/workoutStoryCard";
 import { BearMark } from "./bearMark";
 import { ShareCardBear } from "./shareCardBear";
@@ -80,6 +83,7 @@ export function ShareCardBrand(props: {
   fur?: IBearFur;
   onImageLoad?: (uri: string) => void;
 }): JSX.Element {
+  const cub = CubNumber_mine(CubStore.use(), CloudStore.use().session);
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: props.size * 0.3 }}>
       {props.bear != null ? (
@@ -87,9 +91,16 @@ export function ShareCardBrand(props: {
       ) : (
         <BearMark size={props.size} color={props.color} faceColor={props.faceColor} fur={props.fur} />
       )}
-      <ShareCardText size={props.size * 0.9} weight="bold" color={props.color} spacing={-0.5}>
-        beBEAR
-      </ShareCardText>
+      <View>
+        <ShareCardText size={props.size * 0.9} weight="bold" color={props.color} spacing={-0.5}>
+          beBEAR
+        </ShareCardText>
+        {cub != null && (
+          <ShareCardText size={props.size * 0.36} weight="semibold" color={props.color} spacing={1.5}>
+            {CubNumber_label(cub).toUpperCase()}
+          </ShareCardText>
+        )}
+      </View>
     </View>
   );
 }

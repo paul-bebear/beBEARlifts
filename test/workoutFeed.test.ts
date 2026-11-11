@@ -27,6 +27,7 @@ import {
   Feed_ago,
   Feed_empty,
   Feed_itemKey,
+  Feed_cubs,
   Feed_items,
   Feed_needsRefresh,
   Feed_parse,
@@ -488,6 +489,38 @@ describe("BearTv", () => {
     expect(BearTv_sprite({ level: 1, mood: "normal", countedKg: 1, fur: "polar" })).to.equal(
       "/images/bear/male-polar/level-01.webp"
     );
+  });
+
+  it("shows a friend's cub number from any of their version 4 posts, also on older posts and meals", () => {
+    const numbered = Feed_withServerPosts(
+      Feed_empty(),
+      "me",
+      [
+        { user_id: "a", workout_id: 1, posted_at: "2026-10-08T10:00:00Z", summary: { ...summary, version: 3 } },
+        { user_id: "a", workout_id: 3, posted_at: "2026-10-07T10:00:00Z", summary: { ...summary, cub: 7 } },
+        { user_id: "me", workout_id: 2, posted_at: "2026-10-09T10:00:00Z", summary: { ...summary, cub: 0 } },
+      ],
+      t1
+    );
+    expect([...Feed_cubs(numbered)]).to.have.deep.members([
+      ["a", 7],
+      ["me", 0],
+    ]);
+    expect(Feed_items(numbered, friends).map((i) => [i.author.handle, i.cub])).to.deep.equal([
+      ["paul", 0],
+      ["victor", 7],
+      ["victor", 7],
+    ]);
+    const screen = BearTv_screen({
+      signedIn: true,
+      friendCount: 1,
+      items: Feed_items(numbered, friends),
+      now: Date.parse("2026-10-08T12:00:00Z"),
+    });
+    expect(screen.kind === "post" && screen.cub).to.equal("Cub 7");
+    expect(screen.label).to.equal("victor, Cub 7, lifted: Push · 45 min · 1 set · +425 kg, 2 h ago. Open the feed.");
+    const unnumbered = BearTv_screen({ signedIn: true, friendCount: 1, items: Feed_items(state, friends), now: t1 });
+    expect(unnumbered.kind === "post" && unnumbered.cub).to.equal(undefined);
   });
 });
 

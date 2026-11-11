@@ -1,4 +1,4 @@
-import { JSX, useMemo, useState } from "react";
+import { JSX, useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { useNavOptions } from "../navigation/useNavOptions";
@@ -15,6 +15,7 @@ import { ProgramGoalStore } from "../utils/programGoalStore";
 import { WeekScheduleStore } from "../utils/weekScheduleStore";
 import { useFollowWeekSchedule } from "../utils/useFollowWeekSchedule";
 import { WorkoutStart_open } from "../utils/workoutStart";
+import { CubClient_refresh } from "../utils/cubClient";
 import { BearBoard_lines, IBearBoardTarget } from "../models/bearBoard";
 import { IBearHouseOpenTarget } from "../models/bearHouse";
 import { BearScene_place } from "../models/bearScene";
@@ -50,6 +51,9 @@ function openHouseTarget(
       return;
     case "door":
       WorkoutStart_open(QuickActions_workout({ isOngoingProgress: false, isBagCheckOn }).action, dispatch);
+      return;
+    case "signIn":
+      dispatch(Thunk_pushScreen("friends", undefined, { tab: "friends" }));
       return;
     case "bearPanel":
       navigateToModal("bearPanelModal");
@@ -89,6 +93,9 @@ export function ScreenHome(props: IProps): JSX.Element {
   const schedule = WeekScheduleStore.use();
   const program = useMemo(() => Program_evaluate(props.program, settings), [props.program, settings]);
   useFollowWeekSchedule(program, history, props.progress != null, dispatch);
+  useEffect(() => {
+    CubClient_refresh().catch(() => undefined);
+  }, []);
   const now = Date.now();
   const dayName = TodayPill_dayName(
     WeekSchedule_todayFor(schedule, program, now),

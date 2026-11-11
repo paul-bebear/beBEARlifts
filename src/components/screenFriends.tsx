@@ -3,7 +3,7 @@ import { Pressable, View } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { NavScreenScrollContext } from "../navigation/NavScreenScrollContext";
 import { FeedStore } from "../utils/feedClient";
-import { Feed_items, Feed_screenView, IFeedScreenView } from "../models/feed";
+import { Feed_cubs, Feed_items, Feed_screenView, IFeedScreenView } from "../models/feed";
 import { FeedModeration_items, FeedModeration_users } from "../models/feedModeration";
 import { BlocksStore } from "../utils/moderationStore";
 import {
@@ -161,7 +161,7 @@ export function ScreenFriends(): JSX.Element {
       {friends.me != null && view === "people" && (
         <>
           <FriendsAdd form={form} lists={lists} emit={emit} />
-          <FriendsLists form={form} lists={lists} emit={emit} />
+          <FriendsLists form={form} lists={lists} cubs={Feed_cubs(feed)} emit={emit} />
         </>
       )}
     </View>

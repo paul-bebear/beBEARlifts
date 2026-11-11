@@ -20,6 +20,7 @@ import { BearImage_uri } from "../utils/bearImage";
 const markerInk = "#1F3A5F";
 const pillInk = "#3B2414";
 const pillPaper = "rgba(255, 250, 240, 0.94)";
+const plateRim = "#C9A227";
 const markerFont = "PermanentMarker-Regular";
 const boardTargets: IBearBoardTarget[] = ["plus", "goal", "bear"];
 const padlockImage = BearHouse_image("padlock");
@@ -157,6 +158,31 @@ export function BearSprite(props: {
   );
 }
 
+// An enamel house-number plate: navy with cream digits and a brass rim, so it reads on wood, steel and white.
+function DoorPlate(props: { box: IBearBox; text: string }): JSX.Element {
+  const fontSize = props.box.height * 0.68;
+  return (
+    <View
+      testID="house-door-plate"
+      data-testid="house-door-plate"
+      pointerEvents="none"
+      className="items-center justify-center"
+      style={{
+        position: "absolute",
+        ...props.box,
+        borderRadius: props.box.height * 0.22,
+        borderWidth: Math.max(1, props.box.height * 0.06),
+        borderColor: plateRim,
+        backgroundColor: markerInk,
+      }}
+    >
+      <Text className="font-bold" style={{ color: pillPaper, fontSize, lineHeight: fontSize * 1.1 }}>
+        {props.text}
+      </Text>
+    </View>
+  );
+}
+
 function Overlay(props: { object: IBearHouseObject; unit: number }): JSX.Element | null {
   const overlay = props.object.overlay;
   if (overlay == null) {
@@ -165,6 +191,9 @@ function Overlay(props: { object: IBearHouseObject; unit: number }): JSX.Element
   const box = BearHouse_box(overlay.rect, props.unit);
   if (overlay.kind === "tv") {
     return <BearTv box={box} />;
+  }
+  if (overlay.kind === "plate") {
+    return <DoorPlate box={box} text={overlay.text ?? ""} />;
   }
   const isBadge = overlay.kind === "badge";
   const size = isBadge ? Math.min(box.width, box.height) : Math.min(box.height * 0.7, box.width * 0.5);

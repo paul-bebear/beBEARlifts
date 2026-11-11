@@ -79,10 +79,33 @@ describe("WorkoutPost version 3", () => {
         bear: bear(1499.6),
       }
     );
-    expect(summary.version).to.equal(3);
+    expect(summary.version).to.equal(4);
     expect(summary.bear).to.deep.equal({ level: 5, mood: "pumped", countedKg: 1500, line: "female", fur: "polar" });
     expect(summary.songs).to.deep.equal(["One", "Two", "Three"]);
     expect(WorkoutPost_parse(JSON.parse(JSON.stringify(summary)))).to.deep.equal(summary);
+  });
+
+  it("carries the cub number in version 4 and reads version 3 posts without one", () => {
+    const summary = WorkoutPost_build(workout, settings, {}, { bear: bear(10), cub: 412 });
+    expect(summary.cub).to.equal(412);
+    expect(WorkoutPost_parse(JSON.parse(JSON.stringify(summary)))?.cub).to.equal(412);
+    expect(WorkoutPost_parse({ ...summary, cub: 0 })?.cub).to.equal(0);
+    expect(WorkoutPost_build(workout, settings, {}, undefined).cub).to.equal(undefined);
+    const v3 = WorkoutPost_parse({ ...summary, version: 3 })!;
+    expect(v3.version).to.equal(3);
+    expect(v3.cub).to.equal(undefined);
+    expect(v3.bear?.fur).to.equal("polar");
+    expect(WorkoutPost_parse({ ...summary, cub: -1 })?.cub).to.equal(undefined);
+    expect(WorkoutPost_parse({ ...summary, cub: "412" })?.cub).to.equal(undefined);
+    expect(WorkoutPost_parse({ ...summary, cub: 4.5 })?.cub).to.equal(undefined);
+  });
+
+  it("reads a post from a newer app version as version 4, so the bear and number stay", () => {
+    const summary = WorkoutPost_build(workout, settings, {}, { bear: bear(10), cub: 7 });
+    const v5 = WorkoutPost_parse({ ...summary, version: 5 })!;
+    expect(v5.version).to.equal(4);
+    expect(v5.bear?.level).to.equal(5);
+    expect(v5.cub).to.equal(7);
   });
 
   it("counts zero kg for a workout the bear did not count", () => {

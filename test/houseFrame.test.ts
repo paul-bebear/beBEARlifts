@@ -34,6 +34,8 @@ const sources = {
   honeyEarned: 0,
   badgeCount: 0,
   isOffline: true,
+  signedIn: true,
+  cubPlate: "412",
 };
 
 function inside(rect: IBearRect, safe: IBearRect): boolean {
