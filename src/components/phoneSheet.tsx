@@ -1,13 +1,7 @@
 import { JSX } from "react";
-import { Pressable, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./primitives/text";
-import { IconCog2 } from "./icons/iconCog2";
-import { IconGraphs } from "./icons/iconGraphs";
-import { IconFriends } from "./icons/iconFriends";
-import { IconSpeaker } from "./icons/iconSpeaker";
-import { IconPicture } from "./icons/iconPicture";
-import { IconCrown } from "./icons/iconCrown";
 import { CloudRestoreBanner } from "./cloudRestoreBanner";
 import { SheetScreenContainer } from "../navigation/SheetScreenContainer";
 import { FormSheet } from "../navigation/FormSheet";
@@ -18,42 +12,16 @@ import { IDispatch } from "../ducks/types";
 import { Friends_forUser, Friends_lists } from "../models/friends";
 import {
   IPhoneSheetApp,
-  IPhoneSheetAppId,
   IPhoneSheetTarget,
   PhoneSheet_apps,
+  PhoneSheet_colors,
   PhoneSheet_hasRestoreNotice,
+  PhoneSheet_tileSize,
 } from "../models/phoneSheet";
+import { BearImage_uri } from "../utils/bearImage";
 import { FriendsStore } from "../utils/friendsClient";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { CloudStore } from "../utils/supabaseClient";
-import { Tailwind_semantic } from "../utils/tailwindConfig";
-
-const tileClass: Record<IPhoneSheetAppId, string> = {
-  feed: "bg-background-cardpurple",
-  music: "bg-background-cardyellow",
-  photos: "bg-background-cardpurple",
-  stats: "bg-background-cardyellow",
-  badges: "bg-background-cardpurple",
-  settings: "bg-background-neutral",
-};
-
-function AppIcon(props: { id: IPhoneSheetAppId }): JSX.Element {
-  const color = Tailwind_semantic().icon.neutral;
-  switch (props.id) {
-    case "feed":
-      return <IconFriends color={color} size={30} />;
-    case "music":
-      return <IconSpeaker color={color} size={30} />;
-    case "photos":
-      return <IconPicture color={color} size={30} />;
-    case "stats":
-      return <IconGraphs color={color} size={30} />;
-    case "badges":
-      return <IconCrown color={color} size={30} />;
-    case "settings":
-      return <IconCog2 color={color} size={30} />;
-  }
-}
 
 function open(target: IPhoneSheetTarget, dispatch: IDispatch): void {
   switch (target.kind) {
@@ -81,9 +49,11 @@ function PhoneApp(props: { app: IPhoneSheetApp; onPress: () => void }): JSX.Elem
       style={{ width: "33.33%", paddingVertical: 10 }}
     >
       <View>
-        <View className={`items-center justify-center rounded-2xl ${tileClass[app.id]}`} style={{ width: 64, height: 64 }}>
-          <AppIcon id={app.id} />
-        </View>
+        <Image
+          source={{ uri: BearImage_uri(app.image) }}
+          style={{ width: PhoneSheet_tileSize, height: PhoneSheet_tileSize }}
+          resizeMode="stretch"
+        />
         {badge > 0 ? (
           <View
             className="absolute items-center justify-center rounded-full bg-red-500"
@@ -95,7 +65,11 @@ function PhoneApp(props: { app: IPhoneSheetApp; onPress: () => void }): JSX.Elem
           </View>
         ) : null}
       </View>
-      <Text className="mt-2 text-xs font-semibold text-center" numberOfLines={1}>
+      <Text
+        className="mt-2 text-xs font-semibold text-center"
+        style={{ color: PhoneSheet_colors.label }}
+        numberOfLines={1}
+      >
         {app.label}
       </Text>
     </Pressable>
@@ -129,10 +103,29 @@ export function PhoneSheetModal(): JSX.Element {
               <CloudRestoreBanner dispatch={dispatch} />
             </View>
           ) : null}
-          <View className="px-2 py-3 rounded-3xl bg-background-subtle" style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {apps.map((app) => (
-              <PhoneApp key={app.id} app={app} onPress={tap(app)} />
-            ))}
+          <View
+            className="self-center w-full"
+            style={{ maxWidth: 340, padding: 10, borderRadius: 40, backgroundColor: PhoneSheet_colors.frame }}
+          >
+            <View
+              style={{
+                borderRadius: 30,
+                backgroundColor: PhoneSheet_colors.screen,
+                paddingHorizontal: 6,
+                paddingTop: 14,
+                paddingBottom: 10,
+              }}
+            >
+              <View
+                className="self-center"
+                style={{ width: 72, height: 8, borderRadius: 4, backgroundColor: PhoneSheet_colors.frame }}
+              />
+              <View style={{ flexDirection: "row", flexWrap: "wrap", paddingTop: 10 }}>
+                {apps.map((app) => (
+                  <PhoneApp key={app.id} app={app} onPress={tap(app)} />
+                ))}
+              </View>
+            </View>
           </View>
         </View>
       </FormSheet>

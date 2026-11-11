@@ -1,11 +1,17 @@
 import "mocha";
 import { expect } from "chai";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 import {
   IPhoneSheetInput,
   PhoneSheet_apps,
+  PhoneSheet_colors,
   PhoneSheet_feedLabel,
   PhoneSheet_hasRestoreNotice,
+  PhoneSheet_tileSize,
 } from "../src/models/phoneSheet";
+
+const root = join(__dirname, "..");
 
 const none: IPhoneSheetInput = { friendCount: 0, pendingRequests: 0, isOffline: false, hasPendingRestore: false };
 
@@ -24,6 +30,28 @@ describe("PhoneSheet", () => {
       ["badges", "Badges"],
       ["settings", "Settings"],
     ]);
+  });
+
+  it("gives each app its painted tile, and the file is on disk and bundled for native", () => {
+    const native = readFileSync(join(root, "src/utils/bearImage.native.ts"), "utf8");
+    const apps = PhoneSheet_apps(none);
+    expect(apps.map((a) => a.image)).to.deep.equal([
+      "/images/bear/phone/app-feed.webp",
+      "/images/bear/phone/app-music.webp",
+      "/images/bear/phone/app-photos.webp",
+      "/images/bear/phone/app-stats.webp",
+      "/images/bear/phone/app-badges.webp",
+      "/images/bear/phone/app-settings.webp",
+    ]);
+    for (const app of apps) {
+      expect(existsSync(join(root, app.image)), app.image).to.equal(true);
+      expect(native.includes(`"${app.image}": require(`), app.image).to.equal(true);
+    }
+  });
+
+  it("uses the cream screen, dark frame and brown label of the phone mockup", () => {
+    expect(PhoneSheet_colors).to.deep.equal({ frame: "#282A2D", screen: "#FCE8BB", label: "#34251A" });
+    expect(PhoneSheet_tileSize).to.equal(64);
   });
 
   it("opens the screens the boombox, mirror, shelf, reports hub and settings open", () => {

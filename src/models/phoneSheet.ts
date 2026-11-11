@@ -15,8 +15,17 @@ export type IPhoneSheetAppId = "feed" | "music" | "photos" | "stats" | "badges" 
 export interface IPhoneSheetApp {
   id: IPhoneSheetAppId;
   label: string;
+  image: string;
   target: IPhoneSheetTarget;
   badge?: number;
+}
+
+export const PhoneSheet_colors = { frame: "#282A2D", screen: "#FCE8BB", label: "#34251A" };
+
+export const PhoneSheet_tileSize = 64;
+
+export function PhoneSheet_image(id: IPhoneSheetAppId): string {
+  return `/images/bear/phone/app-${id}.webp`;
 }
 
 export interface IPhoneSheetInput {
@@ -32,7 +41,7 @@ export function PhoneSheet_hasRestoreNotice(input: IPhoneSheetInput): boolean {
 
 export function PhoneSheet_apps(input: IPhoneSheetInput): IPhoneSheetApp[] {
   const hasFriends = input.friendCount > 0 || input.pendingRequests > 0;
-  return [
+  const apps: Omit<IPhoneSheetApp, "image">[] = [
     {
       id: "feed",
       label: PhoneSheet_feedLabel,
@@ -45,4 +54,5 @@ export function PhoneSheet_apps(input: IPhoneSheetInput): IPhoneSheetApp[] {
     { id: "badges", label: "Badges", target: { kind: "screen", screen: "streak" } },
     { id: "settings", label: "Settings", target: { kind: "screen", screen: "settings", tab: "me" } },
   ];
+  return apps.map((app) => ({ ...app, image: PhoneSheet_image(app.id) }));
 }
