@@ -1,0 +1,468 @@
+{
+  "canvas": [
+    1024,
+    1536
+  ],
+  "bear_foot_anchor": [
+    512,
+    1470
+  ],
+  "assets": {
+    "bear_level_01.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        335,
+        890,
+        689,
+        1470
+      ],
+      "visible_height": 580
+    },
+    "bear_level_02.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        309,
+        770,
+        685,
+        1470
+      ],
+      "visible_height": 700
+    },
+    "bear_level_03.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        293,
+        680,
+        720,
+        1471
+      ],
+      "visible_height": 790
+    },
+    "bear_level_04.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        268,
+        600,
+        716,
+        1471
+      ],
+      "visible_height": 870
+    },
+    "bear_level_05.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        258,
+        520,
+        757,
+        1470
+      ],
+      "visible_height": 950
+    },
+    "bear_level_06.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        183,
+        430,
+        825,
+        1470
+      ],
+      "visible_height": 1040
+    },
+    "bear_level_07.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        141,
+        340,
+        874,
+        1470
+      ],
+      "visible_height": 1130
+    },
+    "bear_level_08.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        105,
+        261,
+        906,
+        1471
+      ],
+      "visible_height": 1209
+    },
+    "bear_level_09.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        79,
+        190,
+        926,
+        1469
+      ],
+      "visible_height": 1280
+    },
+    "bear_level_10.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        82,
+        130,
+        912,
+        1471
+      ],
+      "visible_height": 1340
+    },
+    "bear_level_11.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        53,
+        70,
+        944,
+        1471
+      ],
+      "visible_height": 1400
+    },
+    "bear_level_12.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        35,
+        28,
+        969,
+        1471
+      ],
+      "visible_height": 1442
+    },
+    "bear_mood_small_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        246,
+        805,
+        779,
+        1471
+      ],
+      "visible_height": 665
+    },
+    "bear_mood_small_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        221,
+        1155,
+        803,
+        1471
+      ],
+      "visible_height": 315
+    },
+    "bear_mood_small_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        323,
+        560,
+        711,
+        1471
+      ],
+      "visible_height": 910
+    },
+    "bear_mood_medium_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        207,
+        567,
+        817,
+        1471
+      ],
+      "visible_height": 903
+    },
+    "bear_mood_medium_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        111,
+        1042,
+        916,
+        1470
+      ],
+      "visible_height": 428
+    },
+    "bear_mood_medium_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        297,
+        235,
+        738,
+        1471
+      ],
+      "visible_height": 1235
+    },
+    "bear_mood_big_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        59,
+        320,
+        966,
+        1469
+      ],
+      "visible_height": 1150
+    },
+    "bear_mood_big_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        41,
+        925,
+        983,
+        1470
+      ],
+      "visible_height": 545
+    },
+    "bear_mood_big_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        180,
+        30,
+        850,
+        1471
+      ],
+      "visible_height": 1440
+    },
+    "bear_mood_space_hungry.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        38,
+        198,
+        986,
+        1471
+      ],
+      "visible_height": 1272
+    },
+    "bear_mood_space_tired.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        103,
+        867,
+        1022,
+        1471
+      ],
+      "visible_height": 603
+    },
+    "bear_mood_space_pumped.png": {
+      "kind": "bear",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "foot_anchor": [
+        512,
+        1470
+      ],
+      "visible_bbox": [
+        108,
+        30,
+        928,
+        1470
+      ],
+      "visible_height": 1440
+    }
+  }
+}
