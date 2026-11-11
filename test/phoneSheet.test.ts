@@ -1,50 +1,92 @@
 import "mocha";
 import { expect } from "chai";
-import { IPhoneSheetInput, PhoneSheet_rows } from "../src/models/phoneSheet";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
+import {
+  IPhoneSheetInput,
+  PhoneSheet_apps,
+  PhoneSheet_colors,
+  PhoneSheet_feedLabel,
+  PhoneSheet_hasRestoreNotice,
+  PhoneSheet_tileSize,
+} from "../src/models/phoneSheet";
+
+const root = join(__dirname, "..");
 
 const none: IPhoneSheetInput = { friendCount: 0, pendingRequests: 0, isOffline: false, hasPendingRestore: false };
 
-function friendsRow(input: Partial<IPhoneSheetInput>): ReturnType<typeof PhoneSheet_rows>[number] {
-  return PhoneSheet_rows({ ...none, ...input }).find((r) => r.id === "friends")!;
+function feed(input: Partial<IPhoneSheetInput>): ReturnType<typeof PhoneSheet_apps>[number] {
+  return PhoneSheet_apps({ ...none, ...input }).find((a) => a.id === "feed")!;
 }
 
 describe("PhoneSheet", () => {
-  it("lists Settings, More and Add a friend for a user with no friends", () => {
-    const rows = PhoneSheet_rows(none);
-    expect(rows.map((r) => [r.id, r.title])).to.deep.equal([
+  it("lists six apps in order", () => {
+    const apps = PhoneSheet_apps(none);
+    expect(apps.map((a) => [a.id, a.label])).to.deep.equal([
+      ["feed", PhoneSheet_feedLabel],
+      ["music", "Music"],
+      ["photos", "Photos"],
+      ["stats", "Stats"],
+      ["badges", "Badges"],
       ["settings", "Settings"],
-      ["more", "More"],
-      ["friends", "Friends"],
     ]);
-    expect(rows.map((r) => r.target)).to.deep.equal([
-      { kind: "screen", screen: "settings", tab: "me" },
+  });
+
+  it("gives each app its painted tile, and the file is on disk and bundled for native", () => {
+    const native = readFileSync(join(root, "src/utils/bearImage.native.ts"), "utf8");
+    const apps = PhoneSheet_apps(none);
+    expect(apps.map((a) => a.image)).to.deep.equal([
+      "/images/bear/phone/app-feed.webp",
+      "/images/bear/phone/app-music.webp",
+      "/images/bear/phone/app-photos.webp",
+      "/images/bear/phone/app-stats.webp",
+      "/images/bear/phone/app-badges.webp",
+      "/images/bear/phone/app-settings.webp",
+    ]);
+    for (const app of apps) {
+      expect(existsSync(join(root, app.image)), app.image).to.equal(true);
+      expect(native.includes(`"${app.image}": require(`), app.image).to.equal(true);
+    }
+  });
+
+  it("uses the cream screen, dark frame and brown label of the phone mockup", () => {
+    expect(PhoneSheet_colors).to.deep.equal({ frame: "#282A2D", screen: "#FCE8BB", label: "#34251A" });
+    expect(PhoneSheet_tileSize).to.equal(64);
+  });
+
+  it("opens the screens the boombox, mirror, shelf, reports hub and settings open", () => {
+    const targets = PhoneSheet_apps(none).map((a) => a.target);
+    expect(targets.slice(1)).to.deep.equal([
+      { kind: "screen", screen: "music" },
+      { kind: "screen", screen: "progressPhotos" },
       { kind: "screen", screen: "reportsHub", tab: "graphs" },
-      { kind: "addFriend" },
+      { kind: "screen", screen: "streak" },
+      { kind: "screen", screen: "settings", tab: "me" },
     ]);
-    expect(rows[2].subtitle).to.equal("Add a friend to see their workouts");
+  });
+
+  it("opens the add-friend modal for a user with no friends and no requests", () => {
+    expect(feed({}).target).to.deep.equal({ kind: "addFriend" });
   });
 
   it("opens the friends screen once there is a friend", () => {
-    const rows = PhoneSheet_rows({ ...none, friendCount: 2, isOffline: true });
-    const friends = rows.find((r) => r.id === "friends")!;
-    expect(friends.target).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
-    expect(friends.subtitle).to.equal("2 friends");
-    expect(friendsRow({ friendCount: 1 }).subtitle).to.equal("1 friend");
-    expect(rows.some((r) => r.id === "restore")).to.equal(false);
+    expect(feed({ friendCount: 2 }).target).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
   });
 
   it("opens the friends screen for a friend request, where the user can accept it", () => {
-    const request = friendsRow({ pendingRequests: 1 });
-    expect(request.target).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
-    expect(request.subtitle).to.equal("1 friend request");
-    expect(friendsRow({ friendCount: 3, pendingRequests: 2 }).subtitle).to.equal("3 friends · 2 friend requests");
+    expect(feed({ pendingRequests: 1 }).target).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
   });
 
-  it("puts a pending cloud restore first, in the offline build only", () => {
-    const rows = PhoneSheet_rows({ ...none, isOffline: true, hasPendingRestore: true });
-    expect(rows.map((r) => r.id)).to.deep.equal(["restore", "settings", "more", "friends"]);
-    expect(rows[0].target).to.deep.equal({ kind: "restore" });
-    const online = PhoneSheet_rows({ ...none, hasPendingRestore: true });
-    expect(online.map((r) => r.id)).to.deep.equal(["settings", "more", "friends"]);
+  it("badges the feed with the pending request count and no other app", () => {
+    expect(feed({ pendingRequests: 3, friendCount: 1 }).badge).to.equal(3);
+    expect(feed({}).badge).to.equal(0);
+    const others = PhoneSheet_apps({ ...none, pendingRequests: 3 }).filter((a) => a.id !== "feed");
+    expect(others.every((a) => a.badge == null)).to.equal(true);
+  });
+
+  it("shows the cloud restore notice in the offline build only", () => {
+    expect(PhoneSheet_hasRestoreNotice({ ...none, isOffline: true, hasPendingRestore: true })).to.equal(true);
+    expect(PhoneSheet_hasRestoreNotice({ ...none, hasPendingRestore: true })).to.equal(false);
+    expect(PhoneSheet_hasRestoreNotice({ ...none, isOffline: true })).to.equal(false);
   });
 });

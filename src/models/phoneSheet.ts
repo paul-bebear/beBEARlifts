@@ -1,17 +1,31 @@
-import { ReportsHub_title } from "./reportsHub";
+import type { ITab } from "./screen";
+
+export const PhoneSheet_feedLabel = "Beargram";
 
 export type IPhoneSheetTarget =
-  | { kind: "screen"; screen: "settings"; tab: "me" }
-  | { kind: "screen"; screen: "reportsHub"; tab: "graphs" }
-  | { kind: "screen"; screen: "friends"; tab: "friends" }
-  | { kind: "addFriend" }
-  | { kind: "restore" };
+  | {
+      kind: "screen";
+      screen: "settings" | "reportsHub" | "friends" | "music" | "progressPhotos" | "streak";
+      tab?: ITab;
+    }
+  | { kind: "addFriend" };
 
-export interface IPhoneSheetRow {
-  id: "restore" | "settings" | "more" | "friends";
-  title: string;
-  subtitle: string;
+export type IPhoneSheetAppId = "feed" | "music" | "photos" | "stats" | "badges" | "settings";
+
+export interface IPhoneSheetApp {
+  id: IPhoneSheetAppId;
+  label: string;
+  image: string;
   target: IPhoneSheetTarget;
+  badge?: number;
+}
+
+export const PhoneSheet_colors = { frame: "#282A2D", screen: "#FCE8BB", label: "#34251A" };
+
+export const PhoneSheet_tileSize = 64;
+
+export function PhoneSheet_image(id: IPhoneSheetAppId): string {
+  return `/images/bear/phone/app-${id}.webp`;
 }
 
 export interface IPhoneSheetInput {
@@ -21,49 +35,24 @@ export interface IPhoneSheetInput {
   hasPendingRestore: boolean;
 }
 
-function count(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`;
+export function PhoneSheet_hasRestoreNotice(input: IPhoneSheetInput): boolean {
+  return input.isOffline && input.hasPendingRestore;
 }
 
-function friendsLine(friendCount: number, pendingRequests: number): string {
-  const requests = count(pendingRequests, "friend request", "friend requests");
-  if (friendCount === 0) {
-    return requests;
-  }
-  const friends = count(friendCount, "friend", "friends");
-  return pendingRequests > 0 ? `${friends} · ${requests}` : friends;
-}
-
-// The phone on the dock holds what left the home screen: Settings, the reports list and friends. A pending cloud
-// restore goes first, because the offline build has no other place that shows it. A friend request is accepted
-// on the friends screen, so a request alone sends the Friends row there.
-export function PhoneSheet_rows(input: IPhoneSheetInput): IPhoneSheetRow[] {
-  const restore: IPhoneSheetRow[] =
-    input.isOffline && input.hasPendingRestore
-      ? [{ id: "restore", title: "Cloud backup", subtitle: "Pick which data to keep", target: { kind: "restore" } }]
-      : [];
+export function PhoneSheet_apps(input: IPhoneSheetInput): IPhoneSheetApp[] {
   const hasFriends = input.friendCount > 0 || input.pendingRequests > 0;
-  return [
-    ...restore,
+  const apps: Omit<IPhoneSheetApp, "image">[] = [
     {
-      id: "settings",
-      title: "Settings",
-      subtitle: "Units, account and plates",
-      target: { kind: "screen", screen: "settings", tab: "me" },
-    },
-    {
-      id: "more",
-      title: ReportsHub_title,
-      subtitle: "Graphs, honey, badges and more",
-      target: { kind: "screen", screen: "reportsHub", tab: "graphs" },
-    },
-    {
-      id: "friends",
-      title: "Friends",
-      subtitle: hasFriends
-        ? friendsLine(input.friendCount, input.pendingRequests)
-        : "Add a friend to see their workouts",
+      id: "feed",
+      label: PhoneSheet_feedLabel,
       target: hasFriends ? { kind: "screen", screen: "friends", tab: "friends" } : { kind: "addFriend" },
+      badge: input.pendingRequests,
     },
+    { id: "music", label: "Music", target: { kind: "screen", screen: "music" } },
+    { id: "photos", label: "Photos", target: { kind: "screen", screen: "progressPhotos" } },
+    { id: "stats", label: "Stats", target: { kind: "screen", screen: "reportsHub", tab: "graphs" } },
+    { id: "badges", label: "Badges", target: { kind: "screen", screen: "streak" } },
+    { id: "settings", label: "Settings", target: { kind: "screen", screen: "settings", tab: "me" } },
   ];
+  return apps.map((app) => ({ ...app, image: PhoneSheet_image(app.id) }));
 }
