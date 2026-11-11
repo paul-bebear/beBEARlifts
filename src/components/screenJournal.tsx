@@ -71,6 +71,34 @@ function AddButton(props: { testID: string; label: string; onPress: () => void }
   );
 }
 
+function SectionRow(props: {
+  testID: string;
+  title: string;
+  detail: string;
+  disabled?: boolean;
+  isButton?: boolean;
+  onPress: () => void;
+  children?: ReactNode;
+}): JSX.Element {
+  return (
+    <Pressable
+      disabled={props.disabled}
+      accessibilityRole={props.isButton ? "button" : undefined}
+      accessibilityState={props.isButton ? { expanded: false } : undefined}
+      onPress={props.onPress}
+      className="flex-row items-center px-4 pt-6"
+      testID={props.testID}
+      data-testid={props.testID}
+    >
+      <Text className="text-xl font-bold">{props.title}</Text>
+      <Text className="flex-1 ml-3 text-base text-text-secondary" numberOfLines={1}>
+        {props.detail}
+      </Text>
+      {props.children}
+    </Pressable>
+  );
+}
+
 function FoldableSection(props: {
   journal: IJournalDay;
   section: IJournalSection;
@@ -83,36 +111,29 @@ function FoldableSection(props: {
     return <></>;
   }
   if (fold.empty != null) {
-    const canOpen = props.section === "checkIn";
     return (
-      <Pressable
-        disabled={!canOpen}
-        onPress={() => setIsOpenByUser(true)}
-        className="flex-row items-center px-4 pt-6"
+      <SectionRow
         testID={`journal-${props.section}-empty`}
-        data-testid={`journal-${props.section}-empty`}
+        title={fold.empty.title}
+        detail={fold.empty.hint}
+        disabled={props.section !== "checkIn"}
+        onPress={() => setIsOpenByUser(true)}
       >
-        <Text className="text-xl font-bold">{fold.empty.title}</Text>
-        <Text className="flex-1 ml-3 text-base text-text-secondary" numberOfLines={1}>
-          {fold.empty.hint}
-        </Text>
         {props.emptyAction}
-      </Pressable>
+      </SectionRow>
     );
   }
   if (fold.isCollapsed) {
     return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded: false }}
-        onPress={() => setIsOpenByUser(true)}
-        className="flex-row items-center px-4 pt-6"
+      <SectionRow
         testID={`journal-${props.section}-summary`}
-        data-testid={`journal-${props.section}-summary`}
+        title={fold.title ?? ""}
+        detail={fold.detail ?? ""}
+        isButton
+        onPress={() => setIsOpenByUser(true)}
       >
-        <Text className="flex-1 text-base font-semibold">{fold.summary}</Text>
         <Text className="text-sm text-text-link">Show</Text>
-      </Pressable>
+      </SectionRow>
     );
   }
   return (
@@ -196,33 +217,10 @@ function NotesSection(props: { journal: IJournalDay; add: ReactNode }): JSX.Elem
   );
 }
 
-function JournalWeek(props: {
-  header: IJournalHeader;
-  selected: string;
-  onSelectDay: (day: string) => void;
-  onHistory: () => void;
-}): JSX.Element {
+function JournalHistoryLink(props: { header: IJournalHeader; onHistory: () => void }): JSX.Element {
   const { header } = props;
   return (
     <View className="px-4 pt-2" testID="journal-week" data-testid="journal-week">
-      <View className="flex-row items-center" style={{ justifyContent: "space-between" }}>
-        {header.dots.map((dot) => (
-          <Pressable
-            key={dot.day}
-            testID={`journal-week-dot-${dot.day}`}
-            data-testid={`journal-week-dot-${dot.day}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: dot.day === props.selected }}
-            onPress={() => props.onSelectDay(dot.day)}
-            className="p-1"
-          >
-            <View
-              className={`rounded-full border ${dot.isToday ? "border-2" : ""} border-border-neutral`}
-              style={{ width: 24, height: 24, backgroundColor: dot.filled ? T.honey : "transparent" }}
-            />
-          </Pressable>
-        ))}
-      </View>
       {header.historyLabel != null && (
         <Pressable
           testID="journal-history"
@@ -249,16 +247,7 @@ export function ScreenJournal(): JSX.Element {
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const [isCollapsed, setIsCollapsed] = useState(true);
   const journal = JournalDay_build({ ...sources, day });
-  const header = useMemo(
-    () =>
-      JournalDay_header({
-        history,
-        food,
-        now: Date.now(),
-        startWeekFromMonday: sources.settings.startWeekFromMonday,
-      }),
-    [history, food, sources.settings.startWeekFromMonday]
-  );
+  const header = useMemo(() => JournalDay_header({ history }), [history]);
   const streak = useMemo(
     () => DailyChecklist_streak(DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts }), today),
     [food, bear.workouts, today]
@@ -311,12 +300,7 @@ export function ScreenJournal(): JSX.Element {
   return (
     <NavScreenContent>
       <View testID="journal" data-testid="journal">
-        <JournalWeek
-          header={header}
-          selected={day}
-          onSelectDay={selectDay}
-          onHistory={() => dispatch(Thunk_pushScreen("history"))}
-        />
+        <JournalHistoryLink header={header} onHistory={() => dispatch(Thunk_pushScreen("history"))} />
         <ProgressCalendarHeader
           streak={streak}
           calendar={calendar}
