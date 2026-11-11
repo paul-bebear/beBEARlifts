@@ -15,7 +15,7 @@ export const HouseTour_lines: ReadonlyArray<readonly [IBearHouseObjectId, string
   ["bed", "Your bear rests here. Tap it to see how it feels."],
   ["notebook", "Your journal. Every day you logged is in it."],
   ["tv", "Your friends. Add one to see their workouts."],
-  ["phone", "Settings and everything else."],
+  ["phone", "Your phone. Friends, music, photos, stats, badges and settings."],
   ["passport", "A stamp for every city you train in. Coming soon."],
 ];
 
