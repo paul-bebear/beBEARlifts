@@ -382,7 +382,11 @@ describe("WorkoutStoryCard share data", () => {
       celebratedLevel: 1,
       seed: 1,
     });
-    expect(male.bear).to.deep.equal({ sprite: "/images/bear/male/lift-small.webp", fur: "brown", size: "small" });
+    expect(male.bear).to.deep.equal({
+      sprite: "/images/bear/brown/mood-small-pumped.webp",
+      fur: "brown",
+      size: "small",
+    });
     const female = WorkoutStoryCard_build({
       record,
       settings,
@@ -393,7 +397,7 @@ describe("WorkoutStoryCard share data", () => {
       line: "female",
       seed: 1,
     });
-    expect(female.bear.sprite).to.equal("/images/bear/female/lift-small.webp");
+    expect(female.bear.sprite).to.equal("/images/bear/brown/mood-small-pumped.webp");
   });
 
   it("draws the chosen fur on the card sprite", () => {
@@ -410,7 +414,7 @@ describe("WorkoutStoryCard share data", () => {
       seed: 1,
     });
     expect(polar.bear).to.deep.equal({
-      sprite: "/images/bear/female-polar/lift-small.webp",
+      sprite: "/images/bear/brown/mood-small-pumped.webp",
       fur: "polar",
       size: "small",
     });

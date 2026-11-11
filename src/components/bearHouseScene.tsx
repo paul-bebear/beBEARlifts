@@ -58,14 +58,7 @@ function HouseArt(props: IArtProps): JSX.Element {
   const breathing = BearScene_breathing(state.mood);
   const scaleY = useBearBreathing(breathing.durationMs, breathing.scaleY);
   const spritePath = BearArt_sprite(state.line, state.fur, state.level.tier.level, state.mood);
-  const layout = BearScene_layout(
-    props.width,
-    props.art,
-    state.level.tier.level,
-    state.level.fraction,
-    spritePath,
-    breathing.scaleY
-  );
+  const layout = BearScene_layout(props.width, props.art);
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const unit = layout.width / props.art.canvas.width;
 

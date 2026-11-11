@@ -117,7 +117,6 @@ export function BearHouse_artOf(source: IBearHouseManifest): IBearSceneArt {
   return {
     canvas: { width: source.canvas[0], height: source.canvas[1] },
     foot: { x: source.bearFoot[0], y: source.bearFoot[1] },
-    minHeightShare: 0.26,
     board: [source.whiteboard[0], source.whiteboard[1], source.whiteboard[2], source.whiteboard[3]],
     inkBottom: source.whiteboard[1] + BearScene_boardInkBottom - BearScene_dashboardRect[1],
   };

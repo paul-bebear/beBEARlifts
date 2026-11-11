@@ -1,12 +1,10 @@
 import "mocha";
 import { expect } from "chai";
-import { BearArt_sprite } from "../src/models/bearArt";
 import { BearBoardSize_layout, BearBoardSize_maxLines, BearBoardSize_rowRatio } from "../src/models/bearBoardSize";
 import { BearScene_gymArt, BearScene_layout } from "../src/models/bearScene";
 
 function boardAt(width: number): ReturnType<typeof BearBoardSize_layout> {
-  const sprite = BearArt_sprite("female", "brown", 1, "normal");
-  return BearBoardSize_layout(BearScene_layout(width, BearScene_gymArt, 1, 0, sprite).board);
+  return BearBoardSize_layout(BearScene_layout(width, BearScene_gymArt).board);
 }
 
 describe("BearBoardSize_layout", () => {

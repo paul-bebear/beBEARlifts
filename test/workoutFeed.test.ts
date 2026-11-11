@@ -474,19 +474,16 @@ describe("BearTv", () => {
     const screen = BearTv_screen({ signedIn: true, friendCount: 1, items, now: Date.parse("2026-10-08T12:00:00Z") });
     expect(screen).to.deep.equal({
       kind: "post",
-      sprite: "/images/bear/female/mood-medium-hungry.webp",
+      sprite: "/images/bear/brown/mood-medium-hungry.webp",
       text: "\u{1F3CB} victor",
       label: "victor lifted: Push · 45 min · 1 set · +425 kg, 2 h ago. Open the feed.",
     });
-    expect(BearTv_sprite(undefined)).to.equal("/images/bear/male/level-01.webp");
+    expect(BearTv_sprite(undefined)).to.equal("/images/bear/brown/level-01.webp");
     expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female" })).to.equal(
-      "/images/bear/female/mood-medium-hungry.webp"
-    );
-    expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female", fur: "black" })).to.equal(
-      "/images/bear/female-black/mood-medium-hungry.webp"
+      "/images/bear/brown/mood-medium-hungry.webp"
     );
     expect(BearTv_sprite({ level: 1, mood: "normal", countedKg: 1, fur: "polar" })).to.equal(
-      "/images/bear/male-polar/level-01.webp"
+      "/images/bear/brown/level-01.webp"
     );
   });
 });

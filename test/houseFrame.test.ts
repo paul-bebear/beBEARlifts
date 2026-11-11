@@ -119,7 +119,6 @@ describe("HouseFrame", () => {
     expect(HouseFrame_tall(BearScene_gymArt)).to.deep.equal({
       canvas: { width: 1024, height: 2304 },
       foot: { x: 512, y: 1938 },
-      minHeightShare: BearScene_gymArt.minHeightShare,
       board: [125, 643, 825, 1123],
       inkBottom: 1041,
     });
