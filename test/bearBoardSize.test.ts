@@ -18,9 +18,9 @@ function line(id: IBearBoardLine["id"], text: string, target: IBearBoardLine["ta
 }
 
 const todo: IBearBoardLine[] = [
-  line("train", "Train · Push", "plus"),
-  line("food", "Eat · 0 of 2,800 kcal", "plus"),
-  line("weighIn", "Weigh-in · Wednesday", "plus"),
+  line("train", "Push", "plus"),
+  line("food", "0 of 2,800 cal", "plus"),
+  line("weighIn", "Weight: Wednesday", "plus"),
 ];
 const withGoal: IBearBoardLine[] = [
   ...todo,
@@ -92,9 +92,9 @@ describe("BearBoardSize_layout", () => {
   });
 
   it("sets the letter size by the width limit, and the sizes the three phones get", () => {
-    expect(BearBoardSize_layout(boardAt(375), withGoal).lineSize).to.equal(12.5);
-    expect(BearBoardSize_layout(boardAt(393), withGoal).lineSize).to.equal(13);
-    expect(BearBoardSize_layout(boardAt(440), withGoal).lineSize).to.equal(14.5);
+    expect(BearBoardSize_layout(boardAt(375), withGoal).lineSize).to.equal(13.5);
+    expect(BearBoardSize_layout(boardAt(393), withGoal).lineSize).to.equal(14);
+    expect(BearBoardSize_layout(boardAt(440), withGoal).lineSize).to.equal(15.5);
   });
 
   it("makes the letters at least 14.5 pt at 440 pt, up from 13.5 pt in one column", () => {
@@ -104,7 +104,7 @@ describe("BearBoardSize_layout", () => {
 
   it("sizes each column to its longest line", () => {
     const size = BearBoardSize_layout(boardAt(440), withGoal);
-    expect(size.left.width).to.be.closeTo(size.lineSize * ("Eat · 0 of 2,800 kcal".length * 0.49 + 2.2), 1e-9);
+    expect(size.left.width).to.be.closeTo(size.lineSize * ("Weight: Wednesday".length * 0.49 + 2.2), 1e-9);
     expect(size.right.width).to.be.closeTo(size.lineSize * ("Level 4 · 34,173 kg to go".length * 0.49), 1e-9);
   });
 

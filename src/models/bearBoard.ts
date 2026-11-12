@@ -57,13 +57,13 @@ function todo(id: IBearBoardLine["id"], text: string, item: IChecklistItem): IBe
 
 function trainText(input: IBearBoardInput): string {
   const pill = TodayPill_text({ dayName: input.dayName, history: [...input.history], now: input.now });
-  return `Train · ${pill.replace(/!$/, "")}`;
+  return pill.replace(/!$/, "");
 }
 
 function foodText(input: IBearBoardInput, today: string): string {
   const eaten = formatCount(FoodLog_dayTotals(input.foodLog, today).calories);
   const target = DailyChecklist_goalTarget(input.foodLog.goals.calories);
-  return target > 0 ? `Eat · ${eaten} of ${formatCount(target)} kcal` : `Eat · ${eaten} kcal`;
+  return target > 0 ? `${eaten} of ${formatCount(target)} cal` : `${eaten} cal`;
 }
 
 function weightEntries(stats: IStats, now: number): IStatsWeightValue[] {
@@ -150,7 +150,7 @@ export function BearBoard_lines(input: IBearBoardInput): IBearBoardLine[] {
     todo("food", foodText(input, today), item("food")),
     todo(
       "weighIn",
-      `Weigh-in · ${DailyChecklist_weighInDayName(input.goal?.startedAt, input.startWeekFromMonday)}`,
+      `Weight: ${DailyChecklist_weighInDayName(input.goal?.startedAt, input.startWeekFromMonday)}`,
       item("weight")
     ),
     streakLine(input, today),

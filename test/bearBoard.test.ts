@@ -80,9 +80,9 @@ function texts(lines: ReturnType<typeof BearBoard_lines>): [string, string, bool
 describe("BearBoard_lines", () => {
   it("shows three open to-do lines and the bear lines on an untouched day", () => {
     expect(texts(BearBoard_lines(input()))).to.deep.equal([
-      ["Train · Upper", "plus", false],
-      ["Eat · 0 of 2,800 kcal", "plus", false],
-      ["Weigh-in · Sunday", "plus", false],
+      ["Upper", "plus", false],
+      ["0 of 2,800 cal", "plus", false],
+      ["Weight: Sunday", "plus", false],
       ["Streak · 0 days", "streak", false],
       ["Goal: tap to set one", "goal", false],
       ["Weight · not logged yet", "bear", false],
@@ -107,9 +107,9 @@ describe("BearBoard_lines", () => {
       })
     );
     expect(texts(lines)).to.deep.equal([
-      ["Train · Done today", "plus", true],
-      ["Eat · 2,900 of 2,800 kcal", "plus", true],
-      ["Weigh-in · Sunday", "plus", true],
+      ["Done today", "plus", true],
+      ["2,900 of 2,800 cal", "plus", true],
+      ["Weight: Sunday", "plus", true],
       ["Streak · 1 day", "streak", false],
       ["Goal: tap to set one", "goal", false],
       ["72.4 kg · +0.8 in 30 d", "bear", false],
@@ -120,15 +120,20 @@ describe("BearBoard_lines", () => {
 
   it("reads Rest day on the Train line when the schedule names no day", () => {
     const lines = BearBoard_lines(input({ dayName: undefined }));
-    expect([lines[0].text, lines[0].isDone, lines[0].target]).to.deep.equal(["Train · Rest day", false, "plus"]);
+    expect([lines[0].text, lines[0].isDone, lines[0].target]).to.deep.equal(["Rest day", false, "plus"]);
   });
 
-  it("drops the exclamation mark the today pill adds and counts kcal without a target", () => {
+  it("writes the Train line as the bare day name, and Workout for a day with no letters in its name", () => {
+    expect(BearBoard_lines(input({ dayName: "123" }))[0].text).to.equal("Workout");
+    expect(BearBoard_lines(input({ dayName: "Upper" }))[0].text).to.equal("Upper");
+  });
+
+  it("drops the exclamation mark the today pill adds and counts cal without a target", () => {
     const base = FoodLog_empty();
     const lines = BearBoard_lines(input({ dayName: "Push day", foodLog: { ...base, entries: [entry(640, 20)] } }));
     expect(lines.slice(0, 2).map((l) => [l.text, l.isDone])).to.deep.equal([
-      ["Train · Push day", false],
-      ["Eat · 640 kcal", true],
+      ["Push day", false],
+      ["640 cal", true],
     ]);
   });
 
@@ -136,7 +141,7 @@ describe("BearBoard_lines", () => {
     const stats: IStats = { weight: { weight: [weight(now - dayMs, 64)] }, length: {}, percentage: {} };
     const thursday = new Date(2026, 9, 15, 9).getTime();
     const lines = BearBoard_lines(input({ goal: goal({ startedAt: thursday }), stats, units: "lb" }));
-    expect(lines[2].text).to.equal("Weigh-in · Thursday");
+    expect(lines[2].text).to.equal("Weight: Thursday");
     expect(lines[6].text).to.equal("141.0 lb");
   });
 
