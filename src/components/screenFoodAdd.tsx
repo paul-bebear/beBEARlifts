@@ -1,6 +1,7 @@
 import { JSX, useReducer, useRef, useState } from "react";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "./primitives/text";
 import {
   FoodLog_addAll,
@@ -34,6 +35,7 @@ import {
   IScanServing,
 } from "../models/foodScanSteps";
 import { FoodSaveGuard_run } from "../models/foodSaveGuard";
+import { TabBarLayout_hiddenBarFooterGap } from "../models/tabBarLayout";
 import { FoodSuggestions_forMeal } from "../models/foodSuggestions";
 import { Recipes_fromBasket, Recipes_servingPick, SavedMeals_fromBasket, SavedMeals_items } from "../models/savedMeals";
 import { FoodApi_lookupBarcode } from "../utils/foodApi";
@@ -100,8 +102,9 @@ function NotFound(props: {
 
 function ReviewBar(props: { basket: IFoodBasketItem[]; onPress: () => void }): JSX.Element {
   const calories = FoodBasket_totals(props.basket).calories;
+  const bottomGap = TabBarLayout_hiddenBarFooterGap(useSafeAreaInsets().bottom);
   return (
-    <View className="px-4 pt-2 pb-3 bg-background-default">
+    <View className="px-4 pt-2 bg-background-default" style={{ paddingBottom: bottomGap }}>
       <Button
         name="food-review"
         kind="pill"

@@ -4,6 +4,8 @@ import {
   TabBarLayout_compute,
   TabBarLayout_contentPadding,
   TabBarLayout_coveredBottom,
+  TabBarLayout_hiddenBarFooterGap,
+  TabBarLayout_hidesFooter,
   TabBarLayout_keyboardOccluded,
   TabBarLayout_scrollPadding,
 } from "../src/models/tabBarLayout";
@@ -67,5 +69,19 @@ describe("TabBarLayout", () => {
       systemKeyboardHeight: 336,
     });
     expect(system).to.equal(40 + 336);
+  });
+
+  it("hides the footer plus on the food add screen and the screens that never had it", () => {
+    for (const screen of ["foodAdd", "subscription", "onerms"]) {
+      expect(TabBarLayout_hidesFooter(screen), screen).to.equal(true);
+    }
+    for (const screen of ["main", "food", "foodDay", "history", undefined]) {
+      expect(TabBarLayout_hidesFooter(screen), String(screen)).to.equal(false);
+    }
+  });
+
+  it("keeps the bar's own gap under a screen footer when the bar is hidden", () => {
+    expect(TabBarLayout_hiddenBarFooterGap(34)).to.equal(34);
+    expect(TabBarLayout_hiddenBarFooterGap(0)).to.equal(12);
   });
 });
