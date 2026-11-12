@@ -25,10 +25,9 @@ import { BearFullness_percent } from "../src/models/bearFullness";
 import { FoodLog_dayKey, FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
 import { HouseFrame_canvas } from "../src/models/houseFrame";
 import { Weight_build } from "../src/models/weight";
-import { IHistoryRecord, IStats } from "../src/types";
+import { IStats } from "../src/types";
 
 const hourMs = 3600000;
-const dayMs = 24 * hourMs;
 const now = new Date(2026, 9, 26, 12).getTime();
 const today = FoodLog_dayKey(new Date(now));
 const cabinObjects: IBearHouseObjectId[] = [
@@ -42,7 +41,7 @@ const cabinObjects: IBearHouseObjectId[] = [
   "mirror",
 ];
 
-const empty: IBearHouseSources = { fullness: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+const empty: IBearHouseSources = { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false };
 
 function cabin(sources: IBearHouseSources = empty, seen?: ReadonlySet<IBearHouseObjectId>): IBearHouseObject[] {
   return BearHouse_objects("cabin", sources, seen);
@@ -50,21 +49,6 @@ function cabin(sources: IBearHouseSources = empty, seen?: ReadonlySet<IBearHouse
 
 function byId(objects: IBearHouseObject[], id: IBearHouseObjectId): IBearHouseObject {
   return objects.find((o) => o.id === id)!;
-}
-
-function record(startTime: number): IHistoryRecord {
-  return {
-    vtype: "history_record",
-    id: startTime,
-    date: new Date(startTime).toISOString(),
-    startTime,
-    endTime: startTime + hourMs,
-    programId: "p",
-    programName: "P",
-    day: 1,
-    dayName: "Upper",
-    entries: [],
-  };
 }
 
 function food(day: string, calories: number): IFoodEntry {
@@ -155,13 +139,18 @@ describe("BearHouse", () => {
     expect(board.rect).to.deep.equal([32, 190, 992, 650]);
   });
 
-  it("shows the streak on the calendar, the weight on the scale and the requests on the phone", () => {
-    const objects = cabin({ ...empty, streak: 4, pendingRequests: 2, weight: "72.4" });
-    expect(byId(objects, "calendar").overlay?.text).to.equal("4");
+  it("shows the day of the month on the calendar, the weight on the scale and the requests on the phone", () => {
+    const objects = cabin({ ...empty, dayOfMonth: 22, pendingRequests: 2, weight: "72.4" });
+    expect(byId(objects, "calendar").overlay?.text).to.equal("22");
     expect(byId(objects, "phone").overlay?.text).to.equal("2");
     expect(byId(objects, "scale").overlay?.text).to.equal("72.4");
-    expect(byId(cabin(), "calendar").overlay).to.equal(undefined);
     expect(byId(cabin(), "phone").overlay).to.equal(undefined);
+  });
+
+  it("always shows the date on the calendar and never a streak", () => {
+    expect(byId(cabin(), "calendar").overlay?.text).to.equal("1");
+    expect(byId(cabin({ ...empty, dayOfMonth: 31 }), "calendar").overlay?.text).to.equal("31");
+    expect(byId(cabin(), "calendar").overlay?.kind).to.equal("number");
   });
 
   it("picks one of five bowl files by the fullness percent", () => {
@@ -183,7 +172,6 @@ describe("BearHouse", () => {
     const base = FoodLog_empty();
     const foodLog = { ...base, entries: [food(today, 840)], goals: { ...base.goals, calories: { min: 0, max: 2800 } } };
     const sources = BearHouse_sources({
-      workouts: [],
       foodLog,
       stats: stats([]),
       units: "kg",
@@ -303,11 +291,10 @@ describe("BearHouse", () => {
     }
   });
 
-  it("builds the sources from today's food, weight, streak and the running workout", () => {
+  it("builds the sources from today's food, weight, date and the running workout", () => {
     const base = FoodLog_empty();
     const foodLog = { ...base, entries: [food(today, 900)], goals: { ...base.goals, calories: { min: 0, max: 2800 } } };
     const sources = BearHouse_sources({
-      workouts: [{ record: record(now - 3 * dayMs), countedKg: 1000 }],
       foodLog,
       stats: stats([{ at: now - hourMs, kg: 72.4 }]),
       units: "kg",
@@ -318,7 +305,7 @@ describe("BearHouse", () => {
     expect(sources).to.deep.equal({
       fullness: (100 * 900) / 2800,
       weight: "72.4",
-      streak: 1,
+      dayOfMonth: new Date(now).getDate(),
       pendingRequests: 1,
       hasWorkout: true,
     });

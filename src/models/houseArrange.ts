@@ -30,7 +30,7 @@ const grid = 2;
 const minSize = 20;
 const openSources: IBearHouseSources = {
   fullness: 0,
-  streak: 1,
+  dayOfMonth: 1,
   pendingRequests: 0,
   hasWorkout: false,
 };

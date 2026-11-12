@@ -1,12 +1,10 @@
 import manifest from "../../images/bear/house/manifest.json";
 import { IStats, IUnit } from "../types";
 import { BearBoard_latestWeight } from "./bearBoard";
-import { IBearCountedWorkout } from "./bearGrowth";
 import { IBearBox, IBearRect, IBearSceneArt } from "./bearScene";
 import { BearText_houseEmpty } from "./bearText";
 import { BearFullness_percent } from "./bearFullness";
-import { DailyChecklist_doneDays, DailyChecklist_streak } from "./dailyChecklist";
-import { FoodLog_dayKey, IFoodLog } from "./foodLog";
+import { IFoodLog } from "./foodLog";
 import type { ITab } from "./screen";
 
 export type IBearHouseTier = keyof typeof manifest.rooms;
@@ -45,13 +43,12 @@ export interface IBearHouseObject {
 export interface IBearHouseSources {
   fullness: number;
   weight?: string;
-  streak: number;
+  dayOfMonth: number;
   pendingRequests: number;
   hasWorkout: boolean;
 }
 
 export interface IBearHouseSourcesInput {
-  workouts: readonly IBearCountedWorkout[];
   foodLog: IFoodLog;
   stats: IStats;
   units: IUnit;
@@ -121,12 +118,10 @@ export const BearHouse_images: readonly string[] = [
 ];
 
 export function BearHouse_sources(input: IBearHouseSourcesInput): IBearHouseSources {
-  const today = FoodLog_dayKey(new Date(input.now));
-  const doneDays = DailyChecklist_doneDays({ workouts: input.workouts, foodLog: input.foodLog });
   return {
     fullness: BearFullness_percent(input.foodLog, input.now),
     weight: BearBoard_latestWeight(input.stats, input.units, input.now),
-    streak: DailyChecklist_streak(doneDays, today),
+    dayOfMonth: new Date(input.now).getDate(),
     pendingRequests: input.pendingRequests,
     hasWorkout: input.hasWorkout,
   };
@@ -207,7 +202,7 @@ function specs(sources: IBearHouseSources): IObjectSpec[] {
       image: "wall-calendar",
       label: "Calendar",
       target: { kind: "screen", screen: "food", tab: "food" },
-      overlay: sources.streak > 0 ? { kind: "number", share: calendarGrid, text: `${sources.streak}` } : undefined,
+      overlay: { kind: "number", share: calendarGrid, text: `${sources.dayOfMonth}` },
     },
     {
       id: "phone",
