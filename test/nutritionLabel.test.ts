@@ -30,6 +30,17 @@ describe("NutritionLabel_parse", () => {
     expect(label?.perServing).to.deep.equal({ calories: 148, protein: 5.2, carbs: 24, fat: 2.8 });
   });
 
+  it("keeps the micros map of a label and scales it with a per-100 g label", () => {
+    const perServing = NutritionLabel_parse(
+      '{"perServing":{"calories":530,"protein":12,"carbs":84,"fat":16,"micros":{"fiber":3,"bogus":9}}}'
+    );
+    expect(perServing?.perServing.micros).to.deep.equal({ fiber: 3 });
+    const per100g = NutritionLabel_parse(
+      '{"servingGrams":40,"per100g":{"calories":370,"protein":13,"carbs":60,"fat":7,"micros":{"sodium":500}}}'
+    );
+    expect(per100g?.perServing.micros).to.deep.equal({ sodium: 200 });
+  });
+
   it("uses 100 g as the serving when a per-100 g label states none", () => {
     const label = NutritionLabel_parse('{"per100g":{"calories":370}}');
     expect(label?.servingGrams).to.equal(100);

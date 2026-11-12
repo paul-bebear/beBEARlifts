@@ -1,4 +1,4 @@
-import { FoodLog_scale, INutrients } from "./foodLog";
+import { FoodLog_parseMicros, FoodLog_scale, INutrients } from "./foodLog";
 import { JsonInText_extract } from "./jsonInText";
 import { IFoodProduct } from "./openFoodFacts";
 
@@ -41,7 +41,9 @@ function parseNutrients(raw: unknown): INutrients | undefined {
   if (calories == null) {
     return undefined;
   }
-  return { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
+  const nutrients = { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
+  const micros = FoodLog_parseMicros(r.micros);
+  return micros != null ? { ...nutrients, micros } : nutrients;
 }
 
 export function NutritionLabel_parse(text: string): INutritionLabel | undefined {

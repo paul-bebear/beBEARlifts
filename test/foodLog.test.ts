@@ -13,6 +13,7 @@ import {
   FoodLog_hasGoals,
   FoodLog_mealForHour,
   FoodLog_parse,
+  FoodLog_parseNutrients,
   FoodLog_progress,
   FoodLog_remove,
   FoodLog_removeAll,
@@ -21,6 +22,7 @@ import {
   FoodLog_setGrams,
   FoodLog_setGoals,
   FoodLog_shiftDay,
+  FoodLog_sum,
   IFoodEntry,
 } from "../src/models/foodLog";
 
@@ -217,5 +219,76 @@ describe("FoodLog_parse", () => {
   it("round-trips through JSON", () => {
     const log = FoodLog_add(FoodLog_empty(), entry({ barcode: "3017624010701" }));
     expect(FoodLog_parse(JSON.parse(JSON.stringify(log)))).to.deep.equal(log);
+  });
+});
+
+describe("FoodLog micros", () => {
+  const nutella = {
+    calories: 539,
+    protein: 6.3,
+    carbs: 57.5,
+    fat: 30.9,
+    micros: { fiber: 3.4, sugar: 56.3, saturatedFat: 10.6, sodium: 41 },
+  };
+  const plain = { calories: 100, protein: 5, carbs: 10, fat: 4 };
+
+  it("keeps a micro only when its key is in the table and its value is a number of 0 or more", () => {
+    const parsed = FoodLog_parseNutrients({
+      ...plain,
+      micros: { fiber: 2, sugar: 0, potassium: -1, calcium: "40", iron: NaN, notAMicro: 5, sodium: Infinity },
+    });
+    expect(parsed).to.deep.equal({ ...plain, micros: { fiber: 2, sugar: 0 } });
+  });
+
+  it("leaves the micros out when none survives, and when the log has none", () => {
+    expect(FoodLog_parseNutrients({ ...plain, micros: { notAMicro: 1 } })).to.deep.equal(plain);
+    expect(FoodLog_parseNutrients({ ...plain, micros: "x" })).to.deep.equal(plain);
+    expect(FoodLog_parseNutrients(plain)).to.deep.equal(plain);
+  });
+
+  it("round-trips micros through JSON and through a whole entry", () => {
+    const log = FoodLog_add(FoodLog_empty(), entry({ nutrients: nutella, per100g: nutella }));
+    expect(FoodLog_parse(JSON.parse(JSON.stringify(log)))).to.deep.equal(log);
+  });
+
+  it("scales a micro that is present and leaves an absent one absent", () => {
+    const scaled = FoodLog_scale(nutella, 15);
+    expect(scaled.micros).to.deep.equal({ fiber: 0.51, sugar: 8.445, saturatedFat: 1.59, sodium: 6.15 });
+    expect("micros" in FoodLog_scale(plain, 15)).to.equal(false);
+    expect(FoodLog_scale({ ...plain, micros: { fiber: 2 } }, 50).micros).to.deep.equal({ fiber: 1 });
+  });
+
+  it("sums a micro over the items that have it and returns none when no item has one", () => {
+    const sum = FoodLog_sum([nutella, plain, { ...plain, micros: { fiber: 1.5, potassium: 300 } }]);
+    expect(sum.micros).to.deep.equal({ fiber: 4.9, sugar: 56.3, saturatedFat: 10.6, sodium: 41, potassium: 300 });
+    expect("micros" in FoodLog_sum([plain, plain])).to.equal(false);
+  });
+
+  it("never adds zero for an item without a value", () => {
+    const sum = FoodLog_sum([plain, { ...plain, micros: { iron: 2 } }, plain]);
+    expect(sum.micros).to.deep.equal({ iron: 2 });
+    expect(sum.micros).to.not.have.property("fiber");
+  });
+
+  it("keeps a real zero as a value", () => {
+    expect(FoodLog_sum([{ ...plain, micros: { sugar: 0 } }]).micros).to.deep.equal({ sugar: 0 });
+  });
+
+  it("carries micros when the grams of an entry change", () => {
+    const withPer100g = FoodLog_setGrams(
+      FoodLog_add(FoodLog_empty(), entry({ per100g: { ...plain, micros: { fiber: 10 } }, grams: 100 })),
+      "a",
+      50
+    );
+    expect(withPer100g.entries[0].nutrients.micros).to.deep.equal({ fiber: 5 });
+    const photo = entry({ per100g: undefined, grams: 200, nutrients: { ...plain, micros: { sodium: 400 } } });
+    const rescaled = FoodLog_setGrams(FoodLog_add(FoodLog_empty(), photo), "a", 300);
+    expect(rescaled.entries[0].nutrients.micros).to.deep.equal({ sodium: 600 });
+  });
+
+  it("totals the micros of a day from the entries that have them", () => {
+    let log = FoodLog_add(FoodLog_empty(), entry({ id: "a", nutrients: nutella }));
+    log = FoodLog_add(log, entry({ id: "b", nutrients: plain }));
+    expect(FoodLog_dayTotals(log, "2026-10-19").micros).to.deep.equal(nutella.micros);
   });
 });
