@@ -1,3 +1,4 @@
+import type { IFoodAiRequest } from "../models/foodAiEstimate";
 import { FoodPhotoEstimate_failure, FoodPhotoEstimate_parse, IFoodPhotoEstimate } from "../models/foodPhotoEstimate";
 import { INutritionLabel, NutritionLabel_note, NutritionLabel_parse } from "../models/nutritionLabel";
 import { SavedFoods_find, SavedFoods_search } from "../models/savedFoods";
@@ -142,6 +143,10 @@ export async function FoodApi_estimatePhoto(
 
 export async function FoodApi_describe(text: string): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
   return toEstimate(await askAiAnswer({ kind: "describe", text }), "Try different words.");
+}
+
+export function FoodApi_estimate(ask: IFoodAiRequest): Promise<IFoodApiResult<IFoodPhotoEstimate>> {
+  return ask.kind === "photo" ? FoodApi_estimatePhoto(ask.photo, ask.text) : FoodApi_describe(ask.text);
 }
 
 export async function FoodApi_readLabel(imageDataUrl: string): Promise<IFoodApiResult<INutritionLabel>> {

@@ -12,7 +12,7 @@ import { ICloudState } from "../src/models/cloudBackup";
 import { WarmupApi_generate } from "../src/utils/warmupApi";
 import { ReportApi_summary } from "../src/utils/reportStore";
 import { FoodApi_describe } from "../src/utils/foodApi";
-import { FoodApi_estimatePhoto, FoodApi_readLabel } from "../src/utils/foodApi";
+import { FoodApi_estimate, FoodApi_estimatePhoto, FoodApi_readLabel } from "../src/utils/foodApi";
 import { AiConsent_decide } from "../src/models/aiConsent";
 import { AiConsentStore, AiConsent_disabledMessage } from "../src/utils/aiConsentClient";
 
@@ -141,5 +141,18 @@ describe("AiRequest", () => {
   it("turns a gateway timeout into the same message instead of a status code", async () => {
     fetchStub.resolves(new Response("", { status: 504 }));
     expect(await AiRequest_post("/api/ai/onboard", {})).to.deep.equal({ ok: false, error: AiRequest_timeoutMessage });
+  });
+
+  it("sends a photo with the typed text as its note, and text alone as a describe request", async () => {
+    const answer = JSON.stringify({ text: JSON.stringify({ items: [], note: "ok" }) });
+    fetchStub.callsFake(async () => new Response(answer));
+    await FoodApi_estimate({ kind: "photo", photo: "data:image/jpeg;base64,x", text: "half the rice" });
+    expect(JSON.parse(fetchStub.firstCall.args[1].body)).to.deep.equal({
+      kind: "meal",
+      image: "data:image/jpeg;base64,x",
+      text: "half the rice",
+    });
+    await FoodApi_estimate({ kind: "describe", text: "two eggs" });
+    expect(JSON.parse(fetchStub.secondCall.args[1].body)).to.deep.equal({ kind: "describe", text: "two eggs" });
   });
 });

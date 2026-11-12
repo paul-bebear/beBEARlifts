@@ -64,10 +64,10 @@ describe("FoodScanSteps start", () => {
     expect(FoodScanSteps_initial(undefined, true)).to.deep.equal({ kind: "camera", mode: "barcode" });
   });
 
-  it("opens AI scan for photo when AI is on, and Describe for describe either way", () => {
+  it("opens the AI tab for both photo and describe when AI is on, and the quick Describe tab when it is off", () => {
     expect(FoodScanSteps_initial("photo", true)).to.deep.equal({ kind: "camera", mode: "ai" });
+    expect(FoodScanSteps_initial("describe", true)).to.deep.equal({ kind: "camera", mode: "ai" });
     expect(FoodScanSteps_initial("photo", false)).to.deep.equal({ kind: "camera", mode: "describe" });
-    expect(FoodScanSteps_initial("describe", true)).to.deep.equal({ kind: "camera", mode: "describe" });
     expect(FoodScanSteps_initial("describe", false)).to.deep.equal({ kind: "camera", mode: "describe" });
   });
 
@@ -75,8 +75,8 @@ describe("FoodScanSteps start", () => {
     expect(FoodScanSteps_initial("quick", true)).to.deep.equal({ kind: "quick" });
   });
 
-  it("reads Barcode, AI scan and Describe with AI, Barcode and Describe without", () => {
-    expect(FoodScanSteps_modes(true)).to.deep.equal(["barcode", "ai", "describe"]);
+  it("reads Barcode and AI with AI, Barcode and Describe without", () => {
+    expect(FoodScanSteps_modes(true)).to.deep.equal(["barcode", "ai"]);
     expect(FoodScanSteps_modes(false)).to.deep.equal(["barcode", "describe"]);
   });
 
@@ -133,7 +133,7 @@ describe("FoodScanSteps camera to serving", () => {
   });
 
   it("turns a reviewed photo into serving items, one per choice", () => {
-    const serving = servingOf(run([{ type: "photoReviewed", choices: plate, nonce: 7 }]));
+    const serving = servingOf(run([{ type: "aiReviewed", choices: plate, nonce: 7 }]));
     expect(serving.mode).to.equal("ai");
     expect(serving.items.map((i) => i.key)).to.deep.equal(["ai|7|0", "ai|7|1"]);
     expect(FoodScanSteps_description(serving)).to.equal("Rice, Chicken");
@@ -142,23 +142,33 @@ describe("FoodScanSteps camera to serving", () => {
 
   it("skips choices the user unticked", () => {
     const choices = plate.map((c, i) => ({ ...c, isSelected: i === 1 }));
-    const serving = servingOf(run([{ type: "photoReviewed", choices, nonce: 1 }]));
+    const serving = servingOf(run([{ type: "aiReviewed", choices, nonce: 1 }]));
     expect(serving.items.map((i) => i.pick.name)).to.deep.equal(["Chicken"]);
   });
 
-  it("turns a described meal into manual serving items and goes back to Describe", () => {
-    const serving = servingOf(run([{ type: "describeReviewed", choices: plate, nonce: 3 }]));
-    expect(serving.mode).to.equal("describe");
+  it("turns a text-only estimate into manual serving items and goes back to the AI tab with the text", () => {
+    const serving = servingOf(run([{ type: "aiReviewed", choices: plate, nonce: 3 }]));
+    expect(serving.mode).to.equal("ai");
+    expect(serving.photo).to.equal(undefined);
     expect(serving.items.map((i) => i.pick.source)).to.deep.equal(["manual", "manual"]);
     expect(FoodScanSteps_description(serving)).to.equal("Rice, Chicken");
-    const back = run([
-      { type: "describeReviewed", choices: plate, nonce: 3, text: "rice and chicken" },
-      { type: "back" },
-    ]);
+    const back = run([{ type: "aiReviewed", choices: plate, nonce: 3, text: "rice and chicken" }, { type: "back" }]);
     expect(back).to.deep.equal({
       kind: "camera",
-      mode: "describe",
+      mode: "ai",
       resume: { choices: plate, text: "rice and chicken" },
+    });
+  });
+
+  it("keeps both the photo and the text of an estimate that used both, and marks the items as photo", () => {
+    const step = run([
+      { type: "aiReviewed", choices: plate, nonce: 4, photo: "data:image/jpeg;base64,x", text: "half the rice" },
+    ]);
+    expect(servingOf(step).items.map((i) => i.pick.source)).to.deep.equal(["photo", "photo"]);
+    expect(FoodScanSteps_reduce(step, { type: "back" })).to.deep.equal({
+      kind: "camera",
+      mode: "ai",
+      resume: { choices: plate, photo: "data:image/jpeg;base64,x", text: "half the rice" },
     });
   });
 
@@ -172,8 +182,8 @@ describe("FoodScanSteps camera to serving", () => {
   });
 
   it("goes back from serving, notFound and reading to the camera in the same mode", () => {
-    const afterPhoto = run([{ type: "photoReviewed", choices: plate, nonce: 1 }, { type: "back" }]);
-    expect(afterPhoto).to.deep.equal({ kind: "camera", mode: "ai", resume: { choices: plate, photo: undefined } });
+    const afterPhoto = run([{ type: "aiReviewed", choices: plate, nonce: 1 }, { type: "back" }]);
+    expect(afterPhoto).to.deep.equal({ kind: "camera", mode: "ai", resume: { choices: plate } });
     expect(run([...scanNutella, { type: "back" }])).to.deep.equal({ kind: "camera", mode: "barcode" });
     expect(run([{ type: "barcodeMissed", code: "1" }, { type: "back" }])).to.deep.equal({
       kind: "camera",
@@ -187,7 +197,7 @@ describe("FoodScanSteps camera to serving", () => {
 
   it("keeps the scanned items and photo in the camera step when Back leaves Serving size", () => {
     const back = run([
-      { type: "photoReviewed", choices: plate, nonce: 1, photo: "data:image/jpeg;base64,x" },
+      { type: "aiReviewed", choices: plate, nonce: 1, photo: "data:image/jpeg;base64,x" },
       { type: "back" },
     ]);
     expect(back).to.deep.equal({
@@ -198,7 +208,7 @@ describe("FoodScanSteps camera to serving", () => {
   });
 
   it("drops the kept scan when the user picks a mode again", () => {
-    const back = run([{ type: "photoReviewed", choices: plate, nonce: 1 }, { type: "back" }]);
+    const back = run([{ type: "aiReviewed", choices: plate, nonce: 1 }, { type: "back" }]);
     expect(FoodScanSteps_reduce(back, { type: "modePicked", mode: "ai" })).to.deep.equal({
       kind: "camera",
       mode: "ai",
@@ -211,7 +221,7 @@ describe("FoodScanSteps camera to serving", () => {
 });
 
 describe("FoodScanSteps serving edits", () => {
-  const start = (): IScanStep => run([{ type: "photoReviewed", choices: plate, nonce: 1 }]);
+  const start = (): IScanStep => run([{ type: "aiReviewed", choices: plate, nonce: 1 }]);
 
   it("changes the grams of one item", () => {
     const serving = servingOf(FoodScanSteps_reduce(start(), { type: "gramsChanged", key: "ai|1|0", grams: 300 }));
@@ -254,7 +264,7 @@ describe("FoodScanSteps serving edits", () => {
 
 describe("FoodScanSteps_entries", () => {
   it("logs one entry per item when the description is untouched", () => {
-    const serving = servingOf(run([{ type: "photoReviewed", choices: plate, nonce: 1 }]));
+    const serving = servingOf(run([{ type: "aiReviewed", choices: plate, nonce: 1 }]));
     const entries = FoodScanSteps_entries(serving, where, idCounter(), 5);
     expect(entries.map((e) => [e.id, e.name, e.meal, e.day, e.grams])).to.deep.equal([
       ["id1", "Rice", "lunch", "2026-10-22", 150],
@@ -278,7 +288,7 @@ describe("FoodScanSteps_entries", () => {
 
   it("merges several items into one entry when the user edits the description", () => {
     const step = run([
-      { type: "photoReviewed", choices: plate, nonce: 1 },
+      { type: "aiReviewed", choices: plate, nonce: 1, photo: "data:image/jpeg;base64,x" },
       { type: "descriptionChanged", text: "Chicken and rice" },
     ]);
     const entries = FoodScanSteps_entries(servingOf(step), where, idCounter(), 5);
@@ -290,14 +300,14 @@ describe("FoodScanSteps_entries", () => {
   });
 
   it("logs nothing when every item was removed", () => {
-    const step = run([{ type: "photoReviewed", choices: [], nonce: 1 }]);
+    const step = run([{ type: "aiReviewed", choices: [], nonce: 1 }]);
     expect(FoodScanSteps_entries(servingOf(step), where, idCounter(), 5)).to.deep.equal([]);
   });
 });
 
 describe("FoodScanSteps_title", () => {
   it("names each camera mode and the serving step", () => {
-    expect(FoodScanSteps_title({ kind: "camera", mode: "ai" })).to.equal("AI Scan");
+    expect(FoodScanSteps_title({ kind: "camera", mode: "ai" })).to.equal("AI");
     expect(FoodScanSteps_title({ kind: "camera", mode: "describe" })).to.equal("Describe");
     expect(FoodScanSteps_title(run(scanNutella))).to.equal("Serving size");
     expect(FoodScanSteps_title({ kind: "browse" })).to.equal(undefined);

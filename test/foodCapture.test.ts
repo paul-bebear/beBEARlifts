@@ -1,21 +1,11 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import type { IFoodPhotoChoice } from "../src/models/foodAddFlow";
-import {
-  FoodCapture_options,
-  FoodCapture_photo,
-  FoodLabel_empty,
-  FoodLabel_reduce,
-  FoodPhoto_empty,
-  FoodPhoto_reduce,
-  FoodPhoto_shouldOpenCamera,
-} from "../src/models/foodCapture";
-import { FoodCapture_meal, FoodCapture_label, IFoodCaptureDependencies } from "../src/utils/foodCaptureRequest";
+import { FoodCapture_options, FoodCapture_photo, FoodLabel_empty, FoodLabel_reduce } from "../src/models/foodCapture";
+import { FoodCapture_mealPhoto, FoodCapture_label, IFoodCaptureDependencies } from "../src/utils/foodCaptureRequest";
 import { NutritionLabel_toProduct } from "../src/models/nutritionLabel";
 
 const nutrients = { calories: 100, protein: 5, carbs: 10, fat: 4 };
-const estimate = { items: [{ name: "Rice", grams: 100, nutrients }], note: "Check portions" };
 const photo = { assets: [{ type: "image/jpeg", base64: "YWJj" }] };
 
 function dependencies(): IFoodCaptureDependencies {
@@ -23,7 +13,6 @@ function dependencies(): IFoodCaptureDependencies {
     allow: sinon.stub().resolves(true),
     cameraPermission: sinon.stub().resolves(true),
     pick: sinon.stub().resolves(photo),
-    estimate: sinon.stub().resolves({ ok: true, value: estimate }),
     readLabel: sinon.stub().resolves({ ok: true, value: { name: "Rice", servingGrams: 50, perServing: nutrients } }),
   };
 }
@@ -60,14 +49,14 @@ describe("Native food capture", () => {
   it("never opens the picker, requests camera access, or sends data after Not now", async () => {
     const deps = dependencies();
     (deps.allow as sinon.SinonStub).resolves(false);
-    expect(await FoodCapture_meal("camera", "", deps)).to.deep.equal({ type: "cancelled" });
+    expect(await FoodCapture_mealPhoto("camera", deps)).to.deep.equal({ kind: "cancelled" });
     expect(await FoodCapture_label("photo-library", deps)).to.deep.equal({ type: "cancelled" });
-    for (const fn of [deps.cameraPermission, deps.pick, deps.estimate, deps.readLabel]) {
+    for (const fn of [deps.cameraPermission, deps.pick, deps.readLabel]) {
       expect((fn as sinon.SinonStub).called).to.equal(false);
     }
   });
 
-  it("waits for consent before opening the camera and then estimates that photo", async () => {
+  it("waits for consent before opening the camera and then returns the photo without sending it anywhere", async () => {
     const deps = dependencies();
     let allow!: (value: boolean) => void;
     (deps.allow as sinon.SinonStub).returns(
@@ -75,30 +64,35 @@ describe("Native food capture", () => {
         allow = resolve;
       })
     );
-    const pending = FoodCapture_meal("camera", "half the rice", deps);
+    const pending = FoodCapture_mealPhoto("camera", deps);
     expect((deps.pick as sinon.SinonStub).called).to.equal(false);
     allow(true);
-    const event = await pending;
-    expect(event.type).to.equal("estimated");
+    expect(await pending).to.deep.equal({ kind: "photo", dataUrl: "data:image/jpeg;base64,YWJj" });
     sinon.assert.callOrder(
       deps.allow as sinon.SinonStub,
       deps.cameraPermission as sinon.SinonStub,
-      deps.pick as sinon.SinonStub,
-      deps.estimate as sinon.SinonStub
+      deps.pick as sinon.SinonStub
     );
-    expect((deps.estimate as sinon.SinonStub).firstCall.args).to.deep.equal([
-      "data:image/jpeg;base64,YWJj",
-      "half the rice",
-    ]);
+    expect((deps.readLabel as sinon.SinonStub).called).to.equal(false);
   });
 
-  it("does not call AI on camera denial, cancellation, picker errors, or missing base64", async () => {
+  it("picks from the library without a camera request", async () => {
+    const deps = dependencies();
+    expect(await FoodCapture_mealPhoto("photo-library", deps)).to.have.property("kind", "photo");
+    expect((deps.cameraPermission as sinon.SinonStub).called).to.equal(false);
+  });
+
+  it("returns no photo on cancellation, picker errors, or missing base64, and an error when the picker throws", async () => {
+    const kinds: string[] = [];
     for (const result of [{ didCancel: true }, { errorCode: "permission" }, { assets: [{ uri: "file:///a.jpg" }] }]) {
       const deps = dependencies();
       (deps.pick as sinon.SinonStub).resolves(result);
-      await FoodCapture_meal("camera", "", deps);
-      expect((deps.estimate as sinon.SinonStub).called).to.equal(false);
+      kinds.push((await FoodCapture_mealPhoto("camera", deps)).kind);
     }
+    expect(kinds).to.deep.equal(["cancelled", "error", "error"]);
+    const throwing = dependencies();
+    (throwing.pick as sinon.SinonStub).rejects(new Error("picker failed"));
+    expect(await FoodCapture_mealPhoto("photo-library", throwing)).to.have.property("kind", "error");
     const deps = dependencies();
     (deps.cameraPermission as sinon.SinonStub).resolves(false);
     expect(await FoodCapture_label("camera", deps)).to.have.property("type", "failed");
@@ -129,40 +123,5 @@ describe("Native food capture", () => {
       error: "offline",
     });
     expect(FoodLabel_reduce(FoodLabel_empty(), { type: "manual" }).form?.calories).to.equal("");
-  });
-
-  it("reviews meal items and clears stale estimates after a failed new photo", async () => {
-    const event = await FoodCapture_meal("photo-library", "", dependencies());
-    const ready = FoodPhoto_reduce(FoodPhoto_empty(), event);
-    expect(ready.choices?.[0]).to.include({ name: "Rice", grams: 100, isSelected: true });
-    expect(ready.note).to.equal("Check portions");
-    const edited = FoodPhoto_reduce(ready, { type: "choices", choices: [] });
-    expect(edited.choices).to.deep.equal([]);
-    expect(FoodPhoto_reduce(FoodPhoto_reduce(ready, { type: "start" }), { type: "cancelled" }).choices).to.deep.equal(
-      ready.choices
-    );
-    const failed = FoodPhoto_reduce(ready, {
-      type: "estimated",
-      photo: "new",
-      result: { ok: false, error: "offline" },
-    });
-    expect(failed).to.deep.equal({ busy: false, preview: "new", error: "offline" });
-  });
-});
-
-describe("FoodPhoto resume", () => {
-  const choices = [{ name: "Rice", grams: 150, nutrients, isSelected: true }] as unknown as IFoodPhotoChoice[];
-
-  it("starts from the kept estimate and photo", () => {
-    expect(FoodPhoto_empty({ choices, photo: "data:x" })).to.deep.equal({ busy: false, choices, preview: "data:x" });
-    expect(FoodPhoto_empty({ choices })).to.deep.equal({ busy: false, choices });
-    expect(FoodPhoto_empty()).to.deep.equal({ busy: false });
-  });
-
-  it("opens the camera only for a signed-in user with no kept estimate", () => {
-    expect(FoodPhoto_shouldOpenCamera(true, FoodPhoto_empty())).to.equal(true);
-    expect(FoodPhoto_shouldOpenCamera(true, FoodPhoto_empty({ choices }))).to.equal(false);
-    expect(FoodPhoto_shouldOpenCamera(false, FoodPhoto_empty())).to.equal(false);
-    expect(FoodPhoto_shouldOpenCamera(true, { busy: true })).to.equal(false);
   });
 });

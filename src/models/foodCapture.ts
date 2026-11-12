@@ -1,7 +1,4 @@
 import type { ImagePickerResponse } from "react-native-image-picker";
-import { FoodAddFlow_photoChoices, IFoodPhotoChoice } from "./foodAddFlow";
-import type { IScanResume } from "./foodScanSteps";
-import { IFoodPhotoEstimate } from "./foodPhotoEstimate";
 import { INutritionLabel, INutritionLabelForm, NutritionLabel_toForm } from "./nutritionLabel";
 
 export type IFoodCaptureKind = "meal" | "label";
@@ -55,54 +52,7 @@ export function FoodCapture_photo(response: ImagePickerResponse): IFoodCapturePh
   return { kind: "photo", dataUrl: `data:${type};base64,${asset.base64}` };
 }
 
-export interface IFoodPhotoState {
-  busy: boolean;
-  preview?: string;
-  choices?: IFoodPhotoChoice[];
-  note?: string;
-  error?: string;
-}
-
 export type IFoodCaptureEvent = { type: "start" | "cancelled" } | { type: "failed"; error: string };
-export type IFoodPhotoEvent =
-  | IFoodCaptureEvent
-  | { type: "estimated"; photo: string; result: IFoodCaptureResult<IFoodPhotoEstimate> }
-  | { type: "choices"; choices: IFoodPhotoChoice[] };
-
-export function FoodPhoto_empty(resume?: IScanResume): IFoodPhotoState {
-  if (resume == null) {
-    return { busy: false };
-  }
-  return resume.photo != null
-    ? { busy: false, choices: resume.choices, preview: resume.photo }
-    : { busy: false, choices: resume.choices };
-}
-
-export function FoodPhoto_shouldOpenCamera(hasSession: boolean, state: IFoodPhotoState): boolean {
-  return hasSession && !state.busy && (state.choices?.length ?? 0) === 0;
-}
-
-export function FoodPhoto_reduce(state: IFoodPhotoState, event: IFoodPhotoEvent): IFoodPhotoState {
-  switch (event.type) {
-    case "start":
-      return { ...state, busy: true, error: undefined };
-    case "cancelled":
-      return { ...state, busy: false };
-    case "failed":
-      return { ...state, busy: false, error: event.error };
-    case "choices":
-      return { ...state, choices: event.choices };
-    case "estimated":
-      return event.result.ok
-        ? {
-            busy: false,
-            preview: event.photo,
-            choices: FoodAddFlow_photoChoices(event.result.value.items),
-            note: event.result.value.note,
-          }
-        : { busy: false, preview: event.photo, error: event.result.error };
-  }
-}
 
 export interface IFoodLabelState {
   busy: boolean;

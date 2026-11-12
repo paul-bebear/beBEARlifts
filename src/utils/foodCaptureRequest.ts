@@ -6,19 +6,18 @@ import {
   IFoodCapturePhoto,
   IFoodCaptureSource,
   IFoodCaptureResult,
-  IFoodPhotoEvent,
   IFoodLabelEvent,
 } from "../models/foodCapture";
-import { IFoodPhotoEstimate } from "../models/foodPhotoEstimate";
 import { INutritionLabel } from "../models/nutritionLabel";
 
 export interface IFoodCaptureDependencies {
   allow: () => Promise<boolean>;
   cameraPermission: () => Promise<boolean>;
   pick: (source: IFoodCaptureSource, options: ReturnType<typeof FoodCapture_options>) => Promise<ImagePickerResponse>;
-  estimate: (photo: string, note?: string) => Promise<IFoodCaptureResult<IFoodPhotoEstimate>>;
   readLabel: (photo: string) => Promise<IFoodCaptureResult<INutritionLabel>>;
 }
+
+const unreadablePhotoMessage = "The photo could not be read. Try another one.";
 
 async function FoodCapture_pick(
   kind: IFoodCaptureKind,
@@ -34,19 +33,14 @@ async function FoodCapture_pick(
   return FoodCapture_photo(await deps.pick(source, FoodCapture_options(kind)));
 }
 
-export async function FoodCapture_meal(
+export async function FoodCapture_mealPhoto(
   source: IFoodCaptureSource,
-  note: string,
   deps: IFoodCaptureDependencies
-): Promise<IFoodPhotoEvent> {
+): Promise<IFoodCapturePhoto> {
   try {
-    const photo = await FoodCapture_pick("meal", source, deps);
-    if (photo.kind !== "photo") {
-      return photo.kind === "error" ? { type: "failed", error: photo.error } : { type: "cancelled" };
-    }
-    return { type: "estimated", photo: photo.dataUrl, result: await deps.estimate(photo.dataUrl, note) };
+    return await FoodCapture_pick("meal", source, deps);
   } catch {
-    return { type: "failed", error: "The photo could not be read. Try another one." };
+    return { kind: "error", error: unreadablePhotoMessage };
   }
 }
 
@@ -61,6 +55,6 @@ export async function FoodCapture_label(
     }
     return { type: "read", result: await deps.readLabel(photo.dataUrl) };
   } catch {
-    return { type: "failed", error: "The photo could not be read. Try another one." };
+    return { type: "failed", error: unreadablePhotoMessage };
   }
 }

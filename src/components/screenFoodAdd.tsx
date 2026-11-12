@@ -237,8 +237,9 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             resume={step.resume}
             onMode={(mode) => send({ type: "modePicked", mode })}
             onBarcode={onBarcode}
-            onPhotoReviewed={(choices, photo) => send({ type: "photoReviewed", choices, nonce: Date.now(), photo })}
-            onDescribed={(choices, text) => send({ type: "describeReviewed", choices, nonce: Date.now(), text })}
+            onAiReviewed={(choices, photo, text) =>
+              send({ type: "aiReviewed", choices, nonce: Date.now(), photo, text })
+            }
             onQuick={(name, nutrients) => send({ type: "quickEntered", name, nutrients })}
             onSearch={browse}
             onCopied={() => navigation.goBack()}
