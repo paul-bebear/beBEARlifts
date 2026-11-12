@@ -11,19 +11,8 @@ const paraCn = "text-base leading-relaxed text-center text-text-secondary";
 const imagePrefix = "/images/";
 
 const dayZero = BearHouse_objects(
-  "trailer",
-  0,
-  {
-    kcal: 0,
-    kcalTarget: 0,
-    hasNoteToday: false,
-    streak: 0,
-    friendCount: 0,
-    pendingRequests: 0,
-    honeyEarned: 0,
-    badgeCount: 0,
-    isOffline: false,
-  },
+  "cabin",
+  { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false },
   undefined
 );
 
@@ -38,7 +27,7 @@ export const houseTourConfig: ITourConfig = {
       isOfferBusy: PlusOfferClient_isBusy(),
     });
   },
-  steps: HouseTour_steps(dayZero, BearHouse_room("trailer")).map((step) => ({
+  steps: HouseTour_steps(dayZero, BearHouse_room("cabin")).map((step) => ({
     id: step.id,
     title: step.title,
     dino: step.image.slice(imagePrefix.length),

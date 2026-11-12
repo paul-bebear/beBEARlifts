@@ -2,11 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   BearText_finishLine,
-  BearText_honeyBreakdown,
-  BearText_honeyLine,
-  BearText_honeySaved,
   BearText_levelLine,
-  BearText_lockLine,
   BearText_levelTitle,
   BearText_levelUp,
   BearText_status,
@@ -108,27 +104,6 @@ describe("BearText", () => {
     expect(BearText_finishLine(second, [], progress)).to.not.contain("honey");
   });
 
-  it("writes the honey line with a thousands separator", () => {
-    expect(BearText_honeyLine(42)).to.equal("🍯 42 honey");
-    expect(BearText_honeyLine(1240)).to.equal("🍯 1,240 honey");
-    expect(BearText_honeyLine(-3)).to.equal("🍯 0 honey");
-  });
-
-  it("lists today's honey in one line", () => {
-    const items = [
-      { reason: "workout" as const, label: "Workout", amount: 5 },
-      { reason: "weighIn" as const, label: "Weigh-in", amount: 1 },
-      { reason: "protein" as const, label: "Protein", amount: 1 },
-    ];
-    expect(BearText_honeyBreakdown({ day: "2026-10-22", items, isCapped: false, total: 7 })).to.equal(
-      "Workout +5 · Weigh-in +1 · Protein +1"
-    );
-    expect(BearText_honeyBreakdown({ day: "2026-10-22", items, isCapped: true, total: 10 })).to.equal(
-      "Workout +5 · Weigh-in +1 · Protein +1 · Daily max 10"
-    );
-    expect(BearText_honeyBreakdown(undefined)).to.equal("Nothing earned yet today");
-  });
-
   it("explains a workout that added nothing", () => {
     const first = record(1, now - hourMs);
     const second = record(2, now);
@@ -177,11 +152,5 @@ describe("BearText", () => {
     it("has none for level 1", () => {
       expect(BearText_levelUp(1, "male").milestone).to.equal(undefined);
     });
-  });
-
-  it("words the house lock line and the honey jar line", () => {
-    expect(BearText_lockLine(3, 2)).to.equal("Opens at 3 active days · 2 to go");
-    expect(BearText_lockLine(1, 1)).to.equal("Opens at 1 active day · 1 to go");
-    expect(BearText_honeySaved(1060.4)).to.equal("Your bear saved 1,060 honey for you.");
   });
 });

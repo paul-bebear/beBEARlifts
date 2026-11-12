@@ -4,7 +4,7 @@ import { HostConfig_resolveUrl } from "./hostConfig";
 const cache: Map<string, string> = new Map();
 const bundledUris: Record<string, string> = {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  "/images/bear/male/level-01.webp": Image.resolveAssetSource(require("../../images/bear/male/level-01.webp")).uri,
+  "/images/bear/brown/level-01.webp": Image.resolveAssetSource(require("../../images/bear/brown/level-01.webp")).uri,
 };
 
 async function fetchAsDataUri(url: string): Promise<string> {
@@ -44,10 +44,10 @@ export function ImagePreloader_clear(): void {
   cache.clear();
 }
 
-export const ImagePreloader_dynocoach: string = "/images/bear/male/level-01.webp";
+export const ImagePreloader_dynocoach: string = "/images/bear/brown/level-01.webp";
 
-export const ImagePreloader_dynoflex: string = "/images/bear/male/level-01.webp";
+export const ImagePreloader_dynoflex: string = "/images/bear/brown/level-01.webp";
 
-export const ImagePreloader_dynohappy: string = "/images/bear/male/level-01.webp";
+export const ImagePreloader_dynohappy: string = "/images/bear/brown/level-01.webp";
 
 export const ImagePreloader_images: Record<string, unknown> = {};

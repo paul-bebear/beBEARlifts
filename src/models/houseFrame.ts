@@ -68,7 +68,6 @@ export function HouseFrame_tall(art: IBearSceneArt): IBearSceneArt {
   return {
     canvas: HouseFrame_canvas,
     foot: { x: art.foot.x, y: art.foot.y + HouseFrame_oldTop },
-    minHeightShare: art.minHeightShare,
     board: [x1, y1 + HouseFrame_oldTop, x2, y2 + HouseFrame_oldTop],
     inkBottom: art.inkBottom + HouseFrame_oldTop,
   };

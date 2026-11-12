@@ -1,14 +1,10 @@
 import { JSX } from "react";
 import { Animated, Image, Pressable, View, ViewStyle } from "react-native";
 import { Text, TextRaw } from "./primitives/text";
-import { BearTv } from "./bearTv";
 import { IBearBoardLine, IBearBoardTarget } from "../models/bearBoard";
 import {
   BearHouse_box,
   BearHouse_hitSlop,
-  BearHouse_image,
-  BearHouse_lockLine,
-  BearHouse_padlock,
   BearHouse_pillLeft,
   BearHouse_pillWidth,
   IBearHouseObject,
@@ -21,8 +17,7 @@ const markerInk = "#1F3A5F";
 const pillInk = "#3B2414";
 const pillPaper = "rgba(255, 250, 240, 0.94)";
 const markerFont = "PermanentMarker-Regular";
-const boardTargets: IBearBoardTarget[] = ["plus", "goal", "bear"];
-const padlockImage = BearHouse_image("padlock");
+const boardTargets: IBearBoardTarget[] = ["plus", "streak", "goal", "bear"];
 
 interface ITickStroke {
   centerX: number;
@@ -163,9 +158,6 @@ function Overlay(props: { object: IBearHouseObject; unit: number }): JSX.Element
     return null;
   }
   const box = BearHouse_box(overlay.rect, props.unit);
-  if (overlay.kind === "tv") {
-    return <BearTv box={box} />;
-  }
   const isBadge = overlay.kind === "badge";
   const size = isBadge ? Math.min(box.width, box.height) : Math.min(box.height * 0.7, box.width * 0.5);
   return (
@@ -194,40 +186,30 @@ export function HouseObjectView(props: {
   onPress: (object: IBearHouseObject) => void;
 }): JSX.Element | null {
   const { object, unit } = props;
-  if (object.image == null) {
+  if (object.image == null && !object.isPainted) {
     return null;
   }
   const box = BearHouse_box(object.rect, unit);
-  const padlock = BearHouse_box(BearHouse_padlock(object.rect), unit);
-  const label = object.lock == null ? object.label : `${object.label}, ${BearHouse_lockLine(object.lock)}`;
   return (
     <>
       <Pressable
         testID={`house-${object.id}`}
         data-testid={`house-${object.id}`}
         accessibilityRole="button"
-        accessibilityLabel={label}
+        accessibilityLabel={object.label}
         hitSlop={BearHouse_hitSlop(box)}
         onPress={() => props.onPress(object)}
         style={{ position: "absolute", ...box }}
       >
-        <Image
-          source={{ uri: BearImage_uri(object.image) }}
-          style={{ width: box.width, height: box.height }}
-          resizeMode="stretch"
-        />
+        {object.image != null && (
+          <Image
+            source={{ uri: BearImage_uri(object.image) }}
+            style={{ width: box.width, height: box.height }}
+            resizeMode="stretch"
+          />
+        )}
       </Pressable>
       <Overlay object={object} unit={unit} />
-      {object.lock != null && (
-        <View pointerEvents="none" style={{ position: "absolute", ...padlock }}>
-          <Image
-            testID={`house-${object.id}-padlock`}
-            source={{ uri: BearImage_uri(padlockImage) }}
-            style={{ width: padlock.width, height: padlock.height }}
-            resizeMode="contain"
-          />
-        </View>
-      )}
     </>
   );
 }
@@ -238,7 +220,6 @@ export function HousePill(props: {
   center: { x: number; y: number };
   unit: number;
   sceneWidth: number;
-  isNote?: boolean;
   onPress?: () => void;
 }): JSX.Element {
   const fontSize = Math.max(10, Math.round(26 * props.unit));
@@ -259,13 +240,13 @@ export function HousePill(props: {
         width,
         height,
         borderRadius: height / 2,
-        backgroundColor: props.isNote ? "rgba(31, 41, 55, 0.92)" : pillPaper,
+        backgroundColor: pillPaper,
       }}
     >
       <Text
         numberOfLines={1}
         className="font-semibold"
-        style={{ color: props.isNote ? "#FFFFFF" : pillInk, fontSize, lineHeight: fontSize * 1.2 }}
+        style={{ color: pillInk, fontSize, lineHeight: fontSize * 1.2 }}
       >
         {props.text}
       </Text>

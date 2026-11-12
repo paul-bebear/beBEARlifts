@@ -1,18 +1,21 @@
 {
   "canvas": [1024, 2304],
-  "whiteboard": [125, 643, 825, 1123],
-  "bearFoot": [512, 1573],
+  "whiteboard": [32, 190, 992, 650],
+  "bearFoot": [512, 1620],
   "gymExit": {
     "rect": [876, 1076, 1024, 1353],
     "pill": [950, 1376]
   },
   "images": {
+    "bed": [226, 480],
     "bed-big": [480, 296],
     "bed-small": [480, 203],
     "boombox": [480, 276],
-    "bowl-empty": [480, 299],
-    "bowl-full": [480, 359],
-    "bowl-half": [480, 299],
+    "bowl-empty": [480, 310],
+    "bowl-full": [480, 310],
+    "bowl-half": [480, 310],
+    "bowl-quarter": [480, 310],
+    "bowl-three-quarter": [480, 310],
     "door-exit-gym": [255, 480],
     "door-exit-space": [476, 480],
     "door-home-apartment": [285, 480],
@@ -23,14 +26,15 @@
     "honey-jar-empty": [451, 480],
     "honey-jar-full": [450, 480],
     "honey-jar-half": [448, 480],
-    "mirror": [258, 480],
+    "mirror": [220, 480],
     "notebook-closed": [404, 480],
     "notebook-open": [480, 391],
     "padlock": [379, 480],
     "passport-closed": [464, 480],
     "passport-open": [480, 383],
+    "phone": [480, 299],
     "phone-dock": [312, 480],
-    "scale": [480, 261],
+    "scale": [480, 232],
     "trophy-shelf-empty": [480, 123],
     "trophy-shelf-full": [480, 282],
     "trophy-shelf-some": [480, 214],
@@ -38,11 +42,45 @@
     "tv-flat-big": [480, 264],
     "tv-flat-small": [480, 424],
     "tv-hologram": [480, 242],
-    "wall-calendar": [467, 480],
+    "wall-calendar": [427, 480],
     "wardrobe-closed": [415, 480],
     "wardrobe-open": [480, 403]
   },
   "rooms": {
+    "cabin": {
+      "room": "room-cabin",
+      "wall": "#EBD2C0",
+      "objects": {
+        "door": {
+          "rect": [20, 896, 250, 1592],
+          "pill": [135, 1540]
+        },
+        "calendar": {
+          "rect": [65, 700, 217, 867],
+          "pill": [141, 889]
+        },
+        "mirror": {
+          "rect": [767, 907, 995, 1417],
+          "pill": [881, 1439]
+        },
+        "bed": {
+          "rect": [700, 1556, 1024, 2246],
+          "pill": [862, 1610]
+        },
+        "phone": {
+          "rect": [856, 1661, 982, 1741],
+          "pill": [919, 1636]
+        },
+        "bowl": {
+          "rect": [37, 1975, 370, 2190],
+          "pill": [203, 2150]
+        },
+        "scale": {
+          "rect": [454, 2002, 843, 2190],
+          "pill": [648, 2150]
+        }
+      }
+    },
     "trailer": {
       "room": "room-trailer",
       "door": "door-home-trailer",

@@ -224,7 +224,7 @@ export function HouseArrange(props: IHouseArrangeProps): JSX.Element {
       const scale = latest.current.unit;
       latest.current.onChange(HouseArrange_reduce(start.current, make(dx / scale, dy / scale)));
     };
-  const drawn = props.objects.filter((o) => o.image != null);
+  const drawn = props.objects.filter((o) => o.image != null || o.isPainted);
   const pills = state.manifest.rooms[state.room].objects;
   const foot = state.manifest.bearFoot;
   return (

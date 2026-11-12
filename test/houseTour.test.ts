@@ -3,62 +3,42 @@ import { expect } from "chai";
 import { BearHouse_objects, BearHouse_room, IBearHouseObjectId, IBearHouseSources } from "../src/models/bearHouse";
 import { HouseTour_canStart, HouseTour_lines, HouseTour_steps } from "../src/models/houseTour";
 
-const sources: IBearHouseSources = {
-  kcal: 0,
-  kcalTarget: 0,
-  hasNoteToday: false,
-  streak: 0,
-  friendCount: 0,
-  pendingRequests: 0,
-  honeyEarned: 0,
-  badgeCount: 0,
-  isOffline: false,
-};
-const room = BearHouse_room("trailer");
-const order: IBearHouseObjectId[] = [
-  "whiteboard",
-  "door",
-  "bowl",
-  "scale",
-  "bed",
-  "notebook",
-  "tv",
-  "phone",
-  "passport",
-];
+const sources: IBearHouseSources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+const room = BearHouse_room("cabin");
+const order: IBearHouseObjectId[] = ["whiteboard", "door", "bowl", "scale", "mirror", "calendar", "bed", "phone"];
 
 describe("HouseTour_steps", () => {
-  it("gives nine steps in the tour order on day 0", () => {
-    const steps = HouseTour_steps(BearHouse_objects("trailer", 0, sources, undefined), room);
+  it("gives eight steps in the tour order on day 0", () => {
+    const steps = HouseTour_steps(BearHouse_objects("cabin", sources, undefined), room);
     expect(steps.map((s) => s.id)).to.deep.equal(order);
+    expect(HouseTour_lines.map(([id]) => id)).to.deep.equal(order);
   });
 
   it("uses the object's label as the title and the table's line as the text", () => {
-    const objects = BearHouse_objects("trailer", 0, sources, undefined);
+    const objects = BearHouse_objects("cabin", sources, undefined);
     for (const step of HouseTour_steps(objects, room)) {
       expect(step.title).to.equal(objects.find((o) => o.id === step.id)!.label);
       expect(step.line).to.equal(HouseTour_lines.find(([id]) => id === step.id)![1]);
     }
   });
 
-  it("shows each sprite, and the room picture for the whiteboard", () => {
-    const objects = BearHouse_objects("trailer", 0, sources, undefined);
+  it("writes a line for the mirror and for the calendar", () => {
+    const line = (id: IBearHouseObjectId): string => HouseTour_lines.find(([lineId]) => lineId === id)![1];
+    expect(line("mirror")).to.contain("progress photos");
+    expect(line("calendar")).to.contain("day streak");
+  });
+
+  it("shows each sprite, and the room picture for the whiteboard and the painted door", () => {
+    const objects = BearHouse_objects("cabin", sources, undefined);
     for (const step of HouseTour_steps(objects, room)) {
       const image = objects.find((o) => o.id === step.id)!.image;
-      expect(step.image).to.equal(step.id === "whiteboard" ? room : image);
+      expect(step.image).to.equal(step.id === "whiteboard" || step.id === "door" ? room : image);
     }
   });
 
-  it("still gives nine steps when the calendar is open, because the calendar has no line", () => {
-    const steps = HouseTour_steps(BearHouse_objects("trailer", 3, sources, undefined), room);
-    expect(steps.map((s) => s.id)).to.deep.equal(order);
-  });
-
-  it("never names a padlocked object", () => {
-    const objects = BearHouse_objects("trailer", 0, sources, undefined).map((o) =>
-      o.id === "bed" ? { ...o, lock: { atDays: 5, toGo: 5 } } : o
-    );
-    expect(HouseTour_steps(objects, room).map((s) => s.id)).to.not.include("bed");
+  it("leaves out an object the room has no slot for", () => {
+    const objects = BearHouse_objects("cabin", sources, undefined).filter((o) => o.id !== "mirror");
+    expect(HouseTour_steps(objects, room).map((s) => s.id)).to.not.include("mirror");
   });
 });
 

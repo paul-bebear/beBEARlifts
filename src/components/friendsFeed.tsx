@@ -1,12 +1,12 @@
 import { JSX } from "react";
 import { Image, Linking, Pressable, View } from "react-native";
 import { Feed_ago, Feed_itemKey, IFeedItem, IFeedPost } from "../models/feed";
-import { BearTv_sprite } from "../models/bearTv";
+import { BearArt_postSprite } from "../models/bearArt";
 import { IMealPost, MealPost_macrosCard } from "../models/mealPost";
 import { WorkoutPost_feedLine, WorkoutPost_levelText, WorkoutPost_setText } from "../models/workoutPost";
 import { Text } from "./primitives/text";
 import { FeedPostMenu } from "./feedPostMenu";
-import { BearHead } from "./bearTv";
+import { BearHead } from "./bearHead";
 import { Support_email } from "../utils/support";
 import { Dialog_alert } from "../utils/dialog";
 
@@ -20,7 +20,7 @@ function PostHeader(props: { item: IFeedItem; now: number }): JSX.Element {
   const { author, isMine, bear, post } = props.item;
   return (
     <View className="flex-row items-center" style={{ gap: 10 }}>
-      <BearHead sprite={BearTv_sprite(bear)} size={40} />
+      <BearHead sprite={BearArt_postSprite(bear)} size={40} />
       <View className="flex-1">
         <Text className="text-sm" numberOfLines={1}>
           <Text className="font-bold">{isMine ? "You" : author.displayName}</Text>

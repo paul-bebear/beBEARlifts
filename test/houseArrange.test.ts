@@ -17,8 +17,8 @@ function fresh(): ReturnType<typeof HouseArrange_initial> {
   return HouseArrange_initial(undefined);
 }
 
-function bedRect(state: ReturnType<typeof HouseArrange_initial>): number[] {
-  return state.manifest.rooms[state.room].objects.bed.rect;
+function scaleRect(state: ReturnType<typeof HouseArrange_initial>): number[] {
+  return state.manifest.rooms[state.room].objects.scale.rect;
 }
 
 describe("HouseArrange", () => {
@@ -32,14 +32,14 @@ describe("HouseArrange", () => {
 
   it("clamps a move past the left edge to 0", () => {
     const state = fresh();
-    const [x1, y1, x2, y2] = state.manifest.rooms[state.room].objects.wardrobe.rect;
-    const moved = HouseArrange_reduce(state, { type: "move", id: "wardrobe", dx: -5000, dy: 0 });
-    expect(moved.manifest.rooms[moved.room].objects.wardrobe.rect).to.deep.equal([0, y1, x2 - x1, y2]);
+    const [x1, y1, x2, y2] = state.manifest.rooms[state.room].objects.calendar.rect;
+    const moved = HouseArrange_reduce(state, { type: "move", id: "calendar", dx: -5000, dy: 0 });
+    expect(moved.manifest.rooms[moved.room].objects.calendar.rect).to.deep.equal([0, y1, x2 - x1, y2]);
   });
 
   it("clamps a move past the bottom right corner inside the canvas", () => {
-    const moved = HouseArrange_reduce(fresh(), { type: "move", id: "bed", dx: 5000, dy: 9000 });
-    const [x1, y1, x2, y2] = bedRect(moved);
+    const moved = HouseArrange_reduce(fresh(), { type: "move", id: "scale", dx: 5000, dy: 9000 });
+    const [x1, y1, x2, y2] = scaleRect(moved);
     expect(x2).to.be.at.most(HouseFrame_canvas.width);
     expect(y2).to.be.at.most(HouseFrame_canvas.height);
     expect(x1 % 2).to.equal(0);
@@ -48,24 +48,24 @@ describe("HouseArrange", () => {
 
   it("snaps a move of 3 px to the 2 px grid", () => {
     const state = fresh();
-    const moved = HouseArrange_reduce(state, { type: "move", id: "bed", dx: 3, dy: 0 });
-    const shift = bedRect(moved)[0] - bedRect(state)[0];
+    const moved = HouseArrange_reduce(state, { type: "move", id: "scale", dx: 3, dy: 0 });
+    const shift = scaleRect(moved)[0] - scaleRect(state)[0];
     expect([2, 4]).to.include(shift);
   });
 
   it("moves the pill dot with its object", () => {
     const state = fresh();
-    const moved = HouseArrange_reduce(state, { type: "move", id: "bed", dx: 20, dy: 0 });
-    const before = state.manifest.rooms[state.room].objects.bed.pill;
-    const after = moved.manifest.rooms[moved.room].objects.bed.pill;
-    expect(after[0] - before[0]).to.equal(bedRect(moved)[0] - bedRect(state)[0]);
+    const moved = HouseArrange_reduce(state, { type: "move", id: "scale", dx: 20, dy: 0 });
+    const before = state.manifest.rooms[state.room].objects.scale.pill;
+    const after = moved.manifest.rooms[moved.room].objects.scale.pill;
+    expect(after[0] - before[0]).to.equal(scaleRect(moved)[0] - scaleRect(state)[0]);
   });
 
   it("keeps the bottom edge and the centre when it scales by 1.05", () => {
-    const state = HouseArrange_reduce(fresh(), { type: "move", id: "bed", dx: 100, dy: -100 });
-    const [x1, y1, x2, y2] = bedRect(state);
-    const scaled = HouseArrange_reduce(state, { type: "scale", id: "bed", factor: 1.05 });
-    const [nx1, ny1, nx2, ny2] = bedRect(scaled);
+    const state = HouseArrange_reduce(fresh(), { type: "move", id: "scale", dx: 100, dy: -100 });
+    const [x1, y1, x2, y2] = scaleRect(state);
+    const scaled = HouseArrange_reduce(state, { type: "scale", id: "scale", factor: 1.05 });
+    const [nx1, ny1, nx2, ny2] = scaleRect(scaled);
     expect(ny2).to.equal(y2);
     expect(Math.abs((nx1 + nx2) / 2 - (x1 + x2) / 2)).to.be.at.most(1);
     expect(nx1 % 2).to.equal(0);
@@ -85,33 +85,33 @@ describe("HouseArrange", () => {
           ...state.manifest.rooms,
           [state.room]: {
             ...room,
-            objects: { ...room.objects, bed: { ...room.objects.bed, rect: [100, 200, 300, 400] } },
+            objects: { ...room.objects, scale: { ...room.objects.scale, rect: [100, 200, 300, 400] } },
           },
         },
       },
     };
-    const scaled = HouseArrange_reduce(seeded, { type: "scale", id: "bed", factor: 1.05 });
-    expect(bedRect(scaled)).to.deep.equal([96, 190, 306, 400]);
+    const scaled = HouseArrange_reduce(seeded, { type: "scale", id: "scale", factor: 1.05 });
+    expect(scaleRect(scaled)).to.deep.equal([96, 190, 306, 400]);
   });
 
   it("does not shrink an object below 20 px", () => {
     let state = fresh();
     for (let i = 0; i < 200; i++) {
-      state = HouseArrange_reduce(state, { type: "scale", id: "bed", factor: 0.9 });
+      state = HouseArrange_reduce(state, { type: "scale", id: "scale", factor: 0.9 });
     }
-    const [x1, y1, x2, y2] = bedRect(state);
+    const [x1, y1, x2, y2] = scaleRect(state);
     expect(x2 - x1).to.be.at.least(20);
     expect(y2 - y1).to.be.at.least(20);
   });
 
   it("moves the pill dot and the bear's feet on their own", () => {
     const state = fresh();
-    const pill = state.manifest.rooms[state.room].objects.bed.pill;
-    const dot = HouseArrange_reduce(state, { type: "movePill", id: "bed", dx: 10, dy: -10 });
-    expect(dot.manifest.rooms[dot.room].objects.bed.pill).to.deep.equal([pill[0] + 10, pill[1] - 10]);
-    expect(bedRect(dot)).to.deep.equal(bedRect(state));
-    const foot = HouseArrange_reduce(state, { type: "moveFoot", dx: -10, dy: 21 });
-    expect(foot.manifest.bearFoot).to.deep.equal([state.manifest.bearFoot[0] - 10, state.manifest.bearFoot[1] + 21]);
+    const pill = state.manifest.rooms[state.room].objects.scale.pill;
+    const dot = HouseArrange_reduce(state, { type: "movePill", id: "scale", dx: 10, dy: -10 });
+    expect(dot.manifest.rooms[dot.room].objects.scale.pill).to.deep.equal([pill[0] + 10, pill[1] - 10]);
+    expect(scaleRect(dot)).to.deep.equal(scaleRect(state));
+    const foot = HouseArrange_reduce(state, { type: "moveFoot", dx: -10, dy: 20 });
+    expect(foot.manifest.bearFoot).to.deep.equal([state.manifest.bearFoot[0] - 10, state.manifest.bearFoot[1] + 20]);
   });
 
   it("picks a room and an object, and ignores one that does not exist", () => {
@@ -119,8 +119,8 @@ describe("HouseArrange", () => {
     const room = HouseArrange_reduce(state, { type: "pickRoom", room: "moon" });
     expect(room.room).to.equal("moon");
     expect(room.picked).to.equal(undefined);
-    const picked = HouseArrange_reduce(room, { type: "pick", id: "bed" });
-    expect(picked.picked).to.equal("bed");
+    const picked = HouseArrange_reduce(room, { type: "pick", id: "scale" });
+    expect(picked.picked).to.equal("scale");
     expect(HouseArrange_reduce(picked, { type: "pick", id: "nothing" })).to.equal(picked);
     expect(HouseArrange_reduce(picked, { type: "pick", id: undefined }).picked).to.equal(undefined);
     expect(HouseArrange_reduce(picked, { type: "pickRoom", room: "nowhere" })).to.equal(picked);
@@ -128,7 +128,7 @@ describe("HouseArrange", () => {
 
   it("returns the file's values on reset", () => {
     const state = fresh();
-    const edited = HouseArrange_reduce(HouseArrange_reduce(state, { type: "move", id: "bed", dx: 200, dy: 200 }), {
+    const edited = HouseArrange_reduce(HouseArrange_reduce(state, { type: "move", id: "scale", dx: 200, dy: 200 }), {
       type: "moveFoot",
       dx: 40,
       dy: 40,
@@ -138,7 +138,7 @@ describe("HouseArrange", () => {
   });
 
   it("exports text that parses back to the manifest", () => {
-    const edited = HouseArrange_reduce(fresh(), { type: "scale", id: "tv", factor: 1.05 });
+    const edited = HouseArrange_reduce(fresh(), { type: "scale", id: "mirror", factor: 1.05 });
     const text = HouseArrange_export(edited);
     expect(JSON.parse(text)).to.deep.equal(edited.manifest);
     expect(text.endsWith("}\n")).to.equal(true);
@@ -149,11 +149,22 @@ describe("HouseArrange", () => {
     expect(HouseArrange_export(fresh())).to.equal(readFileSync(manifestPath, "utf8"));
   });
 
-  it("draws every object of the picked room, unlocked, from the tool's manifest", () => {
-    const state = HouseArrange_reduce(fresh(), { type: "pickRoom", room: "mars" });
+  it("starts in the cabin and draws its eight objects from the tool's manifest", () => {
+    const state = fresh();
     const scene = HouseArrange_scene(state);
-    expect(scene.room).to.equal(BearHouse_room("mars"));
-    expect(scene.objects.some((o) => o.lock != null)).to.equal(false);
+    expect(state.room).to.equal("cabin");
+    expect(scene.room).to.equal(BearHouse_room("cabin"));
+    expect(scene.objects.map((o) => o.id)).to.have.members([
+      "whiteboard",
+      "door",
+      "bowl",
+      "bed",
+      "scale",
+      "calendar",
+      "phone",
+      "mirror",
+    ]);
+    expect(scene.objects.find((o) => o.id === "door")?.isPainted).to.equal(true);
     const moved = HouseArrange_scene(HouseArrange_reduce(state, { type: "moveFoot", dx: 20, dy: 0 }));
     expect(moved.art.foot.x).to.equal(scene.art.foot.x + 20);
   });

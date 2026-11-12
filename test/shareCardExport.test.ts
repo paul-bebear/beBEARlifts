@@ -45,7 +45,7 @@ describe("ShareCardExport", () => {
   });
 
   it("does not capture a card before its bear sprite has loaded", () => {
-    const sprite = "/images/bear/male/mood-small-pumped.webp";
+    const sprite = "/images/bear/brown/mood-small-pumped.webp";
     const waiting = run([
       { type: "start", pages: ["rank"], frozen: 1, images: [sprite] },
       { type: "layout", page: "rank" },

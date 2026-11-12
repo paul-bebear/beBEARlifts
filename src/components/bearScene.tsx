@@ -34,14 +34,7 @@ function GymArt(props: IProps & { gym: string; width: number }): JSX.Element {
   const scaleY = useBearBreathing(breathing.durationMs, breathing.scaleY);
   const spritePath = BearArt_cardSprite(state.line, state.fur, state.level.tier.level);
   const exit = BearHouse_gymExit(gym);
-  const layout = BearScene_layout(
-    props.width,
-    HouseFrame_gymArt,
-    state.level.tier.level,
-    state.level.fraction,
-    spritePath,
-    breathing.scaleY
-  );
+  const layout = BearScene_layout(props.width, HouseFrame_gymArt);
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const unit = layout.width / HouseFrame_canvas.width;
 

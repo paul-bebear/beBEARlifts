@@ -13,10 +13,8 @@ import { NotesStore } from "../utils/notesStore";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { RunSensors_isAvailable } from "../utils/runSensors";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
-import { useBearHoney } from "../utils/useBearHoney";
 import { IconChevronRight } from "./icons/iconFoodUi";
 import { CheckInChart } from "./checkInChart";
-import { HoneySheet } from "./honeySheet";
 import { JournalCheckIn } from "./journalCheckIn";
 import { ProgramCardSection, StatsSections } from "./screenProgressDashboard";
 
@@ -46,11 +44,6 @@ function HubRow(props: { row: IReportsHubRow; onPress: () => void }): JSX.Elemen
   );
 }
 
-function HoneySheetHost(props: { onClose: () => void }): JSX.Element {
-  const honey = useBearHoney();
-  return <HoneySheet balance={honey.balance} today={honey.today} onClose={props.onClose} />;
-}
-
 function TodayCheckIn(props: { day: string }): JSX.Element {
   const checkIn = Notes_checkIn(NotesStore.use(), props.day);
   return (
@@ -65,7 +58,6 @@ function TodayCheckIn(props: { day: string }): JSX.Element {
 
 export function ScreenReportsHub(): JSX.Element {
   const dispatch = useTrackedDispatch();
-  const [isHoneyOpen, setIsHoneyOpen] = useState(false);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   useNavOptions({ navTitle: ReportsHub_title });
   const today = FoodLog_dayKey(new Date());
@@ -86,9 +78,6 @@ export function ScreenReportsHub(): JSX.Element {
         return;
       case "noteModal":
         navigateToModal("noteEditorModal", { day: effect.day });
-        return;
-      case "openHoney":
-        setIsHoneyOpen(true);
         return;
       case "toggleCheckIn":
         setIsCheckInOpen(!isCheckInOpen);
@@ -113,7 +102,6 @@ export function ScreenReportsHub(): JSX.Element {
           </View>
         ))}
       </View>
-      {isHoneyOpen && <HoneySheetHost onClose={() => setIsHoneyOpen(false)} />}
     </NavScreenContent>
   );
 }

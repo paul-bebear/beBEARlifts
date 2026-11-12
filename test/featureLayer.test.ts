@@ -16,7 +16,6 @@ describe("FeatureLayer", () => {
       "graphs",
       "exerciseStats",
       "friends",
-      "honey",
       "badges",
       "notes",
       "checkIn",
@@ -38,9 +37,8 @@ describe("FeatureLayer", () => {
     expect(FeatureLayer_of("nutrition")).to.equal(2);
   });
 
-  it("puts friends, honey, badges and notes behind More", () => {
+  it("puts friends, badges and notes behind More", () => {
     expect(FeatureLayer_of("friends")).to.equal(3);
-    expect(FeatureLayer_of("honey")).to.equal(3);
     expect(FeatureLayer_of("badges")).to.equal(3);
     expect(FeatureLayer_of("notes")).to.equal(3);
   });

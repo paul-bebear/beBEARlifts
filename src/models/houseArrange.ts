@@ -28,17 +28,12 @@ export interface IHouseArrangeScene {
 
 const grid = 2;
 const minSize = 20;
-const everythingOpenDays = 100000;
 const openSources: IBearHouseSources = {
   kcal: 0,
   kcalTarget: 0,
-  hasNoteToday: false,
   streak: 1,
-  friendCount: 1,
   pendingRequests: 0,
-  honeyEarned: 0,
-  badgeCount: 1,
-  isOffline: true,
+  hasWorkout: false,
 };
 
 export function HouseArrange_isOn(search: string): boolean {
@@ -145,7 +140,7 @@ export function HouseArrange_scene(state: IHouseArrangeState): IHouseArrangeScen
   return {
     room: BearHouse_room(state.room),
     wall: BearHouse_wallColor(state.room),
-    objects: BearHouse_objects(state.room, everythingOpenDays, openSources, undefined, state.manifest),
+    objects: BearHouse_objects(state.room, openSources, undefined, state.manifest),
     art: BearHouse_artOf(state.manifest),
   };
 }

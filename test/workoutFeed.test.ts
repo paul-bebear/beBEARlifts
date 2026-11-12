@@ -41,11 +41,8 @@ import {
   Feed_withServerPosts,
   IFeedOp,
 } from "../src/models/feed";
-import { BearTv_box, BearTv_rect, BearTv_screen, BearTv_sprite } from "../src/models/bearTv";
 import { IMealPostDraft } from "../src/models/mealPost";
 import { Friends_fromServer } from "../src/models/friends";
-import * as fs from "fs";
-import * as path from "path";
 import {
   PullToRefresh_end,
   PullToRefresh_move,
@@ -429,65 +426,6 @@ describe("Feed", () => {
     expect(Feed_ago(t1, t1 + 3 * 3600000)).to.equal("3 h ago");
     expect(Feed_ago(t1, t1 + 30 * 3600000)).to.equal("yesterday");
     expect(Feed_ago(t1, t1 + 72 * 3600000)).to.equal("3 days ago");
-  });
-});
-
-describe("BearTv", () => {
-  const settings = Settings_build();
-  const summary = {
-    ...WorkoutPost_build(record(t1, [entry(bench, [set(85, 5)])]), settings, {}, undefined),
-    bear: { level: 4, mood: "hungry" as const, countedKg: 425, line: "female" as const },
-  };
-  const friends = Friends_fromServer(
-    "me",
-    [
-      { user_id: "me", handle: "paul", display_name: "Paul" },
-      { user_id: "a", handle: "victor", display_name: "victor" },
-    ],
-    [{ requester: "me", addressee: "a", status: "accepted" }]
-  );
-  const state = Feed_withServerPosts(
-    Feed_empty(),
-    "me",
-    [
-      { user_id: "a", workout_id: 1, posted_at: "2026-10-08T10:00:00Z", summary },
-      { user_id: "me", workout_id: 2, posted_at: "2026-10-09T10:00:00Z", summary },
-    ],
-    t1
-  );
-
-  it("sits on the TV screen from the gym manifest", () => {
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(__dirname, "../images/bear/male/manifest.json"), "utf8")
-    ) as Record<string, unknown>;
-    expect(manifest.tv_safe_rect).to.deep.equal(BearTv_rect);
-    expect(BearTv_box(512)).to.deep.equal({ left: 437.5, top: 172.5, width: 62.5, height: 92.5 });
-  });
-
-  it("says no friends yet when signed out or alone, and shows the newest friend post otherwise", () => {
-    const items = Feed_items(state, friends);
-    expect(BearTv_screen({ signedIn: false, friendCount: 1, items, now: t1 }).text).to.equal("No friends yet");
-    expect(BearTv_screen({ signedIn: true, friendCount: 0, items: [], now: t1 }).text).to.equal("No friends yet");
-    expect(BearTv_screen({ signedIn: true, friendCount: 1, items: items.slice(0, 1), now: t1 }).text).to.equal(
-      "No posts yet"
-    );
-    const screen = BearTv_screen({ signedIn: true, friendCount: 1, items, now: Date.parse("2026-10-08T12:00:00Z") });
-    expect(screen).to.deep.equal({
-      kind: "post",
-      sprite: "/images/bear/female/mood-medium-hungry.webp",
-      text: "\u{1F3CB} victor",
-      label: "victor lifted: Push · 45 min · 1 set · +425 kg, 2 h ago. Open the feed.",
-    });
-    expect(BearTv_sprite(undefined)).to.equal("/images/bear/male/level-01.webp");
-    expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female" })).to.equal(
-      "/images/bear/female/mood-medium-hungry.webp"
-    );
-    expect(BearTv_sprite({ level: 4, mood: "hungry", countedKg: 1, line: "female", fur: "black" })).to.equal(
-      "/images/bear/female-black/mood-medium-hungry.webp"
-    );
-    expect(BearTv_sprite({ level: 1, mood: "normal", countedKg: 1, fur: "polar" })).to.equal(
-      "/images/bear/male-polar/level-01.webp"
-    );
   });
 });
 

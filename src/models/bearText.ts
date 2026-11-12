@@ -1,6 +1,5 @@
 import { IBearState } from "./bear";
 import { IBearCountedWorkout } from "./bearGrowth";
-import { BearHoney_dailyMax, IHoneyDay } from "./bearHoney";
 import { FoodLog_dayKey } from "./foodLog";
 import { BearComparison_for } from "./bearComparison";
 import { BearTier_all, IBearTierProgress, IBearTierSet } from "./bearTier";
@@ -56,32 +55,7 @@ export function BearText_status(state: IBearState, now: number): string {
   }
 }
 
-export function BearText_honeyLine(balance: number): string {
-  return `🍯 ${Math.max(0, Math.round(balance)).toLocaleString("en-US")} honey`;
-}
-
-export function BearText_honeyBreakdown(day: IHoneyDay | undefined): string {
-  if (day == null || day.items.length === 0) {
-    return "Nothing earned yet today";
-  }
-  const parts = day.items.map((item) => `${item.label} +${item.amount}`);
-  return day.isCapped ? [...parts, `Daily max ${BearHoney_dailyMax}`].join(" · ") : parts.join(" · ");
-}
-
-export function BearText_honeySaved(total: number): string {
-  return `Your bear saved ${Math.max(0, Math.round(total)).toLocaleString("en-US")} honey for you.`;
-}
-
-export function BearText_lockLine(atDays: number, toGo: number): string {
-  return `Opens at ${atDays} active ${atDays === 1 ? "day" : "days"} · ${toGo} to go`;
-}
-
-export const BearText_houseEmpty = {
-  tv: "No friends yet",
-  passport: "Stamp your first city",
-  scale: "Weigh in",
-  passportSoon: "City stamps come soon",
-} as const;
+export const BearText_houseEmpty = { scale: "Weigh in" } as const;
 
 export function BearText_finishLine(
   record: IHistoryRecord,

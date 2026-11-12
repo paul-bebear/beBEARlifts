@@ -48,7 +48,6 @@ describe("ReportsHub", () => {
     expect(ids({ isOffline: true, hasRunSensors: true }, "extras")).to.deep.equal([
       "friends",
       "add-friend",
-      "honey",
       "badges",
       "notes",
       "check-ins",
@@ -79,7 +78,7 @@ describe("ReportsHub", () => {
     const action = (id: string): unknown => rows.find((r) => r.id === id)?.action;
     expect(action("friends")).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
     expect(action("add-friend")).to.deep.equal({ kind: "addFriend" });
-    expect(action("honey")).to.deep.equal({ kind: "honey" });
+    expect(action("honey")).to.equal(undefined);
     expect(action("badges")).to.deep.equal({ kind: "screen", screen: "streak", tab: undefined });
     expect(action("notes")).to.deep.equal({ kind: "newNote", day: today });
     expect(action("check-ins")).to.deep.equal({ kind: "checkIn" });
@@ -98,7 +97,6 @@ describe("ReportsHub", () => {
     expect(effect("add-friend")).to.deep.equal({ type: "modal", name: "addFriendModal" });
     expect(effect("seasons")).to.deep.equal({ type: "modal", name: "foodGoalsModal" });
     expect(effect("notes")).to.deep.equal({ type: "noteModal", day: today });
-    expect(effect("honey")).to.deep.equal({ type: "openHoney" });
     expect(effect("check-ins")).to.deep.equal({ type: "toggleCheckIn" });
   });
 });

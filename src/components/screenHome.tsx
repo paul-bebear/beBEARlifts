@@ -1,13 +1,11 @@
-import { JSX, useMemo, useState } from "react";
+import { JSX, useMemo } from "react";
 import { View } from "react-native";
 import { untrack, useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { navigateToModal } from "../navigation/navigationService";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { IDispatch } from "../ducks/types";
-import { BearScene } from "./bearScene";
 import { BearHouseScene } from "./bearHouseScene";
-import { HoneySheet } from "./honeySheet";
 import { useBear } from "../utils/useBear";
 import { useBearHouse } from "../utils/useBearHouse";
 import { useFoodLog } from "../utils/foodLogStore";
@@ -16,9 +14,7 @@ import { WeekScheduleStore } from "../utils/weekScheduleStore";
 import { useFollowWeekSchedule } from "../utils/useFollowWeekSchedule";
 import { WorkoutStart_open } from "../utils/workoutStart";
 import { BearBoard_lines, IBearBoardTarget } from "../models/bearBoard";
-import { IBearHouseOpenTarget } from "../models/bearHouse";
-import { BearScene_place } from "../models/bearScene";
-import { BearText_honeySaved } from "../models/bearText";
+import { IBearHouseTarget } from "../models/bearHouse";
 import { Program_evaluate, Program_getProgramDay } from "../models/program";
 import { QuickActions_isBagCheckOn, QuickActions_workout } from "../models/quickActions";
 import { TodayPill_dayName } from "../models/todayPill";
@@ -35,21 +31,25 @@ function openBoardTarget(target: IBearBoardTarget, dispatch: IDispatch, hasGoal:
     dispatch(Thunk_pushScreen("goalWizard", { mode: hasGoal ? "pace" : "goal" }, { tab: "graphs" }));
     return;
   }
+  if (target === "streak") {
+    dispatch(Thunk_pushScreen("streak"));
+    return;
+  }
   navigateToModal(target === "plus" ? "plusSheetModal" : "bearPanelModal");
 }
 
 function openHouseTarget(
-  target: IBearHouseOpenTarget,
+  target: IBearHouseTarget,
   dispatch: IDispatch,
   isBagCheckOn: boolean,
-  openHoney: () => void
+  isOngoingProgress: boolean
 ): void {
   switch (target.kind) {
     case "plus":
       navigateToModal("plusSheetModal");
       return;
     case "door":
-      WorkoutStart_open(QuickActions_workout({ isOngoingProgress: false, isBagCheckOn }).action, dispatch);
+      WorkoutStart_open(QuickActions_workout({ isOngoingProgress, isBagCheckOn }).action, dispatch);
       return;
     case "bearPanel":
       navigateToModal("bearPanelModal");
@@ -62,12 +62,6 @@ function openHouseTarget(
       return;
     case "screen":
       dispatch(Thunk_pushScreen(target.screen, undefined, target.tab != null ? { tab: target.tab } : undefined));
-      return;
-    case "addFriend":
-      navigateToModal("addFriendModal");
-      return;
-    case "honey":
-      openHoney();
       return;
     case "phone":
       navigateToModal("phoneSheetModal");
@@ -82,13 +76,13 @@ export function ScreenHome(props: IProps): JSX.Element {
   const stats = untrack(tracked.storage.stats);
   const settings = untrack(tracked.storage.settings);
   const { state } = useBear();
-  const house = useBearHouse();
-  const [isHoneyOpen, setIsHoneyOpen] = useState(false);
+  const isOngoingProgress = props.progress != null;
+  const house = useBearHouse(isOngoingProgress);
   const foodLog = useFoodLog();
   const goalLog = ProgramGoalStore.use();
   const schedule = WeekScheduleStore.use();
   const program = useMemo(() => Program_evaluate(props.program, settings), [props.program, settings]);
-  useFollowWeekSchedule(program, history, props.progress != null, dispatch);
+  useFollowWeekSchedule(program, history, isOngoingProgress, dispatch);
   const now = Date.now();
   const dayName = TodayPill_dayName(
     WeekSchedule_todayFor(schedule, program, now),
@@ -106,41 +100,24 @@ export function ScreenHome(props: IProps): JSX.Element {
         startWeekFromMonday: settings.startWeekFromMonday,
         level: state.level,
         countedKg: state.countedKg,
+        workouts: state.workouts,
         now,
       }),
     [history, stats, foodLog, settings, dayName, goalLog, state]
   );
   const isBagCheckOn = QuickActions_isBagCheckOn(settings.skipBagCheck, tracked.storage.currentProgramId);
-  const place = BearScene_place(props.progress != null);
   useNavOptions({ navHidden: true });
   return (
     <View style={{ flex: 1 }} testID="home" data-testid="home">
-      {place === "gym" ? (
-        <BearScene
-          state={state}
-          lines={lines}
-          onTarget={(target) => openBoardTarget(target, dispatch, goalLog.current != null)}
-          onExit={() => navigateToModal("gymExitModal")}
-        />
-      ) : (
-        <BearHouseScene
-          state={state}
-          room={house.room}
-          wall={house.wall}
-          lines={lines}
-          objects={house.objects}
-          onBoardTarget={(target) => openBoardTarget(target, dispatch, goalLog.current != null)}
-          onTarget={(target) => openHouseTarget(target, dispatch, isBagCheckOn, () => setIsHoneyOpen(true))}
-        />
-      )}
-      {isHoneyOpen && (
-        <HoneySheet
-          balance={house.honey.balance}
-          today={house.honey.today}
-          saved={BearText_honeySaved(house.honey.earned)}
-          onClose={() => setIsHoneyOpen(false)}
-        />
-      )}
+      <BearHouseScene
+        state={state}
+        room={house.room}
+        wall={house.wall}
+        lines={lines}
+        objects={house.objects}
+        onBoardTarget={(target) => openBoardTarget(target, dispatch, goalLog.current != null)}
+        onTarget={(target) => openHouseTarget(target, dispatch, isBagCheckOn, isOngoingProgress)}
+      />
     </View>
   );
 }
