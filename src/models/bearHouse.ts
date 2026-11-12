@@ -12,14 +12,12 @@ export type IBearHouseTier = keyof typeof manifest.rooms;
 
 export type IBearHouseObjectId = "whiteboard" | "door" | "bowl" | "bed" | "scale" | "calendar" | "phone" | "mirror";
 
-export type IBearHouseScreen = "stats" | "progressPhotos";
+export type IBearHouseScreen = "stats" | "progressPhotos" | "food" | "foodDay";
 
 export type IBearHouseTarget =
   | { kind: "plus" }
   | { kind: "door" }
   | { kind: "bearPanel" }
-  | { kind: "journal" }
-  | { kind: "monthCalendar" }
   | { kind: "screen"; screen: IBearHouseScreen; tab: ITab }
   | { kind: "phone" };
 
@@ -190,7 +188,12 @@ function specs(sources: IBearHouseSources): IObjectSpec[] {
       pill: sources.hasWorkout ? BearHouse_doorLabel.workout : undefined,
       target: { kind: "door" },
     },
-    { id: "bowl", image: BearHouse_bowlImage(sources), label: "Food", target: { kind: "journal" } },
+    {
+      id: "bowl",
+      image: BearHouse_bowlImage(sources),
+      label: "Food",
+      target: { kind: "screen", screen: "foodDay", tab: "food" },
+    },
     { id: "bed", image: "bed", label: "Bed", target: { kind: "bearPanel" } },
     {
       id: "scale",
@@ -204,7 +207,7 @@ function specs(sources: IBearHouseSources): IObjectSpec[] {
       id: "calendar",
       image: "wall-calendar",
       label: "Calendar",
-      target: { kind: "monthCalendar" },
+      target: { kind: "screen", screen: "food", tab: "food" },
       overlay: sources.streak > 0 ? { kind: "number", share: calendarGrid, text: `${sources.streak}` } : undefined,
     },
     {

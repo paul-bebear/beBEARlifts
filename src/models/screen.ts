@@ -30,6 +30,7 @@ export type IScreenData =
   | { name: "progressPhotos"; params?: Record<string, never> }
   | { name: "streak"; params?: Record<string, never> }
   | { name: "food"; params?: Record<string, never> }
+  | { name: "foodDay"; params?: Record<string, never> }
   | { name: "friends"; params?: Record<string, never> }
   | { name: "foodAdd"; params: IFoodAddScreenParams }
   | { name: "history"; params?: Record<string, never> }
@@ -151,6 +152,7 @@ export function Screen_tab(screen: IScreen): ITab {
     case "food": {
       return "food";
     }
+    case "foodDay":
     case "foodAdd":
     case "history": {
       return "food";

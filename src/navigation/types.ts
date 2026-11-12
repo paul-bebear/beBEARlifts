@@ -69,6 +69,7 @@ export type IFriendsStackParamList = {
 
 export type IFoodStackParamList = {
   food: undefined;
+  foodDay: undefined;
   foodAdd: IFoodAddScreenParams;
   history: undefined;
   progress: { id?: number } | undefined;

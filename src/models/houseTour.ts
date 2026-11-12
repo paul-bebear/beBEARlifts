@@ -10,10 +10,10 @@ export interface IHouseTourStep {
 export const HouseTour_lines: ReadonlyArray<readonly [IBearHouseObjectId, string]> = [
   ["whiteboard", "Your to-do list. Tap a line to log it."],
   ["door", "The gym. Tap it to start a workout."],
-  ["bowl", "Your food. Tap it to see today's meals."],
+  ["bowl", "Your food. Tap it to see what you ate and to log a meal."],
   ["scale", "Weigh in here."],
   ["mirror", "Your progress photos. Tap it to see how you changed."],
-  ["calendar", "Your month. The number is your day streak."],
+  ["calendar", "Today's date. Tap it to open your Journal."],
   ["bed", "Your bear rests here. Tap it to see how it feels."],
   ["phone", "Your phone. Friends, music, photos, stats, badges and settings."],
 ];

@@ -235,13 +235,13 @@ describe("JournalDay", () => {
     expect(parts("songs")).to.include({ title: "Songs", detail: "1 logged", isCollapsed: true });
   });
 
-  it("points today's empty sections at the +", () => {
+  it("describes today's empty sections", () => {
     const day = JournalDay_build(input());
     expect(day.title).to.equal("Today, Oct 22");
     expect(day.isToday).to.equal(true);
     expect(day.workouts).to.eql([]);
     expect(day.mealCount).to.equal(0);
-    expect(day.canAddFood).to.equal(false);
+    expect(day.canAddFood).to.equal(true);
     expect(day.canEditCheckIn).to.equal(true);
     expect(day.notes).to.eql([]);
     expect(day.chips).to.eql([]);
@@ -289,10 +289,14 @@ describe("JournalDay", () => {
     expect(JournalDay_showsSeasonNudge(JournalDay_build(input({ day: "2026-10-23" })))).to.equal(false);
   });
 
-  it("adds food only to past days, never today or a future day", () => {
+  it("adds food to today and to past days, never to a future day", () => {
     expect(JournalDay_build(input({ day: "2026-10-01" })).canAddFood).to.equal(true);
-    expect(JournalDay_build(input({ day: today })).canAddFood).to.equal(false);
+    expect(JournalDay_build(input({ day: today })).canAddFood).to.equal(true);
     expect(JournalDay_build(input({ day: "2026-10-23" })).canAddFood).to.equal(false);
+  });
+
+  it("does not tell the user to tap the plus when today has no meals", () => {
+    expect(JournalDay_hints.noFoodToday).to.equal("Nothing logged yet");
   });
 
   it("shows the day's finished workouts in order, with stats, records and a chip", () => {

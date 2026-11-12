@@ -22,10 +22,12 @@ describe("HouseTour_steps", () => {
     }
   });
 
-  it("writes a line for the mirror and for the calendar", () => {
+  it("writes a line for the mirror, the bowl and the calendar", () => {
     const line = (id: IBearHouseObjectId): string => HouseTour_lines.find(([lineId]) => lineId === id)![1];
     expect(line("mirror")).to.contain("progress photos");
-    expect(line("calendar")).to.contain("day streak");
+    expect(line("bowl")).to.contain("log a meal");
+    expect(line("calendar")).to.contain("Journal");
+    expect(line("calendar")).to.not.contain("streak");
   });
 
   it("shows each sprite, and the room picture for the whiteboard and the painted door", () => {
