@@ -1,7 +1,7 @@
 {
   "canvas": [1024, 2304],
-  "whiteboard": [125, 643, 825, 1123],
-  "bearFoot": [512, 1573],
+  "whiteboard": [32, 190, 992, 650],
+  "bearFoot": [512, 1620],
   "gymExit": {
     "rect": [876, 1076, 1024, 1353],
     "pill": [950, 1376]
@@ -47,6 +47,40 @@
     "wardrobe-open": [480, 403]
   },
   "rooms": {
+    "cabin": {
+      "room": "room-cabin",
+      "wall": "#EBD2C0",
+      "objects": {
+        "door": {
+          "rect": [20, 896, 250, 1592],
+          "pill": [135, 1540]
+        },
+        "calendar": {
+          "rect": [65, 700, 217, 867],
+          "pill": [141, 889]
+        },
+        "mirror": {
+          "rect": [767, 907, 995, 1417],
+          "pill": [881, 1439]
+        },
+        "bed": {
+          "rect": [700, 1556, 1024, 2246],
+          "pill": [862, 1610]
+        },
+        "phone": {
+          "rect": [856, 1661, 982, 1741],
+          "pill": [919, 1636]
+        },
+        "bowl": {
+          "rect": [37, 1975, 370, 2190],
+          "pill": [203, 2150]
+        },
+        "scale": {
+          "rect": [454, 2002, 843, 2190],
+          "pill": [648, 2150]
+        }
+      }
+    },
     "trailer": {
       "room": "room-trailer",
       "door": "door-home-trailer",

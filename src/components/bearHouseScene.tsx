@@ -1,9 +1,9 @@
-import { JSX, useEffect, useState } from "react";
+import { JSX, useState } from "react";
 import { Image, View } from "react-native";
 import { IBearState } from "../models/bear";
 import { BearArt_sprite } from "../models/bearArt";
 import { IBearBoardLine, IBearBoardTarget } from "../models/bearBoard";
-import { BearHouse_art, BearHouse_tap, IBearHouseObject, IBearHouseOpenTarget } from "../models/bearHouse";
+import { BearHouse_art, IBearHouseObject, IBearHouseTarget } from "../models/bearHouse";
 import { BearScene_breathing, BearScene_breathingPivot, BearScene_layout, IBearSceneArt } from "../models/bearScene";
 import { HouseArrange_initial, HouseArrange_scene, IHouseArrangeState } from "../models/houseArrange";
 import { BearImage_uri } from "../utils/bearImage";
@@ -13,8 +13,6 @@ import { BearSceneBoard, BearSprite, HouseObjectView, HousePill } from "./bearSc
 import { HouseArrange } from "./houseArrange";
 import { HouseFrameView } from "./houseFrameView";
 
-const noteMs = 3000;
-
 interface IProps {
   state: IBearState;
   room: string;
@@ -22,17 +20,9 @@ interface IProps {
   lines: IBearBoardLine[];
   objects: IBearHouseObject[];
   onBoardTarget: (target: IBearBoardTarget) => void;
-  onTarget: (target: IBearHouseOpenTarget) => void;
+  onTarget: (target: IBearHouseTarget) => void;
 }
 
-interface INote {
-  id: string;
-  text: string;
-  at: number;
-}
-
-// The home: the room, its objects, the whiteboard and the bear, filling the screen. A padlocked object answers
-// with the day it opens, for three seconds, under the object.
 export function BearHouseScene(props: IProps): JSX.Element {
   const [arrange, setArrange] = useState<IHouseArrangeState | undefined>(() =>
     HouseArrangeFlag_isOn() ? HouseArrange_initial(props.room) : undefined
@@ -53,7 +43,6 @@ interface IArtProps extends IProps {
 }
 
 function HouseArt(props: IArtProps): JSX.Element {
-  const [note, setNote] = useState<INote | undefined>(undefined);
   const { state } = props;
   const breathing = BearScene_breathing(state.mood);
   const scaleY = useBearBreathing(breathing.durationMs, breathing.scaleY);
@@ -62,30 +51,11 @@ function HouseArt(props: IArtProps): JSX.Element {
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const unit = layout.width / props.art.canvas.width;
 
-  useEffect(() => {
-    if (note == null) {
-      return;
-    }
-    const timer = setTimeout(() => setNote(undefined), noteMs);
-    return () => clearTimeout(timer);
-  }, [note]);
-
-  const press = (object: IBearHouseObject): void => {
-    const tap = BearHouse_tap(object);
-    if (tap.kind === "note") {
-      setNote({ id: object.id, text: tap.text, at: Date.now() });
-    } else {
-      props.onTarget(tap.target);
-    }
-  };
+  const press = (object: IBearHouseObject): void => props.onTarget(object.target);
   const drawn = (layer: IBearHouseObject["layer"]): JSX.Element[] =>
     props.objects
       .filter((o) => o.layer === layer)
       .map((o) => <HouseObjectView key={o.id} object={o} unit={unit} onPress={press} />);
-  const noteAt = props.objects.find((o) => o.id === note?.id)?.pillAt ?? {
-    x: props.art.canvas.width / 2,
-    y: props.art.foot.y,
-  };
 
   return (
     <View style={{ width: layout.width, height: layout.height }}>
@@ -99,7 +69,7 @@ function HouseArt(props: IArtProps): JSX.Element {
       {drawn("front")}
       <BearSceneBoard board={layout.board} lines={props.lines} onTarget={props.onBoardTarget} />
       {props.objects.map((o) =>
-        o.image == null || o.pill == null || o.lock != null || note?.id === o.id ? null : (
+        o.pill == null ? null : (
           <HousePill
             key={o.id}
             testID={`house-${o.id}-pill`}
@@ -110,17 +80,6 @@ function HouseArt(props: IArtProps): JSX.Element {
             onPress={() => press(o)}
           />
         )
-      )}
-      {note != null && (
-        <HousePill
-          key={note.at}
-          testID="house-note"
-          text={note.text}
-          center={noteAt}
-          unit={unit}
-          sceneWidth={layout.width}
-          isNote={true}
-        />
       )}
       {props.arrange != null && (
         <HouseArrange state={props.arrange} objects={props.objects} unit={unit} onChange={props.onArrange} />

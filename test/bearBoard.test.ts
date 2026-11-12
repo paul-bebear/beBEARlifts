@@ -63,6 +63,7 @@ function input(overrides: Partial<IBearBoardInput> = {}): IBearBoardInput {
     dayName: "Upper",
     level: BearTier_progress(0, 0, "male"),
     countedKg: 0,
+    workouts: [],
     now,
     ...overrides,
   };
@@ -82,6 +83,7 @@ describe("BearBoard_lines", () => {
       ["Train · Upper", "plus", false],
       ["Eat · 0 of 2,800 kcal", "plus", false],
       ["Weigh-in · Sunday", "plus", false],
+      ["Streak · 0 days", "streak", false],
       ["Goal: tap to set one", "goal", false],
       ["Weight · not logged yet", "bear", false],
       ["Level 1 · 2,000 kg to Teen", "bear", false],
@@ -108,6 +110,7 @@ describe("BearBoard_lines", () => {
       ["Train · Done today", "plus", true],
       ["Eat · 2,900 of 2,800 kcal", "plus", true],
       ["Weigh-in · Sunday", "plus", true],
+      ["Streak · 1 day", "streak", false],
       ["Goal: tap to set one", "goal", false],
       ["72.4 kg · +0.8 in 30 d", "bear", false],
       ["Level 6 · 150,000 kg to Athlete", "bear", false],
@@ -134,20 +137,43 @@ describe("BearBoard_lines", () => {
     const thursday = new Date(2026, 9, 15, 9).getTime();
     const lines = BearBoard_lines(input({ goal: goal({ startedAt: thursday }), stats, units: "lb" }));
     expect(lines[2].text).to.equal("Weigh-in · Thursday");
-    expect(lines[5].text).to.equal("141.0 lb");
+    expect(lines[6].text).to.equal("141.0 lb");
   });
 
   it("shows the top level without a next step", () => {
     const lines = BearBoard_lines(input({ level: BearTier_progress(9e7, 9e7, "male"), countedKg: 9e7 }));
-    expect(lines[5].text).to.equal("Level 12 · top level");
+    expect(lines[6].text).to.equal("Level 12 · top level");
   });
 
-  it("keeps all eight lines in order with a goal set", () => {
+  it("counts the streak from the counted workouts and the food log, as the streak screen does", () => {
+    const base = FoodLog_empty();
+    const yesterday = now - dayMs;
+    const lines = BearBoard_lines(
+      input({
+        workouts: [
+          { record: record(now - 2 * dayMs), countedKg: 1000 },
+          { record: record(yesterday), countedKg: 1000 },
+        ],
+        foodLog: { ...base, entries: [entry(640, 20)] },
+      })
+    );
+    expect(lines[3]).to.deep.equal({ id: "streak", text: "Streak · 3 days", isDone: false, target: "streak" });
+  });
+
+  it("keeps a streak alive through a day that is still open, and ends it after a missed day", () => {
+    const open = BearBoard_lines(input({ workouts: [{ record: record(now - dayMs), countedKg: 1000 }] }));
+    expect(open[3].text).to.equal("Streak · 1 day");
+    const missed = BearBoard_lines(input({ workouts: [{ record: record(now - 3 * dayMs), countedKg: 1000 }] }));
+    expect(missed[3].text).to.equal("Streak · 0 days");
+  });
+
+  it("keeps all nine lines in order with a goal set", () => {
     const lines = BearBoard_lines(input({ goal: goal({ startWeight: Weight_build(73, "kg") }) }));
     expect(lines.map((l) => [l.id, l.target])).to.deep.equal([
       ["train", "plus"],
       ["food", "plus"],
       ["weighIn", "plus"],
+      ["streak", "streak"],
       ["goal", "goal"],
       ["goalSince", "goal"],
       ["weight", "bear"],

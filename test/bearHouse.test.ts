@@ -3,27 +3,26 @@ import { expect } from "chai";
 import * as fs from "fs";
 import * as path from "path";
 import {
-  BearHouse_activeDays,
+  BearHouse_art,
+  BearHouse_bowlImage,
+  BearHouse_box,
+  BearHouse_doorLabel,
   BearHouse_gymExit,
   BearHouse_gymWallColor,
   BearHouse_hitSlop,
   BearHouse_images,
-  BearHouse_lockLine,
   BearHouse_objects,
-  BearHouse_padlock,
   BearHouse_pillLeft,
   BearHouse_pillWidth,
+  BearHouse_room,
   BearHouse_sources,
-  BearHouse_tap,
   BearHouse_wallColor,
   IBearHouseObject,
   IBearHouseObjectId,
   IBearHouseSources,
-  IBearHouseTier,
 } from "../src/models/bearHouse";
 import { FoodLog_dayKey, FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
-import { HouseFrame_canvas, HouseFrame_oldTop } from "../src/models/houseFrame";
-import { Notes_empty, Notes_new, Notes_save } from "../src/models/notes";
+import { HouseFrame_canvas } from "../src/models/houseFrame";
 import { Weight_build } from "../src/models/weight";
 import { IHistoryRecord, IStats } from "../src/types";
 
@@ -31,30 +30,22 @@ const hourMs = 3600000;
 const dayMs = 24 * hourMs;
 const now = new Date(2026, 9, 26, 12).getTime();
 const today = FoodLog_dayKey(new Date(now));
-const tiers: IBearHouseTier[] = ["trailer", "apartment", "loft", "mansion", "spaceship", "moon", "mars"];
-const dayZeroOpen: IBearHouseObjectId[] = [
+const cabinObjects: IBearHouseObjectId[] = [
   "whiteboard",
   "door",
   "bowl",
   "bed",
-  "notebook",
-  "tv",
-  "passport",
   "scale",
+  "calendar",
   "phone",
+  "mirror",
 ];
 
-const empty: IBearHouseSources = {
-  kcal: 0,
-  kcalTarget: 0,
-  hasNoteToday: false,
-  streak: 0,
-  friendCount: 0,
-  pendingRequests: 0,
-  honeyEarned: 0,
-  badgeCount: 0,
-  isOffline: true,
-};
+const empty: IBearHouseSources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+
+function cabin(sources: IBearHouseSources = empty, seen?: ReadonlySet<IBearHouseObjectId>): IBearHouseObject[] {
+  return BearHouse_objects("cabin", sources, seen);
+}
 
 function byId(objects: IBearHouseObject[], id: IBearHouseObjectId): IBearHouseObject {
   return objects.find((o) => o.id === id)!;
@@ -96,172 +87,173 @@ function stats(weights: { at: number; kg: number }[]): IStats {
 }
 
 describe("BearHouse", () => {
-  it("opens exactly the nine day-0 objects and locks every later one at 0 active days", () => {
-    const objects = BearHouse_objects("trailer", 0, empty, undefined);
-    const open = objects.filter((o) => o.lock == null).map((o) => o.id);
-    expect(open).to.have.members(dayZeroOpen);
-    expect(open).to.have.length(9);
-    for (const object of objects.filter((o) => !dayZeroOpen.includes(o.id))) {
-      expect(object.lock, object.id).to.not.equal(undefined);
-      expect(object.lock!.toGo).to.equal(object.lock!.atDays);
+  it("draws exactly the eight cabin objects, all there from day 0", () => {
+    const objects = cabin();
+    expect(objects.map((o) => o.id)).to.have.members(cabinObjects);
+    expect(objects).to.have.length(8);
+    for (const object of objects) {
+      expect(object, object.id).to.not.have.property("lock");
     }
   });
 
   it("gives every object a label and a target", () => {
-    for (const object of BearHouse_objects("trailer", 0, empty, undefined)) {
-      expect(object.label, object.id).to.not.equal("");
-      expect(object.target.kind, object.id).to.be.a("string");
-    }
-  });
-
-  it("draws no pill on a day-0 room that has a weight, a friend and a note, except the passport", () => {
-    const objects = BearHouse_objects(
-      "trailer",
-      0,
-      { ...empty, weight: "72.4", friendCount: 1, hasNoteToday: true },
-      undefined
-    );
-    expect(objects.filter((o) => o.pill != null).map((o) => o.id)).to.deep.equal(["passport"]);
-  });
-
-  it("draws exactly the three empty-state pills on an empty day-0 room", () => {
-    const objects = BearHouse_objects("trailer", 0, empty, undefined);
-    expect(objects.filter((o) => o.pill != null).map((o) => [o.id, o.pill])).to.deep.equal([
-      ["tv", "No friends yet"],
-      ["passport", "Stamp your first city"],
-      ["scale", "Weigh in"],
-    ]);
-  });
-
-  it("labels and targets the day-0 room like the picked mockup", () => {
-    const objects = BearHouse_objects("trailer", 0, empty, undefined);
-    const summary = Object.fromEntries(objects.map((o) => [o.id, [o.label, o.target.kind]]));
-    expect(summary).to.deep.include({
+    const summary = Object.fromEntries(cabin().map((o) => [o.id, [o.label, o.target.kind]]));
+    expect(summary).to.deep.equal({
       whiteboard: ["To-do", "plus"],
       door: ["Gym", "door"],
       bowl: ["Food", "journal"],
       bed: ["Bed", "bearPanel"],
-      notebook: ["Journal", "journal"],
-      tv: ["TV", "addFriend"],
-      passport: ["Passport", "line"],
       scale: ["Scale", "screen"],
       calendar: ["Calendar", "monthCalendar"],
-      boombox: ["Music", "screen"],
       phone: ["Phone", "phone"],
-      honey: ["Honey", "honey"],
-      shelf: ["Trophies", "screen"],
-      wardrobe: ["Wardrobe", "honey"],
       mirror: ["Mirror", "screen"],
     });
   });
 
-  it("opens each arrival on its day and counts the days left before it", () => {
-    const at = (days: number): IBearHouseObject[] => BearHouse_objects("trailer", days, empty, undefined);
-    expect(byId(at(2), "calendar").lock).to.deep.equal({ atDays: 3, toGo: 1 });
-    expect(byId(at(3), "calendar").lock).to.equal(undefined);
-    expect(byId(at(0), "phone").lock).to.equal(undefined);
-    expect(byId(at(13), "honey").lock).to.deep.equal({ atDays: 14, toGo: 1 });
-    expect(byId(at(30), "shelf").lock).to.equal(undefined);
-    expect(byId(at(30), "wardrobe").lock).to.equal(undefined);
-    expect(byId(at(99), "mirror").lock).to.deep.equal({ atDays: 100, toGo: 1 });
-    expect(at(100).every((o) => o.lock == null)).to.equal(true);
-    expect(BearHouse_lockLine({ atDays: 3, toGo: 2 })).to.equal("Opens at 3 active days · 2 to go");
+  it("draws only the Weigh in pill on an empty day, and none once there is a weight", () => {
+    expect(
+      cabin()
+        .filter((o) => o.pill != null)
+        .map((o) => [o.id, o.pill])
+    ).to.deep.equal([["scale", "Weigh in"]]);
+    expect(cabin({ ...empty, weight: "72.4" }).filter((o) => o.pill != null)).to.deep.equal([]);
   });
 
-  it("drops the padlocked object's state overlay and keeps it on open ones", () => {
-    const sources = { ...empty, streak: 4, pendingRequests: 2 };
-    expect(byId(BearHouse_objects("trailer", 0, sources, undefined), "calendar").overlay).to.equal(undefined);
-    expect(byId(BearHouse_objects("trailer", 7, sources, undefined), "calendar").overlay?.text).to.equal("4");
-    expect(byId(BearHouse_objects("trailer", 0, sources, undefined), "phone").overlay?.text).to.equal("2");
+  it("paints the door into the room and opens the running workout from it", () => {
+    const idle = byId(cabin(), "door");
+    expect(idle.image).to.equal(undefined);
+    expect(idle.isPainted).to.equal(true);
+    expect(idle.label).to.equal(BearHouse_doorLabel.gym);
+    expect(idle.pill).to.equal(undefined);
+    expect(idle.rect).to.deep.equal([20, 896, 250, 1592]);
+    const running = byId(cabin({ ...empty, hasWorkout: true }), "door");
+    expect(running.label).to.equal("Back to workout");
+    expect(running.pill).to.equal("Back to workout");
+    expect(running.target).to.deep.equal({ kind: "door" });
   });
 
-  it("draws the music boombox only in the offline build", () => {
-    const ids = (isOffline: boolean): IBearHouseObjectId[] =>
-      BearHouse_objects("trailer", 0, { ...empty, isOffline }, undefined).map((o) => o.id);
-    expect(ids(true)).to.include("boombox");
-    expect(ids(false)).to.not.include("boombox");
+  it("keeps the whiteboard in the room picture, with no sprite and no tap area of its own", () => {
+    const board = byId(cabin(), "whiteboard");
+    expect(board.image).to.equal(undefined);
+    expect(board.isPainted).to.equal(false);
+    expect(board.rect).to.deep.equal([32, 190, 992, 650]);
   });
 
-  it("fills the bowl by the share of the kcal target", () => {
-    const bowl = (kcal: number, kcalTarget: number): string | undefined =>
-      byId(BearHouse_objects("trailer", 0, { ...empty, kcal, kcalTarget }, undefined), "bowl").image;
-    expect(bowl(0, 2800)).to.equal("/images/bear/house/bowl-empty.webp");
-    expect(bowl(699, 2800)).to.equal("/images/bear/house/bowl-empty.webp");
-    expect(bowl(700, 2800)).to.equal("/images/bear/house/bowl-half.webp");
-    expect(bowl(2100, 2800)).to.equal("/images/bear/house/bowl-half.webp");
-    expect(bowl(2101, 2800)).to.equal("/images/bear/house/bowl-full.webp");
-    expect(bowl(500, 0)).to.equal("/images/bear/house/bowl-full.webp");
+  it("shows the streak on the calendar, the weight on the scale and the requests on the phone", () => {
+    const objects = cabin({ ...empty, streak: 4, pendingRequests: 2, weight: "72.4" });
+    expect(byId(objects, "calendar").overlay?.text).to.equal("4");
+    expect(byId(objects, "phone").overlay?.text).to.equal("2");
+    expect(byId(objects, "scale").overlay?.text).to.equal("72.4");
+    expect(byId(cabin(), "calendar").overlay).to.equal(undefined);
+    expect(byId(cabin(), "phone").overlay).to.equal(undefined);
   });
 
-  it("switches the TV from Add a friend to the feed once there is a friend", () => {
-    const tv = (friendCount: number): IBearHouseObject =>
-      byId(BearHouse_objects("trailer", 0, { ...empty, friendCount }, undefined), "tv");
-    expect(tv(0).pill).to.equal("No friends yet");
-    expect(tv(0).target).to.deep.equal({ kind: "addFriend" });
-    expect(tv(1).pill).to.equal(undefined);
-    expect(tv(1).target).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
-    expect(tv(1).overlay?.kind).to.equal("tv");
-  });
-
-  it("shows the latest weight on the scale and asks for a weigh-in without one", () => {
-    const scale = (weight?: string): IBearHouseObject =>
-      byId(BearHouse_objects("trailer", 0, { ...empty, weight }, undefined), "scale");
-    expect(scale().pill).to.equal("Weigh in");
-    expect(scale().overlay).to.equal(undefined);
-    expect(scale("72.4").pill).to.equal(undefined);
-    expect(scale("72.4").overlay?.text).to.equal("72.4");
-  });
-
-  it("picks the TV, bed, honey jar and shelf art from the tier and the counts", () => {
-    const image = (tier: IBearHouseTier, id: IBearHouseObjectId, sources = empty): string | undefined =>
-      byId(BearHouse_objects(tier, 1000, sources, undefined), id).image;
-    expect(image("apartment", "tv")).to.equal("/images/bear/house/tv-crt.webp");
-    expect(image("loft", "tv")).to.equal("/images/bear/house/tv-flat-small.webp");
-    expect(image("mansion", "tv")).to.equal("/images/bear/house/tv-flat-big.webp");
-    expect(image("mars", "tv")).to.equal("/images/bear/house/tv-hologram.webp");
-    expect(image("loft", "bed")).to.equal("/images/bear/house/bed-small.webp");
-    expect(image("mansion", "bed")).to.equal("/images/bear/house/bed-big.webp");
-    expect(image("trailer", "honey", { ...empty, honeyEarned: 49 })).to.equal("/images/bear/house/honey-jar-half.webp");
-    expect(image("trailer", "honey", { ...empty, honeyEarned: 50 })).to.equal("/images/bear/house/honey-jar-full.webp");
-    expect(image("trailer", "shelf", { ...empty, badgeCount: 9 })).to.equal(
-      "/images/bear/house/trophy-shelf-some.webp"
+  it("picks one of five bowl files by the share of the kcal target", () => {
+    const bowl = (kcal: number, kcalTarget: number): string => BearHouse_bowlImage({ ...empty, kcal, kcalTarget });
+    expect(bowl(0, 2800)).to.equal("bowl-empty");
+    expect(bowl(279, 2800)).to.equal("bowl-empty");
+    expect(bowl(280, 2800)).to.equal("bowl-quarter");
+    expect(bowl(1119, 2800)).to.equal("bowl-quarter");
+    expect(bowl(1120, 2800)).to.equal("bowl-half");
+    expect(bowl(1819, 2800)).to.equal("bowl-half");
+    expect(bowl(1820, 2800)).to.equal("bowl-three-quarter");
+    expect(bowl(2519, 2800)).to.equal("bowl-three-quarter");
+    expect(bowl(2520, 2800)).to.equal("bowl-full");
+    expect(bowl(500, 0)).to.equal("bowl-full");
+    expect(byId(cabin({ ...empty, kcal: 1500, kcalTarget: 2800 }), "bowl").image).to.equal(
+      "/images/bear/house/bowl-half.webp"
     );
-    expect(image("trailer", "shelf", { ...empty, badgeCount: 10 })).to.equal(
-      "/images/bear/house/trophy-shelf-full.webp"
-    );
-    expect(image("trailer", "door")).to.equal("/images/bear/house/door-home-trailer.webp");
-    expect(image("moon", "door")).to.equal("/images/bear/house/door-home-space.webp");
   });
 
-  it("marks open objects new only when the seen flags are kept", () => {
-    expect(BearHouse_objects("trailer", 0, empty, undefined).some((o) => o.isNew)).to.equal(false);
-    const seen = new Set<IBearHouseObjectId>(dayZeroOpen);
-    const objects = BearHouse_objects("trailer", 3, empty, seen);
-    expect(objects.filter((o) => o.isNew).map((o) => o.id)).to.deep.equal(["calendar"]);
-    expect(byId(objects, "calendar").pill).to.equal("New");
+  it("draws the bed and the phone from their own files, with no tier to pick from", () => {
+    expect(byId(cabin(), "bed").image).to.equal("/images/bear/house/bed.webp");
+    expect(byId(cabin(), "phone").image).to.equal("/images/bear/house/phone.webp");
   });
 
-  it("keeps every drawn object inside its room and standing on its slot", () => {
-    for (const tier of tiers) {
-      for (const object of BearHouse_objects(tier, 1000, { ...empty, friendCount: 1 }, undefined)) {
-        const [x1, y1, x2, y2] = object.rect;
-        expect(x1, `${tier} ${object.id}`).to.be.at.least(0);
-        expect(y1).to.be.at.least(0);
-        expect(x2).to.be.at.most(1024);
-        expect(y2).to.be.at.most(HouseFrame_canvas.height);
-        expect(y1, `${tier} ${object.id} sits in the old picture`).to.be.at.least(HouseFrame_oldTop);
-        expect(x2 - x1).to.be.above(0);
-      }
+  it("marks objects new only when the seen flags are kept, and never the whiteboard", () => {
+    expect(cabin().some((o) => o.isNew)).to.equal(false);
+    const seen = new Set<IBearHouseObjectId>(cabinObjects.filter((id) => id !== "mirror"));
+    const objects = cabin(empty, seen);
+    expect(objects.filter((o) => o.isNew).map((o) => o.id)).to.deep.equal(["mirror"]);
+    expect(byId(objects, "mirror").pill).to.equal("New");
+    expect(byId(cabin(empty, new Set()), "whiteboard").isNew).to.equal(false);
+  });
+
+  it("puts the calendar, mirror and door behind the bear, and the rest in front", () => {
+    const layers = Object.fromEntries(cabin().map((o) => [o.id, o.layer]));
+    expect(layers).to.deep.equal({
+      whiteboard: "front",
+      door: "back",
+      bowl: "front",
+      bed: "front",
+      scale: "front",
+      calendar: "back",
+      phone: "front",
+      mirror: "back",
+    });
+  });
+
+  it("lays the phone on the bed and draws it after the bed", () => {
+    const objects = cabin();
+    const bed = byId(objects, "bed").rect;
+    const phone = byId(objects, "phone").rect;
+    expect(phone[0]).to.be.at.least(bed[0]);
+    expect(phone[2]).to.be.at.most(bed[2]);
+    expect(phone[1]).to.be.at.least(bed[1]);
+    expect(phone[3]).to.be.at.most(bed[3]);
+    expect(objects.indexOf(byId(objects, "phone"))).to.be.above(objects.indexOf(byId(objects, "bed")));
+  });
+
+  it("keeps every object inside the canvas, and the bowl and the scale whole above row 2222", () => {
+    for (const object of cabin()) {
+      const [x1, y1, x2, y2] = object.rect;
+      expect(x1, object.id).to.be.at.least(0);
+      expect(y1, object.id).to.be.at.least(0);
+      expect(x2, object.id).to.be.at.most(1024);
+      expect(y2, object.id).to.be.at.most(HouseFrame_canvas.height);
+      expect(x2 - x1, object.id).to.be.above(0);
     }
-    const exit = BearHouse_gymExit("/images/bear/gyms/garage.webp");
-    expect(exit.image).to.equal("/images/bear/house/door-exit-gym.webp");
-    expect(BearHouse_gymExit("/images/bear/gyms/moon.webp").image).to.equal("/images/bear/house/door-exit-space.webp");
+    expect(byId(cabin(), "bowl").rect[3]).to.be.at.most(2222);
+    expect(byId(cabin(), "scale").rect[3]).to.be.at.most(2222);
   });
 
-  it("gives every room and every gym a wall colour", () => {
-    for (const tier of tiers) {
-      expect(BearHouse_wallColor(tier), tier).to.match(/^#[0-9a-f]{6}$/);
+  it("stands each sprite on its slot and keeps its own shape", () => {
+    const slots: Record<string, number[]> = {
+      calendar: [65, 700, 217, 867],
+      mirror: [767, 907, 995, 1417],
+      bed: [700, 1556, 1024, 2246],
+      phone: [856, 1661, 982, 1741],
+      bowl: [37, 1975, 370, 2190],
+      scale: [454, 2002, 843, 2190],
+    };
+    for (const [id, slot] of Object.entries(slots)) {
+      const rect = byId(cabin(), id as IBearHouseObjectId).rect;
+      expect(rect[0], id).to.be.at.least(slot[0] - 0.1);
+      expect(rect[1], id).to.be.at.least(slot[1] - 0.1);
+      expect(rect[2], id).to.be.at.most(slot[2] + 0.1);
+      expect(rect[3], id).to.equal(slot[3]);
     }
+  });
+
+  it("grows the phone's tap area to 44 points at every phone width", () => {
+    for (const width of [343, 390, 430]) {
+      const box = BearHouse_box(byId(cabin(), "phone").rect, width / 1024);
+      const slop = BearHouse_hitSlop(box);
+      expect(box.width + slop.left + slop.right, `${width} wide`).to.be.at.least(44);
+      expect(box.height + slop.top + slop.bottom, `${width} high`).to.be.at.least(44);
+    }
+  });
+
+  it("gives the room the cabin wall, the whiteboard and the bear's foot line", () => {
+    expect(BearHouse_wallColor("cabin")).to.equal("#EBD2C0");
+    expect(BearHouse_room("cabin")).to.equal("/images/bear/house/room-cabin.webp");
+    expect(BearHouse_art.canvas).to.deep.equal({ width: 1024, height: 2304 });
+    expect(BearHouse_art.board).to.deep.equal([32, 190, 992, 650]);
+    expect(BearHouse_art.foot).to.deep.equal({ x: 512, y: 1620 });
+    expect(BearHouse_art.inkBottom).to.equal(650);
+  });
+
+  it("gives every gym a wall colour and keeps the gym exit door", () => {
     const gyms = fs
       .readdirSync(path.join(__dirname, "..", "images", "bear", "gyms"))
       .filter((f) => f.endsWith(".webp"));
@@ -270,6 +262,8 @@ describe("BearHouse", () => {
       expect(BearHouse_gymWallColor(`/images/bear/gyms/${gym}`), gym).to.match(/^#[0-9a-f]{6}$/);
     }
     expect(BearHouse_gymWallColor("/images/bear/gyms/garage.webp")).to.equal("#532b11");
+    expect(BearHouse_gymExit("/images/bear/gyms/garage.webp").image).to.equal("/images/bear/house/door-exit-gym.webp");
+    expect(BearHouse_gymExit("/images/bear/gyms/moon.webp").image).to.equal("/images/bear/house/door-exit-space.webp");
   });
 
   it("ships every image the house draws", () => {
@@ -278,53 +272,29 @@ describe("BearHouse", () => {
     }
   });
 
-  it("counts active days from counted workouts, food entries and weigh-ins, once per day", () => {
-    const yesterday = now - dayMs;
-    const days = BearHouse_activeDays({
-      workouts: [{ record: record(now - 3 * dayMs), countedKg: 1000 }],
-      foodLog: { entries: [food(today, 500), food(today, 300), food(FoodLog_dayKey(new Date(yesterday)), 200)] },
-      stats: stats([
-        { at: yesterday, kg: 70 },
-        { at: now - 5 * dayMs, kg: 70 },
-      ]),
-    });
-    expect(days).to.equal(4);
-  });
-
-  it("builds the sources from today's food, notes, weight and streak", () => {
+  it("builds the sources from today's food, weight, streak and the running workout", () => {
     const base = FoodLog_empty();
     const foodLog = { ...base, entries: [food(today, 900)], goals: { ...base.goals, calories: { min: 0, max: 2800 } } };
-    const note = { ...Notes_new("n1", today, now), body: "Felt strong" };
     const sources = BearHouse_sources({
-      workouts: [],
+      workouts: [{ record: record(now - 3 * dayMs), countedKg: 1000 }],
       foodLog,
       stats: stats([{ at: now - hourMs, kg: 72.4 }]),
-      notes: Notes_save(Notes_empty(), note, now),
       units: "kg",
-      friendCount: 0,
-      pendingRequests: 0,
-      honeyEarned: 10,
-      badgeCount: 1,
-      isOffline: false,
+      pendingRequests: 1,
+      hasWorkout: true,
       now,
     });
-    expect(sources).to.deep.include({ kcal: 900, kcalTarget: 2800, hasNoteToday: true, weight: "72.4", streak: 1 });
-  });
-
-  it("answers a padlocked object and the passport with a line and opens the rest", () => {
-    const objects = BearHouse_objects("trailer", 1, empty, undefined);
-    expect(BearHouse_tap(byId(objects, "calendar"))).to.deep.equal({
-      kind: "note",
-      text: "Opens at 3 active days · 2 to go",
+    expect(sources).to.deep.equal({
+      kcal: 900,
+      kcalTarget: 2800,
+      weight: "72.4",
+      streak: 1,
+      pendingRequests: 1,
+      hasWorkout: true,
     });
-    expect(BearHouse_tap(byId(objects, "passport"))).to.deep.equal({ kind: "note", text: "City stamps come soon" });
-    expect(BearHouse_tap(byId(objects, "bed"))).to.deep.equal({ kind: "open", target: { kind: "bearPanel" } });
   });
 
-  it("sizes the padlock, the hit area and the pill position", () => {
-    const [x1, y1, x2, y2] = BearHouse_padlock([0, 0, 200, 200]);
-    expect(y2 - y1).to.equal(96);
-    expect((x1 + x2) / 2).to.equal(100);
+  it("sizes the hit area and the pill position", () => {
     expect(BearHouse_hitSlop({ left: 0, top: 0, width: 30, height: 50 })).to.deep.equal({
       top: 0,
       bottom: 0,

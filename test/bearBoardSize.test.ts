@@ -1,16 +1,27 @@
 import "mocha";
 import { expect } from "chai";
 import { BearBoardSize_layout, BearBoardSize_maxLines, BearBoardSize_rowRatio } from "../src/models/bearBoardSize";
-import { BearScene_gymArt, BearScene_layout } from "../src/models/bearScene";
+import { BearHouse_art } from "../src/models/bearHouse";
+import { BearScene_layout } from "../src/models/bearScene";
 
 function boardAt(width: number): ReturnType<typeof BearBoardSize_layout> {
-  return BearBoardSize_layout(BearScene_layout(width, BearScene_gymArt).board);
+  return BearBoardSize_layout(BearScene_layout(width, BearHouse_art).board);
 }
 
 describe("BearBoardSize_layout", () => {
+  it("counts the whole cabin whiteboard as ink, so its ink ends at the board's bottom edge", () => {
+    const [, top, , bottom] = BearHouse_art.board;
+    expect(BearHouse_art.inkBottom).to.equal(bottom);
+    const scene = BearScene_layout(1024, BearHouse_art);
+    const size = boardAt(1024);
+    expect(size.pad + size.height).to.be.closeTo(bottom - top, 1e-9);
+    expect(scene.board.height).to.equal(bottom - top);
+  });
+
   [375, 393, 440].forEach((width) => {
-    it(`fits eight rows inside the ink area at ${width} pt`, () => {
+    it(`fits nine rows inside the board at ${width} pt`, () => {
       const size = boardAt(width);
+      expect(BearBoardSize_maxLines).to.equal(9);
       expect(size.lineSize * BearBoardSize_rowRatio * BearBoardSize_maxLines).to.be.at.most(size.height);
     });
   });

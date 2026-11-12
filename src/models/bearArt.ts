@@ -1,6 +1,7 @@
 import { IBearMood } from "./bear";
 import { IBearFur, IBearLine } from "./bearStoreData";
 import { BearTier_all, BearTier_byLevel, IBearLevel } from "./bearTier";
+import type { IPostBear } from "./workoutPost";
 
 function tierForLevel(level: number): IBearLevel {
   return BearTier_byLevel(level) ?? BearTier_all("male")[0];
@@ -13,6 +14,10 @@ export function BearArt_sprite(_line: IBearLine, _fur: IBearFur, level: number, 
   const tier = tierForLevel(level);
   const name = mood === "normal" ? `level-${String(tier.level).padStart(2, "0")}` : `mood-${tier.size}-${mood}`;
   return `/images/bear/${BearArt_folder}/${name}.webp`;
+}
+
+export function BearArt_postSprite(bear: IPostBear | undefined): string {
+  return BearArt_sprite(bear?.line ?? "male", bear?.fur ?? "brown", bear?.level ?? 1, bear?.mood ?? "normal");
 }
 
 export const BearArt_liftingSizes: readonly IBearLevel["size"][] = [];

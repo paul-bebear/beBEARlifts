@@ -7,6 +7,7 @@ import {
   BearArt_furColor,
   BearArt_gym,
   BearArt_liftingSizes,
+  BearArt_postSprite,
   BearArt_sprite,
 } from "../src/models/bearArt";
 import { IBearFur, IBearLine } from "../src/models/bearStoreData";
@@ -53,6 +54,16 @@ describe("BearArt", () => {
     const listed = ["medium", "space"] as const;
     expect(BearArt_cardSprite("female", "brown", 5, listed)).to.equal("/images/bear/brown/lift-medium.webp");
     expect(BearArt_cardSprite("male", "brown", 8, listed)).to.equal("/images/bear/brown/mood-big-pumped.webp");
+  });
+
+  it("draws a friend's post bear from the brown folder, and a post with no bear as a cub", () => {
+    expect(BearArt_postSprite(undefined)).to.equal("/images/bear/brown/level-01.webp");
+    expect(BearArt_postSprite({ level: 4, mood: "hungry", countedKg: 1, line: "female" })).to.equal(
+      "/images/bear/brown/mood-medium-hungry.webp"
+    );
+    expect(BearArt_postSprite({ level: 1, mood: "normal", countedKg: 1, fur: "polar" })).to.equal(
+      "/images/bear/brown/level-01.webp"
+    );
   });
 
   it("maps every gym band, including each space level", () => {

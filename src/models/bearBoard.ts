@@ -1,9 +1,12 @@
 import { IHistoryRecord, IStats, IStatsWeightValue, IUnit } from "../types";
+import { IBearCountedWorkout } from "./bearGrowth";
 import { BearText_kg } from "./bearText";
 import { IBearTierProgress } from "./bearTier";
 import {
   DailyChecklist_build,
+  DailyChecklist_doneDays,
   DailyChecklist_goalTarget,
+  DailyChecklist_streak,
   DailyChecklist_weighInDayName,
   IChecklistItem,
 } from "./dailyChecklist";
@@ -13,10 +16,10 @@ import { IProgramGoal, ProgramGoal_formatWeight, ProgramGoal_kindLabel } from ".
 import { TodayPill_text } from "./todayPill";
 import { Weight_convertTo } from "./weight";
 
-export type IBearBoardTarget = "plus" | "goal" | "bear";
+export type IBearBoardTarget = "plus" | "goal" | "bear" | "streak";
 
 export interface IBearBoardLine {
-  id: "train" | "food" | "weighIn" | "goal" | "goalSince" | "weight" | "level" | "lifted";
+  id: "train" | "food" | "weighIn" | "streak" | "goal" | "goalSince" | "weight" | "level" | "lifted";
   text: string;
   isDone: boolean;
   target: IBearBoardTarget;
@@ -32,6 +35,7 @@ export interface IBearBoardInput {
   startWeekFromMonday?: boolean;
   level: IBearTierProgress;
   countedKg: number;
+  workouts: readonly IBearCountedWorkout[];
   now: number;
 }
 
@@ -85,6 +89,14 @@ export function BearBoard_latestWeight(stats: IStats, units: IUnit, now: number)
   const entries = weightEntries(stats, now);
   const latest = entries[entries.length - 1];
   return latest == null ? undefined : oneDecimal(Weight_convertTo(latest.value, units).value);
+}
+
+function streakLine(input: IBearBoardInput, today: string): IBearBoardLine {
+  const days = DailyChecklist_streak(
+    DailyChecklist_doneDays({ workouts: input.workouts, foodLog: input.foodLog }),
+    today
+  );
+  return { id: "streak", text: `Streak · ${days} ${days === 1 ? "day" : "days"}`, isDone: false, target: "streak" };
 }
 
 function weightLine(input: IBearBoardInput): IBearBoardLine {
@@ -154,6 +166,7 @@ export function BearBoard_lines(input: IBearBoardInput): IBearBoardLine[] {
       `Weigh-in · ${DailyChecklist_weighInDayName(input.goal?.startedAt, input.startWeekFromMonday)}`,
       item("weight")
     ),
+    streakLine(input, today),
     ...BearBoard_goalLines(input.goal, input.units, input.now),
     weightLine(input),
     { id: "level", text: levelText(input.level), isDone: false, target: "bear" },

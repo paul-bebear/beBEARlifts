@@ -19,7 +19,6 @@ export type IReportsHubAction =
   | { kind: "addFriend" }
   | { kind: "newNote"; day: string }
   | { kind: "seasons" }
-  | { kind: "honey" }
   | { kind: "checkIn" };
 
 export interface IReportsHubRow {
@@ -69,13 +68,6 @@ export function ReportsHub_rows(input: IReportsHubInput): IReportsHubRow[] {
       subtitle: "Share your code or enter one",
       feature: "friends",
       action: { kind: "addFriend" },
-    },
-    {
-      id: "honey",
-      title: "Honey",
-      subtitle: "Your balance and how you earned it",
-      feature: "honey",
-      action: { kind: "honey" },
     },
     screenRow("badges", "Badges and streak", "Every badge and your day streak", "badges", "streak"),
     {
@@ -144,7 +136,6 @@ export type IReportsHubEffect =
   | { type: "pushScreen"; screen: IReportsHubScreen; opts?: { tab: ITab } }
   | { type: "modal"; name: "addFriendModal" | "foodGoalsModal" }
   | { type: "noteModal"; day: string }
-  | { type: "openHoney" }
   | { type: "toggleCheckIn" };
 
 export function ReportsHub_actionEffect(row: IReportsHubRow): IReportsHubEffect {
@@ -158,8 +149,6 @@ export function ReportsHub_actionEffect(row: IReportsHubRow): IReportsHubEffect 
       return { type: "noteModal", day: action.day };
     case "seasons":
       return { type: "modal", name: "foodGoalsModal" };
-    case "honey":
-      return { type: "openHoney" };
     case "checkIn":
       return { type: "toggleCheckIn" };
   }

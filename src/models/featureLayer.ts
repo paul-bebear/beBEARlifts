@@ -10,7 +10,6 @@ export type IFeature =
   | "graphs"
   | "exerciseStats"
   | "friends"
-  | "honey"
   | "badges"
   | "notes"
   | "checkIn"
@@ -38,7 +37,6 @@ const layers: Record<IFeature, IFeatureLayer> = {
   graphs: 2,
   exerciseStats: 2,
   friends: 3,
-  honey: 3,
   badges: 3,
   notes: 3,
   checkIn: 3,

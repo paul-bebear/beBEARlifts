@@ -15,7 +15,6 @@ import {
   BearHouse_gymWallColor,
   BearHouse_objects,
   BearHouse_wallColor,
-  IBearHouseTier,
 } from "../src/models/bearHouse";
 import { BearScene_gymArt, IBearRect } from "../src/models/bearScene";
 
@@ -23,18 +22,7 @@ const iPhone = { width: 393, height: 852 };
 const iPhoneInsets = { top: 59, bottom: 34 };
 const iPhoneSe = { width: 375, height: 667 };
 const iPad = { width: 820, height: 1180 };
-const tiers: IBearHouseTier[] = ["trailer", "apartment", "loft", "mansion", "spaceship", "moon", "mars"];
-const sources = {
-  kcal: 0,
-  kcalTarget: 0,
-  hasNoteToday: false,
-  streak: 0,
-  friendCount: 1,
-  pendingRequests: 0,
-  honeyEarned: 0,
-  badgeCount: 0,
-  isOffline: true,
-};
+const sources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
 
 function inside(rect: IBearRect, safe: IBearRect): boolean {
   return rect[0] >= safe[0] && rect[1] >= safe[1] && rect[2] <= safe[2] && rect[3] <= safe[3];
@@ -92,21 +80,32 @@ describe("HouseFrame", () => {
 
   it("keeps every object, the board, the bear's feet and the gym exit inside the safe area on an iPhone", () => {
     const safe = HouseFrame_safeRect(HouseFrame_fit(iPhone), iPhone, iPhoneInsets);
-    for (const tier of tiers) {
-      for (const object of BearHouse_objects(tier, 1000, sources, undefined)) {
-        expect(inside(object.rect, safe), `${tier} ${object.id}`).to.equal(true);
-        if (object.id !== "whiteboard") {
-          expect(object.pillAt.y, `${tier} ${object.id} pill`).to.be.within(safe[1], safe[3]);
-        }
+    for (const object of BearHouse_objects("cabin", sources, undefined)) {
+      if (object.id === "whiteboard") {
+        continue;
       }
+      if (object.id === "bed") {
+        expect(object.rect[1], "bed top").to.be.within(safe[1], safe[3]);
+      } else {
+        expect(inside(object.rect, safe), `cabin ${object.id}`).to.equal(true);
+      }
+      expect(object.pillAt.y, `cabin ${object.id} pill`).to.be.within(safe[1], safe[3]);
     }
-    expect(inside(BearHouse_art.board, safe)).to.equal(true);
+    expect(BearHouse_art.board[3]).to.be.within(safe[1], safe[3]);
     expect(BearHouse_art.foot.y).to.be.within(safe[1], safe[3]);
     expect(inside(BearHouse_gymExit("/images/bear/gyms/garage.webp").rect, safe)).to.equal(true);
     expect(inside(HouseFrame_gymArt.board, safe)).to.equal(true);
   });
 
+  it("keeps the cabin whiteboard on the screen of an iPhone 16 Pro, with its ink below the top edge", () => {
+    const fit = HouseFrame_fit(iPhone);
+    const firstRow = -fit.top / fit.scale;
+    expect(BearHouse_art.board[1]).to.be.above(firstRow);
+    expect(BearHouse_art.board[3]).to.be.at.most((iPhone.height - fit.top) / fit.scale);
+  });
+
   it("picks the status bar text that reads best on the ceiling", () => {
+    expect(HouseFrame_statusBarStyle(BearHouse_wallColor("cabin"))).to.equal("dark-content");
     expect(HouseFrame_statusBarStyle(BearHouse_wallColor("trailer"))).to.equal("light-content");
     expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/trailer-park.webp"))).to.equal(
       "dark-content"
@@ -123,7 +122,5 @@ describe("HouseFrame", () => {
       inkBottom: 1041,
     });
     expect(BearHouse_art.canvas).to.deep.equal(HouseFrame_canvas);
-    expect(BearHouse_art.board).to.deep.equal(HouseFrame_gymArt.board);
-    expect(BearHouse_art.inkBottom).to.equal(HouseFrame_gymArt.inkBottom);
   });
 });
