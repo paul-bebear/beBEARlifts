@@ -7,6 +7,8 @@ import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch } from "../navigation/TrackedStateContext";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodSummaryCard } from "./foodSummaryCard";
+import { FoodSummaryPager } from "./foodSummaryPager";
+import { IMicroTotals } from "../models/foodMicroTotals";
 import { FoodMealCard } from "./foodMealCard";
 
 interface IProps {
@@ -14,10 +16,11 @@ interface IProps {
   canAdd: boolean;
   leadsWithSummary?: boolean;
   showsEmptyMeals?: boolean;
+  micros?: IMicroTotals;
 }
 
 export function JournalMeals(props: IProps): JSX.Element {
-  const { day, canAdd, leadsWithSummary, showsEmptyMeals } = props;
+  const { day, canAdd, leadsWithSummary, showsEmptyMeals, micros } = props;
   const dispatch = useTrackedDispatch();
   const log = useFoodLog();
   const [mode, setMode] = useState<IFoodProgressMode>("consumed");
@@ -25,15 +28,24 @@ export function JournalMeals(props: IProps): JSX.Element {
   const openAdd = (meal: IFoodMeal): void => {
     dispatch(Thunk_pushScreen("foodAdd", { day, meal }));
   };
-  const summary = (
-    <FoodSummaryCard
-      totals={FoodLog_dayTotals(log, day)}
-      goals={log.goals}
-      mode={mode}
-      onModeChange={setMode}
-      isOpenAtStart={leadsWithSummary}
-    />
-  );
+  const summary =
+    micros != null ? (
+      <FoodSummaryPager
+        totals={FoodLog_dayTotals(log, day)}
+        goals={log.goals}
+        micros={micros}
+        mode={mode}
+        onModeChange={setMode}
+      />
+    ) : (
+      <FoodSummaryCard
+        totals={FoodLog_dayTotals(log, day)}
+        goals={log.goals}
+        mode={mode}
+        onModeChange={setMode}
+        isOpenAtStart={leadsWithSummary}
+      />
+    );
 
   return (
     <View testID="journal-meals" data-testid="journal-meals">
