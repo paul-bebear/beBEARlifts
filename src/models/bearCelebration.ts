@@ -1,4 +1,4 @@
-import { IBearLine, IBearStoreData } from "./bearStoreData";
+import { IBearStoreData } from "./bearStoreData";
 import { BearTier_for, IBearTierSet } from "./bearTier";
 
 export interface IBearLevelUp {
@@ -38,8 +38,4 @@ export function BearCelebration_step(
     return { store };
   }
   return { store: { ...store, celebratedLevel: reached }, levelUp: { from: store.celebratedLevel, to: reached } };
-}
-
-export function BearCelebration_setLine(store: IBearStoreData, line: IBearLine): IBearStoreData {
-  return store.line === line ? store : { ...store, line };
 }
