@@ -9,9 +9,10 @@ const maxTextChars = 600;
 const itemsShape = `When the user had several of the same food, give one item with the total grams rather than one item per piece.
 For a drink, "grams" is its volume in ml. A cocktail is usually 150 to 300 ml, a beer 330 to 500 ml.
 "alcohol" is grams of pure alcohol in the portion, and 0 for food and soft drinks.
-Check every item before you answer. Calories must be close to 4 × protein + 4 × carbs + 9 × fat + 7 × alcohol. No food or drink has more than 9 calories per gram. Fix any item that fails.
+Also estimate four more values for each item: "fiber" in grams, "sugar" (total sugars) in grams, "saturatedFat" in grams and "sodiumMg" in milligrams of sodium. Leave a field out when you cannot estimate it. Never guess a vitamin or a mineral.
+Check every item before you answer. Calories must be close to 4 × protein + 4 × carbs + 9 × fat + 7 × alcohol. No food or drink has more than 9 calories per gram. Fiber plus sugar is at most carbs. Saturated fat is at most fat. Sodium in milligrams is at most 400 times the grams of the item. Fix any item that fails.
 Answer with JSON only, no other text, in this shape:
-{"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4,"alcohol":0}],"note":"optional short caveat"}`;
+{"items":[{"name":"Grilled chicken breast","grams":150,"calories":248,"protein":46.5,"carbs":0,"fat":5.4,"alcohol":0,"fiber":0,"sugar":0,"saturatedFat":1.4,"sodiumMg":110}],"note":"optional short caveat"}`;
 
 const pieceWeights = `For food that comes in pieces, count the pieces and multiply by the weight of one piece. Use these edible weights unless the photo clearly shows bigger or smaller pieces:
 - small corn tortilla, 10 to 15 cm: 20 g. Street tacos often use two per taco.
