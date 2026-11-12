@@ -186,7 +186,7 @@ describe("JournalExport", () => {
     }
     expect(JournalExport_output(data, "week", "csv")).to.include({
       kind: "file",
-      filename: `bebear-journal-${today}.csv`,
+      filename: `bebear-days-${today}.csv`,
     });
     expect(JournalExport_csv(sources(), "all").split("\r\n")).to.have.length(2);
   });

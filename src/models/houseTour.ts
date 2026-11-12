@@ -13,7 +13,7 @@ export const HouseTour_lines: ReadonlyArray<readonly [IBearHouseObjectId, string
   ["bowl", "Your food. Tap it to see what you ate and to log a meal."],
   ["scale", "Weigh in here."],
   ["mirror", "Your progress photos. Tap it to see how you changed."],
-  ["calendar", "Today's date. Tap it to open your Journal."],
+  ["calendar", "Your days. Tap the date to see your workouts, meals and weigh-ins."],
   ["bed", "Your bear rests here. Tap it to see how it feels."],
   ["phone", "Your phone. Friends, music, photos, stats, badges and settings."],
 ];

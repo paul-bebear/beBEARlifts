@@ -269,7 +269,7 @@ export function ScreenJournal(): JSX.Element {
     setMonth(MonthCalendar_monthOf(next));
   };
 
-  useNavOptions({ navTitle: "Journal" });
+  useNavOptions({ navTitle: "Calendar" });
 
   const allWorkouts = (
     <LinkText testID="journal-all-workouts" text="All workouts" onPress={() => dispatch(Thunk_pushScreen("history"))} />

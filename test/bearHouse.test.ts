@@ -91,7 +91,7 @@ describe("BearHouse", () => {
     expect(byId(cabin(), "scale").target).to.deep.equal({ kind: "screen", screen: "stats", tab: "graphs" });
   });
 
-  it("opens the food day page from the bowl and the Journal from the wall calendar, both in the food tab", () => {
+  it("opens the food day page from the bowl and the Calendar page from the wall calendar, both in the food tab", () => {
     expect(byId(cabin(), "bowl").target).to.deep.equal({ kind: "screen", screen: "foodDay", tab: "food" });
     expect(byId(cabin(), "calendar").target).to.deep.equal({ kind: "screen", screen: "food", tab: "food" });
   });

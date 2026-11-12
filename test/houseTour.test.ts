@@ -26,7 +26,8 @@ describe("HouseTour_steps", () => {
     const line = (id: IBearHouseObjectId): string => HouseTour_lines.find(([lineId]) => lineId === id)![1];
     expect(line("mirror")).to.contain("progress photos");
     expect(line("bowl")).to.contain("log a meal");
-    expect(line("calendar")).to.contain("Journal");
+    expect(line("calendar")).to.contain("workouts, meals and weigh-ins");
+    expect(line("calendar")).to.not.contain("Journal");
     expect(line("calendar")).to.not.contain("streak");
   });
 
