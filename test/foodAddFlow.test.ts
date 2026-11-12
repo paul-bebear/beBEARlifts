@@ -1,6 +1,8 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  FoodAddFlow_aiMicros,
+  FoodAddFlow_maxSodiumMgPerGram,
   FoodAddFlow_entriesFromPhoto,
   FoodAddFlow_entryFromPick,
   FoodAddFlow_initialGrams,
@@ -109,6 +111,97 @@ describe("FoodAddFlow photo", () => {
       isSelected: true,
     });
     expect(FoodAddFlow_setPhotoGrams(fixed, 0, 480)[0].nutrients.calories).to.equal(480);
+  });
+
+  it("maps the four AI micro fields into the item's micros, with sodiumMg under sodium", () => {
+    const [choice] = FoodAddFlow_photoChoices([
+      {
+        name: "Toast",
+        grams: 60,
+        nutrients: { calories: 160, protein: 5, carbs: 30, fat: 2 },
+        fiber: 2.5,
+        sugar: 3,
+        saturatedFat: 0.5,
+        sodiumMg: 300,
+      },
+    ]);
+    expect(choice).to.deep.equal({
+      name: "Toast",
+      grams: 60,
+      nutrients: {
+        calories: 160,
+        protein: 5,
+        carbs: 30,
+        fat: 2,
+        micros: { fiber: 2.5, sugar: 3, saturatedFat: 0.5, sodium: 300 },
+      },
+      isSelected: true,
+    });
+  });
+
+  it("leaves the micros out for an item with no micro fields, so they stay unknown", () => {
+    expect(FoodAddFlow_photoChoices(items)[0].nutrients).to.not.have.property("micros");
+    expect(FoodAddFlow_photoChoices(items)[0]).to.not.have.any.keys("fiber", "sugar", "saturatedFat", "sodiumMg");
+  });
+
+  it("drops fiber and sugar when together they are more than the carbs, and keeps them at the limit", () => {
+    const item = { name: "Bar", grams: 40, nutrients: { calories: 150, protein: 3, carbs: 20, fat: 6 } };
+    expect(FoodAddFlow_aiMicros({ ...item, fiber: 8, sugar: 13 })).to.equal(undefined);
+    expect(FoodAddFlow_aiMicros({ ...item, fiber: 8, sugar: 12 })).to.deep.equal({ fiber: 8, sugar: 12 });
+    expect(FoodAddFlow_aiMicros({ ...item, fiber: 25 })).to.equal(undefined);
+    expect(FoodAddFlow_aiMicros({ ...item, fiber: 4, saturatedFat: 2 })).to.deep.equal({ fiber: 4, saturatedFat: 2 });
+  });
+
+  it("drops saturated fat when it is more than the fat", () => {
+    const item = { name: "Cheese", grams: 30, nutrients: { calories: 120, protein: 7, carbs: 0.5, fat: 10 } };
+    expect(FoodAddFlow_aiMicros({ ...item, saturatedFat: 10.1 })).to.equal(undefined);
+    expect(FoodAddFlow_aiMicros({ ...item, saturatedFat: 6.2 })).to.deep.equal({ saturatedFat: 6.2 });
+  });
+
+  it("drops sodium above 400 mg per gram, the sodium of pure salt", () => {
+    const item = { name: "Soup", grams: 250, nutrients: { calories: 90, protein: 4, carbs: 12, fat: 3 } };
+    expect(FoodAddFlow_maxSodiumMgPerGram).to.equal(400);
+    expect(FoodAddFlow_aiMicros({ ...item, sodiumMg: 100001 })).to.equal(undefined);
+    expect(FoodAddFlow_aiMicros({ ...item, sodiumMg: 100000 })).to.deep.equal({ sodium: 100000 });
+    expect(FoodAddFlow_aiMicros({ ...item, sodiumMg: 900 })).to.deep.equal({ sodium: 900 });
+  });
+
+  it("drops only the value that broke a limit and keeps the others", () => {
+    const item = {
+      name: "Chips",
+      grams: 30,
+      nutrients: { calories: 160, protein: 2, carbs: 15, fat: 10 },
+      fiber: 1.5,
+      sugar: 0.2,
+      saturatedFat: 12,
+      sodiumMg: 180,
+    };
+    expect(FoodAddFlow_aiMicros(item)).to.deep.equal({ fiber: 1.5, sugar: 0.2, sodium: 180 });
+  });
+
+  it("keeps a real zero from the AI", () => {
+    const item = { name: "Cola", grams: 330, nutrients: { calories: 139, protein: 0, carbs: 35, fat: 0 }, fiber: 0 };
+    expect(FoodAddFlow_aiMicros({ ...item, sugar: 35, saturatedFat: 0 })).to.deep.equal({
+      fiber: 0,
+      sugar: 35,
+      saturatedFat: 0,
+    });
+  });
+
+  it("scales the micros when the grams of a choice change, and logs them in the entry", () => {
+    const [choice] = FoodAddFlow_photoChoices([
+      {
+        name: "Rice",
+        grams: 200,
+        nutrients: { calories: 260, protein: 5, carbs: 56, fat: 0.6 },
+        fiber: 1.2,
+        sodiumMg: 10,
+      },
+    ]);
+    const [bigger] = FoodAddFlow_setPhotoGrams([choice], 0, 300);
+    expect(bigger.nutrients.micros).to.deep.equal({ fiber: 1.8, sodium: 15 });
+    const [entry] = FoodAddFlow_entriesFromPhoto([bigger], { day: "2026-10-19", meal: "lunch" }, () => "x", 1);
+    expect(entry.nutrients.micros).to.deep.equal({ fiber: 1.8, sodium: 15 });
   });
 
   it("logs only the selected items", () => {

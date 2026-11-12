@@ -56,6 +56,55 @@ describe("UsdaFoodData_parseBarcodeResponse", () => {
     expect(product?.servingGrams).to.equal(undefined);
   });
 
+  it("reads the micros a branded food reports, in the units USDA names", () => {
+    const foodNutrients = [
+      { nutrientNumber: "208", unitName: "KCAL", value: 379 },
+      { nutrientNumber: "291", unitName: "G", value: 10.3 },
+      { nutrientNumber: "269", unitName: "G", value: 5.13 },
+      { nutrientNumber: "606", unitName: "G", value: 1.28 },
+      { nutrientNumber: "307", unitName: "MG", value: 487 },
+      { nutrientNumber: "306", unitName: "MG", value: 641 },
+      { nutrientNumber: "320", unitName: "UG", value: 193 },
+      { nutrientNumber: "417", unitName: "UG", value: 500 },
+      { nutrientNumber: "418", unitName: "UG", value: 7.5 },
+    ];
+    const product = UsdaFoodData_parseBarcodeResponse({ foods: [food({ foodNutrients })] }, "8801073113428");
+    expect(product?.per100g.micros).to.deep.equal({
+      fiber: 10.3,
+      sugar: 5.13,
+      saturatedFat: 1.28,
+      sodium: 487,
+      potassium: 641,
+      vitaminA: 193,
+      folate: 500,
+      vitaminB12: 7.5,
+    });
+  });
+
+  it("leaves a micro the food does not report out, and keeps a reported zero", () => {
+    const foodNutrients = [
+      { nutrientNumber: "208", unitName: "KCAL", value: 379 },
+      { nutrientNumber: "601", unitName: "MG", value: 0 },
+    ];
+    const product = UsdaFoodData_parseBarcodeResponse({ foods: [food({ foodNutrients })] }, "8801073113428");
+    expect(product?.per100g.micros).to.deep.equal({ cholesterol: 0 });
+    const bare = UsdaFoodData_parseBarcodeResponse(
+      { foods: [food({ foodNutrients: [{ nutrientNumber: "208", unitName: "KCAL", value: 379 }] })] },
+      "8801073113428"
+    );
+    expect(bare?.per100g).to.not.have.property("micros");
+  });
+
+  it("does not use the IU values of vitamin A and D, which are not the µg rows", () => {
+    const foodNutrients = [
+      { nutrientNumber: "208", unitName: "KCAL", value: 379 },
+      { nutrientNumber: "318", unitName: "IU", value: 3750 },
+      { nutrientNumber: "324", unitName: "IU", value: 205 },
+    ];
+    const product = UsdaFoodData_parseBarcodeResponse({ foods: [food({ foodNutrients })] }, "8801073113428");
+    expect(product?.per100g).to.not.have.property("micros");
+  });
+
   it("returns nothing for a food without energy or a broken response", () => {
     expect(UsdaFoodData_parseBarcodeResponse({ foods: [food({ foodNutrients: [] })] }, "8801073113428")).to.equal(
       undefined

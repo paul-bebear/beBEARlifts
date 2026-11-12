@@ -6,6 +6,10 @@ export interface IFoodPhotoItem {
   grams: number;
   nutrients: INutrients;
   isAmountSuspect?: boolean;
+  fiber?: number;
+  sugar?: number;
+  saturatedFat?: number;
+  sodiumMg?: number;
 }
 
 export interface IFoodPhotoEstimate {
@@ -56,6 +60,12 @@ function parseItem(raw: unknown): IFoodPhotoItem | undefined {
   const item: IFoodPhotoItem = { name, grams: Math.round(grams), nutrients: { calories, ...macros } };
   if (calories > fatCaloriesPerGram * grams) {
     item.isAmountSuspect = true;
+  }
+  for (const field of ["fiber", "sugar", "saturatedFat", "sodiumMg"] as const) {
+    const value = num(r[field]);
+    if (value != null) {
+      item[field] = value;
+    }
   }
   return item;
 }

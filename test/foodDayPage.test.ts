@@ -60,6 +60,22 @@ describe("FoodDayPage_build", () => {
     expect(page.totals).to.include({ calories: 800, protein: 40, carbs: 20, fat: 10 });
   });
 
+  it("carries the day's micro totals, worded for today or for another day", () => {
+    const withFiber = log([
+      {
+        ...entry("a", today, "lunch", 500, 30),
+        nutrients: { calories: 500, protein: 30, carbs: 10, fat: 5, micros: { fiber: 4 } },
+      },
+      entry("b", today, "dinner", 300, 10),
+    ]);
+    const page = FoodDayPage_build(withFiber, today, now);
+    expect(page.micros.rows.find((r) => r.key === "fiber")?.coverageText).to.equal("1 of 2 foods");
+    expect(page.micros.hasData).to.equal(true);
+    const empty = FoodDayPage_build(log([]), today, now);
+    expect(empty.micros.emptyText).to.contain("today's");
+    expect(FoodDayPage_build(log([]), "2026-10-20", now).micros.emptyText).to.not.contain("today");
+  });
+
   it("marks a past day as not today and still lists its four meals", () => {
     const page = FoodDayPage_build(log([]), "2026-10-20", now);
     expect(page.isToday).to.equal(false);

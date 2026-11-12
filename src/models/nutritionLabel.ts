@@ -1,4 +1,5 @@
 import { FoodLog_scale, INutrients } from "./foodLog";
+import { FoodMicros_fromCoreFields, IMicros } from "./foodMicros";
 import { JsonInText_extract } from "./jsonInText";
 import { IFoodProduct } from "./openFoodFacts";
 
@@ -18,6 +19,10 @@ export interface INutritionLabelForm {
   protein: string;
   carbs: string;
   fat: string;
+  fiber: string;
+  sugar: string;
+  saturatedFat: string;
+  sodium: string;
 }
 
 export type INutritionLabelResult = { ok: true; product: IFoodProduct } | { ok: false; error: string };
@@ -41,7 +46,9 @@ function parseNutrients(raw: unknown): INutrients | undefined {
   if (calories == null) {
     return undefined;
   }
-  return { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
+  const nutrients = { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
+  const micros = FoodMicros_fromCoreFields(r);
+  return micros != null ? { ...nutrients, micros } : nutrients;
 }
 
 export function NutritionLabel_parse(text: string): INutritionLabel | undefined {
@@ -86,6 +93,10 @@ export function NutritionLabel_toForm(label: INutritionLabel | undefined): INutr
     protein: formNumber(label?.perServing.protein),
     carbs: formNumber(label?.perServing.carbs),
     fat: formNumber(label?.perServing.fat),
+    fiber: formNumber(label?.perServing.micros?.fiber),
+    sugar: formNumber(label?.perServing.micros?.sugar),
+    saturatedFat: formNumber(label?.perServing.micros?.saturatedFat),
+    sodium: formNumber(label?.perServing.micros?.sodium),
   };
 }
 
@@ -102,12 +113,30 @@ function parseNumber(text: string): number | undefined {
 function per100gFromServing(perServing: INutrients, grams: number): INutrients {
   const k = 100 / grams;
   const round1 = (n: number): number => Math.round(n * k * 10) / 10;
-  return {
+  const result: INutrients = {
     calories: round1(perServing.calories),
     protein: round1(perServing.protein),
     carbs: round1(perServing.carbs),
     fat: round1(perServing.fat),
   };
+  const micros = perServing.micros;
+  if (micros == null) {
+    return result;
+  }
+  const scaled: IMicros = {};
+  for (const [key, value] of Object.entries(micros) as [keyof IMicros, number][]) {
+    scaled[key] = Math.round(value * k * 1000) / 1000;
+  }
+  return { ...result, micros: scaled };
+}
+
+function formMicros(form: INutritionLabelForm): IMicros | undefined {
+  return FoodMicros_fromCoreFields({
+    fiber: parseNumber(form.fiber),
+    sugar: parseNumber(form.sugar),
+    saturatedFat: parseNumber(form.saturatedFat),
+    sodiumMg: parseNumber(form.sodium),
+  });
 }
 
 export function NutritionLabel_toProduct(form: INutritionLabelForm, barcode?: string): INutritionLabelResult {
@@ -129,6 +158,10 @@ export function NutritionLabel_toProduct(form: INutritionLabelForm, barcode?: st
     carbs: parseNumber(form.carbs) ?? 0,
     fat: parseNumber(form.fat) ?? 0,
   };
+  const micros = formMicros(form);
+  if (micros != null) {
+    perServing.micros = micros;
+  }
   const product: IFoodProduct = { name, per100g: per100gFromServing(perServing, grams), servingGrams: grams };
   const brand = form.brand.trim();
   if (brand !== "") {

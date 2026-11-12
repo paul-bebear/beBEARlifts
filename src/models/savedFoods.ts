@@ -1,4 +1,5 @@
 import { INutrients } from "./foodLog";
+import { FoodMicros_parse } from "./foodMicros";
 import { IFoodProduct } from "./openFoodFacts";
 
 const maxSavedFoods = 500;
@@ -45,7 +46,9 @@ function parseNutrients(raw: unknown): INutrients | undefined {
   if (calories == null) {
     return undefined;
   }
-  return { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
+  const nutrients = { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
+  const micros = FoodMicros_parse(r.micros);
+  return micros != null ? { ...nutrients, micros } : nutrients;
 }
 
 function parseProduct(raw: unknown): IFoodProduct | undefined {

@@ -139,12 +139,14 @@ export function RecipeCatalog_basketKey(recipe: ICatalogRecipe): string {
 // The serving count is applied here once. The pick has no grams, so the basket logs these numbers as they are.
 export function RecipeCatalog_servingPick(recipe: ICatalogRecipe, servings: number): IFoodPick {
   const one = RecipeCatalog_perServing(recipe);
+  const printed = recipe.printedPerServing;
   const nutrients = FoodLog_sum([
     {
       calories: one.calories * servings,
       protein: one.protein * servings,
       carbs: one.carbs * servings,
       fat: one.fat * servings,
+      micros: { fiber: printed.fiber * servings, sugar: printed.sugar * servings, sodium: printed.sodiumMg * servings },
     },
   ]);
   return {

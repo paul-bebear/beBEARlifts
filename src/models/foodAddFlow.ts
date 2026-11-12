@@ -1,4 +1,5 @@
 import { FoodLog_scale, IFoodEntry, IFoodMeal, IFoodRecent, IFoodSource, INutrients } from "./foodLog";
+import { FoodMicros_fromCoreFields, IMicros } from "./foodMicros";
 import { IFoodPhotoItem } from "./foodPhotoEstimate";
 import { IFoodProduct } from "./openFoodFacts";
 
@@ -95,8 +96,38 @@ export function FoodAddFlow_entryFromPick(
   return entry;
 }
 
+export const FoodAddFlow_maxSodiumMgPerGram = 400;
+
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+export function FoodAddFlow_aiMicros(item: IFoodPhotoItem): IMicros | undefined {
+  const { carbs, fat } = item.nutrients;
+  const fiberAndSugarFit = round1((item.fiber ?? 0) + (item.sugar ?? 0)) <= carbs;
+  return FoodMicros_fromCoreFields({
+    fiber: fiberAndSugarFit ? item.fiber : undefined,
+    sugar: fiberAndSugarFit ? item.sugar : undefined,
+    saturatedFat: item.saturatedFat != null && item.saturatedFat <= fat ? item.saturatedFat : undefined,
+    sodiumMg:
+      item.sodiumMg != null && item.sodiumMg <= FoodAddFlow_maxSodiumMgPerGram * item.grams ? item.sodiumMg : undefined,
+  });
+}
+
 export function FoodAddFlow_photoChoices(items: IFoodPhotoItem[]): IFoodPhotoChoice[] {
-  return items.map((item) => ({ ...item, isSelected: true }));
+  return items.map((item) => {
+    const micros = FoodAddFlow_aiMicros(item);
+    const choice: IFoodPhotoChoice = {
+      name: item.name,
+      grams: item.grams,
+      nutrients: micros != null ? { ...item.nutrients, micros } : item.nutrients,
+      isSelected: true,
+    };
+    if (item.isAmountSuspect != null) {
+      choice.isAmountSuspect = item.isAmountSuspect;
+    }
+    return choice;
+  });
 }
 
 export function FoodAddFlow_setPhotoGrams(

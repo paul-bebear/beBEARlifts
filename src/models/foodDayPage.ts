@@ -10,6 +10,7 @@ import {
   IFoodMeal,
   INutrients,
 } from "./foodLog";
+import { FoodMicroTotals_forDay, IMicroTotals } from "./foodMicroTotals";
 
 export interface IFoodDayMeal {
   meal: IFoodMeal;
@@ -24,6 +25,7 @@ export interface IFoodDayPage {
   nextDay: string;
   totals: INutrients;
   meals: IFoodDayMeal[];
+  micros: IMicroTotals;
 }
 
 export function FoodDayPage_meals(log: IFoodLog, day: string, includesEmpty: boolean): IFoodDayMeal[] {
@@ -43,5 +45,6 @@ export function FoodDayPage_build(log: IFoodLog, day: string, now: number): IFoo
     nextDay: FoodLog_shiftDay(day, 1),
     totals: FoodLog_dayTotals(log, day),
     meals: FoodDayPage_meals(log, day, true),
+    micros: FoodMicroTotals_forDay(log, day, today),
   };
 }

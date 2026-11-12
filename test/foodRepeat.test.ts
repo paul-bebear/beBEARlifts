@@ -117,6 +117,19 @@ describe("FoodRepeat", () => {
     expect(FoodRepeat_details(entry("a", { grams: undefined }))).to.equal("1 serving · 150 kcal");
   });
 
+  it("copies the micros of an entry with the entry, and adds none to an entry that had none", () => {
+    const log = {
+      ...FoodLog_empty(),
+      entries: [
+        entry("a", { nutrients: { calories: 150, protein: 25, carbs: 8, fat: 2, micros: { fiber: 1.5, sodium: 90 } } }),
+        entry("b"),
+      ],
+    };
+    const result = FoodRepeat_copy(log, { ...initial, selected: ["a", "b"] }, now, () => "n");
+    expect(result.entries[2].nutrients.micros).to.deep.equal({ fiber: 1.5, sodium: 90 });
+    expect(result.entries[3].nutrients).to.not.have.property("micros");
+  });
+
   it("copies only selected source entries with new ids and today's time", () => {
     const log = {
       ...FoodLog_empty(),

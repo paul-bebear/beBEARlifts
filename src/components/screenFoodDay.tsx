@@ -82,7 +82,7 @@ export function ScreenFoodDay(): JSX.Element {
           onToday={() => setDay(FoodLog_dayKey(new Date()))}
           onNext={() => setDay(page.nextDay)}
         />
-        <JournalMeals day={day} canAdd leadsWithSummary showsEmptyMeals />
+        <JournalMeals day={day} canAdd leadsWithSummary showsEmptyMeals micros={page.micros} />
         <View className="px-4 pb-8">
           <Button name="food-log-meal" testID="food-log-meal" kind="pill" onPress={logMeal}>
             Log a meal

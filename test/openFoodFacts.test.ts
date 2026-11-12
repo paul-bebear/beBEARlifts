@@ -1,5 +1,6 @@
 import "mocha";
 import { expect } from "chai";
+import type { INutrients } from "../src/models/foodLog";
 import {
   OpenFoodFacts_firstBarcode,
   OpenFoodFacts_isBarcode,
@@ -126,6 +127,66 @@ describe("OpenFoodFacts_isBarcode", () => {
     expect(OpenFoodFacts_isBarcode("3017624010701")).to.equal(true);
     expect(OpenFoodFacts_isBarcode("1234567")).to.equal(false);
     expect(OpenFoodFacts_isBarcode("greek yogurt")).to.equal(false);
+  });
+});
+
+describe("OpenFoodFacts micros", () => {
+  function parse(nutriments: Record<string, unknown>, extra: Record<string, unknown> = {}): INutrients | undefined {
+    return OpenFoodFacts_parseBarcodeResponse({
+      status: 1,
+      product: { code: "1", product_name: "Cereal", nutriments: { "energy-kcal_100g": 380, ...nutriments }, ...extra },
+    })?.per100g;
+  }
+
+  it("converts grams to the unit of each row: mg times 1,000 and µg times 1,000,000", () => {
+    const per100g = parse({
+      fiber_100g: 3.4,
+      sugars_100g: 56.3,
+      "saturated-fat_100g": 10.6,
+      sodium_100g: 0.041,
+      potassium_100g: 0.4,
+      "vitamin-a_100g": 0.00006,
+      "vitamin-b12_100g": 0.0000021,
+      "vitamin-pp_100g": 0.0133,
+    });
+    expect(per100g?.micros).to.deep.equal({
+      fiber: 3.4,
+      sugar: 56.3,
+      saturatedFat: 10.6,
+      sodium: 41,
+      potassium: 400,
+      vitaminA: 60,
+      vitaminB12: 2.1,
+      niacin: 13.3,
+    });
+  });
+
+  it("leaves a missing micro out, so it stays unknown and is not zero", () => {
+    const per100g = parse({ fiber_100g: 3.4 });
+    expect(per100g?.micros).to.deep.equal({ fiber: 3.4 });
+    expect(per100g?.micros).to.not.have.property("sugar");
+    expect(parse({})).to.not.have.property("micros");
+  });
+
+  it("keeps a printed zero as a value", () => {
+    expect(parse({ sugars_100g: 0 })?.micros).to.deep.equal({ sugar: 0 });
+  });
+
+  it("uses salt divided by 2.5 only when sodium is missing", () => {
+    expect(parse({ salt_100g: 1.25 })?.micros).to.deep.equal({ sodium: 500 });
+    expect(parse({ salt_100g: 1.25, sodium_100g: 0.3 })?.micros).to.deep.equal({ sodium: 300 });
+  });
+
+  it("converts per-serving values to per 100 g with the serving size", () => {
+    const per100g = parse(
+      { "energy-kcal_serving": 190, fiber_serving: 2, potassium_serving: 0.1 },
+      { serving_quantity: "50", nutriments: { "energy-kcal_serving": 190, fiber_serving: 2, potassium_serving: 0.1 } }
+    );
+    expect(per100g?.micros).to.deep.equal({ fiber: 4, potassium: 200 });
+  });
+
+  it("ignores a negative or non-numeric value", () => {
+    expect(parse({ fiber_100g: -1, sugars_100g: "n/a", iron_100g: "0.002" })?.micros).to.deep.equal({ iron: 2 });
   });
 });
 

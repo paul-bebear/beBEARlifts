@@ -35,6 +35,14 @@ describe("MealPost", () => {
       description: "Rice and chicken",
       macros: { kcal: 640, protein: 43, carbs: 60, fat: 0 },
     });
+    const withMicros = MealPost_build(id, "Rice", {
+      calories: 100,
+      protein: 2,
+      carbs: 20,
+      fat: 1,
+      micros: { fiber: 1, sodium: 300 },
+    });
+    expect(withMicros?.macros).to.deep.equal({ kcal: 100, protein: 2, carbs: 20, fat: 1 });
     expect(MealPost_build(id, "   ", { calories: 1, protein: 1, carbs: 1, fat: 1 })).to.equal(undefined);
     expect(MealPost_build("not-a-uuid", "Rice", { calories: 1, protein: 1, carbs: 1, fat: 1 })).to.equal(undefined);
     expect(

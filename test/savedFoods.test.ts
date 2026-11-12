@@ -53,6 +53,18 @@ describe("SavedFoods_parse", () => {
     expect(parsed[1].barcode).to.equal(undefined);
   });
 
+  it("keeps the micros of a saved food through a parse, and drops the keys that are not in the table", () => {
+    const withMicros: IFoodProduct = { ...buldak, per100g: { ...buldak.per100g, micros: { fiber: 2.1, sodium: 864 } } };
+    const parsed = SavedFoods_parse([
+      {
+        ...withMicros,
+        per100g: { ...withMicros.per100g, micros: { ...withMicros.per100g.micros, bogus: 3, sugar: -1 } },
+      },
+    ]);
+    expect(parsed[0].per100g.micros).to.deep.equal({ fiber: 2.1, sodium: 864 });
+    expect(SavedFoods_parse([buldak])[0].per100g).to.not.have.property("micros");
+  });
+
   it("is empty when the stored log predates saved foods", () => {
     expect(FoodLog_parse({ version: 1, entries: [], recents: [] }).savedFoods).to.deep.equal([]);
   });

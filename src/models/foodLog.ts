@@ -1,3 +1,4 @@
+import { FoodMicros_keys, FoodMicros_parse, IMicroKey, IMicros } from "./foodMicros";
 import type { IFoodProduct } from "./openFoodFacts";
 import { SavedFoods_parse, SavedFoods_save } from "./savedFoods";
 import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } from "./foodTargets";
@@ -13,6 +14,7 @@ export interface INutrients {
   protein: number;
   carbs: number;
   fat: number;
+  micros?: IMicros;
 }
 
 export interface IFoodEntry {
@@ -113,7 +115,7 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && isFinite(value);
 }
 
-function parseNutrients(raw: unknown): INutrients | undefined {
+export function FoodLog_parseNutrients(raw: unknown): INutrients | undefined {
   if (raw == null || typeof raw !== "object") {
     return undefined;
   }
@@ -121,12 +123,14 @@ function parseNutrients(raw: unknown): INutrients | undefined {
   if (![r.calories, r.protein, r.carbs, r.fat].every(isFiniteNumber)) {
     return undefined;
   }
-  return {
+  const nutrients: INutrients = {
     calories: r.calories as number,
     protein: r.protein as number,
     carbs: r.carbs as number,
     fat: r.fat as number,
   };
+  const micros = FoodMicros_parse(r.micros);
+  return micros != null ? { ...nutrients, micros } : nutrients;
 }
 
 function parseRange(raw: unknown, fallback: IFoodRange): IFoodRange {
@@ -145,7 +149,7 @@ function parseEntry(raw: unknown): IFoodEntry | undefined {
     return undefined;
   }
   const r = raw as Record<string, unknown>;
-  const nutrients = parseNutrients(r.nutrients);
+  const nutrients = FoodLog_parseNutrients(r.nutrients);
   if (
     typeof r.id !== "string" ||
     typeof r.day !== "string" ||
@@ -166,7 +170,7 @@ function parseEntry(raw: unknown): IFoodEntry | undefined {
     nutrients,
     createdAt: isFiniteNumber(r.createdAt) ? r.createdAt : 0,
   };
-  const per100g = parseNutrients(r.per100g);
+  const per100g = FoodLog_parseNutrients(r.per100g);
   if (typeof r.brand === "string") {
     result.brand = r.brand;
   }
@@ -293,14 +297,64 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+function round3(n: number): number {
+  return Math.round(n * 1000) / 1000;
+}
+
+function mapMicros(micros: IMicros | undefined, change: (value: number) => number): IMicros | undefined {
+  if (micros == null) {
+    return undefined;
+  }
+  const result: IMicros = {};
+  for (const key of FoodMicros_keys) {
+    const value = micros[key];
+    if (value != null) {
+      result[key] = change(value);
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function withMicros(nutrients: Omit<INutrients, "micros">, micros: IMicros | undefined): INutrients {
+  return micros != null ? { ...nutrients, micros } : nutrients;
+}
+
 export function FoodLog_scale(per100g: INutrients, grams: number): INutrients {
   const k = grams / 100;
-  return {
-    calories: Math.round(per100g.calories * k),
-    protein: round1(per100g.protein * k),
-    carbs: round1(per100g.carbs * k),
-    fat: round1(per100g.fat * k),
-  };
+  return withMicros(
+    {
+      calories: Math.round(per100g.calories * k),
+      protein: round1(per100g.protein * k),
+      carbs: round1(per100g.carbs * k),
+      fat: round1(per100g.fat * k),
+    },
+    mapMicros(per100g.micros, (value) => round3(value * k))
+  );
+}
+
+export function FoodLog_scaleBy(nutrients: INutrients, k: number): INutrients {
+  return withMicros(
+    {
+      calories: nutrients.calories * k,
+      protein: nutrients.protein * k,
+      carbs: nutrients.carbs * k,
+      fat: nutrients.fat * k,
+    },
+    mapMicros(nutrients.micros, (value) => value * k)
+  );
+}
+
+function sumMicros(items: INutrients[]): IMicros | undefined {
+  const totals: Partial<Record<IMicroKey, number>> = {};
+  for (const item of items) {
+    for (const key of FoodMicros_keys) {
+      const value = item.micros?.[key];
+      if (value != null) {
+        totals[key] = (totals[key] ?? 0) + value;
+      }
+    }
+  }
+  return mapMicros(totals, round3);
 }
 
 export function FoodLog_sum(items: INutrients[]): INutrients {
@@ -313,12 +367,15 @@ export function FoodLog_sum(items: INutrients[]): INutrients {
     }),
     FoodLog_zero()
   );
-  return {
-    calories: Math.round(total.calories),
-    protein: round1(total.protein),
-    carbs: round1(total.carbs),
-    fat: round1(total.fat),
-  };
+  return withMicros(
+    {
+      calories: Math.round(total.calories),
+      protein: round1(total.protein),
+      carbs: round1(total.carbs),
+      fat: round1(total.fat),
+    },
+    sumMicros(items)
+  );
 }
 
 export function FoodLog_entriesFor(log: IFoodLog, day: string, meal?: IFoodMeal): IFoodEntry[] {
@@ -399,10 +456,7 @@ export function FoodLog_setGrams(log: IFoodLog, id: string, grams: number): IFoo
         return { ...e, grams, nutrients: FoodLog_scale(e.per100g, grams) };
       }
       if (e.grams != null && e.grams > 0) {
-        const k = grams / e.grams;
-        const n = e.nutrients;
-        const scaled = { calories: n.calories * k, protein: n.protein * k, carbs: n.carbs * k, fat: n.fat * k };
-        return { ...e, grams, nutrients: FoodLog_sum([scaled]) };
+        return { ...e, grams, nutrients: FoodLog_sum([FoodLog_scaleBy(e.nutrients, grams / e.grams)]) };
       }
       return e;
     }),

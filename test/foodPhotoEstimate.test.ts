@@ -17,6 +17,16 @@ describe("FoodPhotoEstimate_parse", () => {
     });
   });
 
+  it("keeps the four micro fields an item has, and leaves out the ones it lacks or that are not numbers", () => {
+    const estimate = FoodPhotoEstimate_parse(
+      '{"items":[{"name":"Toast","grams":60,"calories":160,"protein":5,"carbs":30,"fat":2,"fiber":2.5,"sugar":"3 g","saturatedFat":-1,"sodiumMg":null}]}'
+    );
+    const item = estimate?.items[0];
+    expect(item?.fiber).to.equal(2.5);
+    expect(item?.sugar).to.equal(3);
+    expect(item).to.not.have.any.keys("saturatedFat", "sodiumMg");
+  });
+
   it("reads JSON wrapped in a code fence with text around it", () => {
     const estimate = FoodPhotoEstimate_parse(
       'Here is my estimate:\n```json\n{"items":[{"name":"Rice","grams":200,"calories":260,"protein":5,"carbs":56,"fat":0.6}],"note":"Sauce not counted"}\n```'
