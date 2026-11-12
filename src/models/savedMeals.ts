@@ -1,4 +1,5 @@
-import { FoodLog_sum, IFoodRecipe, IFoodSavedMeal, INutrients } from "./foodLog";
+import { FoodLog_scaleBy, FoodLog_sum, IFoodRecipe, IFoodSavedMeal, INutrients } from "./foodLog";
+import { IMicroKey, IMicros } from "./foodMicros";
 import { FoodAddFlow_pickFromRecent, IFoodPick } from "./foodAddFlow";
 import { FoodBasket_toRecents, IFoodBasketItem } from "./foodBasket";
 
@@ -29,12 +30,22 @@ function round1(n: number): number {
 
 export function Recipes_perServing(recipe: IFoodRecipe): INutrients {
   const total = FoodLog_sum(recipe.ingredients.map((i) => i.nutrients));
-  return {
+  const perServing: INutrients = {
     calories: Math.round(total.calories / recipe.servings),
     protein: round1(total.protein / recipe.servings),
     carbs: round1(total.carbs / recipe.servings),
     fat: round1(total.fat / recipe.servings),
   };
+  const micros = FoodLog_scaleBy(total, 1 / recipe.servings).micros;
+  return micros != null ? { ...perServing, micros: roundMicros(micros) } : perServing;
+}
+
+function roundMicros(micros: IMicros): IMicros {
+  const rounded: IMicros = {};
+  for (const [key, value] of Object.entries(micros) as [IMicroKey, number][]) {
+    rounded[key] = Math.round(value * 1000) / 1000;
+  }
+  return rounded;
 }
 
 // The serving weight is only known when every ingredient has grams. Without it the serving logs as fixed numbers.

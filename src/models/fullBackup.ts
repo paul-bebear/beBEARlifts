@@ -25,7 +25,7 @@ const readme = [
   "Backup of the beBEAR app. Weights use the unit in workouts.settings.units.",
   "workouts.history: one record per finished workout. Each of its entries is an exercise; each set has reps, weight, completedReps, completedWeight, completedRpe (10 minus reps in reserve) and timestamp (ms, when the set was ticked).",
   "workouts.stats: body measurements over time, under weight, length and percentage (body fat). workouts.programs: the training programs, written in BearScript.",
-  "food.entries: food eaten, with calories and macros per entry. food.goals: daily targets. food.profile: height, sex, birth year, activity, goal.",
+  "food.entries: food eaten, with calories and macros per entry. An entry may also have a micros map. fiber, sugar and saturatedFat are in g. sodium, potassium, calcium, iron, magnesium, zinc, phosphorus, cholesterol, vitaminC, vitaminE, thiamin, riboflavin, niacin and vitaminB6 are in mg. vitaminA, vitaminD, vitaminK, folate and vitaminB12 are in µg. A micro the food does not report is left out, and left out means unknown, not zero. food.goals: daily targets. food.profile: height, sex, birth year, activity, goal.",
   "body.scans: gym scale scans (weight, body fat %, muscle mass, body water %, bone mass, visceral fat, BMR, metabolic age), newest first. Masses use each scan's unit.",
   "warmups.plans: saved warmup items and their completion ticks. A workoutId of 0 does not identify a finished workout; do not assume every plan matches a workouts.history id.",
   "reports.reports: the report after each workout: what changed per exercise against the last 4 weeks, the user's answers (onPurpose, feltOff, hurt, mistake, better, same, worse) and the coach's note.",

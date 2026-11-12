@@ -1,4 +1,4 @@
-import { FoodMicros_keys, IMicroKey, IMicros } from "./foodMicros";
+import { FoodMicros_keys, FoodMicros_parse, IMicroKey, IMicros } from "./foodMicros";
 import type { IFoodProduct } from "./openFoodFacts";
 import { SavedFoods_parse, SavedFoods_save } from "./savedFoods";
 import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } from "./foodTargets";
@@ -115,21 +115,6 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && isFinite(value);
 }
 
-export function FoodLog_parseMicros(raw: unknown): IMicros | undefined {
-  if (raw == null || typeof raw !== "object") {
-    return undefined;
-  }
-  const r = raw as Record<string, unknown>;
-  const micros: IMicros = {};
-  for (const key of FoodMicros_keys) {
-    const value = r[key];
-    if (isFiniteNumber(value) && value >= 0) {
-      micros[key] = value;
-    }
-  }
-  return Object.keys(micros).length > 0 ? micros : undefined;
-}
-
 export function FoodLog_parseNutrients(raw: unknown): INutrients | undefined {
   if (raw == null || typeof raw !== "object") {
     return undefined;
@@ -144,7 +129,7 @@ export function FoodLog_parseNutrients(raw: unknown): INutrients | undefined {
     carbs: r.carbs as number,
     fat: r.fat as number,
   };
-  const micros = FoodLog_parseMicros(r.micros);
+  const micros = FoodMicros_parse(r.micros);
   return micros != null ? { ...nutrients, micros } : nutrients;
 }
 

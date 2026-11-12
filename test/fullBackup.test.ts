@@ -184,6 +184,12 @@ describe("FullBackup", () => {
     expect(FullBackup_unwrap(older).notes).to.equal(undefined);
   });
 
+  it("describes the micros map of a food entry and what a missing micro means", () => {
+    const readme = FullBackup_build(parts({}), now).readme;
+    expect(readme).to.contain("micros map");
+    expect(readme).to.contain("left out means unknown, not zero");
+  });
+
   it("carries one Markdown file per calendar day", () => {
     const notes = Notes_save(Notes_empty(), { ...Notes_new("a", "2026-10-19", now), title: "Rest" }, now);
     const backup = FullBackup_build(parts({ notes }), now);

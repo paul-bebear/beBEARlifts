@@ -74,6 +74,21 @@ export function FoodMicros_isKey(key: string): key is IMicroKey {
   return FoodMicros_keys.includes(key as IMicroKey);
 }
 
+export function FoodMicros_parse(raw: unknown): IMicros | undefined {
+  if (raw == null || typeof raw !== "object") {
+    return undefined;
+  }
+  const r = raw as Record<string, unknown>;
+  const micros: IMicros = {};
+  for (const key of FoodMicros_keys) {
+    const value = r[key];
+    if (typeof value === "number" && isFinite(value) && value >= 0) {
+      micros[key] = value;
+    }
+  }
+  return Object.keys(micros).length > 0 ? micros : undefined;
+}
+
 export const FoodMicros_saltPerSodium = 2.5;
 
 const unitPerGram: Record<IMicroUnit, number> = { g: 1, mg: 1000, µg: 1000000 };

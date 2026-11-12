@@ -129,8 +129,41 @@ describe("RecipeCatalog_toUserRecipe", () => {
 describe("RecipeCatalog_servingPick", () => {
   const bowls = RecipeCatalog_find("teriyaki-chicken-rice-bowls")!;
 
-  it("logs one serving's nutrients for one serving", () => {
-    expect(RecipeCatalog_servingPick(bowls, 1).fixed?.nutrients).to.deep.equal(RecipeCatalog_perServing(bowls));
+  it("logs one serving's nutrients for one serving, with the printed fiber, sugar and sodium as micros", () => {
+    const printed = bowls.printedPerServing;
+    expect(RecipeCatalog_servingPick(bowls, 1).fixed?.nutrients).to.deep.equal({
+      ...RecipeCatalog_perServing(bowls),
+      micros: { fiber: printed.fiber, sugar: printed.sugar, sodium: printed.sodiumMg },
+    });
+  });
+
+  it("scales the printed micros by the servings and does not invent saturated fat", () => {
+    const printed = bowls.printedPerServing;
+    const micros = RecipeCatalog_servingPick(bowls, 2).fixed!.nutrients.micros!;
+    expect(micros.fiber).to.equal(printed.fiber * 2);
+    expect(micros.sodium).to.equal(printed.sodiumMg * 2);
+    expect(micros).to.not.have.property("saturatedFat");
+  });
+
+  it("gives a saved recipe's serving no micros when its ingredients have none", () => {
+    expect(Recipes_perServing(RecipeCatalog_toUserRecipe(bowls))).to.not.have.property("micros");
+  });
+
+  it("divides the micros of the ingredients that have them by the servings", () => {
+    const recipe: IFoodRecipe = {
+      id: "r2",
+      name: "Oat bowl",
+      servings: 2,
+      ingredients: [
+        {
+          name: "Oats",
+          source: "barcode",
+          nutrients: { calories: 300, protein: 10, carbs: 54, fat: 6, micros: { fiber: 8, sodium: 10 } },
+        },
+        { name: "Milk", source: "manual", nutrients: { calories: 100, protein: 8, carbs: 12, fat: 2 } },
+      ],
+    };
+    expect(Recipes_perServing(recipe).micros).to.deep.equal({ fiber: 4, sodium: 5 });
   });
 
   it("logs half for half a serving without changing the catalog entry", () => {
