@@ -7,8 +7,6 @@ import { BearFullness_percent } from "./bearFullness";
 import { IFoodLog } from "./foodLog";
 import type { ITab } from "./screen";
 
-export type IBearHouseTier = keyof typeof manifest.rooms;
-
 export type IBearHouseObjectId = "whiteboard" | "door" | "bowl" | "bed" | "scale" | "calendar" | "phone" | "mirror";
 
 export type IBearHouseScreen = "stats" | "progressPhotos" | "food" | "foodDay";
@@ -89,33 +87,30 @@ const calendarGrid: IBearRect = [0.2, 0.3, 0.8, 0.9];
 const phoneBadge: IBearRect = [0.7, -0.04, 1.02, 0.2];
 
 const backLayer: ReadonlySet<IBearHouseObjectId> = new Set(["door", "calendar", "mirror"]);
-const tierOrder = Object.keys(manifest.rooms) as IBearHouseTier[];
-
 export const BearHouse_doorLabel = { gym: "Gym", workout: "Back to workout" } as const;
 
 export function BearHouse_image(name: string): string {
   return `${imageDir}/${name}.webp`;
 }
 
-export function BearHouse_room(tier: IBearHouseTier): string {
-  return BearHouse_image(manifest.rooms[tier].room);
+export const BearHouse_roomKey = "cabin";
+
+export function BearHouse_room(): string {
+  return BearHouse_image(manifest.rooms.cabin.room);
 }
 
 // The colour beside the art on a screen wider than the picture, measured from the picture's top rows.
-export function BearHouse_wallColor(tier: IBearHouseTier): string {
-  return manifest.rooms[tier].wall;
+export function BearHouse_wallColor(): string {
+  return manifest.rooms.cabin.wall;
 }
 
 export function BearHouse_gymWallColor(gymImage: string): string {
   const walls: Record<string, string> = manifest.gymWalls;
   const name = gymImage.replace(/^.*\//, "").replace(/\.webp$/, "");
-  return walls[name] ?? manifest.rooms.trailer.wall;
+  return walls[name] ?? manifest.rooms.cabin.wall;
 }
 
-export const BearHouse_images: readonly string[] = [
-  ...Object.keys(images).map(BearHouse_image),
-  ...tierOrder.map(BearHouse_room),
-];
+export const BearHouse_images: readonly string[] = [...Object.keys(images).map(BearHouse_image), BearHouse_room()];
 
 export function BearHouse_sources(input: IBearHouseSourcesInput): IBearHouseSources {
   return {
@@ -226,12 +221,11 @@ function specs(sources: IBearHouseSources): IObjectSpec[] {
 // Every object is there from day 0. seen holds the objects the user has already met; undefined means the
 // flags are not kept yet. A room without a slot for an object leaves that object out.
 export function BearHouse_objects(
-  houseTier: IBearHouseTier,
   sources: IBearHouseSources,
   seen: ReadonlySet<IBearHouseObjectId> | undefined,
   source: IBearHouseManifest = manifest
 ): IBearHouseObject[] {
-  const slots: Record<string, IManifestSlot> = source.rooms[houseTier].objects;
+  const slots: Record<string, IManifestSlot> = source.rooms[BearHouse_roomKey].objects;
   const present = specs(sources).filter((spec) => spec.id === "whiteboard" || slots[spec.id] != null);
   return present.map((spec) => {
     const isNew = seen != null && spec.id !== "whiteboard" && !seen.has(spec.id);

@@ -4,18 +4,18 @@ import { BearHouse_objects, BearHouse_room, IBearHouseObjectId, IBearHouseSource
 import { HouseTour_canStart, HouseTour_lines, HouseTour_steps } from "../src/models/houseTour";
 
 const sources: IBearHouseSources = { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false };
-const room = BearHouse_room("cabin");
+const room = BearHouse_room();
 const order: IBearHouseObjectId[] = ["whiteboard", "door", "bowl", "scale", "mirror", "calendar", "bed", "phone"];
 
 describe("HouseTour_steps", () => {
   it("gives eight steps in the tour order on day 0", () => {
-    const steps = HouseTour_steps(BearHouse_objects("cabin", sources, undefined), room);
+    const steps = HouseTour_steps(BearHouse_objects(sources, undefined), room);
     expect(steps.map((s) => s.id)).to.deep.equal(order);
     expect(HouseTour_lines.map(([id]) => id)).to.deep.equal(order);
   });
 
   it("uses the object's label as the title and the table's line as the text", () => {
-    const objects = BearHouse_objects("cabin", sources, undefined);
+    const objects = BearHouse_objects(sources, undefined);
     for (const step of HouseTour_steps(objects, room)) {
       expect(step.title).to.equal(objects.find((o) => o.id === step.id)!.label);
       expect(step.line).to.equal(HouseTour_lines.find(([id]) => id === step.id)![1]);
@@ -32,7 +32,7 @@ describe("HouseTour_steps", () => {
   });
 
   it("shows each sprite, and the room picture for the whiteboard and the painted door", () => {
-    const objects = BearHouse_objects("cabin", sources, undefined);
+    const objects = BearHouse_objects(sources, undefined);
     for (const step of HouseTour_steps(objects, room)) {
       const image = objects.find((o) => o.id === step.id)!.image;
       expect(step.image).to.equal(step.id === "whiteboard" || step.id === "door" ? room : image);
@@ -40,7 +40,7 @@ describe("HouseTour_steps", () => {
   });
 
   it("leaves out an object the room has no slot for", () => {
-    const objects = BearHouse_objects("cabin", sources, undefined).filter((o) => o.id !== "mirror");
+    const objects = BearHouse_objects(sources, undefined).filter((o) => o.id !== "mirror");
     expect(HouseTour_steps(objects, room).map((s) => s.id)).to.not.include("mirror");
   });
 });

@@ -22,7 +22,7 @@ const iPhone = { width: 393, height: 852 };
 const iPhoneInsets = { top: 59, bottom: 34 };
 const iPhoneSe = { width: 375, height: 667 };
 const iPad = { width: 820, height: 1180 };
-const sources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+const sources = { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false };
 
 function inside(rect: IBearRect, safe: IBearRect): boolean {
   return rect[0] >= safe[0] && rect[1] >= safe[1] && rect[2] <= safe[2] && rect[3] <= safe[3];
@@ -80,7 +80,7 @@ describe("HouseFrame", () => {
 
   it("keeps every object, the board, the bear's feet and the gym exit inside the safe area on an iPhone", () => {
     const safe = HouseFrame_safeRect(HouseFrame_fit(iPhone), iPhone, iPhoneInsets);
-    for (const object of BearHouse_objects("cabin", sources, undefined)) {
+    for (const object of BearHouse_objects(sources, undefined)) {
       if (object.id === "whiteboard") {
         continue;
       }
@@ -105,8 +105,8 @@ describe("HouseFrame", () => {
   });
 
   it("picks the status bar text that reads best on the ceiling", () => {
-    expect(HouseFrame_statusBarStyle(BearHouse_wallColor("cabin"))).to.equal("dark-content");
-    expect(HouseFrame_statusBarStyle(BearHouse_wallColor("trailer"))).to.equal("light-content");
+    expect(HouseFrame_statusBarStyle(BearHouse_wallColor())).to.equal("dark-content");
+    expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/moon.webp"))).to.equal("light-content");
     expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/trailer-park.webp"))).to.equal(
       "dark-content"
     );

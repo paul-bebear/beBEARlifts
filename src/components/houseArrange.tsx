@@ -4,6 +4,7 @@ import { BearHouse_box, IBearHouseObject } from "../models/bearHouse";
 import {
   HouseArrange_export,
   HouseArrange_reduce,
+  HouseArrange_slots,
   IHouseArrangeAction,
   IHouseArrangeState,
 } from "../models/houseArrange";
@@ -25,14 +26,6 @@ const pickedLayer = 2;
 const dotLayer = 3;
 // react-native-web passes these CSS values through, but the react-native types do not list them.
 const noTouchScroll = { touchAction: "none", userSelect: "none" } as unknown as ViewStyle;
-const pinnedTop = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  zIndex: 9999,
-  paddingTop: "env(safe-area-inset-top)",
-} as unknown as ViewStyle;
 const pinnedBottom = {
   position: "fixed",
   bottom: 0,
@@ -126,37 +119,8 @@ function Button(props: { testID: string; label: string; isDisabled?: boolean; on
   );
 }
 
-function RoomPicker(props: { state: IHouseArrangeState; onChange: (state: IHouseArrangeState) => void }): JSX.Element {
-  const { state } = props;
-  return (
-    <View style={[pinnedTop, noTouchScroll, { backgroundColor: "rgba(17, 24, 39, 0.85)" }]}>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", padding: 6 }}>
-        {Object.keys(state.manifest.rooms).map((room) => (
-          <Pressable
-            key={room}
-            testID={`arrange-room-${room}`}
-            data-testid={`arrange-room-${room}`}
-            onPress={() => props.onChange(HouseArrange_reduce(state, { type: "pickRoom", room }))}
-            style={{
-              margin: 3,
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              borderRadius: 16,
-              backgroundColor: room === state.room ? pickedColor : "#FFFFFF",
-            }}
-          >
-            <Text style={{ color: room === state.room ? "#FFFFFF" : "#111827", fontSize: 13, fontWeight: "600" }}>
-              {room}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
-
 function pickedLine(state: IHouseArrangeState): string {
-  const slot = state.picked == null ? undefined : state.manifest.rooms[state.room].objects[state.picked];
+  const slot = state.picked == null ? undefined : HouseArrange_slots(state)[state.picked];
   return slot == null ? "Tap an object, then drag it" : `${state.picked}  [${slot.rect.join(", ")}]`;
 }
 
@@ -225,7 +189,7 @@ export function HouseArrange(props: IHouseArrangeProps): JSX.Element {
       latest.current.onChange(HouseArrange_reduce(start.current, make(dx / scale, dy / scale)));
     };
   const drawn = props.objects.filter((o) => o.image != null || o.isPainted);
-  const pills = state.manifest.rooms[state.room].objects;
+  const pills = HouseArrange_slots(state);
   const foot = state.manifest.bearFoot;
   return (
     <View
@@ -287,7 +251,6 @@ export function HouseArrange(props: IHouseArrangeProps): JSX.Element {
           }}
         />
       </DragHandle>
-      <RoomPicker state={state} onChange={props.onChange} />
       <Toolbar state={state} onChange={props.onChange} />
     </View>
   );
