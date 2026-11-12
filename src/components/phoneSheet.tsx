@@ -26,7 +26,7 @@ import { CloudStore } from "../utils/supabaseClient";
 function open(target: IPhoneSheetTarget, dispatch: IDispatch): void {
   switch (target.kind) {
     case "screen":
-      dispatch(Thunk_pushScreen(target.screen, undefined, target.tab != null ? { tab: target.tab } : undefined));
+      dispatch(Thunk_pushScreen(target.screen, undefined, { tab: target.tab }));
       return;
     case "addFriend":
       navigateToModal("addFriendModal");

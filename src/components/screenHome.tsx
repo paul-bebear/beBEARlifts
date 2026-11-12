@@ -32,7 +32,7 @@ function openBoardTarget(target: IBearBoardTarget, dispatch: IDispatch, hasGoal:
     return;
   }
   if (target === "streak") {
-    dispatch(Thunk_pushScreen("streak"));
+    dispatch(Thunk_pushScreen("streak", undefined, { tab: "graphs" }));
     return;
   }
   navigateToModal(target === "plus" ? "plusSheetModal" : "bearPanelModal");
@@ -61,7 +61,7 @@ function openHouseTarget(
       navigateToModal("monthCalendarModal");
       return;
     case "screen":
-      dispatch(Thunk_pushScreen(target.screen, undefined, target.tab != null ? { tab: target.tab } : undefined));
+      dispatch(Thunk_pushScreen(target.screen, undefined, { tab: target.tab }));
       return;
     case "phone":
       navigateToModal("phoneSheetModal");
