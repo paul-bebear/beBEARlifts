@@ -15,8 +15,8 @@ import { FormSheet } from "../navigation/FormSheet";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
 import { buildNavCommon } from "../navigation/utils";
 import { Thunk_pushScreen } from "../ducks/thunks";
-import { FoodLog_dayKey } from "../models/foodLog";
-import { FoodMealForTime_pick } from "../models/foodMealForTime";
+import { LateNightMeal_targets } from "../models/lateNightMeal";
+import { LateNightMealChoice_pick } from "../utils/lateNightMealChoice";
 import {
   IQuickAction,
   IQuickActionId,
@@ -75,11 +75,11 @@ export function PlusSheetModal(): JSX.Element {
     effect();
   };
   const onSquare: Record<IQuickActionId, () => void> = {
-    food: closeThen(() => {
-      const now = new Date();
-      dispatch(
-        Thunk_pushScreen("foodAdd", { day: FoodLog_dayKey(now), meal: FoodMealForTime_pick(now) }, { tab: "food" })
-      );
+    food: closeThen(async () => {
+      const target = await LateNightMealChoice_pick(LateNightMeal_targets(Date.now()));
+      if (target != null) {
+        dispatch(Thunk_pushScreen("foodAdd", { day: target.day, meal: target.meal }, { tab: "food" }));
+      }
     }),
     weight: closeThen(() => dispatch(Thunk_pushScreen("stats", undefined, { tab: "graphs" }))),
     run: closeThen(() => dispatch(Thunk_pushScreen("runs"))),

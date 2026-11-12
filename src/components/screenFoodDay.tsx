@@ -10,6 +10,8 @@ import { useTrackedDispatch } from "../navigation/TrackedStateContext";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { FoodDayPage_build } from "../models/foodDayPage";
+import { LateNightMeal_targets } from "../models/lateNightMeal";
+import { LateNightMealChoice_pick } from "../utils/lateNightMealChoice";
 import { useFoodLog } from "../utils/foodLogStore";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
@@ -64,6 +66,13 @@ export function ScreenFoodDay(): JSX.Element {
 
   useNavOptions({ navTitle: "Food" });
 
+  const logMeal = async (): Promise<void> => {
+    const target = await LateNightMealChoice_pick(LateNightMeal_targets(Date.now(), day));
+    if (target != null) {
+      dispatch(Thunk_pushScreen("foodAdd", { day: target.day, meal: target.meal }));
+    }
+  };
+
   return (
     <NavScreenContent>
       <View testID="food-day" data-testid="food-day">
@@ -75,12 +84,7 @@ export function ScreenFoodDay(): JSX.Element {
         />
         <JournalMeals day={day} canAdd leadsWithSummary showsEmptyMeals />
         <View className="px-4 pb-8">
-          <Button
-            name="food-log-meal"
-            testID="food-log-meal"
-            kind="pill"
-            onPress={() => dispatch(Thunk_pushScreen("foodAdd", { day, meal: page.logMeal }))}
-          >
+          <Button name="food-log-meal" testID="food-log-meal" kind="pill" onPress={logMeal}>
             Log a meal
           </Button>
         </View>
