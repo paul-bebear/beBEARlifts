@@ -11,7 +11,7 @@ import {
   IFoodBasketItem,
 } from "./foodBasket";
 
-export type IScanMode = "barcode" | "ai" | "describe";
+export type IScanMode = "barcode" | "ai" | "quick";
 export type IScanEntryMode = "barcode" | "photo" | "describe" | "quick" | undefined;
 
 export interface IScanResume {
@@ -44,9 +44,14 @@ export type IScanStep =
 
 export type IScanTile = "barcode" | "photo" | "describe" | "quick";
 
+export interface IScanAccess {
+  isOffline: boolean;
+  isAiDeclined: boolean;
+}
+
 export type IScanEvent =
   | { type: "modePicked"; mode: IScanMode }
-  | { type: "tileOpened"; tile: IScanTile; hasAi: boolean }
+  | { type: "tileOpened"; tile: IScanTile; access: IScanAccess }
   | { type: "browseOpened" }
   | { type: "basketOpened" }
   | { type: "labelOpened"; code?: string }
@@ -65,16 +70,19 @@ export type IScanEvent =
   | { type: "shareToggled"; isShared: boolean }
   | { type: "back" };
 
-export function FoodScanSteps_modes(hasAi: boolean): IScanMode[] {
-  return hasAi ? ["barcode", "ai"] : ["barcode", "describe"];
+export function FoodScanSteps_modes(isOffline: boolean): IScanMode[] {
+  return isOffline ? ["barcode", "quick"] : ["barcode", "ai"];
 }
 
-export function FoodScanSteps_initial(entry: IScanEntryMode, hasAi: boolean): IScanStep {
+export function FoodScanSteps_initial(entry: IScanEntryMode, access: IScanAccess): IScanStep {
   if (entry === "quick") {
     return { kind: "quick" };
   }
   if (entry === "describe" || entry === "photo") {
-    return { kind: "camera", mode: hasAi ? "ai" : "describe" };
+    if (access.isOffline) {
+      return { kind: "camera", mode: "quick" };
+    }
+    return { kind: "camera", mode: access.isAiDeclined ? "barcode" : "ai" };
   }
   return { kind: "camera", mode: "barcode" };
 }
@@ -99,7 +107,7 @@ export function FoodScanSteps_title(step: IScanStep): string | undefined {
     case "catalogRecipe":
       return "Recipe";
     case "camera":
-      return step.mode === "barcode" ? "Scan barcode" : step.mode === "ai" ? "AI" : "Describe";
+      return step.mode === "barcode" ? "Scan barcode" : step.mode === "ai" ? "AI" : "Quick add";
     default:
       return undefined;
   }
@@ -152,7 +160,7 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
     case "modePicked":
       return { kind: "camera", mode: event.mode };
     case "tileOpened":
-      return FoodScanSteps_initial(event.tile, event.hasAi);
+      return FoodScanSteps_initial(event.tile, event.access);
     case "browseOpened":
       return { kind: "browse" };
     case "basketOpened":
@@ -190,7 +198,7 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
       return event.photo != null ? mapServing(serving, (s) => ({ ...s, photo: event.photo })) : serving;
     }
     case "quickEntered":
-      return servingOf("describe", FoodBasket_put([], FoodAddFlow_manualPick(event.name, event.nutrients), 0));
+      return servingOf("quick", FoodBasket_put([], FoodAddFlow_manualPick(event.name, event.nutrients), 0));
     case "gramsChanged":
       return mapServing(step, (s) => ({ ...s, items: FoodBasket_setGrams(s.items, event.key, event.grams) }));
     case "itemRemoved":

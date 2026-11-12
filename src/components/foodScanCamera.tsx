@@ -4,7 +4,7 @@ import { Text } from "./primitives/text";
 import { INutrients } from "../models/foodLog";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodScanSteps_modes, IScanMode, IScanResume } from "../models/foodScanSteps";
-import { AiConsent_ensure } from "../utils/aiConsentClient";
+import { AiConsent_disabledMessage, AiConsent_ensure } from "../utils/aiConsentClient";
 import { AiConsentGate } from "./aiConsentGate";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
 import { FoodAiPanel } from "./foodAiPanel";
@@ -14,7 +14,7 @@ import { FoodRepeatList } from "./foodRepeatList";
 interface IProps {
   day: string;
   mode: IScanMode;
-  hasAi: boolean;
+  isOffline: boolean;
   resume?: IScanResume;
   onMode: (mode: IScanMode) => void;
   onBarcode: (code: string) => void;
@@ -24,7 +24,7 @@ interface IProps {
   onCopied: () => void;
 }
 
-const modeLabels: Record<IScanMode, string> = { barcode: "Barcode", ai: "AI", describe: "Describe" };
+const modeLabels: Record<IScanMode, string> = { barcode: "Barcode", ai: "AI", quick: "Quick add" };
 
 function ModeToggle(props: { modes: IScanMode[]; mode: IScanMode; onPick: (mode: IScanMode) => void }): JSX.Element {
   return (
@@ -51,10 +51,14 @@ function ModeToggle(props: { modes: IScanMode[]; mode: IScanMode; onPick: (mode:
 
 export function FoodScanCamera(props: IProps): JSX.Element {
   const [isRepeating, setIsRepeating] = useState(false);
+  const [aiNotice, setAiNotice] = useState<string>();
 
   const pickMode = async (mode: IScanMode): Promise<void> => {
     if (mode !== "ai" || (await AiConsent_ensure())) {
+      setAiNotice(undefined);
       props.onMode(mode);
+    } else {
+      setAiNotice(AiConsent_disabledMessage);
     }
   };
 
@@ -70,11 +74,10 @@ export function FoodScanCamera(props: IProps): JSX.Element {
           <FoodAiPanel resume={props.resume} onAdd={props.onAiReviewed} />
         </AiConsentGate>
       )}
-      {props.mode === "describe" && (
-        <FoodQuickAddPanel onBack={() => props.onMode("barcode")} onSubmit={props.onQuick} />
-      )}
+      {props.mode === "quick" && <FoodQuickAddPanel onBack={() => props.onMode("barcode")} onSubmit={props.onQuick} />}
       <View className="mt-4">
-        <ModeToggle modes={FoodScanSteps_modes(props.hasAi)} mode={props.mode} onPick={pickMode} />
+        <ModeToggle modes={FoodScanSteps_modes(props.isOffline)} mode={props.mode} onPick={pickMode} />
+        {aiNotice != null && <Text className="pt-2 text-sm text-center text-text-secondary">{aiNotice}</Text>}
       </View>
       <View className="flex-row justify-center mt-4" style={{ gap: 24 }}>
         <Pressable className="py-2" testID="food-scan-search" data-testid="food-scan-search" onPress={props.onSearch}>

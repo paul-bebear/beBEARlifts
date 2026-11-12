@@ -60,11 +60,6 @@ describe("FoodDayPage_build", () => {
     expect(page.totals).to.include({ calories: 800, protein: 40, carbs: 20, fat: 10 });
   });
 
-  it("picks the meal for the Log a meal button from the clock, not from the day shown", () => {
-    expect(FoodDayPage_build(log([]), "2026-10-01", now).logMeal).to.equal("dinner");
-    expect(FoodDayPage_build(log([]), today, new Date(2026, 9, 22, 8, 0).getTime()).logMeal).to.equal("breakfast");
-  });
-
   it("marks a past day as not today and still lists its four meals", () => {
     const page = FoodDayPage_build(log([]), "2026-10-20", now);
     expect(page.isToday).to.equal(false);

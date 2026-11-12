@@ -38,7 +38,11 @@ const scanNutella: IScanEvent[] = [
   { type: "barcodeFound", code: nutellaCode, pick: nutella },
 ];
 
-function run(events: IScanEvent[], from: IScanStep = FoodScanSteps_initial(undefined, true)): IScanStep {
+const online = { isOffline: false, isAiDeclined: false };
+const declined = { isOffline: false, isAiDeclined: true };
+const offline = { isOffline: true, isAiDeclined: false };
+
+function run(events: IScanEvent[], from: IScanStep = FoodScanSteps_initial(undefined, online)): IScanStep {
   return events.reduce(FoodScanSteps_reduce, from);
 }
 
@@ -61,23 +65,42 @@ const where = { day: "2026-10-22", meal: "lunch" as const };
 
 describe("FoodScanSteps start", () => {
   it("opens on the barcode camera by default", () => {
-    expect(FoodScanSteps_initial(undefined, true)).to.deep.equal({ kind: "camera", mode: "barcode" });
+    expect(FoodScanSteps_initial(undefined, online)).to.deep.equal({ kind: "camera", mode: "barcode" });
   });
 
-  it("opens the AI tab for both photo and describe when AI is on, and the quick Describe tab when it is off", () => {
-    expect(FoodScanSteps_initial("photo", true)).to.deep.equal({ kind: "camera", mode: "ai" });
-    expect(FoodScanSteps_initial("describe", true)).to.deep.equal({ kind: "camera", mode: "ai" });
-    expect(FoodScanSteps_initial("photo", false)).to.deep.equal({ kind: "camera", mode: "describe" });
-    expect(FoodScanSteps_initial("describe", false)).to.deep.equal({ kind: "camera", mode: "describe" });
+  it("opens the AI tab for both photo and describe, also before the user has chosen on the consent prompt", () => {
+    expect(FoodScanSteps_initial("photo", online)).to.deep.equal({ kind: "camera", mode: "ai" });
+    expect(FoodScanSteps_initial("describe", online)).to.deep.equal({ kind: "camera", mode: "ai" });
+  });
+
+  it("stays on Barcode when the user declined the AI consent", () => {
+    expect(FoodScanSteps_initial("photo", declined)).to.deep.equal({ kind: "camera", mode: "barcode" });
+    expect(FoodScanSteps_initial("describe", declined)).to.deep.equal({ kind: "camera", mode: "barcode" });
+  });
+
+  it("opens Quick add instead of AI in the offline build", () => {
+    expect(FoodScanSteps_initial("photo", offline)).to.deep.equal({ kind: "camera", mode: "quick" });
+    expect(FoodScanSteps_initial("describe", { isOffline: true, isAiDeclined: true })).to.deep.equal({
+      kind: "camera",
+      mode: "quick",
+    });
+  });
+
+  it("opens the tile's tab by the same rule when a tile is tapped", () => {
+    const tapped = (tile: "photo" | "describe", access: typeof online): IScanStep =>
+      FoodScanSteps_reduce({ kind: "browse" }, { type: "tileOpened", tile, access });
+    expect(tapped("photo", online)).to.deep.equal({ kind: "camera", mode: "ai" });
+    expect(tapped("describe", declined)).to.deep.equal({ kind: "camera", mode: "barcode" });
+    expect(tapped("describe", offline)).to.deep.equal({ kind: "camera", mode: "quick" });
   });
 
   it("opens quick log directly", () => {
-    expect(FoodScanSteps_initial("quick", true)).to.deep.equal({ kind: "quick" });
+    expect(FoodScanSteps_initial("quick", online)).to.deep.equal({ kind: "quick" });
   });
 
-  it("reads Barcode and AI with AI, Barcode and Describe without", () => {
-    expect(FoodScanSteps_modes(true)).to.deep.equal(["barcode", "ai"]);
-    expect(FoodScanSteps_modes(false)).to.deep.equal(["barcode", "describe"]);
+  it("shows Barcode and AI to everyone, and Barcode and Quick add in the offline build", () => {
+    expect(FoodScanSteps_modes(false)).to.deep.equal(["barcode", "ai"]);
+    expect(FoodScanSteps_modes(true)).to.deep.equal(["barcode", "quick"]);
   });
 
   it("leaves the screen only from the camera", () => {
@@ -176,7 +199,7 @@ describe("FoodScanSteps camera to serving", () => {
     const serving = servingOf(
       run([{ type: "quickEntered", name: "Protein bar", nutrients: { calories: 200, protein: 20, carbs: 20, fat: 6 } }])
     );
-    expect(serving.mode).to.equal("describe");
+    expect(serving.mode).to.equal("quick");
     expect(serving.items[0].grams).to.equal(0);
     expect(FoodScanSteps_description(serving)).to.equal("Protein bar");
   });
@@ -308,7 +331,7 @@ describe("FoodScanSteps_entries", () => {
 describe("FoodScanSteps_title", () => {
   it("names each camera mode and the serving step", () => {
     expect(FoodScanSteps_title({ kind: "camera", mode: "ai" })).to.equal("AI");
-    expect(FoodScanSteps_title({ kind: "camera", mode: "describe" })).to.equal("Describe");
+    expect(FoodScanSteps_title({ kind: "camera", mode: "quick" })).to.equal("Quick add");
     expect(FoodScanSteps_title(run(scanNutella))).to.equal("Serving size");
     expect(FoodScanSteps_title({ kind: "browse" })).to.equal(undefined);
   });
