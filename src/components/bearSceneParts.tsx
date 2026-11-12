@@ -9,7 +9,7 @@ import {
   BearHouse_pillWidth,
   IBearHouseObject,
 } from "../models/bearHouse";
-import { BearBoardSize_layout, BearBoardSize_rowRatio } from "../models/bearBoardSize";
+import { BearBoardSize_columns, BearBoardSize_layout, BearBoardSize_rowRatio } from "../models/bearBoardSize";
 import { IBearBox } from "../models/bearScene";
 import { BearImage_uri } from "../utils/bearImage";
 
@@ -111,21 +111,27 @@ export function BearSceneBoard(props: {
   onTarget: (target: IBearBoardTarget) => void;
 }): JSX.Element {
   const { board } = props;
-  const { pad, width, height, lineSize } = BearBoardSize_layout(board);
+  const { pad, width, height, lineSize, left, right } = BearBoardSize_layout(board, props.lines);
+  const columns = BearBoardSize_columns(props.lines);
+  const column = (lines: IBearBoardLine[], at: { x: number; width: number }): JSX.Element => (
+    <View style={{ position: "absolute", left: at.x, top: 0, width: at.width }}>
+      {boardTargets
+        .filter((target) => lines.some((l) => l.target === target))
+        .map((target) => (
+          <BoardGroup
+            key={target}
+            target={target}
+            lines={lines.filter((l) => l.target === target)}
+            size={lineSize}
+            onPress={() => props.onTarget(target)}
+          />
+        ))}
+    </View>
+  );
   return (
-    <View
-      className="justify-between"
-      style={{ position: "absolute", left: board.left + pad, top: board.top + pad, width, height }}
-    >
-      {boardTargets.map((target) => (
-        <BoardGroup
-          key={target}
-          target={target}
-          lines={props.lines.filter((l) => l.target === target)}
-          size={lineSize}
-          onPress={() => props.onTarget(target)}
-        />
-      ))}
+    <View style={{ position: "absolute", left: board.left + pad, top: board.top + pad, width, height }}>
+      {column(columns.left, left)}
+      {column(columns.right, right)}
     </View>
   );
 }

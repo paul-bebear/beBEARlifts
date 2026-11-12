@@ -86,8 +86,8 @@ describe("BearBoard_lines", () => {
       ["Streak · 0 days", "streak", false],
       ["Goal: tap to set one", "goal", false],
       ["Weight · not logged yet", "bear", false],
-      ["Level 1 · 2,000 kg to Teen", "bear", false],
-      ["Lifted 0 kg since day one", "bear", false],
+      ["Level 1 · 2,000 kg to go", "bear", false],
+      ["Lifted 0 kg", "bear", false],
     ]);
   });
 
@@ -113,8 +113,8 @@ describe("BearBoard_lines", () => {
       ["Streak · 1 day", "streak", false],
       ["Goal: tap to set one", "goal", false],
       ["72.4 kg · +0.8 in 30 d", "bear", false],
-      ["Level 6 · 150,000 kg to Athlete", "bear", false],
-      ["Lifted 310,000 kg since day one", "bear", false],
+      ["Level 6 · 150,000 kg to go", "bear", false],
+      ["Lifted 310,000 kg", "bear", false],
     ]);
   });
 
@@ -138,6 +138,20 @@ describe("BearBoard_lines", () => {
     const lines = BearBoard_lines(input({ goal: goal({ startedAt: thursday }), stats, units: "lb" }));
     expect(lines[2].text).to.equal("Weigh-in · Thursday");
     expect(lines[6].text).to.equal("141.0 lb");
+  });
+
+  it("shortens the lifted, level and goal-since lines for the two-column board", () => {
+    const lines = BearBoard_lines(
+      input({
+        goal: goal({ startedAt: new Date(2026, 9, 21, 9).getTime(), startWeight: Weight_build(73, "kg") }),
+        level: BearTier_progress(0, 65827, "male"),
+        countedKg: 45827,
+      })
+    );
+    const text = (id: string): string => lines.find((l) => l.id === id)!.text;
+    expect(text("lifted")).to.equal("Lifted 45,827 kg");
+    expect(text("level")).to.match(/^Level \d+ · [\d,]+ kg to go$/);
+    expect(text("goalSince")).to.equal("Since Oct 21 · 73 kg");
   });
 
   it("shows the top level without a next step", () => {
@@ -190,19 +204,19 @@ describe("BearBoard_goalLines", () => {
     const lines = BearBoard_goalLines(goal({ startedAt: october21, startWeight: Weight_build(73, "kg") }), "kg", now);
     expect(texts(lines)).to.deep.equal([
       ["Goal: build muscle", "goal", false],
-      ["since October 21 at 73 kg", "goal", false],
+      ["Since Oct 21 · 73 kg", "goal", false],
     ]);
   });
 
   it("drops the weight when the goal has no start weight", () => {
     const lines = BearBoard_goalLines(goal({ startedAt: october21 }), "kg", now);
-    expect(lines.map((l) => l.text)).to.deep.equal(["Goal: build muscle", "since October 21"]);
+    expect(lines.map((l) => l.text)).to.deep.equal(["Goal: build muscle", "Since Oct 21"]);
   });
 
   it("adds the year when the goal started in an earlier year", () => {
     const lastYear = new Date(2025, 9, 21, 9).getTime();
     const lines = BearBoard_goalLines(goal({ startedAt: lastYear, startWeight: Weight_build(73, "kg") }), "kg", now);
-    expect(lines[1].text).to.equal("since October 21, 2025 at 73 kg");
+    expect(lines[1].text).to.equal("Since Oct 21, 2025 · 73 kg");
   });
 
   it("converts the start weight to the user's units and names other goals", () => {
@@ -211,7 +225,7 @@ describe("BearBoard_goalLines", () => {
       "lb",
       now
     );
-    expect(lines.map((l) => l.text)).to.deep.equal(["Goal: lose fat", "since October 21 at 220.5 lb"]);
+    expect(lines.map((l) => l.text)).to.deep.equal(["Goal: lose fat", "Since Oct 21 · 220.5 lb"]);
   });
 
   it("asks the user to set a goal when there is none", () => {
