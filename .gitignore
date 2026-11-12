@@ -59,6 +59,11 @@ android/app/*.keystore
 # Claude Code local settings (personal overrides)
 .claude/settings.local.json
 
+# Codex's local copy of the Claude setup (AGENTS.md mirrors CLAUDE.md, .agents/skills mirrors .claude/skills)
+.agents/
+.codex/
+AGENTS.md
+
 # Claude Code temp files
 .tmp/
 worktrees/
