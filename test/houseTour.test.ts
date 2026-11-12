@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { BearHouse_objects, BearHouse_room, IBearHouseObjectId, IBearHouseSources } from "../src/models/bearHouse";
 import { HouseTour_canStart, HouseTour_lines, HouseTour_steps } from "../src/models/houseTour";
 
-const sources: IBearHouseSources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+const sources: IBearHouseSources = { fullness: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
 const room = BearHouse_room("cabin");
 const order: IBearHouseObjectId[] = ["whiteboard", "door", "bowl", "scale", "mirror", "calendar", "bed", "phone"];
 

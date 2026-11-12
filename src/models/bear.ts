@@ -1,5 +1,6 @@
 import { IHistoryRecord, ISettings, IStats } from "../types";
 import { IFoodLog } from "./foodLog";
+import { BearFullness_hungryBelow, BearFullness_percent } from "./bearFullness";
 import { BearGrowth_history, IBearCountedWorkout } from "./bearGrowth";
 import { BearStoreData_empty, IBearFur, IBearLine, IBearStoreData } from "./bearStoreData";
 import { BearTier_floorKg, BearTier_progress, BearTier_setFor, IBearTierProgress, IBearTierSet } from "./bearTier";
@@ -34,37 +35,13 @@ const hourMs = 3600000;
 const pumpedHours = 2;
 const pumpedHoursAfterRecord = 24;
 
-function feedingAge(start: number, now: number, workouts: IBearCountedWorkout[]): number {
-  let acceleratedMs = 0;
-  let coveredUntil = start;
-  for (const { record } of workouts) {
-    const from = Math.max(start, coveredUntil, record.endTime!);
-    const to = Math.min(now, record.endTime! + 24 * hourMs);
-    if (to > from) {
-      acceleratedMs += to - from;
-      coveredUntil = to;
-    }
-  }
-  return (now - start + acceleratedMs / 3) / hourMs;
-}
-
 export function Bear_state(sources: IBearSources, now: number): IBearState {
   const history = sources.history.filter((record) => record.endTime != null && record.endTime <= now);
   const growth = BearGrowth_history(history, sources.settings, sources.stats);
   const store = sources.bear ?? BearStoreData_empty();
   const tierSet = BearTier_setFor(sources.foodLog.profile.sex, store.line);
   const level = BearTier_progress(BearTier_floorKg(store.celebratedLevel, tierSet), growth.countedKg, tierSet);
-  const fadeHours = Math.max(18, 36 - 2 * (level.tier.level - 1));
-  const fullness = Math.min(
-    100,
-    sources.foodLog.entries.reduce((total, entry) => {
-      if (entry.createdAt > now || !Number.isFinite(entry.createdAt) || !Number.isFinite(entry.nutrients.calories)) {
-        return total;
-      }
-      const points = 25 * Math.max(0, Math.min(1, entry.nutrients.calories / 400));
-      return total + points * Math.max(0, 1 - feedingAge(entry.createdAt, now, growth.workouts) / fadeHours);
-    }, 0)
-  );
+  const fullness = BearFullness_percent(sources.foodLog, now);
   const last = growth.workouts.slice(-1)[0]?.record;
   const lastCountedWorkoutAt = last?.endTime;
   const plannedDays = sources.plannedDaysPerWeek;
@@ -83,7 +60,7 @@ export function Bear_state(sources: IBearSources, now: number): IBearState {
       ? "pumped"
       : energy < 40
         ? "tired"
-        : fullness < 20
+        : fullness < BearFullness_hungryBelow
           ? "hungry"
           : "normal";
   const line = store.line ?? sources.defaultLine ?? "male";

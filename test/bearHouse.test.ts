@@ -21,6 +21,7 @@ import {
   IBearHouseObjectId,
   IBearHouseSources,
 } from "../src/models/bearHouse";
+import { BearFullness_percent } from "../src/models/bearFullness";
 import { FoodLog_dayKey, FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
 import { HouseFrame_canvas } from "../src/models/houseFrame";
 import { Weight_build } from "../src/models/weight";
@@ -41,7 +42,7 @@ const cabinObjects: IBearHouseObjectId[] = [
   "mirror",
 ];
 
-const empty: IBearHouseSources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+const empty: IBearHouseSources = { fullness: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
 
 function cabin(sources: IBearHouseSources = empty, seen?: ReadonlySet<IBearHouseObjectId>): IBearHouseObject[] {
   return BearHouse_objects("cabin", sources, seen);
@@ -163,21 +164,36 @@ describe("BearHouse", () => {
     expect(byId(cabin(), "phone").overlay).to.equal(undefined);
   });
 
-  it("picks one of five bowl files by the share of the kcal target", () => {
-    const bowl = (kcal: number, kcalTarget: number): string => BearHouse_bowlImage({ ...empty, kcal, kcalTarget });
-    expect(bowl(0, 2800)).to.equal("bowl-empty");
-    expect(bowl(279, 2800)).to.equal("bowl-empty");
-    expect(bowl(280, 2800)).to.equal("bowl-quarter");
-    expect(bowl(1119, 2800)).to.equal("bowl-quarter");
-    expect(bowl(1120, 2800)).to.equal("bowl-half");
-    expect(bowl(1819, 2800)).to.equal("bowl-half");
-    expect(bowl(1820, 2800)).to.equal("bowl-three-quarter");
-    expect(bowl(2519, 2800)).to.equal("bowl-three-quarter");
-    expect(bowl(2520, 2800)).to.equal("bowl-full");
-    expect(bowl(500, 0)).to.equal("bowl-full");
-    expect(byId(cabin({ ...empty, kcal: 1500, kcalTarget: 2800 }), "bowl").image).to.equal(
-      "/images/bear/house/bowl-half.webp"
-    );
+  it("picks one of five bowl files by the fullness percent", () => {
+    const bowl = (fullness: number): string => BearHouse_bowlImage({ ...empty, fullness });
+    expect(bowl(0)).to.equal("bowl-empty");
+    expect(bowl(9.9)).to.equal("bowl-empty");
+    expect(bowl(10)).to.equal("bowl-quarter");
+    expect(bowl(39.9)).to.equal("bowl-quarter");
+    expect(bowl(40)).to.equal("bowl-half");
+    expect(bowl(64.9)).to.equal("bowl-half");
+    expect(bowl(65)).to.equal("bowl-three-quarter");
+    expect(bowl(89.9)).to.equal("bowl-three-quarter");
+    expect(bowl(90)).to.equal("bowl-full");
+    expect(bowl(100)).to.equal("bowl-full");
+    expect(byId(cabin({ ...empty, fullness: 53.6 }), "bowl").image).to.equal("/images/bear/house/bowl-half.webp");
+  });
+
+  it("fills the bowl from the same percent that sets the bear's fullness", () => {
+    const base = FoodLog_empty();
+    const foodLog = { ...base, entries: [food(today, 840)], goals: { ...base.goals, calories: { min: 0, max: 2800 } } };
+    const sources = BearHouse_sources({
+      workouts: [],
+      foodLog,
+      stats: stats([]),
+      units: "kg",
+      pendingRequests: 0,
+      hasWorkout: false,
+      now,
+    });
+    expect(sources.fullness).to.equal(BearFullness_percent(foodLog, now));
+    expect(sources.fullness).to.equal(30);
+    expect(BearHouse_bowlImage(sources)).to.equal("bowl-quarter");
   });
 
   it("draws the bed and the phone from their own files, with no tier to pick from", () => {
@@ -300,8 +316,7 @@ describe("BearHouse", () => {
       now,
     });
     expect(sources).to.deep.equal({
-      kcal: 900,
-      kcalTarget: 2800,
+      fullness: (100 * 900) / 2800,
       weight: "72.4",
       streak: 1,
       pendingRequests: 1,
