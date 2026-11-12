@@ -184,7 +184,7 @@ describe("FullBackup", () => {
     expect(FullBackup_unwrap(older).notes).to.equal(undefined);
   });
 
-  it("carries one Markdown file per Journal day", () => {
+  it("carries one Markdown file per calendar day", () => {
     const notes = Notes_save(Notes_empty(), { ...Notes_new("a", "2026-10-19", now), title: "Rest" }, now);
     const backup = FullBackup_build(parts({ notes }), now);
     expect(Object.keys(backup.journal)).to.eql(["journal/2026-10-19.md"]);

@@ -5,10 +5,8 @@ import { BottomTabBarHeightCallbackContext, type BottomTabBarProps } from "@reac
 import type { NavigationState } from "@react-navigation/native";
 import { useTrackedState } from "../TrackedStateContext";
 import { Footer2View } from "../../components/footer2";
-import { TabBarLayout_compute } from "../../models/tabBarLayout";
+import { TabBarLayout_compute, TabBarLayout_hidesFooter } from "../../models/tabBarLayout";
 import type { IScreen } from "../../models/screen";
-
-const screensWithoutFooter: string[] = ["subscription", "onerms"];
 
 function getTopScreenOfActiveTab(tabState: BottomTabBarProps["state"]): IScreen | undefined {
   const activeTab = tabState.routes[tabState.index];
@@ -32,7 +30,7 @@ export function Footer2Wrapper(props: BottomTabBarProps): JSX.Element | null {
   const setTabBarHeight = useContext(BottomTabBarHeightCallbackContext);
   const layout = TabBarLayout_compute(useSafeAreaInsets().bottom);
   const topScreen = getTopScreenOfActiveTab(props.state);
-  const isHidden = topScreen != null && screensWithoutFooter.includes(topScreen);
+  const isHidden = TabBarLayout_hidesFooter(topScreen);
   const reportedHeight = isHidden ? 0 : layout.height;
   useEffect(() => {
     setTabBarHeight?.(reportedHeight);

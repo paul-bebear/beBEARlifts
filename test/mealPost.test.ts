@@ -122,13 +122,13 @@ describe("Serving step share switch", () => {
   const camera: IScanStep = { kind: "camera", mode: "ai" };
 
   it("starts off every time and keeps the photo as taken", () => {
-    const first = FoodScanSteps_reduce(camera, { type: "photoReviewed", choices: plate, nonce: 1, photo: "data:p" });
+    const first = FoodScanSteps_reduce(camera, { type: "aiReviewed", choices: plate, nonce: 1, photo: "data:p" });
     expect(first.kind === "serving" && first.serving.isShared).to.not.equal(true);
     expect(first.kind === "serving" && first.serving.photo).to.equal("data:p");
     const on = FoodScanSteps_reduce(first, { type: "shareToggled", isShared: true });
     expect(on.kind === "serving" && on.serving.isShared).to.equal(true);
     const again = FoodScanSteps_reduce(FoodScanSteps_reduce(on, { type: "back" }), {
-      type: "photoReviewed",
+      type: "aiReviewed",
       choices: plate,
       nonce: 2,
     });
@@ -146,7 +146,7 @@ describe("Serving step share switch", () => {
   });
 
   it("builds a post from the serving step only when the switch is on and allowed", () => {
-    const first = FoodScanSteps_reduce(camera, { type: "photoReviewed", choices: plate, nonce: 1 });
+    const first = FoodScanSteps_reduce(camera, { type: "aiReviewed", choices: plate, nonce: 1 });
     const on = FoodScanSteps_reduce(first, { type: "shareToggled", isShared: true });
     const serving = (step: IScanStep): IScanServing => (step.kind === "serving" ? step.serving : ({} as IScanServing));
     const allowed = MealPost_shareSwitch(true, true, true);

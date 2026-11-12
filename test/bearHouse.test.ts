@@ -21,13 +21,13 @@ import {
   IBearHouseObjectId,
   IBearHouseSources,
 } from "../src/models/bearHouse";
+import { BearFullness_percent } from "../src/models/bearFullness";
 import { FoodLog_dayKey, FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
 import { HouseFrame_canvas } from "../src/models/houseFrame";
 import { Weight_build } from "../src/models/weight";
-import { IHistoryRecord, IStats } from "../src/types";
+import { IStats } from "../src/types";
 
 const hourMs = 3600000;
-const dayMs = 24 * hourMs;
 const now = new Date(2026, 9, 26, 12).getTime();
 const today = FoodLog_dayKey(new Date(now));
 const cabinObjects: IBearHouseObjectId[] = [
@@ -41,7 +41,7 @@ const cabinObjects: IBearHouseObjectId[] = [
   "mirror",
 ];
 
-const empty: IBearHouseSources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+const empty: IBearHouseSources = { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false };
 
 function cabin(sources: IBearHouseSources = empty, seen?: ReadonlySet<IBearHouseObjectId>): IBearHouseObject[] {
   return BearHouse_objects("cabin", sources, seen);
@@ -49,21 +49,6 @@ function cabin(sources: IBearHouseSources = empty, seen?: ReadonlySet<IBearHouse
 
 function byId(objects: IBearHouseObject[], id: IBearHouseObjectId): IBearHouseObject {
   return objects.find((o) => o.id === id)!;
-}
-
-function record(startTime: number): IHistoryRecord {
-  return {
-    vtype: "history_record",
-    id: startTime,
-    date: new Date(startTime).toISOString(),
-    startTime,
-    endTime: startTime + hourMs,
-    programId: "p",
-    programName: "P",
-    day: 1,
-    dayName: "Upper",
-    entries: [],
-  };
 }
 
 function food(day: string, calories: number): IFoodEntry {
@@ -106,15 +91,20 @@ describe("BearHouse", () => {
     expect(byId(cabin(), "scale").target).to.deep.equal({ kind: "screen", screen: "stats", tab: "graphs" });
   });
 
+  it("opens the food day page from the bowl and the Calendar page from the wall calendar, both in the food tab", () => {
+    expect(byId(cabin(), "bowl").target).to.deep.equal({ kind: "screen", screen: "foodDay", tab: "food" });
+    expect(byId(cabin(), "calendar").target).to.deep.equal({ kind: "screen", screen: "food", tab: "food" });
+  });
+
   it("gives every object a label and a target", () => {
     const summary = Object.fromEntries(cabin().map((o) => [o.id, [o.label, o.target.kind]]));
     expect(summary).to.deep.equal({
       whiteboard: ["To-do", "plus"],
       door: ["Gym", "door"],
-      bowl: ["Food", "journal"],
+      bowl: ["Food", "screen"],
       bed: ["Bed", "bearPanel"],
       scale: ["Scale", "screen"],
-      calendar: ["Calendar", "monthCalendar"],
+      calendar: ["Calendar", "screen"],
       phone: ["Phone", "phone"],
       mirror: ["Mirror", "screen"],
     });
@@ -149,30 +139,49 @@ describe("BearHouse", () => {
     expect(board.rect).to.deep.equal([32, 190, 992, 650]);
   });
 
-  it("shows the streak on the calendar, the weight on the scale and the requests on the phone", () => {
-    const objects = cabin({ ...empty, streak: 4, pendingRequests: 2, weight: "72.4" });
-    expect(byId(objects, "calendar").overlay?.text).to.equal("4");
+  it("shows the day of the month on the calendar, the weight on the scale and the requests on the phone", () => {
+    const objects = cabin({ ...empty, dayOfMonth: 22, pendingRequests: 2, weight: "72.4" });
+    expect(byId(objects, "calendar").overlay?.text).to.equal("22");
     expect(byId(objects, "phone").overlay?.text).to.equal("2");
     expect(byId(objects, "scale").overlay?.text).to.equal("72.4");
-    expect(byId(cabin(), "calendar").overlay).to.equal(undefined);
     expect(byId(cabin(), "phone").overlay).to.equal(undefined);
   });
 
-  it("picks one of five bowl files by the share of the kcal target", () => {
-    const bowl = (kcal: number, kcalTarget: number): string => BearHouse_bowlImage({ ...empty, kcal, kcalTarget });
-    expect(bowl(0, 2800)).to.equal("bowl-empty");
-    expect(bowl(279, 2800)).to.equal("bowl-empty");
-    expect(bowl(280, 2800)).to.equal("bowl-quarter");
-    expect(bowl(1119, 2800)).to.equal("bowl-quarter");
-    expect(bowl(1120, 2800)).to.equal("bowl-half");
-    expect(bowl(1819, 2800)).to.equal("bowl-half");
-    expect(bowl(1820, 2800)).to.equal("bowl-three-quarter");
-    expect(bowl(2519, 2800)).to.equal("bowl-three-quarter");
-    expect(bowl(2520, 2800)).to.equal("bowl-full");
-    expect(bowl(500, 0)).to.equal("bowl-full");
-    expect(byId(cabin({ ...empty, kcal: 1500, kcalTarget: 2800 }), "bowl").image).to.equal(
-      "/images/bear/house/bowl-half.webp"
-    );
+  it("always shows the date on the calendar and never a streak", () => {
+    expect(byId(cabin(), "calendar").overlay?.text).to.equal("1");
+    expect(byId(cabin({ ...empty, dayOfMonth: 31 }), "calendar").overlay?.text).to.equal("31");
+    expect(byId(cabin(), "calendar").overlay?.kind).to.equal("number");
+  });
+
+  it("picks one of five bowl files by the fullness percent", () => {
+    const bowl = (fullness: number): string => BearHouse_bowlImage({ ...empty, fullness });
+    expect(bowl(0)).to.equal("bowl-empty");
+    expect(bowl(9.9)).to.equal("bowl-empty");
+    expect(bowl(10)).to.equal("bowl-quarter");
+    expect(bowl(39.9)).to.equal("bowl-quarter");
+    expect(bowl(40)).to.equal("bowl-half");
+    expect(bowl(64.9)).to.equal("bowl-half");
+    expect(bowl(65)).to.equal("bowl-three-quarter");
+    expect(bowl(89.9)).to.equal("bowl-three-quarter");
+    expect(bowl(90)).to.equal("bowl-full");
+    expect(bowl(100)).to.equal("bowl-full");
+    expect(byId(cabin({ ...empty, fullness: 53.6 }), "bowl").image).to.equal("/images/bear/house/bowl-half.webp");
+  });
+
+  it("fills the bowl from the same percent that sets the bear's fullness", () => {
+    const base = FoodLog_empty();
+    const foodLog = { ...base, entries: [food(today, 840)], goals: { ...base.goals, calories: { min: 0, max: 2800 } } };
+    const sources = BearHouse_sources({
+      foodLog,
+      stats: stats([]),
+      units: "kg",
+      pendingRequests: 0,
+      hasWorkout: false,
+      now,
+    });
+    expect(sources.fullness).to.equal(BearFullness_percent(foodLog, now));
+    expect(sources.fullness).to.equal(30);
+    expect(BearHouse_bowlImage(sources)).to.equal("bowl-quarter");
   });
 
   it("draws the bed and the phone from their own files, with no tier to pick from", () => {
@@ -282,11 +291,10 @@ describe("BearHouse", () => {
     }
   });
 
-  it("builds the sources from today's food, weight, streak and the running workout", () => {
+  it("builds the sources from today's food, weight, date and the running workout", () => {
     const base = FoodLog_empty();
     const foodLog = { ...base, entries: [food(today, 900)], goals: { ...base.goals, calories: { min: 0, max: 2800 } } };
     const sources = BearHouse_sources({
-      workouts: [{ record: record(now - 3 * dayMs), countedKg: 1000 }],
       foodLog,
       stats: stats([{ at: now - hourMs, kg: 72.4 }]),
       units: "kg",
@@ -295,10 +303,9 @@ describe("BearHouse", () => {
       now,
     });
     expect(sources).to.deep.equal({
-      kcal: 900,
-      kcalTarget: 2800,
+      fullness: (100 * 900) / 2800,
       weight: "72.4",
-      streak: 1,
+      dayOfMonth: new Date(now).getDate(),
       pendingRequests: 1,
       hasWorkout: true,
     });

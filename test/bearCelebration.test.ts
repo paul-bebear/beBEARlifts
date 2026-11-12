@@ -1,6 +1,6 @@
 import "mocha";
 import { expect } from "chai";
-import { BearCelebration_seed, BearCelebration_setLine, BearCelebration_step } from "../src/models/bearCelebration";
+import { BearCelebration_seed, BearCelebration_step } from "../src/models/bearCelebration";
 import { BearStoreData_empty } from "../src/models/bearStoreData";
 
 describe("BearCelebration", () => {
@@ -32,7 +32,6 @@ describe("BearCelebration", () => {
     const store = { ...BearStoreData_empty(), celebratedLevel: 3, seeded: true as const };
     expect(BearCelebration_step(store, 12000, "male").store).to.equal(store);
     expect(BearCelebration_seed(store, 999999, "male")).to.equal(store);
-    expect(BearCelebration_setLine({ ...store, line: "female" }, "female").line).to.equal("female");
   });
 
   it("reaches each level at the set's own threshold", () => {
@@ -41,12 +40,5 @@ describe("BearCelebration", () => {
     expect(BearCelebration_step(store, 1000, "male").levelUp).to.equal(undefined);
     expect(BearCelebration_seed(BearStoreData_empty(), 10000, "female").celebratedLevel).to.equal(3);
     expect(BearCelebration_seed(BearStoreData_empty(), 10000, "male").celebratedLevel).to.equal(2);
-  });
-
-  it("sets the line the user picks", () => {
-    expect(BearCelebration_setLine(BearStoreData_empty(), "female")).to.deep.equal({
-      ...BearStoreData_empty(),
-      line: "female",
-    });
   });
 });

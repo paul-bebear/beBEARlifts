@@ -12,7 +12,6 @@ import { Friends_forUser, Friends_lists } from "../models/friends";
 import { useFoodLog } from "./foodLogStore";
 import { FriendsStore } from "./friendsClient";
 import { CloudStore } from "./supabaseClient";
-import { useBear } from "./useBear";
 
 export interface IBearHouseView {
   room: string;
@@ -27,12 +26,10 @@ export function useBearHouse(hasWorkout: boolean): IBearHouseView {
   const stats = untrack(tracked.storage.stats);
   const units = untrack(tracked.storage.settings).units;
   const foodLog = useFoodLog();
-  const { state } = useBear();
   const userId = CloudStore.use().session?.userId;
   const pendingRequests = Friends_lists(Friends_forUser(FriendsStore.use(), userId)).incoming.length;
   const objects = useMemo(() => {
     const sources = BearHouse_sources({
-      workouts: state.workouts,
       foodLog,
       stats,
       units,
@@ -41,6 +38,6 @@ export function useBearHouse(hasWorkout: boolean): IBearHouseView {
       now: Date.now(),
     });
     return BearHouse_objects(houseTier, sources, undefined);
-  }, [state.workouts, foodLog, stats, units, pendingRequests, hasWorkout]);
+  }, [foodLog, stats, units, pendingRequests, hasWorkout]);
   return { room: BearHouse_room(houseTier), wall: BearHouse_wallColor(houseTier), objects };
 }

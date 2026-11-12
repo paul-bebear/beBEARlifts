@@ -84,50 +84,31 @@ describe("Bear_state", () => {
     ]).to.deep.equal(["male", 1, 0, 0, 0, "tired", undefined]);
   });
 
-  it("gives 25 points per 400 kcal, proportional below it and clamped to 100", () => {
-    expect(Bear_state(fed([meal(now, 200)]), now).fullness).to.equal(12.5);
-    expect(Bear_state(fed([meal(now, 800)]), now).fullness).to.equal(25);
-    expect(Bear_state(fed(Array.from({ length: 5 }, () => meal(now))), now).fullness).to.equal(100);
+  it("fills the bear by today's calories over the default 2,500 when no target is set", () => {
+    expect(Bear_state(fed([meal(now, 250)]), now).fullness).to.equal(10);
+    expect(Bear_state(fed([meal(now, 1250)]), now).fullness).to.equal(50);
+    expect(Bear_state(fed([meal(now, 2500)]), now).fullness).to.equal(100);
+    expect(Bear_state(fed([meal(now, 9000)]), now).fullness).to.equal(100);
     expect(Bear_state(fed([meal(now, -400)]), now).fullness).to.equal(0);
   });
 
-  it("fades cub feeding linearly over 36 hours", () => {
-    const data = fed([meal(now)]);
-    expect(Bear_state(data, now + 18 * hourMs).fullness).to.equal(12.5);
-    expect(Bear_state(data, now + 36 * hourMs).fullness).to.equal(0);
-    expect(Bear_state(data, now + 72 * hourMs).fullness).to.equal(0);
+  it("gives 30 percent for 840 of 2,800 cal whether it was one item or three", () => {
+    const goals = { ...FoodLog_empty().goals, calories: { min: 0, max: 2800 } };
+    const one = { ...FoodLog_empty(), goals, entries: [meal(now, 840)] };
+    const three = { ...FoodLog_empty(), goals, entries: [meal(now, 280), meal(now + 1, 280), meal(now + 2, 280)] };
+    expect(Bear_state(sources({ foodLog: one }), now).fullness).to.equal(30);
+    expect(Bear_state(sources({ foodLog: three }), now + 3).fullness).to.equal(30);
   });
 
-  it("reduces the feeding window by two hours per level, down to 18 hours", () => {
-    expect(
-      Bear_state(fed([meal(now)], { bear: { ...BearStoreData_empty(), celebratedLevel: 2 } }), now + 17 * hourMs)
-        .fullness
-    ).to.equal(12.5);
-    for (const level of [10, 11, 12]) {
-      const data = fed([meal(now)], { bear: { ...BearStoreData_empty(), celebratedLevel: level } });
-      expect(Bear_state(data, now + 9 * hourMs).fullness).to.equal(12.5);
-    }
+  it("does not fade through the day and starts again at midnight", () => {
+    const data = fed([meal(now, 1250)]);
+    expect(Bear_state(data, now + 10 * hourMs).fullness).to.equal(50);
+    expect(Bear_state(data, now + 13 * hourMs).fullness).to.equal(0);
   });
 
-  it("shortens the feeding window by 25 percent after a counted workout", () => {
-    const data = fed([meal(now)], { history: [workout(now)] });
-    expect(Bear_state(data, now + 13.5 * hourMs).fullness).to.equal(12.5);
-    expect(Bear_state(data, now + 24 * hourMs).fullness).to.be.closeTo(25 * (1 - 32 / 36), 0.00001);
-    expect(Bear_state(data, now + 28 * hourMs).fullness).to.equal(0);
-  });
-
-  it("does not refill food when acceleration ends and counts only overlapping hours", () => {
-    const data = fed([meal(now - 6 * hourMs)], { history: [workout(now)] });
-    const atEnd = Bear_state(data, now + 24 * hourMs).fullness;
-    expect(Bear_state(data, now + 24 * hourMs + 1).fullness).to.be.at.most(atEnd);
-    const partial = fed([meal(now + 20 * hourMs)], { history: [workout(now)] });
-    expect(Bear_state(partial, now + 26 * hourMs).fullness).to.be.closeTo(25 * (1 - (4 / 0.75 + 2) / 36), 0.00001);
-  });
-
-  it("merges overlapping hunger windows from workouts on adjacent days", () => {
-    const data = fed([meal(now)], { history: [workout(now), workout(now + 23 * hourMs)] });
-    const result = Bear_state(data, now + 24 * hourMs);
-    expect(result.fullness).to.be.closeTo(25 * (1 - 32 / 36), 0.00001);
+  it("counts only the calories logged for today", () => {
+    const yesterday = { ...meal(now, 2500), day: "2026-10-19" };
+    expect(Bear_state(fed([yesterday, meal(now, 250)]), now).fullness).to.equal(10);
   });
 
   it("keeps energy at 100 for 56 hours on a three-day program, then fades over 168 hours", () => {
@@ -177,14 +158,14 @@ describe("Bear_state", () => {
 
   it("uses hungry below 20 fullness and normal at 20, including the old ok band", () => {
     const history = [workout(now - 3 * hourMs)];
-    expect(Bear_state(fed([meal(now, 319)], { history }), now).mood).to.equal("hungry");
-    expect(Bear_state(fed([meal(now, 320)], { history }), now).mood).to.equal("normal");
+    expect(Bear_state(fed([meal(now, 499)], { history }), now).mood).to.equal("hungry");
+    expect(Bear_state(fed([meal(now, 500)], { history }), now).mood).to.equal("normal");
     expect(Bear_state(fed([meal(now), meal(now)], { history }), now).mood).to.equal("normal");
   });
 
-  it("ignores future meals and workouts", () => {
-    const state = Bear_state(fed([meal(now + 1)], { history: [workout(now + hourMs)] }), now);
-    expect([state.countedKg, state.fullness, state.lastCountedWorkoutAt]).to.deep.equal([0, 0, undefined]);
+  it("ignores future workouts", () => {
+    const state = Bear_state(sources({ history: [workout(now + hourMs)] }), now);
+    expect([state.countedKg, state.lastCountedWorkoutAt]).to.deep.equal([0, undefined]);
   });
 
   it("retains a celebrated level and the female line after history is removed", () => {

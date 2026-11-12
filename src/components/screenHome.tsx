@@ -54,12 +54,6 @@ function openHouseTarget(
     case "bearPanel":
       navigateToModal("bearPanelModal");
       return;
-    case "journal":
-      dispatch(Thunk_pushScreen("food", undefined, { tab: "food" }));
-      return;
-    case "monthCalendar":
-      navigateToModal("monthCalendarModal");
-      return;
     case "screen":
       dispatch(Thunk_pushScreen(target.screen, undefined, { tab: target.tab }));
       return;

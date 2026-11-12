@@ -1432,6 +1432,7 @@ export function Thunk_pushScreen<T extends IScreen>(
       "hearaboutus",
       "programselect",
       "food",
+      "foodDay",
       "foodAdd",
       "history",
       "friends",

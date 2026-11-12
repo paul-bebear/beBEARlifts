@@ -39,7 +39,7 @@ describe("FoodRepeat", () => {
     expect(FoodRepeat_initial("2027-01-01").day).to.equal("2026-12-31");
   });
 
-  it("copies into the day the Journal shows, not the real today", () => {
+  it("copies into the day the Calendar shows, not the real today", () => {
     const journalDay = "2026-10-20";
     const state = { ...FoodRepeat_initial(journalDay), selected: ["a"] };
     expect(state.day).to.equal("2026-10-19");

@@ -12,7 +12,7 @@ const imagePrefix = "/images/";
 
 const dayZero = BearHouse_objects(
   "cabin",
-  { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false },
+  { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false },
   undefined
 );
 

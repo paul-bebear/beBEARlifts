@@ -132,7 +132,7 @@ export function JournalExport_output(
   range: IJournalExportRange,
   format: IJournalExportFormat
 ): IJournalExportOutput {
-  const filename = `bebear-journal-${sources.today}`;
+  const filename = `bebear-days-${sources.today}`;
   if (format === "csv") {
     return { kind: "file", filename: `${filename}.csv`, text: JournalExport_csv(sources, range) };
   }

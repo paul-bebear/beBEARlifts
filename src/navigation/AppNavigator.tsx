@@ -51,6 +51,7 @@ import { NavScreenSteps } from "./screens/NavScreenSteps";
 import { NavScreenProgressPhotos } from "./screens/NavScreenProgressPhotos";
 import { NavScreenStreak } from "./screens/NavScreenStreak";
 import { ScreenJournal } from "../components/screenJournal";
+import { ScreenFoodDay } from "../components/screenFoodDay";
 import { ScreenHistory } from "../components/screenHistory";
 import { NavScreenFriends } from "./screens/NavScreenFriends";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
@@ -301,6 +302,7 @@ function FoodStackScreen(): JSX.Element {
   return (
     <FoodStack.Navigator screenOptions={screenOptions} screenLayout={renderScreenWithErrorBoundary}>
       <FoodStack.Screen name="food" component={ScreenJournal} />
+      <FoodStack.Screen name="foodDay" component={ScreenFoodDay} />
       <FoodStack.Screen name="foodAdd" component={NavScreenFoodAdd} />
       <FoodStack.Screen name="history" component={ScreenHistory} />
       <FoodStack.Screen name="progress" component={NavScreenProgress} getId={({ params }) => String(params?.id ?? 0)} />

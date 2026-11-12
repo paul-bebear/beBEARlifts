@@ -7,9 +7,8 @@ import { FoodScanSteps_modes, IScanMode, IScanResume } from "../models/foodScanS
 import { AiConsent_ensure } from "../utils/aiConsentClient";
 import { AiConsentGate } from "./aiConsentGate";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
-import { FoodPhotoPanel } from "./foodPhotoPanel";
+import { FoodAiPanel } from "./foodAiPanel";
 import { FoodQuickAddPanel } from "./foodQuickAddPanel";
-import { FoodDescribePanel } from "./foodDescribePanel";
 import { FoodRepeatList } from "./foodRepeatList";
 
 interface IProps {
@@ -19,14 +18,13 @@ interface IProps {
   resume?: IScanResume;
   onMode: (mode: IScanMode) => void;
   onBarcode: (code: string) => void;
-  onPhotoReviewed: (choices: IFoodPhotoChoice[], photo?: string) => void;
-  onDescribed: (choices: IFoodPhotoChoice[], text: string) => void;
+  onAiReviewed: (choices: IFoodPhotoChoice[], photo?: string, text?: string) => void;
   onQuick: (name: string, nutrients: INutrients) => void;
   onSearch: () => void;
   onCopied: () => void;
 }
 
-const modeLabels: Record<IScanMode, string> = { barcode: "Barcode", ai: "AI scan", describe: "Describe" };
+const modeLabels: Record<IScanMode, string> = { barcode: "Barcode", ai: "AI", describe: "Describe" };
 
 function ModeToggle(props: { modes: IScanMode[]; mode: IScanMode; onPick: (mode: IScanMode) => void }): JSX.Element {
   return (
@@ -69,18 +67,10 @@ export function FoodScanCamera(props: IProps): JSX.Element {
       {props.mode === "barcode" && <FoodBarcodeScanner onDetected={props.onBarcode} />}
       {props.mode === "ai" && (
         <AiConsentGate>
-          <FoodPhotoPanel resume={props.resume} onAdd={props.onPhotoReviewed} />
+          <FoodAiPanel resume={props.resume} onAdd={props.onAiReviewed} />
         </AiConsentGate>
       )}
-      {props.mode === "describe" && props.hasAi && (
-        <FoodDescribePanel
-          resume={props.resume}
-          onAdd={props.onDescribed}
-          onCamera={() => pickMode("ai")}
-          onPhoto={() => pickMode("ai")}
-        />
-      )}
-      {props.mode === "describe" && !props.hasAi && (
+      {props.mode === "describe" && (
         <FoodQuickAddPanel onBack={() => props.onMode("barcode")} onSubmit={props.onQuick} />
       )}
       <View className="mt-4">

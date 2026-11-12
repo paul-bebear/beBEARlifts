@@ -106,6 +106,7 @@ describe("First-launch navigation", () => {
   it("opens food, friends, progress and their program-independent screens without a program", async () => {
     const screens: IScreen[] = [
       "food",
+      "foodDay",
       "foodAdd",
       "history",
       "friends",

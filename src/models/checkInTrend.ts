@@ -76,7 +76,7 @@ export function CheckInTrend_segments(values: (number | undefined)[], width: num
 
 export function CheckInTrend_summary(trend: ICheckInTrend): string {
   if (trend.checkInCount === 0) {
-    return "No check-ins yet. Rate your day in the Journal.";
+    return "No check-ins yet. Rate your day in the Calendar.";
   }
   const days = trend.checkInCount === 1 ? "1 check-in" : `${trend.checkInCount} check-ins`;
   return `${days} in the last ${trend.days.length} days`;

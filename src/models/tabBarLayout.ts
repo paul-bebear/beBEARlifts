@@ -9,6 +9,16 @@ const TabBarLayout_pillHeight = 60;
 // Phones without a home indicator report a 0 inset, and a pill flush with the screen edge looks docked.
 const minBottomGap = 12;
 const contentGap = 16;
+const screensWithoutFooter: readonly string[] = ["subscription", "onerms", "foodAdd"];
+
+export function TabBarLayout_hidesFooter(screen: string | undefined): boolean {
+  return screen != null && screensWithoutFooter.includes(screen);
+}
+
+// With the bar hidden, a screen footer sits at the screen edge and keeps the bar's own gap above it.
+export function TabBarLayout_hiddenBarFooterGap(bottomInset: number): number {
+  return TabBarLayout_compute(bottomInset).bottomGap;
+}
 
 export function TabBarLayout_compute(bottomInset: number): ITabBarLayout {
   const bottomGap = Math.max(bottomInset, minBottomGap);

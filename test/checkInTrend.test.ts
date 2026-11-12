@@ -30,7 +30,7 @@ describe("CheckInTrend", () => {
     expect(trend.days[29]).to.equal("2026-10-22");
     expect(trend.lines.map((l) => l.label)).to.eql(["Energy", "Soreness", "Mood"]);
     expect(trend.checkInCount).to.equal(0);
-    expect(CheckInTrend_summary(trend)).to.equal("No check-ins yet. Rate your day in the Journal.");
+    expect(CheckInTrend_summary(trend)).to.equal("No check-ins yet. Rate your day in the Calendar.");
   });
 
   it("puts each score on its day and averages the known ones", () => {

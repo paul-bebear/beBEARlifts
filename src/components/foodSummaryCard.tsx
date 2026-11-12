@@ -170,8 +170,8 @@ function SummaryDetails(props: IProps): JSX.Element {
   );
 }
 
-export function FoodSummaryCard(props: IProps): JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
+export function FoodSummaryCard(props: IProps & { isOpenAtStart?: boolean }): JSX.Element {
+  const [isOpen, setIsOpen] = useState(props.isOpenAtStart === true);
   const { totals } = props;
   const text = `🔥 ${Math.round(totals.calories).toLocaleString("en-US")} · C ${Math.round(totals.carbs)} · P ${Math.round(totals.protein)} · F ${Math.round(totals.fat)}`;
   return (

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { BearHouse_objects, BearHouse_room, IBearHouseObjectId, IBearHouseSources } from "../src/models/bearHouse";
 import { HouseTour_canStart, HouseTour_lines, HouseTour_steps } from "../src/models/houseTour";
 
-const sources: IBearHouseSources = { kcal: 0, kcalTarget: 0, streak: 0, pendingRequests: 0, hasWorkout: false };
+const sources: IBearHouseSources = { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false };
 const room = BearHouse_room("cabin");
 const order: IBearHouseObjectId[] = ["whiteboard", "door", "bowl", "scale", "mirror", "calendar", "bed", "phone"];
 
@@ -22,10 +22,13 @@ describe("HouseTour_steps", () => {
     }
   });
 
-  it("writes a line for the mirror and for the calendar", () => {
+  it("writes a line for the mirror, the bowl and the calendar", () => {
     const line = (id: IBearHouseObjectId): string => HouseTour_lines.find(([lineId]) => lineId === id)![1];
     expect(line("mirror")).to.contain("progress photos");
-    expect(line("calendar")).to.contain("day streak");
+    expect(line("bowl")).to.contain("log a meal");
+    expect(line("calendar")).to.contain("workouts, meals and weigh-ins");
+    expect(line("calendar")).to.not.contain("Journal");
+    expect(line("calendar")).to.not.contain("streak");
   });
 
   it("shows each sprite, and the room picture for the whiteboard and the painted door", () => {

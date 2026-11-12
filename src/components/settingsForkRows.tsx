@@ -88,9 +88,9 @@ function SettingsJournalExport(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
-      <MenuItemWrapper name="Export journal" onClick={() => setIsOpen(true)}>
+      <MenuItemWrapper name="Export days" onClick={() => setIsOpen(true)}>
         <View className="py-3">
-          <Text className="text-base text-text-primary">Export journal</Text>
+          <Text className="text-base text-text-primary">Export days</Text>
           <Text className="text-xs text-text-secondary">A day, a week or every day, as Markdown or CSV.</Text>
         </View>
       </MenuItemWrapper>

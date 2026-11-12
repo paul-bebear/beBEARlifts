@@ -1,15 +1,13 @@
 import { JSX } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { IBearState } from "../models/bear";
-import { IBearLine } from "../models/bearStoreData";
 import { BearText_levelLine, BearText_levelTitle, BearText_status } from "../models/bearText";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
 
 interface IProps {
   state: IBearState;
   now: number;
-  onLine: (line: IBearLine) => void;
 }
 
 const energyColor = "#5B8DEF";
@@ -40,21 +38,6 @@ function Meter(props: { label: string; value: number; color: string; testID: str
   );
 }
 
-function LineChoice(props: { line: IBearLine; label: string; current: IBearLine; onPress: () => void }): JSX.Element {
-  const isOn = props.line === props.current;
-  return (
-    <Pressable
-      testID={`bear-line-${props.line}`}
-      data-testid={`bear-line-${props.line}`}
-      onPress={props.onPress}
-      className={`px-3 py-1 rounded-full ${isOn ? "" : "border border-border-neutral"}`}
-      style={isOn ? { backgroundColor: T.honey } : undefined}
-    >
-      <Text className="text-sm font-semibold">{props.label}</Text>
-    </Pressable>
-  );
-}
-
 export function BearPanel(props: IProps): JSX.Element {
   const { state } = props;
   return (
@@ -72,11 +55,6 @@ export function BearPanel(props: IProps): JSX.Element {
       <View className="flex-row mt-4" style={{ gap: 16 }}>
         <Meter testID="bear-fullness" label="Fullness" value={state.fullness} color={T.green} />
         <Meter testID="bear-energy" label="Energy" value={state.energy} color={energyColor} />
-      </View>
-      <View className="flex-row items-center mt-4" style={{ gap: 8 }}>
-        <Text className="mr-1 text-sm text-text-secondary">Your bear</Text>
-        <LineChoice line="male" label="Male" current={state.line} onPress={() => props.onLine("male")} />
-        <LineChoice line="female" label="Female" current={state.line} onPress={() => props.onLine("female")} />
       </View>
     </View>
   );

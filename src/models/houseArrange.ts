@@ -29,9 +29,8 @@ export interface IHouseArrangeScene {
 const grid = 2;
 const minSize = 20;
 const openSources: IBearHouseSources = {
-  kcal: 0,
-  kcalTarget: 0,
-  streak: 1,
+  fullness: 0,
+  dayOfMonth: 1,
   pendingRequests: 0,
   hasWorkout: false,
 };

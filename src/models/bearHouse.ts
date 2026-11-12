@@ -1,25 +1,22 @@
 import manifest from "../../images/bear/house/manifest.json";
 import { IStats, IUnit } from "../types";
 import { BearBoard_latestWeight } from "./bearBoard";
-import { IBearCountedWorkout } from "./bearGrowth";
 import { IBearBox, IBearRect, IBearSceneArt } from "./bearScene";
 import { BearText_houseEmpty } from "./bearText";
-import { DailyChecklist_doneDays, DailyChecklist_goalTarget, DailyChecklist_streak } from "./dailyChecklist";
-import { FoodLog_dayKey, FoodLog_dayTotals, IFoodLog } from "./foodLog";
+import { BearFullness_percent } from "./bearFullness";
+import { IFoodLog } from "./foodLog";
 import type { ITab } from "./screen";
 
 export type IBearHouseTier = keyof typeof manifest.rooms;
 
 export type IBearHouseObjectId = "whiteboard" | "door" | "bowl" | "bed" | "scale" | "calendar" | "phone" | "mirror";
 
-export type IBearHouseScreen = "stats" | "progressPhotos";
+export type IBearHouseScreen = "stats" | "progressPhotos" | "food" | "foodDay";
 
 export type IBearHouseTarget =
   | { kind: "plus" }
   | { kind: "door" }
   | { kind: "bearPanel" }
-  | { kind: "journal" }
-  | { kind: "monthCalendar" }
   | { kind: "screen"; screen: IBearHouseScreen; tab: ITab }
   | { kind: "phone" };
 
@@ -44,16 +41,14 @@ export interface IBearHouseObject {
 }
 
 export interface IBearHouseSources {
-  kcal: number;
-  kcalTarget: number;
+  fullness: number;
   weight?: string;
-  streak: number;
+  dayOfMonth: number;
   pendingRequests: number;
   hasWorkout: boolean;
 }
 
 export interface IBearHouseSourcesInput {
-  workouts: readonly IBearCountedWorkout[];
   foodLog: IFoodLog;
   stats: IStats;
   units: IUnit;
@@ -123,30 +118,27 @@ export const BearHouse_images: readonly string[] = [
 ];
 
 export function BearHouse_sources(input: IBearHouseSourcesInput): IBearHouseSources {
-  const today = FoodLog_dayKey(new Date(input.now));
-  const doneDays = DailyChecklist_doneDays({ workouts: input.workouts, foodLog: input.foodLog });
   return {
-    kcal: FoodLog_dayTotals(input.foodLog, today).calories,
-    kcalTarget: DailyChecklist_goalTarget(input.foodLog.goals.calories),
+    fullness: BearFullness_percent(input.foodLog, input.now),
     weight: BearBoard_latestWeight(input.stats, input.units, input.now),
-    streak: DailyChecklist_streak(doneDays, today),
+    dayOfMonth: new Date(input.now).getDate(),
     pendingRequests: input.pendingRequests,
     hasWorkout: input.hasWorkout,
   };
 }
 
 export function BearHouse_bowlImage(sources: IBearHouseSources): string {
-  const share = sources.kcalTarget > 0 ? sources.kcal / sources.kcalTarget : sources.kcal > 0 ? 1 : 0;
-  if (share < 0.1) {
+  const { fullness } = sources;
+  if (fullness < 10) {
     return "bowl-empty";
   }
-  if (share < 0.4) {
+  if (fullness < 40) {
     return "bowl-quarter";
   }
-  if (share < 0.65) {
+  if (fullness < 65) {
     return "bowl-half";
   }
-  return share < 0.9 ? "bowl-three-quarter" : "bowl-full";
+  return fullness < 90 ? "bowl-three-quarter" : "bowl-full";
 }
 
 // The image keeps its own shape inside the slot, standing on the slot's bottom edge.
@@ -190,7 +182,12 @@ function specs(sources: IBearHouseSources): IObjectSpec[] {
       pill: sources.hasWorkout ? BearHouse_doorLabel.workout : undefined,
       target: { kind: "door" },
     },
-    { id: "bowl", image: BearHouse_bowlImage(sources), label: "Food", target: { kind: "journal" } },
+    {
+      id: "bowl",
+      image: BearHouse_bowlImage(sources),
+      label: "Food",
+      target: { kind: "screen", screen: "foodDay", tab: "food" },
+    },
     { id: "bed", image: "bed", label: "Bed", target: { kind: "bearPanel" } },
     {
       id: "scale",
@@ -204,8 +201,8 @@ function specs(sources: IBearHouseSources): IObjectSpec[] {
       id: "calendar",
       image: "wall-calendar",
       label: "Calendar",
-      target: { kind: "monthCalendar" },
-      overlay: sources.streak > 0 ? { kind: "number", share: calendarGrid, text: `${sources.streak}` } : undefined,
+      target: { kind: "screen", screen: "food", tab: "food" },
+      overlay: { kind: "number", share: calendarGrid, text: `${sources.dayOfMonth}` },
     },
     {
       id: "phone",
