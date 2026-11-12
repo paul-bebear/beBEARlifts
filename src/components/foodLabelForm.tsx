@@ -15,6 +15,12 @@ const numberFields: { key: keyof INutritionLabelForm; label: string }[] = [
   { key: "carbs", label: "Carbs (g)" },
   { key: "fat", label: "Fat (g)" },
 ];
+const microFields: { key: keyof INutritionLabelForm; label: string }[] = [
+  { key: "fiber", label: "Fiber (g)" },
+  { key: "sugar", label: "Sugar (g)" },
+  { key: "saturatedFat", label: "Saturated fat (g)" },
+  { key: "sodium", label: "Sodium (mg)" },
+];
 
 export function FoodLabelForm(props: {
   form: INutritionLabelForm;
@@ -46,6 +52,24 @@ export function FoodLabelForm(props: {
               keyboardType="decimal-pad"
               inputMode="decimal"
               placeholder="0"
+            />
+          </View>
+        ))}
+      </View>
+      <Text className="mt-4 mb-1.5 text-xs font-semibold tracking-wide uppercase text-text-secondary">
+        Also on the label (leave empty if not printed)
+      </Text>
+      <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+        {microFields.map((f) => (
+          <View key={f.key} style={{ width: "48%" }}>
+            <Text className="mb-1.5 text-sm font-semibold">{f.label}</Text>
+            <FoodTextInput
+              testID={`food-label-${f.key}`}
+              value={form[f.key]}
+              onChangeText={(text) => props.onChange({ ...form, [f.key]: text })}
+              keyboardType="decimal-pad"
+              inputMode="decimal"
+              placeholder="–"
             />
           </View>
         ))}

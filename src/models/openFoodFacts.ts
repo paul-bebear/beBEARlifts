@@ -1,4 +1,5 @@
 import { INutrients } from "./foodLog";
+import { FoodMicros_fromGrams, FoodMicros_sodiumFromSalt, FoodMicros_table, IMicros } from "./foodMicros";
 
 export interface IFoodProduct {
   barcode?: string;
@@ -102,12 +103,36 @@ function per100g(nutriments: INutriments, grams: number | undefined): INutrients
     return undefined;
   }
   const macro = (name: string): number => round1(value((portion) => num(nutriments[`${name}${portion}`])) ?? 0);
-  return {
+  const result: INutrients = {
     calories: Math.round(calories),
     protein: macro("proteins"),
     carbs: macro("carbohydrates"),
     fat: macro("fat"),
   };
+  const micros = readMicros(value, nutriments);
+  return micros != null ? { ...result, micros } : result;
+}
+
+function nonNegative(value: unknown): number | undefined {
+  const n = num(value);
+  return n != null && n >= 0 ? n : undefined;
+}
+
+function readMicros(
+  value: (read: (portion: IPortion) => number | undefined) => number | undefined,
+  nutriments: INutriments
+): IMicros | undefined {
+  const micros: IMicros = {};
+  for (const row of FoodMicros_table) {
+    const grams = value((portion) => nonNegative(nutriments[`${row.openFoodFacts}${portion}`]));
+    const saltGrams =
+      row.key === "sodium" && grams == null ? value((portion) => nonNegative(nutriments[`salt${portion}`])) : undefined;
+    const known = grams ?? (saltGrams != null ? FoodMicros_sodiumFromSalt(saltGrams) : undefined);
+    if (known != null) {
+      micros[row.key] = FoodMicros_fromGrams(row.unit, known);
+    }
+  }
+  return Object.keys(micros).length > 0 ? micros : undefined;
 }
 
 export function OpenFoodFacts_parseProduct(raw: unknown): IFoodProduct | undefined {

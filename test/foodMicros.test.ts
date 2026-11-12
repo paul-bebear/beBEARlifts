@@ -1,6 +1,10 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  FoodMicros_fromCoreFields,
+  FoodMicros_fromGrams,
+  FoodMicros_saltPerSodium,
+  FoodMicros_sodiumFromSalt,
   FoodMicros_coreKeys,
   FoodMicros_isKey,
   FoodMicros_keys,
@@ -83,5 +87,35 @@ describe("FoodMicros_table", () => {
     expect(FoodMicros_isKey("vitaminB12")).to.equal(true);
     expect(FoodMicros_isKey("sodiumMg")).to.equal(false);
     expect(FoodMicros_isKey("__proto__")).to.equal(false);
+  });
+});
+
+describe("FoodMicros conversions", () => {
+  it("converts grams to the row's unit and rounds to three decimals", () => {
+    expect(FoodMicros_fromGrams("g", 3.4)).to.equal(3.4);
+    expect(FoodMicros_fromGrams("mg", 0.00125)).to.equal(1.25);
+    expect(FoodMicros_fromGrams("µg", 0.0000021)).to.equal(2.1);
+  });
+
+  it("gives sodium from salt as salt divided by 2.5", () => {
+    expect(FoodMicros_saltPerSodium).to.equal(2.5);
+    expect(FoodMicros_sodiumFromSalt(1.25)).to.equal(0.5);
+  });
+
+  it("reads the four core fields of a label or an AI answer, with sodium from sodiumMg", () => {
+    expect(FoodMicros_fromCoreFields({ fiber: 3, sugar: "4.5", saturatedFat: 0, sodiumMg: 1210 })).to.deep.equal({
+      fiber: 3,
+      sugar: 4.5,
+      saturatedFat: 0,
+      sodium: 1210,
+    });
+  });
+
+  it("leaves a field out when it is missing, negative, not a number or not finite", () => {
+    expect(FoodMicros_fromCoreFields({ fiber: 2, sugar: -1, saturatedFat: "lots", sodiumMg: Infinity })).to.deep.equal({
+      fiber: 2,
+    });
+    expect(FoodMicros_fromCoreFields({ sodium: 500, calories: 90 })).to.equal(undefined);
+    expect(FoodMicros_fromCoreFields({ fiber: "", sugar: null })).to.equal(undefined);
   });
 });

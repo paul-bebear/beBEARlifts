@@ -30,15 +30,26 @@ describe("NutritionLabel_parse", () => {
     expect(label?.perServing).to.deep.equal({ calories: 148, protein: 5.2, carbs: 24, fat: 2.8 });
   });
 
-  it("keeps the micros map of a label and scales it with a per-100 g label", () => {
-    const perServing = NutritionLabel_parse(
-      '{"perServing":{"calories":530,"protein":12,"carbs":84,"fat":16,"micros":{"fiber":3,"bogus":9}}}'
+  it("reads the four core values a label prints, and leaves out the ones it does not print", () => {
+    const label = NutritionLabel_parse(
+      '{"perServing":{"calories":530,"protein":12,"carbs":84,"fat":16,"fiber":3,"saturatedFat":5.5,"sodiumMg":1210}}'
     );
-    expect(perServing?.perServing.micros).to.deep.equal({ fiber: 3 });
-    const per100g = NutritionLabel_parse(
-      '{"servingGrams":40,"per100g":{"calories":370,"protein":13,"carbs":60,"fat":7,"micros":{"sodium":500}}}'
+    expect(label?.perServing.micros).to.deep.equal({ fiber: 3, saturatedFat: 5.5, sodium: 1210 });
+    expect(label?.perServing.micros).to.not.have.property("sugar");
+  });
+
+  it("gives no micros when the label prints none, and ignores a value that is not a number of 0 or more", () => {
+    const none = NutritionLabel_parse('{"perServing":{"calories":530,"protein":12,"carbs":84,"fat":16}}');
+    expect(none?.perServing).to.not.have.property("micros");
+    const bad = NutritionLabel_parse('{"perServing":{"calories":530,"fiber":-2,"sugar":"lots","sodiumMg":null}}');
+    expect(bad?.perServing).to.not.have.property("micros");
+  });
+
+  it("scales the micros of a per-100 g label to the serving", () => {
+    const label = NutritionLabel_parse(
+      '{"servingGrams":40,"per100g":{"calories":370,"protein":13,"carbs":60,"fat":7,"sodiumMg":500,"fiber":8}}'
     );
-    expect(per100g?.perServing.micros).to.deep.equal({ sodium: 200 });
+    expect(label?.perServing.micros).to.deep.equal({ fiber: 3.2, sodium: 200 });
   });
 
   it("uses 100 g as the serving when a per-100 g label states none", () => {
@@ -96,6 +107,29 @@ describe("NutritionLabel_toProduct", () => {
       protein: "",
       carbs: "",
       fat: "",
+      fiber: "",
+      sugar: "",
+      saturatedFat: "",
+      sodium: "",
     });
+  });
+
+  it("fills the micro fields from a scanned label and keeps them through the form into per-100 g values", () => {
+    const scanned = NutritionLabel_toForm({
+      servingGrams: 140,
+      perServing: { calories: 530, protein: 12, carbs: 84, fat: 16, micros: { fiber: 3, sodium: 1210 } },
+    });
+    expect([scanned.fiber, scanned.sugar, scanned.saturatedFat, scanned.sodium]).to.deep.equal(["3", "", "", "1210"]);
+    const result = NutritionLabel_toProduct({ ...scanned, name: "Ramen" });
+    expect(result.ok && result.product.per100g.micros).to.deep.equal({ fiber: 2.143, sodium: 864.286 });
+    if (result.ok) {
+      const pick = FoodAddFlow_pickFromProduct(result.product, "barcode");
+      expect(FoodAddFlow_nutrientsFor(pick, 140).micros).to.deep.equal({ fiber: 3, sodium: 1210 });
+    }
+  });
+
+  it("stores no micros when the form fields are empty, so unknown does not become zero", () => {
+    const result = NutritionLabel_toProduct(form);
+    expect(result.ok && result.product.per100g).to.not.have.property("micros");
   });
 });

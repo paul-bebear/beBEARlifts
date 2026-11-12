@@ -1,4 +1,5 @@
 import { INutrients } from "./foodLog";
+import { FoodMicros_table, IMicros } from "./foodMicros";
 import { IFoodProduct } from "./openFoodFacts";
 
 const kjPerKcal = 4.184;
@@ -54,12 +55,25 @@ function parseNutrients(nutrients: unknown[]): INutrients | undefined {
     return undefined;
   }
   const round1 = (n: number | undefined): number => Math.round((n ?? 0) * 10) / 10;
-  return {
+  const result: INutrients = {
     calories: Math.round(calories),
     protein: round1(nutrientValue(nutrients, nutrientNumbers.protein)),
     carbs: round1(nutrientValue(nutrients, nutrientNumbers.carbs)),
     fat: round1(nutrientValue(nutrients, nutrientNumbers.fat)),
   };
+  const micros = readMicros(nutrients);
+  return micros != null ? { ...result, micros } : result;
+}
+
+function readMicros(nutrients: unknown[]): IMicros | undefined {
+  const micros: IMicros = {};
+  for (const row of FoodMicros_table) {
+    const value = nutrientValue(nutrients, [row.usda]);
+    if (value != null) {
+      micros[row.key] = Math.round(value * 1000) / 1000;
+    }
+  }
+  return Object.keys(micros).length > 0 ? micros : undefined;
 }
 
 function parseFood(raw: Record<string, unknown>, barcode: string): IFoodProduct | undefined {

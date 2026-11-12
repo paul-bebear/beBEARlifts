@@ -73,3 +73,41 @@ export function FoodMicros_row(key: IMicroKey): IMicroRow {
 export function FoodMicros_isKey(key: string): key is IMicroKey {
   return FoodMicros_keys.includes(key as IMicroKey);
 }
+
+export const FoodMicros_saltPerSodium = 2.5;
+
+const unitPerGram: Record<IMicroUnit, number> = { g: 1, mg: 1000, µg: 1000000 };
+
+function round3(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
+export function FoodMicros_fromGrams(unit: IMicroUnit, grams: number): number {
+  return round3(grams * unitPerGram[unit]);
+}
+
+export function FoodMicros_sodiumFromSalt(saltInUnit: number): number {
+  return saltInUnit / FoodMicros_saltPerSodium;
+}
+
+function nonNegative(value: unknown): number | undefined {
+  const n = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+  return typeof n === "number" && isFinite(n) && n >= 0 ? n : undefined;
+}
+
+export function FoodMicros_fromCoreFields(raw: Record<string, unknown>): IMicros | undefined {
+  const fields: [IMicroKey, unknown][] = [
+    ["fiber", raw.fiber],
+    ["sugar", raw.sugar],
+    ["saturatedFat", raw.saturatedFat],
+    ["sodium", raw.sodiumMg],
+  ];
+  const micros: IMicros = {};
+  for (const [key, value] of fields) {
+    const n = nonNegative(value);
+    if (n != null) {
+      micros[key] = round3(n);
+    }
+  }
+  return Object.keys(micros).length > 0 ? micros : undefined;
+}
