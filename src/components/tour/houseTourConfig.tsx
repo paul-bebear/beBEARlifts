@@ -10,11 +10,7 @@ import { ITourConfig } from "./tourTypes";
 const paraCn = "text-base leading-relaxed text-center text-text-secondary";
 const imagePrefix = "/images/";
 
-const dayZero = BearHouse_objects(
-  "cabin",
-  { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false },
-  undefined
-);
+const dayZero = BearHouse_objects({ fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false }, undefined);
 
 export const houseTourConfig: ITourConfig = {
   id: "house",
@@ -27,7 +23,7 @@ export const houseTourConfig: ITourConfig = {
       isOfferBusy: PlusOfferClient_isBusy(),
     });
   },
-  steps: HouseTour_steps(dayZero, BearHouse_room("cabin")).map((step) => ({
+  steps: HouseTour_steps(dayZero, BearHouse_room()).map((step) => ({
     id: step.id,
     title: step.title,
     dino: step.image.slice(imagePrefix.length),

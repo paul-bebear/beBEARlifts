@@ -25,7 +25,7 @@ interface IProps {
 
 export function BearHouseScene(props: IProps): JSX.Element {
   const [arrange, setArrange] = useState<IHouseArrangeState | undefined>(() =>
-    HouseArrangeFlag_isOn() ? HouseArrange_initial(props.room) : undefined
+    HouseArrangeFlag_isOn() ? HouseArrange_initial() : undefined
   );
   const shown = arrange != null ? HouseArrange_scene(arrange) : { ...props, art: BearHouse_art };
   return (

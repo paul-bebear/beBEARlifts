@@ -7,18 +7,19 @@ import {
   HouseArrange_isOn,
   HouseArrange_reduce,
   HouseArrange_scene,
+  HouseArrange_slots,
 } from "../src/models/houseArrange";
-import { BearHouse_room } from "../src/models/bearHouse";
+import { BearHouse_room, BearHouse_roomKey } from "../src/models/bearHouse";
 import { HouseFrame_canvas } from "../src/models/houseFrame";
 
 const manifestPath = "images/bear/house/manifest.json";
 
 function fresh(): ReturnType<typeof HouseArrange_initial> {
-  return HouseArrange_initial(undefined);
+  return HouseArrange_initial();
 }
 
 function scaleRect(state: ReturnType<typeof HouseArrange_initial>): number[] {
-  return state.manifest.rooms[state.room].objects.scale.rect;
+  return HouseArrange_slots(state).scale.rect;
 }
 
 describe("HouseArrange", () => {
@@ -32,9 +33,9 @@ describe("HouseArrange", () => {
 
   it("clamps a move past the left edge to 0", () => {
     const state = fresh();
-    const [x1, y1, x2, y2] = state.manifest.rooms[state.room].objects.calendar.rect;
+    const [x1, y1, x2, y2] = HouseArrange_slots(state).calendar.rect;
     const moved = HouseArrange_reduce(state, { type: "move", id: "calendar", dx: -5000, dy: 0 });
-    expect(moved.manifest.rooms[moved.room].objects.calendar.rect).to.deep.equal([0, y1, x2 - x1, y2]);
+    expect(HouseArrange_slots(moved).calendar.rect).to.deep.equal([0, y1, x2 - x1, y2]);
   });
 
   it("clamps a move past the bottom right corner inside the canvas", () => {
@@ -56,8 +57,8 @@ describe("HouseArrange", () => {
   it("moves the pill dot with its object", () => {
     const state = fresh();
     const moved = HouseArrange_reduce(state, { type: "move", id: "scale", dx: 20, dy: 0 });
-    const before = state.manifest.rooms[state.room].objects.scale.pill;
-    const after = moved.manifest.rooms[moved.room].objects.scale.pill;
+    const before = HouseArrange_slots(state).scale.pill;
+    const after = HouseArrange_slots(moved).scale.pill;
     expect(after[0] - before[0]).to.equal(scaleRect(moved)[0] - scaleRect(state)[0]);
   });
 
@@ -76,14 +77,14 @@ describe("HouseArrange", () => {
 
   it("snaps every edge to 2 px when [100, 200, 300, 400] scales by 1.05", () => {
     const state = fresh();
-    const room = state.manifest.rooms[state.room];
+    const room = state.manifest.rooms[BearHouse_roomKey];
     const seeded = {
       ...state,
       manifest: {
         ...state.manifest,
         rooms: {
           ...state.manifest.rooms,
-          [state.room]: {
+          [BearHouse_roomKey]: {
             ...room,
             objects: { ...room.objects, scale: { ...room.objects.scale, rect: [100, 200, 300, 400] } },
           },
@@ -106,24 +107,19 @@ describe("HouseArrange", () => {
 
   it("moves the pill dot and the bear's feet on their own", () => {
     const state = fresh();
-    const pill = state.manifest.rooms[state.room].objects.scale.pill;
+    const pill = HouseArrange_slots(state).scale.pill;
     const dot = HouseArrange_reduce(state, { type: "movePill", id: "scale", dx: 10, dy: -10 });
-    expect(dot.manifest.rooms[dot.room].objects.scale.pill).to.deep.equal([pill[0] + 10, pill[1] - 10]);
+    expect(HouseArrange_slots(dot).scale.pill).to.deep.equal([pill[0] + 10, pill[1] - 10]);
     expect(scaleRect(dot)).to.deep.equal(scaleRect(state));
     const foot = HouseArrange_reduce(state, { type: "moveFoot", dx: -10, dy: 20 });
     expect(foot.manifest.bearFoot).to.deep.equal([state.manifest.bearFoot[0] - 10, state.manifest.bearFoot[1] + 20]);
   });
 
-  it("picks a room and an object, and ignores one that does not exist", () => {
-    const state = fresh();
-    const room = HouseArrange_reduce(state, { type: "pickRoom", room: "moon" });
-    expect(room.room).to.equal("moon");
-    expect(room.picked).to.equal(undefined);
-    const picked = HouseArrange_reduce(room, { type: "pick", id: "scale" });
+  it("picks an object, and ignores one that does not exist", () => {
+    const picked = HouseArrange_reduce(fresh(), { type: "pick", id: "scale" });
     expect(picked.picked).to.equal("scale");
     expect(HouseArrange_reduce(picked, { type: "pick", id: "nothing" })).to.equal(picked);
     expect(HouseArrange_reduce(picked, { type: "pick", id: undefined }).picked).to.equal(undefined);
-    expect(HouseArrange_reduce(picked, { type: "pickRoom", room: "nowhere" })).to.equal(picked);
   });
 
   it("returns the file's values on reset", () => {
@@ -152,8 +148,7 @@ describe("HouseArrange", () => {
   it("starts in the cabin and draws its eight objects from the tool's manifest", () => {
     const state = fresh();
     const scene = HouseArrange_scene(state);
-    expect(state.room).to.equal("cabin");
-    expect(scene.room).to.equal(BearHouse_room("cabin"));
+    expect(scene.room).to.equal(BearHouse_room());
     expect(scene.objects.map((o) => o.id)).to.have.members([
       "whiteboard",
       "door",

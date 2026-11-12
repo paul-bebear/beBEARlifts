@@ -1,21 +1,27 @@
 import manifest from "../../images/bear/house/manifest.json";
-import { BearHouse_artOf, BearHouse_objects, BearHouse_room, BearHouse_wallColor } from "./bearHouse";
-import type { IBearHouseManifest, IBearHouseObject, IBearHouseSources, IBearHouseTier } from "./bearHouse";
+import {
+  BearHouse_artOf,
+  BearHouse_objects,
+  BearHouse_room,
+  BearHouse_roomKey,
+  BearHouse_wallColor,
+} from "./bearHouse";
+import type { IBearHouseManifest, IBearHouseObject, IBearHouseSources } from "./bearHouse";
 import type { IBearSceneArt } from "./bearScene";
 import { HouseFrame_canvas } from "./houseFrame";
 
 export interface IHouseArrangeState {
   manifest: IBearHouseManifest;
-  room: IBearHouseTier;
   picked: string | undefined;
 }
+
+type ISlot = { rect: number[]; pill: number[] };
 
 export type IHouseArrangeAction =
   | { type: "move"; id: string; dx: number; dy: number }
   | { type: "scale"; id: string; factor: number }
   | { type: "movePill"; id: string; dx: number; dy: number }
   | { type: "moveFoot"; dx: number; dy: number }
-  | { type: "pickRoom"; room: string }
   | { type: "pick"; id: string | undefined }
   | { type: "reset" };
 
@@ -43,10 +49,12 @@ function fileManifest(): IBearHouseManifest {
   return JSON.parse(JSON.stringify(manifest));
 }
 
-export function HouseArrange_initial(roomImage: string | undefined): IHouseArrangeState {
-  const tiers = Object.keys(manifest.rooms) as IBearHouseTier[];
-  const room = tiers.find((tier) => BearHouse_room(tier) === roomImage) ?? tiers[0];
-  return { manifest: fileManifest(), room, picked: undefined };
+export function HouseArrange_initial(): IHouseArrangeState {
+  return { manifest: fileManifest(), picked: undefined };
+}
+
+export function HouseArrange_slots(state: IHouseArrangeState): Record<string, ISlot> {
+  return state.manifest.rooms[BearHouse_roomKey].objects;
 }
 
 function snap(value: number): number {
@@ -86,19 +94,15 @@ function scaleRect(rect: number[], factor: number): number[] {
   return [left, top, left + width, y2];
 }
 
-function withSlot(
-  state: IHouseArrangeState,
-  id: string,
-  change: (slot: { rect: number[]; pill: number[] }) => { rect: number[]; pill: number[] }
-): IHouseArrangeState {
-  const objects = state.manifest.rooms[state.room].objects;
+function withSlot(state: IHouseArrangeState, id: string, change: (slot: ISlot) => ISlot): IHouseArrangeState {
+  const objects = HouseArrange_slots(state);
   if (objects[id] == null) {
     return state;
   }
-  const room = state.manifest.rooms[state.room];
+  const room = state.manifest.rooms[BearHouse_roomKey];
   const rooms = {
     ...state.manifest.rooms,
-    [state.room]: { ...room, objects: { ...objects, [id]: change(objects[id]) } },
+    [BearHouse_roomKey]: { ...room, objects: { ...objects, [id]: change(objects[id]) } },
   };
   return { ...state, manifest: { ...state.manifest, rooms } };
 }
@@ -120,12 +124,8 @@ export function HouseArrange_reduce(state: IHouseArrangeState, action: IHouseArr
         ...state,
         manifest: { ...state.manifest, bearFoot: movePoint(state.manifest.bearFoot, action.dx, action.dy) },
       };
-    case "pickRoom":
-      return state.manifest.rooms[action.room] == null
-        ? state
-        : { ...state, room: action.room as IBearHouseTier, picked: undefined };
     case "pick":
-      if (action.id != null && state.manifest.rooms[state.room].objects[action.id] == null) {
+      if (action.id != null && HouseArrange_slots(state)[action.id] == null) {
         return state;
       }
       return { ...state, picked: action.id };
@@ -137,9 +137,9 @@ export function HouseArrange_reduce(state: IHouseArrangeState, action: IHouseArr
 // The picked room with every object open and every source filled, so the owner can place all of them.
 export function HouseArrange_scene(state: IHouseArrangeState): IHouseArrangeScene {
   return {
-    room: BearHouse_room(state.room),
-    wall: BearHouse_wallColor(state.room),
-    objects: BearHouse_objects(state.room, openSources, undefined, state.manifest),
+    room: BearHouse_room(),
+    wall: BearHouse_wallColor(),
+    objects: BearHouse_objects(openSources, undefined, state.manifest),
     art: BearHouse_artOf(state.manifest),
   };
 }

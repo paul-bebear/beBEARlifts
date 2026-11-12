@@ -6,7 +6,6 @@ import {
   BearHouse_sources,
   BearHouse_wallColor,
   IBearHouseObject,
-  IBearHouseTier,
 } from "../models/bearHouse";
 import { Friends_forUser, Friends_lists } from "../models/friends";
 import { useFoodLog } from "./foodLogStore";
@@ -18,8 +17,6 @@ export interface IBearHouseView {
   wall: string;
   objects: IBearHouseObject[];
 }
-
-const houseTier: IBearHouseTier = "cabin";
 
 export function useBearHouse(hasWorkout: boolean): IBearHouseView {
   const tracked = useTrackedState();
@@ -37,7 +34,7 @@ export function useBearHouse(hasWorkout: boolean): IBearHouseView {
       hasWorkout,
       now: Date.now(),
     });
-    return BearHouse_objects(houseTier, sources, undefined);
+    return BearHouse_objects(sources, undefined);
   }, [foodLog, stats, units, pendingRequests, hasWorkout]);
-  return { room: BearHouse_room(houseTier), wall: BearHouse_wallColor(houseTier), objects };
+  return { room: BearHouse_room(), wall: BearHouse_wallColor(), objects };
 }

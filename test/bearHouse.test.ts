@@ -44,7 +44,7 @@ const cabinObjects: IBearHouseObjectId[] = [
 const empty: IBearHouseSources = { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false };
 
 function cabin(sources: IBearHouseSources = empty, seen?: ReadonlySet<IBearHouseObjectId>): IBearHouseObject[] {
-  return BearHouse_objects("cabin", sources, seen);
+  return BearHouse_objects(sources, seen);
 }
 
 function byId(objects: IBearHouseObject[], id: IBearHouseObjectId): IBearHouseObject {
@@ -264,8 +264,8 @@ describe("BearHouse", () => {
   });
 
   it("gives the room the cabin wall, the whiteboard and the bear's foot line", () => {
-    expect(BearHouse_wallColor("cabin")).to.equal("#EBD2C0");
-    expect(BearHouse_room("cabin")).to.equal("/images/bear/house/room-cabin.webp");
+    expect(BearHouse_wallColor()).to.equal("#EBD2C0");
+    expect(BearHouse_room()).to.equal("/images/bear/house/room-cabin.webp");
     expect(BearHouse_art.canvas).to.deep.equal({ width: 1024, height: 2304 });
     expect(BearHouse_art.board).to.deep.equal([32, 190, 992, 650]);
     expect(BearHouse_art.foot).to.deep.equal({ x: 512, y: 1620 });
