@@ -6,7 +6,7 @@ export type IPhoneSheetTarget =
   | {
       kind: "screen";
       screen: "settings" | "reportsHub" | "friends" | "music" | "progressPhotos" | "streak";
-      tab?: ITab;
+      tab: ITab;
     }
   | { kind: "addFriend" };
 
@@ -48,10 +48,10 @@ export function PhoneSheet_apps(input: IPhoneSheetInput): IPhoneSheetApp[] {
       target: hasFriends ? { kind: "screen", screen: "friends", tab: "friends" } : { kind: "addFriend" },
       badge: input.pendingRequests,
     },
-    { id: "music", label: "Music", target: { kind: "screen", screen: "music" } },
-    { id: "photos", label: "Photos", target: { kind: "screen", screen: "progressPhotos" } },
+    { id: "music", label: "Music", target: { kind: "screen", screen: "music", tab: "graphs" } },
+    { id: "photos", label: "Photos", target: { kind: "screen", screen: "progressPhotos", tab: "graphs" } },
     { id: "stats", label: "Stats", target: { kind: "screen", screen: "reportsHub", tab: "graphs" } },
-    { id: "badges", label: "Badges", target: { kind: "screen", screen: "streak" } },
+    { id: "badges", label: "Badges", target: { kind: "screen", screen: "streak", tab: "graphs" } },
     { id: "settings", label: "Settings", target: { kind: "screen", screen: "settings", tab: "me" } },
   ];
   return apps.map((app) => ({ ...app, image: PhoneSheet_image(app.id) }));

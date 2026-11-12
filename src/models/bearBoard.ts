@@ -40,20 +40,7 @@ export interface IBearBoardInput {
 }
 
 const dayMs = 86400000;
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const trendDays = 30;
 
 function oneDecimal(value: number): string {
@@ -70,13 +57,13 @@ function todo(id: IBearBoardLine["id"], text: string, item: IChecklistItem): IBe
 
 function trainText(input: IBearBoardInput): string {
   const pill = TodayPill_text({ dayName: input.dayName, history: [...input.history], now: input.now });
-  return `Train · ${pill.replace(/!$/, "")}`;
+  return pill.replace(/!$/, "");
 }
 
 function foodText(input: IBearBoardInput, today: string): string {
   const eaten = formatCount(FoodLog_dayTotals(input.foodLog, today).calories);
   const target = DailyChecklist_goalTarget(input.foodLog.goals.calories);
-  return target > 0 ? `Eat · ${eaten} of ${formatCount(target)} kcal` : `Eat · ${eaten} kcal`;
+  return target > 0 ? `${eaten} of ${formatCount(target)} cal` : `${eaten} cal`;
 }
 
 function weightEntries(stats: IStats, now: number): IStatsWeightValue[] {
@@ -124,7 +111,7 @@ function weightLine(input: IBearBoardInput): IBearBoardLine {
 
 function levelText(level: IBearTierProgress): string {
   const head = `Level ${level.tier.level}`;
-  return level.next == null ? `${head} · top level` : `${head} · ${BearText_kg(level.kgToNext)} to ${level.next.name}`;
+  return level.next == null ? `${head} · top level` : `${head} · ${BearText_kg(level.kgToNext)} to go`;
 }
 
 function sinceDate(startedAt: number, now: number): string {
@@ -138,10 +125,10 @@ export function BearBoard_goalLines(goal: IProgramGoal | undefined, units: IUnit
     return [{ id: "goal", text: "Goal: tap to set one", isDone: false, target: "goal" }];
   }
   const since = sinceDate(goal.startedAt, now);
-  const text = goal.startWeight == null ? since : `${since} at ${ProgramGoal_formatWeight(goal.startWeight, units)}`;
+  const text = goal.startWeight == null ? since : `${since} · ${ProgramGoal_formatWeight(goal.startWeight, units)}`;
   return [
     { id: "goal", text: `Goal: ${ProgramGoal_kindLabel(goal.kind).toLowerCase()}`, isDone: false, target: "goal" },
-    { id: "goalSince", text: `since ${text}`, isDone: false, target: "goal" },
+    { id: "goalSince", text: `Since ${text}`, isDone: false, target: "goal" },
   ];
 }
 
@@ -163,13 +150,13 @@ export function BearBoard_lines(input: IBearBoardInput): IBearBoardLine[] {
     todo("food", foodText(input, today), item("food")),
     todo(
       "weighIn",
-      `Weigh-in · ${DailyChecklist_weighInDayName(input.goal?.startedAt, input.startWeekFromMonday)}`,
+      `Weight: ${DailyChecklist_weighInDayName(input.goal?.startedAt, input.startWeekFromMonday)}`,
       item("weight")
     ),
     streakLine(input, today),
     ...BearBoard_goalLines(input.goal, input.units, input.now),
     weightLine(input),
     { id: "level", text: levelText(input.level), isDone: false, target: "bear" },
-    { id: "lifted", text: `Lifted ${BearText_kg(input.countedKg)} since day one`, isDone: false, target: "bear" },
+    { id: "lifted", text: `Lifted ${BearText_kg(input.countedKg)}`, isDone: false, target: "bear" },
   ];
 }

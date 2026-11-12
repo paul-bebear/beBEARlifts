@@ -57,12 +57,22 @@ describe("PhoneSheet", () => {
   it("opens the screens the boombox, mirror, shelf, reports hub and settings open", () => {
     const targets = PhoneSheet_apps(none).map((a) => a.target);
     expect(targets.slice(1)).to.deep.equal([
-      { kind: "screen", screen: "music" },
-      { kind: "screen", screen: "progressPhotos" },
+      { kind: "screen", screen: "music", tab: "graphs" },
+      { kind: "screen", screen: "progressPhotos", tab: "graphs" },
       { kind: "screen", screen: "reportsHub", tab: "graphs" },
-      { kind: "screen", screen: "streak" },
+      { kind: "screen", screen: "streak", tab: "graphs" },
       { kind: "screen", screen: "settings", tab: "me" },
     ]);
+  });
+
+  it("gives every screen target a tab, because the home stack has none of these screens", () => {
+    for (const input of [none, { ...none, friendCount: 1 }]) {
+      for (const app of PhoneSheet_apps(input)) {
+        if (app.target.kind === "screen") {
+          expect(app.target.tab, app.id).to.be.a("string");
+        }
+      }
+    }
   });
 
   it("opens the add-friend modal for a user with no friends and no requests", () => {

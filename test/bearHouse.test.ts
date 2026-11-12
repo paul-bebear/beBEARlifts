@@ -96,6 +96,16 @@ describe("BearHouse", () => {
     }
   });
 
+  it("gives every screen target a tab, because the home stack has none of these screens", () => {
+    for (const object of cabin()) {
+      if (object.target.kind === "screen") {
+        expect(object.target.tab, object.id).to.be.a("string");
+      }
+    }
+    expect(byId(cabin(), "mirror").target).to.deep.equal({ kind: "screen", screen: "progressPhotos", tab: "graphs" });
+    expect(byId(cabin(), "scale").target).to.deep.equal({ kind: "screen", screen: "stats", tab: "graphs" });
+  });
+
   it("gives every object a label and a target", () => {
     const summary = Object.fromEntries(cabin().map((o) => [o.id, [o.label, o.target.kind]]));
     expect(summary).to.deep.equal({

@@ -20,7 +20,7 @@ export type IBearHouseTarget =
   | { kind: "bearPanel" }
   | { kind: "journal" }
   | { kind: "monthCalendar" }
-  | { kind: "screen"; screen: IBearHouseScreen; tab?: ITab }
+  | { kind: "screen"; screen: IBearHouseScreen; tab: ITab }
   | { kind: "phone" };
 
 export interface IBearHouseOverlay {
@@ -217,7 +217,12 @@ function specs(sources: IBearHouseSources): IObjectSpec[] {
           ? { kind: "badge", share: phoneBadge, text: `${sources.pendingRequests}` }
           : undefined,
     },
-    { id: "mirror", image: "mirror", label: "Mirror", target: { kind: "screen", screen: "progressPhotos" } },
+    {
+      id: "mirror",
+      image: "mirror",
+      label: "Mirror",
+      target: { kind: "screen", screen: "progressPhotos", tab: "graphs" },
+    },
   ];
 }
 
