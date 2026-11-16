@@ -1,4 +1,4 @@
-import { JSX, ReactNode, useRef, useState } from "react";
+import { JSX, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { IDispatch } from "../ducks/types";
@@ -29,6 +29,8 @@ import { StringUtils_dashcase } from "../utils/string";
 import { INavCommon } from "../models/state";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { Input } from "./input";
+import { InputNumber2 } from "./inputNumber2";
+import { RulerTape_parse, RulerTape_spec } from "../models/rulerTape";
 import { IconFilter } from "./icons/iconFilter";
 import { HealthSync_eligibleForAppleHealth, HealthSync_eligibleForGoogleHealth } from "../lib/healthSync";
 import { MenuItemEditable } from "./menuItemEditable";
@@ -506,8 +508,44 @@ function DoubleLine(props: IDoubleLineProps): JSX.Element {
   );
 }
 
+function StatWeighInInput(props: IStatInputProps): JSX.Element {
+  const testName = StringUtils_dashcase(props.label.toLowerCase());
+  const ruler = useMemo(() => RulerTape_spec("weighIn", props.unit), [props.unit]);
+  const [value, setValue] = useState<number | undefined>(RulerTape_parse(String(props.defaultValue ?? "")));
+  const onValue = useCallback(
+    (v: number | undefined) => {
+      props.valuesRef.current[props.name] = v != null ? String(v) : "";
+      setValue(v);
+    },
+    [props.valuesRef, props.name]
+  );
+  return (
+    <View>
+      <Text className="mb-1 text-xs text-text-secondary">{`${props.label} (${props.unit})`}</Text>
+      <InputNumber2
+        key={`${props.name}-${props.clearKey}`}
+        name={`stats-${testName}`}
+        size="lg"
+        width={12}
+        value={value}
+        placeholder="e.g. 70"
+        min={0}
+        max={1000}
+        allowDot={true}
+        ruler={ruler}
+        inputCommitMode="live"
+        onInput={onValue}
+        onBlur={onValue}
+      />
+    </View>
+  );
+}
+
 function StatInput(props: IStatInputProps): JSX.Element {
   const testName = StringUtils_dashcase(props.label.toLowerCase());
+  if (props.name === "weight") {
+    return <StatWeighInInput {...props} />;
+  }
   return (
     <Input
       key={`${props.name}-${props.clearKey}`}

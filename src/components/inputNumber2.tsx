@@ -12,6 +12,8 @@ import { lg } from "../utils/posthog";
 import { FocusedInputFlush_register, FocusedInputFlush_unregister } from "../utils/focusedInputFlush";
 import { useRem } from "../utils/useRem";
 import { FitText_fontSize } from "../utils/fitText";
+import { IRulerSpec, RulerTape_panelMode, RulerTape_parse } from "../models/rulerTape";
+import { RulerPicker } from "./rulerPicker";
 
 export type IInputCommitMode = "live" | "debounced" | "blur";
 
@@ -42,6 +44,7 @@ interface IInputNumber2Props {
   enableUnits?: (IUnit | IPercentageUnit)[];
   onChangeUnits?: (unit: IUnit | IPercentageUnit) => void;
   selectedUnit?: IUnit | IPercentageUnit;
+  ruler?: IRulerSpec;
   showUnitInside?: boolean;
   cornerLabel?: string;
   inputCommitMode?: IInputCommitMode;
@@ -337,6 +340,24 @@ function InputNumber2Inner(props: IInputNumber2Props): JSX.Element {
       onInputRef.current(newValue);
     }
   }, [cancelPendingInput]);
+
+  const getRulerValue = useCallback(() => RulerTape_parse(valueRef.current), []);
+
+  const onRulerChange = useCallback(
+    (rulerValue: number) => {
+      cancelPendingInput();
+      setIsTyping(false);
+      isTypingRef.current = false;
+      const newValue = clamp(rulerValue, minRef.current, maxRef.current);
+      valueRef.current = newValue != null ? newValue.toString() : "";
+      setValue(valueRef.current);
+      onPreviewRef.current?.(newValue);
+      if (commitModeRef.current !== "blur" && onInputRef.current) {
+        onInputRef.current(newValue);
+      }
+    },
+    [cancelPendingInput]
+  );
 
   const onShowCalculator = useCallback(() => {
     blurRef.current?.("show-calculator");
@@ -677,6 +698,10 @@ function InputNumber2Inner(props: IInputNumber2Props): JSX.Element {
           enableUnits={props.enableUnits}
           onChangeUnits={onChangeUnits}
           selectedUnit={props.selectedUnit}
+          ruler={props.ruler}
+          getRulerValue={getRulerValue}
+          initialValue={props.initialValue}
+          onRulerChange={onRulerChange}
         />
       )}
     </div>
@@ -686,6 +711,10 @@ function InputNumber2Inner(props: IInputNumber2Props): JSX.Element {
 export const InputNumber2 = memo(InputNumber2Inner);
 
 interface ICustomKeyboardProps {
+  ruler?: IRulerSpec;
+  getRulerValue: () => number | undefined;
+  initialValue?: number;
+  onRulerChange: (value: number) => void;
   onInput: (value: string) => void;
   onBlur: () => void;
   onPlus: () => void;
@@ -731,6 +760,10 @@ const CustomKeyboardInner = forwardRef((props: ICustomKeyboardProps, ref: React.
     [props.allowDot, props.allowNegative]
   );
   const handleBackspace = useCallback(() => props.onInput("⌫"), [props.onInput]);
+  const [padRequested, setPadRequested] = useState(false);
+  const showPad = useCallback(() => setPadRequested(true), []);
+  const showRuler = useCallback(() => setPadRequested(false), []);
+  const mode = RulerTape_panelMode(props.ruler != null, padRequested);
 
   const element = (
     <div
@@ -757,7 +790,49 @@ const CustomKeyboardInner = forwardRef((props: ICustomKeyboardProps, ref: React.
             </div>
           )}
         </div>
-        <div className="flex w-full gap-4 p-4 bg-background-default">
+        {mode === "ruler" && props.ruler && (
+          <div className="bg-background-default">
+            <RulerPicker
+              key={`${props.ruler.kind}-${props.ruler.label}`}
+              spec={props.ruler}
+              getValue={props.getRulerValue}
+              initialValue={props.initialValue}
+              onChange={props.onRulerChange}
+              onPressNumber={showPad}
+            />
+            <div className="flex items-end gap-4 px-4 pt-2 pb-4">
+              <div className="flex-1">
+                {props.enableUnits && props.selectedUnit && (
+                  <div className="flex items-center h-scaled-10 gap-2 w-scaled-24">
+                    {props.enableUnits.map((unit) => (
+                      <button
+                        key={unit}
+                        className={`flex text-icon-neutral touch-manipulation items-center aspect-square justify-center flex-1 w-full border rounded ${unit === props.selectedUnit ? "border-border-prominent bg-background-cardpurpleselected" : " border-border-cardpurple bg-background-cardpurple"}`}
+                        data-testid={`keyboard-unit-${unit}`}
+                        onClick={() => props.onChangeUnits?.(unit)}
+                      >
+                        {unit}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="w-scaled-24">
+                <button
+                  className="flex items-center justify-center w-full pt-2 pb-1 border rounded touch-manipulation keyboard-close border-border-cardpurple bg-background-cardpurple"
+                  data-testid="keyboard-close"
+                  onClick={props.onBlur}
+                >
+                  <IconKeyboardClose />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div
+          className="flex w-full gap-4 p-4 bg-background-default"
+          style={mode === "ruler" ? { display: "none" } : undefined}
+        >
           <div className="grid flex-1 grid-cols-3 gap-2">
             {keys.map((key, i) =>
               key ? <KeyboardButton key={key} label={key} onPress={props.onInput} /> : <div key={`empty-${i}`} />
@@ -822,6 +897,17 @@ const CustomKeyboardInner = forwardRef((props: ICustomKeyboardProps, ref: React.
                 <IconBackspace />
               </button>
             </div>
+            {props.ruler && (
+              <div className="mt-4">
+                <button
+                  className="flex items-center justify-center w-full h-scaled-10 text-xs border rounded touch-manipulation text-icon-neutral border-border-cardpurple bg-background-cardpurple"
+                  data-testid="keyboard-show-ruler"
+                  onClick={showRuler}
+                >
+                  Ruler
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

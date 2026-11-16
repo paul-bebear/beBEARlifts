@@ -19,6 +19,7 @@ import { Tailwind_colors } from "../utils/tailwindConfig";
 import { Subscriptions_hasSubscription } from "../utils/subscriptions";
 import { Equipment_getUnitOrDefaultForExerciseType } from "../models/equipment";
 import { PlatesLine_shouldShow } from "../utils/workoutSetPlates";
+import { IRulerKind, RulerTape_spec } from "../models/rulerTape";
 
 interface IInputWeight2Props {
   value: IWeight | IPercentage | undefined;
@@ -39,6 +40,7 @@ interface IInputWeight2Props {
   addOn?: () => JSX.Element;
   settings: ISettings;
   after?: () => JSX.Element | undefined;
+  ruler?: IRulerKind;
   onBlur?: (value: IWeight | IPercentage | undefined) => void;
   onInput?: (value: IWeight | IPercentage | undefined) => void;
   subscription?: ISubscription;
@@ -140,6 +142,8 @@ function InputWeight2Inner(props: IInputWeight2Props): JSX.Element {
     setValue(weight);
   }, []);
 
+  const rulerSpec = useMemo(() => (props.ruler ? RulerTape_spec(props.ruler, unit) : undefined), [props.ruler, unit]);
+
   const showPlates =
     props.subscription &&
     props.exerciseType &&
@@ -189,6 +193,7 @@ function InputWeight2Inner(props: IInputWeight2Props): JSX.Element {
         name={props.name}
         enableUnits={props.units}
         selectedUnit={unit}
+        ruler={rulerSpec}
         showUnitInside={props.showUnitInside}
         cornerLabel={props.showUnitInCorner ? unit : undefined}
         onChangeUnits={onChangeUnits}
