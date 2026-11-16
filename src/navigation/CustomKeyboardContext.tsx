@@ -14,6 +14,7 @@ import { View, Animated, StyleSheet, Platform, BackHandler } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeCustomKeyboard } from "../components/nativeCustomKeyboard.native";
 import { IPercentageUnit, IUnit } from "../types";
+import { IRulerSpec } from "../models/rulerTape";
 import {
   KeyboardActiveId_get,
   KeyboardActiveId_set,
@@ -21,8 +22,16 @@ import {
   KeyboardActiveId_subscribe,
 } from "./keyboardActiveId";
 
+export interface IKeyboardRuler {
+  spec: IRulerSpec;
+  getValue: () => number | undefined;
+  initialValue?: number;
+  onChange: (value: number) => void;
+}
+
 export interface IKeyboardConfig {
   id: string;
+  ruler?: IKeyboardRuler;
   onInput: (key: string) => void;
   onBlur: () => void;
   onPlus: () => void;
@@ -192,6 +201,7 @@ export function CustomKeyboardProvider(props: {
       enableCalculator={renderedConfig.enableCalculator}
       enableUnits={renderedConfig.enableUnits}
       selectedUnit={renderedConfig.selectedUnit}
+      ruler={renderedConfig.ruler}
       applySafeAreaBottom={props.applySafeAreaBottom}
       noShadow={props.noShadow}
     />

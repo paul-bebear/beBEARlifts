@@ -1,4 +1,4 @@
-import { JSX, memo, ReactNode, useCallback, useMemo, useRef } from "react";
+import { JSX, memo, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Pressable, Platform, LayoutChangeEvent, StyleSheet } from "react-native";
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 import { Text } from "./primitives/text";
@@ -10,12 +10,16 @@ import { KeyboardRestTimer } from "./restTimer";
 import { IPercentageUnit, IUnit } from "../types";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import {
+  IKeyboardRuler,
   useCustomKeyboardActiveId,
   useMeasuredKeyboardHeightRef,
   useSetCustomKeyboardHeight,
 } from "../navigation/CustomKeyboardContext";
+import { RulerPicker } from "./rulerPicker";
+import { RulerTape_panelMode } from "../models/rulerTape";
 
 export interface INativeCustomKeyboardProps {
+  ruler?: IKeyboardRuler;
   onInput: (value: string) => void;
   onBlur: () => void;
   onPlus: () => void;
@@ -86,29 +90,89 @@ export const NativeCustomKeyboard = memo(function NativeCustomKeyboard(props: IN
     [setKeyboardHeight, measuredHeightRef]
   );
 
+  const [padForId, setPadForId] = useState<string | null>(null);
+  useEffect(() => {
+    if (activeId != null) {
+      setPadForId((prev) => (prev === activeId ? prev : null));
+    }
+  }, [activeId]);
+  const showPad = useCallback(() => setPadForId(activeIdRef.current), []);
+  const showRuler = useCallback(() => setPadForId(null), []);
+  const mode = RulerTape_panelMode(props.ruler != null, padForId != null);
+
+  const addonRow = (props.keyboardAddon || props.enableCalculator) && (
+    <View className="flex-row items-center gap-2 px-4 bg-background-subtle">
+      <View className="flex-1">{props.keyboardAddon}</View>
+      {props.enableCalculator && (
+        <Pressable
+          testID="keyboard-rm-calculator"
+          data-testid="keyboard-rm-calculator"
+          onPress={props.onShowCalculator}
+          className="flex-row items-center justify-center w-scaled-24 px-2 py-1 my-2 border rounded border-border-cardpurple bg-background-cardpurple"
+          style={cardPressedStyle}
+        >
+          <Text className="mr-2">RM</Text>
+          <IconCalculator size={14} />
+        </Pressable>
+      )}
+    </View>
+  );
+
+  if (mode === "ruler" && props.ruler) {
+    return (
+      <View
+        onLayout={onLayout}
+        className="bg-background-default"
+        style={[{ paddingBottom: bottomPadding }, props.noShadow ? keyboardTopBorderStyle : keyboardShadowStyle]}
+      >
+        {addonRow}
+        <RulerPicker
+          key={`${activeId ?? "ruler"}-${props.ruler.spec.kind}-${props.ruler.spec.label}`}
+          spec={props.ruler.spec}
+          getValue={props.ruler.getValue}
+          initialValue={props.ruler.initialValue}
+          onChange={props.ruler.onChange}
+          onPressNumber={showPad}
+        />
+        <View className="flex-row items-end gap-4 px-4 pt-2 pb-4">
+          <View className="flex-1">
+            {props.enableUnits && props.selectedUnit ? (
+              <View className="flex-row items-center h-scaled-10 gap-2 w-scaled-24">
+                {props.enableUnits.map((unit) => (
+                  <UnitButton
+                    key={unit}
+                    unit={unit}
+                    selected={unit === props.selectedUnit}
+                    onPress={props.onChangeUnits}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
+          <View className="w-scaled-24">
+            <KeyboardRestTimer />
+            <Pressable
+              testID="keyboard-close"
+              data-testid="keyboard-close"
+              onPress={props.onBlur}
+              className="items-center justify-center w-full pt-2 pb-1 border rounded border-border-cardpurple bg-background-cardpurple"
+              style={cardPressedStyle}
+            >
+              <IconKeyboardClose />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View
       onLayout={onLayout}
       className="bg-background-default"
       style={[{ paddingBottom: bottomPadding }, props.noShadow ? keyboardTopBorderStyle : keyboardShadowStyle]}
     >
-      {(props.keyboardAddon || props.enableCalculator) && (
-        <View className="flex-row items-center gap-2 px-4 bg-background-subtle">
-          <View className="flex-1">{props.keyboardAddon}</View>
-          {props.enableCalculator && (
-            <Pressable
-              testID="keyboard-rm-calculator"
-              data-testid="keyboard-rm-calculator"
-              onPress={props.onShowCalculator}
-              className="flex-row items-center justify-center w-scaled-24 px-2 py-1 my-2 border rounded border-border-cardpurple bg-background-cardpurple"
-              style={cardPressedStyle}
-            >
-              <Text className="mr-2">RM</Text>
-              <IconCalculator size={14} />
-            </Pressable>
-          )}
-        </View>
-      )}
+      {addonRow}
 
       <View className="flex-row gap-4 p-4">
         <View className="flex-1 gap-2">
@@ -187,6 +251,18 @@ export const NativeCustomKeyboard = memo(function NativeCustomKeyboard(props: IN
           >
             <IconBackspace />
           </Pressable>
+
+          {props.ruler != null && (
+            <Pressable
+              testID="keyboard-show-ruler"
+              data-testid="keyboard-show-ruler"
+              onPress={showRuler}
+              className="items-center justify-center w-full h-scaled-10 mt-4 border rounded border-border-cardpurple bg-background-cardpurple"
+              style={cardPressedStyle}
+            >
+              <Text className="text-xs text-icon-neutral">Ruler</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </View>

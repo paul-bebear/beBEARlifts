@@ -20,8 +20,10 @@ import { useModal } from "../navigation/ModalStateContext";
 import { useRem } from "../utils/useRem";
 import { FitText_fontSize } from "../utils/fitText";
 import { NavScreenScrollContext } from "../navigation/NavScreenContent";
+import { IRulerSpec, RulerTape_parse } from "../models/rulerTape";
 import {
   IKeyboardConfig,
+  IKeyboardRuler,
   useCloseCustomKeyboard,
   useMeasuredKeyboardHeightRef,
   useOpenCustomKeyboard,
@@ -71,6 +73,7 @@ interface IInputNumber2Props {
   enableUnits?: (IUnit | IPercentageUnit)[];
   onChangeUnits?: (unit: IUnit | IPercentageUnit) => void;
   selectedUnit?: IUnit | IPercentageUnit;
+  ruler?: IRulerSpec;
   showUnitInside?: boolean;
   cornerLabel?: string;
   inputCommitMode?: IInputCommitMode;
@@ -139,6 +142,7 @@ interface IInputKeypadControllerProps {
   enableUnits?: (IUnit | IPercentageUnit)[];
   selectedUnit?: IUnit | IPercentageUnit;
   onChangeUnits?: (unit: IUnit | IPercentageUnit) => void;
+  ruler?: IKeyboardRuler;
 }
 
 function InputKeypadController(props: IInputKeypadControllerProps): null {
@@ -190,6 +194,7 @@ function InputKeypadController(props: IInputKeypadControllerProps): null {
   const buildKeyboardConfig = useCallback((): IKeyboardConfig => {
     return {
       id: myId,
+      ruler: props.ruler,
       onInput: props.onInput,
       onBlur: closeKeyboard,
       onPlus: props.onPlus,
@@ -227,6 +232,7 @@ function InputKeypadController(props: IInputKeypadControllerProps): null {
     props.enableUnits,
     props.selectedUnit,
     props.onChangeUnits,
+    props.ruler,
   ]);
 
   useEffect(() => {
@@ -484,6 +490,37 @@ function InputNumber2Inner(props: IInputNumber2Props): JSX.Element {
     }
   }, []);
 
+  const handleRulerChange = useCallback((rulerValue: number) => {
+    if (debounceTimerRef.current != null) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    hasPendingInputRef.current = false;
+    pendingInputRef.current = undefined;
+    setIsTyping(false);
+    isTypingRef.current = false;
+    const newValue = clamp(rulerValue, minRef.current, maxRef.current);
+    valueRef.current = newValue != null ? newValue.toString() : "";
+    setValue(valueRef.current);
+    onPreviewRef.current?.(newValue);
+    if (commitModeRef.current !== "blur" && onInputRef.current) {
+      onInputRef.current(newValue);
+    }
+  }, []);
+
+  const rulerConfig = useMemo<IKeyboardRuler | undefined>(
+    () =>
+      props.ruler
+        ? {
+            spec: props.ruler,
+            getValue: () => RulerTape_parse(valueRef.current),
+            initialValue: initialValueRef.current,
+            onChange: handleRulerChange,
+          }
+        : undefined,
+    [props.ruler, props.initialValue, handleRulerChange]
+  );
+
   const focusSelf = useCallback(() => {
     lg(`focus-nm-${props.name}`);
     KeyboardActiveId_set(myId);
@@ -579,6 +616,7 @@ function InputNumber2Inner(props: IInputNumber2Props): JSX.Element {
           enableUnits={props.enableUnits}
           selectedUnit={props.selectedUnit}
           onChangeUnits={props.onChangeUnits}
+          ruler={rulerConfig}
         />
       )}
       <View ref={pressableRef} collapsable={false} style={props.fill ? { flex: 1 } : undefined}>
