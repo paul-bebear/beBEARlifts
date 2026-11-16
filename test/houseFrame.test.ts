@@ -3,20 +3,12 @@ import { expect } from "chai";
 import {
   HouseFrame_canvas,
   HouseFrame_fit,
-  HouseFrame_gymArt,
   HouseFrame_oldTop,
   HouseFrame_safeRect,
   HouseFrame_statusBarStyle,
-  HouseFrame_tall,
 } from "../src/models/houseFrame";
-import {
-  BearHouse_art,
-  BearHouse_gymExit,
-  BearHouse_gymWallColor,
-  BearHouse_objects,
-  BearHouse_wallColor,
-} from "../src/models/bearHouse";
-import { BearScene_gymArt, IBearRect } from "../src/models/bearScene";
+import { BearHouse_art, BearHouse_gymWallColor, BearHouse_objects, BearHouse_wallColor } from "../src/models/bearHouse";
+import { IBearRect } from "../src/models/bearScene";
 
 const iPhone = { width: 393, height: 852 };
 const iPhoneInsets = { top: 59, bottom: 34 };
@@ -78,7 +70,7 @@ describe("HouseFrame", () => {
     expect(safe[3]).to.be.closeTo((852 - 34 + 32.3) / fit.scale, 0.5);
   });
 
-  it("keeps every object, the board, the bear's feet and the gym exit inside the safe area on an iPhone", () => {
+  it("keeps every object, the board and the bear's feet inside the safe area on an iPhone", () => {
     const safe = HouseFrame_safeRect(HouseFrame_fit(iPhone), iPhone, iPhoneInsets);
     for (const object of BearHouse_objects(sources, undefined)) {
       if (object.id === "whiteboard") {
@@ -93,8 +85,6 @@ describe("HouseFrame", () => {
     }
     expect(BearHouse_art.board[3]).to.be.within(safe[1], safe[3]);
     expect(BearHouse_art.foot.y).to.be.within(safe[1], safe[3]);
-    expect(inside(BearHouse_gymExit("/images/bear/gyms/garage.webp").rect, safe)).to.equal(true);
-    expect(inside(HouseFrame_gymArt.board, safe)).to.equal(true);
   });
 
   it("keeps the cabin whiteboard on the screen of an iPhone 16 Pro, with its ink below the top edge", () => {
@@ -106,7 +96,7 @@ describe("HouseFrame", () => {
 
   it("picks the status bar text that reads best on the ceiling", () => {
     expect(HouseFrame_statusBarStyle(BearHouse_wallColor())).to.equal("dark-content");
-    expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/moon.webp"))).to.equal("light-content");
+    expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/moon.webp"))).to.equal("dark-content");
     expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/trailer-park.webp"))).to.equal(
       "dark-content"
     );
@@ -114,13 +104,7 @@ describe("HouseFrame", () => {
     expect(HouseFrame_statusBarStyle("#ffffff")).to.equal("dark-content");
   });
 
-  it("moves the gym's anchors 448 rows down onto the tall canvas", () => {
-    expect(HouseFrame_tall(BearScene_gymArt)).to.deep.equal({
-      canvas: { width: 1024, height: 2304 },
-      foot: { x: 512, y: 1938 },
-      board: [125, 643, 825, 1123],
-      inkBottom: 1041,
-    });
+  it("draws the house art on the tall canvas", () => {
     expect(BearHouse_art.canvas).to.deep.equal(HouseFrame_canvas);
   });
 });

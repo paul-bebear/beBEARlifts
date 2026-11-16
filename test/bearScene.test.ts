@@ -7,12 +7,8 @@ import {
   BearScene_breathing,
   BearScene_breathingPivot,
   BearScene_canvas,
-  BearScene_dashboardRect,
-  BearScene_gymArt,
-  BearScene_gymFoot,
   BearScene_headCrop,
   BearScene_layout,
-  BearScene_place,
   BearScene_spriteFoot,
   BearScene_spriteScale,
   BearScene_visibleBox,
@@ -20,7 +16,6 @@ import {
   IBearSceneArt,
 } from "../src/models/bearScene";
 import { BearArt_sprite } from "../src/models/bearArt";
-import { HouseFrame_gymArt, HouseFrame_oldTop } from "../src/models/houseFrame";
 import { IBearMood } from "../src/models/bear";
 
 const moods: IBearMood[] = ["normal", "hungry", "tired", "pumped"];
@@ -194,25 +189,5 @@ describe("BearScene", () => {
       const [, y1, , y2] = BearScene_visibleBox(BearArt_sprite("male", "brown", level, "normal"));
       expect((y2 - y1) * 0.42, `level ${level}`).to.be.at.least(helmetWidths[level]);
     }
-  });
-
-  it("puts the bear in the gym while a workout runs and at home the rest of the time", () => {
-    expect(BearScene_place(true)).to.equal("gym");
-    expect(BearScene_place(false)).to.equal("home");
-  });
-});
-
-describe("BearScene on the tall canvas", () => {
-  it("draws the bear at the same size and 448 rows lower than on the old gym picture", () => {
-    const old = BearScene_layout(1024, BearScene_gymArt);
-    const tall = BearScene_layout(1024, HouseFrame_gymArt);
-    expect(tall.height).to.equal(2304);
-    expect(tall.sprite.width).to.equal(old.sprite.width);
-    expect(tall.sprite.height).to.equal(old.sprite.height);
-    expect(tall.sprite.left).to.equal(old.sprite.left);
-    expect(tall.sprite.top).to.be.closeTo(old.sprite.top + HouseFrame_oldTop, 0.1);
-    expect(tall.board.top).to.equal(old.board.top + HouseFrame_oldTop);
-    expect(BearScene_gymFoot.y).to.equal(1490);
-    expect(BearScene_dashboardRect[1]).to.equal(195);
   });
 });

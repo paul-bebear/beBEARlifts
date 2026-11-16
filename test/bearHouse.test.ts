@@ -7,7 +7,6 @@ import {
   BearHouse_bowlImage,
   BearHouse_box,
   BearHouse_doorLabel,
-  BearHouse_gymExit,
   BearHouse_gymWallColor,
   BearHouse_hitSlop,
   BearHouse_images,
@@ -272,7 +271,7 @@ describe("BearHouse", () => {
     expect(BearHouse_art.inkBottom).to.equal(650);
   });
 
-  it("gives every gym a wall colour and keeps the gym exit door", () => {
+  it("gives every gym a wall colour", () => {
     const gyms = fs
       .readdirSync(path.join(__dirname, "..", "images", "bear", "gyms"))
       .filter((f) => f.endsWith(".webp"));
@@ -280,9 +279,8 @@ describe("BearHouse", () => {
     for (const gym of gyms) {
       expect(BearHouse_gymWallColor(`/images/bear/gyms/${gym}`), gym).to.match(/^#[0-9a-f]{6}$/);
     }
-    expect(BearHouse_gymWallColor("/images/bear/gyms/garage.webp")).to.equal("#532b11");
-    expect(BearHouse_gymExit("/images/bear/gyms/garage.webp").image).to.equal("/images/bear/house/door-exit-gym.webp");
-    expect(BearHouse_gymExit("/images/bear/gyms/moon.webp").image).to.equal("/images/bear/house/door-exit-space.webp");
+    expect(BearHouse_gymWallColor("/images/bear/gyms/trailer-park.webp")).to.equal("#e8d1ba");
+    expect(BearHouse_gymWallColor("/images/bear/gyms/moon.webp")).to.equal("#d7bfab");
   });
 
   it("ships every image the house draws", () => {

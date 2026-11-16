@@ -2,10 +2,6 @@
   "canvas": [1024, 2304],
   "whiteboard": [32, 190, 992, 650],
   "bearFoot": [512, 1620],
-  "gymExit": {
-    "rect": [876, 1076, 1024, 1353],
-    "pill": [950, 1376]
-  },
   "images": {
     "bed": [226, 480],
     "bowl-empty": [480, 310],
@@ -57,15 +53,12 @@
     }
   },
   "gymWalls": {
-    "bedroom": "#b28665",
-    "discount-gym": "#5f4a3b",
-    "garage": "#532b11",
-    "luxury-club": "#81461c",
-    "mansion-gym": "#7b4520",
-    "mars": "#926044",
-    "moon": "#3b312e",
-    "pro": "#7e4a23",
-    "spaceship": "#646468",
-    "trailer-park": "#b1b3b4"
+    "discount-gym": "#e3cdba",
+    "luxury-club": "#f2d9c0",
+    "mansion-gym": "#f8d8b3",
+    "mars": "#ebd2bb",
+    "moon": "#d7bfab",
+    "spaceship": "#e8d3c2",
+    "trailer-park": "#e8d1ba"
   }
 }

@@ -71,7 +71,7 @@ export function ScreenHome(props: IProps): JSX.Element {
   const settings = untrack(tracked.storage.settings);
   const { state } = useBear();
   const isOngoingProgress = props.progress != null;
-  const house = useBearHouse(isOngoingProgress);
+  const house = useBearHouse(isOngoingProgress, state.level.tier.level);
   const foodLog = useFoodLog();
   const goalLog = ProgramGoalStore.use();
   const schedule = WeekScheduleStore.use();

@@ -18,8 +18,6 @@ export interface IBearSceneLayout {
 
 export const BearScene_canvas = { width: 1024, height: 1536 };
 export const BearScene_spriteFoot = { x: 512, y: 1470 };
-export const BearScene_gymFoot = { x: 512, y: 1490 };
-export const BearScene_dashboardRect: IBearRect = [125, 195, 825, 675];
 
 // The new art holds the size inside the canvas: level 1 is 580 rows tall and level 12 is 1442. One sprite pixel is
 // 0.62 scene pixels at every level, so the bear grows because the art does.
@@ -31,15 +29,6 @@ export interface IBearSceneArt {
   board: IBearRect;
   inkBottom: number;
 }
-
-// Lowest row of whiteboard ink in the gym picture, measured on the owner's iPhone screenshot of level 3.
-export const BearScene_boardInkBottom = 593;
-export const BearScene_gymArt: IBearSceneArt = {
-  canvas: BearScene_canvas,
-  foot: BearScene_gymFoot,
-  board: BearScene_dashboardRect,
-  inkBottom: BearScene_boardInkBottom,
-};
 
 // Copied from images/bear/brown/manifest.json, in the 1024 by 1536 art canvas. test/bearScene.test.ts reads the
 // manifest and fails when scripts/realistic-bear-art.py writes other boxes.
@@ -79,12 +68,6 @@ function round(value: number): number {
 export function BearScene_visibleBox(spritePath: string): IBearRect {
   const key = spritePath.replace(/^\/images\/bear\/brown\//, "").replace(/\.webp$/, "");
   return visibleBoxes[key] ?? [0, 0, BearScene_canvas.width, BearScene_canvas.height];
-}
-
-export type IBearScenePlace = "home" | "gym";
-
-export function BearScene_place(isOngoingProgress: boolean): IBearScenePlace {
-  return isOngoingProgress ? "gym" : "home";
 }
 
 export function BearScene_breathing(mood: IBearMood): { durationMs: number; scaleY: number } {
