@@ -243,27 +243,29 @@ export function Reps_setsStatus(sets: ISet[]): ISetsStatus {
   }
 }
 
-export function Reps_isCompletedSet(set: ISet): boolean {
-  if (set.completedReps != null && set.completedWeight != null) {
-    return (
-      !!set.isCompleted &&
-      (set.reps == null || set.completedReps >= set.reps) &&
-      (set.weight == null || Weight_gte(set.completedWeight, set.weight))
-    );
-  } else {
+function Reps_sidesCount(set: ISet): number {
+  return set.isUnilateral || set.completedRepsLeft != null ? 2 : 1;
+}
+
+function Reps_movedAtLeastTarget(set: ISet, targetReps: number | undefined): boolean {
+  if (set.completedReps == null || set.completedWeight == null) {
     return false;
   }
+  if (targetReps == null || set.weight == null) {
+    const isRepsMet = targetReps == null || set.completedReps >= targetReps;
+    return isRepsMet && (set.weight == null || Weight_gte(set.completedWeight, set.weight));
+  }
+  const done = Weight_multiply(set.completedWeight, set.completedReps + (set.completedRepsLeft ?? 0));
+  const target = Weight_multiply(set.weight, targetReps * Reps_sidesCount(set));
+  return Weight_gte(done, target);
+}
+
+export function Reps_isCompletedSet(set: ISet): boolean {
+  return !!set.isCompleted && Reps_movedAtLeastTarget(set, set.reps);
 }
 
 export function Reps_isInRangeCompletedSet(set: ISet): boolean {
-  if (set.completedReps != null && set.completedWeight != null) {
-    return (
-      (set.weight == null || Weight_gte(set.completedWeight, set.weight)) &&
-      (set.minReps != null ? set.completedReps >= set.minReps : set.reps == null || set.completedReps >= set.reps)
-    );
-  } else {
-    return false;
-  }
+  return Reps_movedAtLeastTarget(set, set.minReps ?? set.reps);
 }
 
 export function Reps_isStarted(sets: ISet[]): boolean {
