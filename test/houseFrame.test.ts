@@ -93,7 +93,7 @@ describe("HouseFrame", () => {
     }
     expect(BearHouse_art.board[3]).to.be.within(safe[1], safe[3]);
     expect(BearHouse_art.foot.y).to.be.within(safe[1], safe[3]);
-    expect(inside(BearHouse_gymExit("/images/bear/gyms/garage.webp").rect, safe)).to.equal(true);
+    expect(inside(BearHouse_gymExit("/images/bear/gyms/trailer-park.webp").rect, safe)).to.equal(true);
     expect(inside(HouseFrame_gymArt.board, safe)).to.equal(true);
   });
 
@@ -106,7 +106,7 @@ describe("HouseFrame", () => {
 
   it("picks the status bar text that reads best on the ceiling", () => {
     expect(HouseFrame_statusBarStyle(BearHouse_wallColor())).to.equal("dark-content");
-    expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/moon.webp"))).to.equal("light-content");
+    expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/moon.webp"))).to.equal("dark-content");
     expect(HouseFrame_statusBarStyle(BearHouse_gymWallColor("/images/bear/gyms/trailer-park.webp"))).to.equal(
       "dark-content"
     );

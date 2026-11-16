@@ -280,8 +280,10 @@ describe("BearHouse", () => {
     for (const gym of gyms) {
       expect(BearHouse_gymWallColor(`/images/bear/gyms/${gym}`), gym).to.match(/^#[0-9a-f]{6}$/);
     }
-    expect(BearHouse_gymWallColor("/images/bear/gyms/garage.webp")).to.equal("#532b11");
-    expect(BearHouse_gymExit("/images/bear/gyms/garage.webp").image).to.equal("/images/bear/house/door-exit-gym.webp");
+    expect(BearHouse_gymWallColor("/images/bear/gyms/trailer-park.webp")).to.equal("#e8d1ba");
+    expect(BearHouse_gymExit("/images/bear/gyms/trailer-park.webp").image).to.equal(
+      "/images/bear/house/door-exit-gym.webp"
+    );
     expect(BearHouse_gymExit("/images/bear/gyms/moon.webp").image).to.equal("/images/bear/house/door-exit-space.webp");
   });
 

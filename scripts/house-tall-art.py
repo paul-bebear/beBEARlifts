@@ -1,6 +1,6 @@
 # Replaces the stopgap tall rooms and gyms (scripts/house-stopgap-tall.py) with the Codex art from
 # HANDOFF-codex-tall-rooms.md. The Codex files are 1024 by 2304 and live outside the repo, so a missing one is skipped.
-# The 06-gym-ladder spaceship, moon and mars are not the pictures the app ships, so those gyms come from 13-tall-app-gyms.
+# The gym pictures come from scripts/painted-gyms-art.py now. This script no longer writes them.
 # Run it with `python3 -I scripts/house-tall-art.py`.
 import os
 import subprocess
@@ -23,16 +23,6 @@ sources = {
     "images/bear/house/room-spaceship.webp": "12-tall-rooms/room-spaceship.png",
     "images/bear/house/room-moon.webp": "12-tall-rooms/room-moon.png",
     "images/bear/house/room-mars.webp": "12-tall-rooms/room-mars.png",
-    "images/bear/gyms/trailer-park.webp": "12-tall-rooms/trailer-park.png",
-    "images/bear/gyms/discount-gym.webp": "12-tall-rooms/discount-gym.png",
-    "images/bear/gyms/luxury-club.webp": "12-tall-rooms/luxury-club.png",
-    "images/bear/gyms/mansion-gym.webp": "12-tall-rooms/mansion-gym.png",
-    "images/bear/gyms/spaceship.webp": "13-tall-app-gyms/spaceship.png",
-    "images/bear/gyms/moon.webp": "13-tall-app-gyms/moon.png",
-    "images/bear/gyms/mars.webp": "13-tall-app-gyms/mars.png",
-    "images/bear/gyms/bedroom.webp": "13-tall-app-gyms/bedroom.png",
-    "images/bear/gyms/garage.webp": "13-tall-app-gyms/garage.png",
-    "images/bear/gyms/pro.webp": "13-tall-app-gyms/pro.png",
 }
 
 with tempfile.TemporaryDirectory() as tmp:
