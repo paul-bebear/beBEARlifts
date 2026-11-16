@@ -121,21 +121,21 @@ Change it in the program editor to a similar lift you can do. Keep the same sets
 ```liftoscript
 # Week 1
 ## Full Body A
-build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
-iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+build / used: none / 3x8 / 90s / progress: beat(5lb, 12)
+iso / used: none / 2x12 / 60s / progress: beat(2.5lb, 15)
 run / used: none / 1x1 0lb 600s|0s / warmup: none
 mobility / used: none / 2x1 0lb 45s|15s / warmup: none
 
-Squat / ...build / 95lb / progress: dp(10lb, 8, 12)
+Squat / ...build / 95lb / progress: beat(10lb, 12)
 Bench Press / ...build / 95lb
 Bent Over Row / ...build / 75lb
-Romanian Deadlift, Barbell / ...build / 95lb / progress: dp(10lb, 8, 12)
+Romanian Deadlift, Barbell / ...build / 95lb / progress: beat(10lb, 12)
 Lateral Raise, Cable / ...iso / 10lb
 // Bike or treadmill, 10 easy minutes. You should still be able to talk.
 Cycling / ...run
 
 ## Full Body B
-Deadlift / ...build / 135lb / progress: dp(10lb, 8, 12)
+Deadlift / ...build / 135lb / progress: beat(10lb, 12)
 Overhead Press / ...build / 65lb
 Lat Pulldown / ...build / 70lb
 Lunge, Dumbbell / ...build / 20lb
@@ -143,10 +143,10 @@ Triceps Pushdown / ...iso / 40lb
 Calf Press on Leg Press / ...iso / 90lb
 
 ## Full Body C
-Leg Press / ...build / 180lb / progress: dp(10lb, 8, 12)
+Leg Press / ...build / 180lb / progress: beat(10lb, 12)
 Incline Bench Press, Dumbbell / ...build / 30lb
 Seated Row / ...build / 70lb
-Hip Thrust / ...build / 95lb / progress: dp(10lb, 8, 12)
+Hip Thrust / ...build / 95lb / progress: beat(10lb, 12)
 Hammer Curl / ...iso / 20lb
 // Sit in a deep squat. Hold a door frame for balance.
 Assisted Squat / ...mobility
