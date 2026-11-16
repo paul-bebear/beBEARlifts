@@ -1,3 +1,4 @@
+import { IBearMood } from "./bear";
 import { BearArt_gym } from "./bearArt";
 import {
   BearHouse_gymWallColor,
@@ -20,6 +21,11 @@ export interface IBearHouseViewInput {
 }
 
 const workoutObjects: ReadonlySet<IBearHouseObjectId> = new Set(["whiteboard", "door"]);
+const sleepyMoods: ReadonlySet<IBearMood> = new Set(["tired", "hungry"]);
+
+export function BearHouseView_mood(hasWorkout: boolean, mood: IBearMood): IBearMood {
+  return hasWorkout && sleepyMoods.has(mood) ? "normal" : mood;
+}
 
 export function BearHouseView_pick(input: IBearHouseViewInput): IBearHouseView {
   if (!input.hasWorkout) {

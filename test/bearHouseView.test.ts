@@ -9,7 +9,8 @@ import {
   BearHouse_objects,
   IBearHouseObject,
 } from "../src/models/bearHouse";
-import { BearHouseView_pick } from "../src/models/bearHouseView";
+import { BearHouseView_mood, BearHouseView_pick } from "../src/models/bearHouseView";
+import { IBearMood } from "../src/models/bear";
 import { BearTier_all } from "../src/models/bearTier";
 
 const sources = { fullness: 0, dayOfMonth: 1, pendingRequests: 0, hasWorkout: false };
@@ -26,6 +27,31 @@ function webpSize(file: string): [number, number] {
   const fourteenBits = 16384;
   return [bytes.readUInt16LE(26) % fourteenBits, bytes.readUInt16LE(28) % fourteenBits];
 }
+
+describe("BearHouseView_mood", () => {
+  it("wakes a tired bear during a workout", () => {
+    expect(BearHouseView_mood(true, "tired")).to.equal("normal");
+  });
+
+  it("feeds a hungry bear during a workout", () => {
+    expect(BearHouseView_mood(true, "hungry")).to.equal("normal");
+  });
+
+  it("keeps a pumped bear pumped during a workout", () => {
+    expect(BearHouseView_mood(true, "pumped")).to.equal("pumped");
+  });
+
+  it("keeps a normal bear normal during a workout", () => {
+    expect(BearHouseView_mood(true, "normal")).to.equal("normal");
+  });
+
+  it("leaves every mood unchanged with no workout", () => {
+    const moods: IBearMood[] = ["pumped", "tired", "hungry", "normal"];
+    for (const mood of moods) {
+      expect(BearHouseView_mood(false, mood), mood).to.equal(mood);
+    }
+  });
+});
 
 describe("BearHouseView_pick", () => {
   it("shows the cabin with all eight objects when no workout runs", () => {

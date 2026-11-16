@@ -20,11 +20,15 @@ import {
   RulerTape_tick,
   RulerTape_valueForIndex,
   RulerTape_valueForOffset,
+  RulerTape_weightSpec,
   RulerTape_widths,
   RulerTape_window,
   RulerTape_windowNeedsShift,
   IRulerSpec,
 } from "../src/models/rulerTape";
+import { IEquipment, IEquipmentData, IExerciseType, ISettings, IUnit } from "../src/types";
+import { Settings_build } from "../src/models/settings";
+import { Weight_build } from "../src/models/weight";
 
 function spec(kind: "reps" | "weight" | "weighIn", unit: string): IRulerSpec {
   const result = RulerTape_spec(kind, unit);
@@ -326,5 +330,196 @@ describe("RulerTape panel mode", () => {
   it("shows the pad for a field with no ruler", () => {
     expect(RulerTape_panelMode(false, false)).to.equal("pad");
     expect(RulerTape_panelMode(false, true)).to.equal("pad");
+  });
+});
+
+function gymSettings(units: IUnit, equipment: IEquipment, data: Partial<IEquipmentData>): ISettings {
+  const base = Settings_build();
+  const current = base.gyms[0].equipment[equipment];
+  if (!current) {
+    throw new Error(`no default ${equipment}`);
+  }
+  return {
+    ...base,
+    units,
+    gyms: [{ ...base.gyms[0], equipment: { ...base.gyms[0].equipment, [equipment]: { ...current, ...data } } }],
+  };
+}
+
+function weightRuler(
+  settings: ISettings,
+  equipment: IEquipment,
+  unit: IUnit,
+  current?: number
+): IRulerSpec & { stops: number[] } {
+  const exerciseType: IExerciseType = { id: "benchPress", equipment };
+  const result = RulerTape_weightSpec(settings, exerciseType, unit, current);
+  if (!result || !result.stops) {
+    throw new Error(`no equipment ruler for ${equipment} ${unit}`);
+  }
+  return { ...result, stops: result.stops };
+}
+
+function plates(unit: IUnit, values: number[]): IEquipmentData["plates"] {
+  return values.map((value) => ({ weight: Weight_build(value, unit), num: 40 }));
+}
+
+describe("RulerTape workout weight for fixed equipment in kg", () => {
+  const settings = gymSettings("kg", "dumbbell", {
+    isFixed: true,
+    fixed: [2, 4, 6, 8, 10, 12, 15, 17.5, 20].map((value) => Weight_build(value, "kg")),
+  });
+  const ruler = weightRuler(settings, "dumbbell", "kg");
+
+  it("has one tick for each dumbbell and nothing between them", () => {
+    expect(ruler.stops).to.eql([2, 4, 6, 8, 10, 12, 15, 17.5, 20]);
+    expect(RulerTape_lastIndex(ruler)).to.equal(8);
+  });
+
+  it("spaces the ticks evenly although the weights are not", () => {
+    const offsets = ruler.stops.map((_, index) => RulerTape_offsetForIndex(ruler, index));
+    expect(offsets).to.eql(ruler.stops.map((_, index) => index * ruler.tickSpacing));
+    expect(RulerTape_valueForOffset(ruler, 6 * ruler.tickSpacing)).to.equal(15);
+    expect(RulerTape_valueForOffset(ruler, 7 * ruler.tickSpacing)).to.equal(17.5);
+  });
+
+  it("ends at the heaviest dumbbell however far the ceiling reaches", () => {
+    const far = weightRuler(settings, "dumbbell", "kg", 500);
+    expect(far.stops[far.stops.length - 1]).to.equal(20);
+  });
+
+  it("marks every 5th tick tall and prints its number", () => {
+    const ticks = ruler.stops.map((_, index) => RulerTape_tick(ruler, index));
+    expect(ticks.filter((t) => t.isTall).map((t) => t.value)).to.eql([2, 12]);
+    expect(ticks.filter((t) => t.label != null).map((t) => t.label)).to.eql(["2", "12"]);
+  });
+
+  it("rests a typed 11 on the nearest dumbbell and keeps the stored value", () => {
+    const stored = 11;
+    const startIndex = RulerTape_indexForValue(ruler, stored);
+    expect(RulerTape_valueForIndex(ruler, startIndex)).to.equal(12);
+    expect(RulerTape_indexForValue(ruler, 10.9)).to.equal(4);
+    const resting = RulerTape_move(ruler, startIndex, RulerTape_offsetForValue(ruler, stored));
+    expect(resting.changed).to.equal(false);
+    expect(stored).to.equal(11);
+    const nudged = RulerTape_move(ruler, startIndex, RulerTape_offsetForValue(ruler, stored) + ruler.tickSpacing);
+    expect(nudged.changed).to.equal(true);
+    expect(nudged.value).to.equal(15);
+  });
+
+  it("clamps a typed weight past either end", () => {
+    expect(RulerTape_snap(ruler, 0)).to.equal(2);
+    expect(RulerTape_snap(ruler, 90)).to.equal(20);
+  });
+});
+
+describe("RulerTape workout weight for fixed equipment in lb", () => {
+  const settings = gymSettings("lb", "dumbbell", {
+    isFixed: true,
+    fixed: [10, 15, 20, 25, 30, 35, 40].map((value) => Weight_build(value, "lb")),
+  });
+  const ruler = weightRuler(settings, "dumbbell", "lb");
+
+  it("has one tick for each dumbbell", () => {
+    expect(ruler.stops).to.eql([10, 15, 20, 25, 30, 35, 40]);
+    expect(ruler.label).to.equal("lb");
+  });
+
+  it("snaps 22 lb to 20 and 23 lb to 25", () => {
+    expect(RulerTape_snap(ruler, 22)).to.equal(20);
+    expect(RulerTape_snap(ruler, 23)).to.equal(25);
+  });
+});
+
+describe("RulerTape workout weight for a barbell in kg", () => {
+  const fivePair = gymSettings("kg", "barbell", { plates: plates("kg", [20, 10, 5, 2.5]) });
+  const withQuarterPlates = gymSettings("kg", "barbell", { plates: plates("kg", [20, 10, 5, 2.5, 1.25]) });
+
+  it("starts at the bare bar and steps by the smallest plate pair of 5 kg", () => {
+    const ruler = weightRuler(fivePair, "barbell", "kg");
+    expect(ruler.stops.slice(0, 6)).to.eql([20, 25, 30, 35, 40, 45]);
+    expect(ruler.stops).to.not.include(0);
+  });
+
+  it("steps by 2.5 kg with 1.25 kg plates", () => {
+    const ruler = weightRuler(withQuarterPlates, "barbell", "kg");
+    expect(ruler.stops.slice(0, 6)).to.eql([20, 22.5, 25, 27.5, 30, 32.5]);
+  });
+
+  it("rests a typed 23 on 25 and a typed 22 on 20", () => {
+    const ruler = weightRuler(fivePair, "barbell", "kg");
+    expect(RulerTape_snap(ruler, 23)).to.equal(25);
+    expect(RulerTape_snap(ruler, 22)).to.equal(20);
+    expect(RulerTape_snap(ruler, 0)).to.equal(20);
+  });
+
+  it("stops at 300 kg", () => {
+    const ruler = weightRuler(fivePair, "barbell", "kg");
+    expect(ruler.stops[ruler.stops.length - 1]).to.equal(300);
+  });
+
+  it("reaches twice a heavy current value", () => {
+    const ruler = weightRuler(fivePair, "barbell", "kg", 400);
+    expect(ruler.stops[ruler.stops.length - 1]).to.equal(900);
+    expect(RulerTape_snap(ruler, 400)).to.equal(400);
+  });
+
+  it("builds the list once for the same settings and exercise", () => {
+    const first = weightRuler(fivePair, "barbell", "kg", 80);
+    const second = weightRuler(fivePair, "barbell", "kg", 120);
+    expect(second.stops).to.equal(first.stops);
+    const other = weightRuler(withQuarterPlates, "barbell", "kg", 80);
+    expect(other.stops).to.not.equal(first.stops);
+  });
+
+  it("marks every 5th tick tall and prints its number", () => {
+    const ruler = weightRuler(fivePair, "barbell", "kg");
+    const ticks = ruler.stops.slice(0, 11).map((_, index) => RulerTape_tick(ruler, index));
+    expect(ticks.filter((t) => t.isTall).map((t) => t.value)).to.eql([20, 45, 70]);
+    expect(ticks.filter((t) => t.label != null).map((t) => t.label)).to.eql(["20", "45", "70"]);
+  });
+});
+
+describe("RulerTape workout weight for a barbell in lb", () => {
+  it("starts at the 45 lb bar and steps by the smallest plate pair", () => {
+    const ruler = weightRuler(Settings_build(), "barbell", "lb");
+    expect(ruler.stops.slice(0, 5)).to.eql([45, 47.5, 50, 52.5, 55]);
+    expect(ruler.stops[ruler.stops.length - 1]).to.be.at.most(700);
+  });
+
+  it("steps by 10 lb with 5 lb plates as the smallest", () => {
+    const settings = gymSettings("lb", "barbell", { plates: plates("lb", [45, 25, 10, 5]) });
+    const ruler = weightRuler(settings, "barbell", "lb");
+    expect(ruler.stops.slice(0, 5)).to.eql([45, 55, 65, 75, 85]);
+    expect(RulerTape_snap(ruler, 59)).to.equal(55);
+    expect(RulerTape_snap(ruler, 61)).to.equal(65);
+  });
+});
+
+describe("RulerTape workout weight for equipment with a fixed step", () => {
+  const settings = gymSettings("kg", "dumbbell", { isFixed: false });
+
+  it("steps by one kg from zero", () => {
+    const ruler = weightRuler({ ...settings, units: "kg" }, "dumbbell", "kg");
+    expect(ruler.stops.slice(0, 5)).to.eql([0, 1, 2, 3, 4]);
+  });
+});
+
+describe("RulerTape workout weight fallbacks", () => {
+  it("keeps the flat ruler when no exercise is known", () => {
+    const flat = RulerTape_weightSpec(Settings_build(), undefined, "kg", 80);
+    expect(flat).to.equal(RulerTape_spec("weight", "kg"));
+  });
+
+  it("has no ruler for a percent weight", () => {
+    expect(RulerTape_weightSpec(Settings_build(), { id: "benchPress", equipment: "barbell" }, "%", 80)).to.equal(
+      undefined
+    );
+  });
+
+  it("keeps the flat ruler when the equipment has no weights in the unit", () => {
+    const settings = gymSettings("lb", "dumbbell", { isFixed: true, fixed: [Weight_build(10, "kg")] });
+    const result = RulerTape_weightSpec(settings, { id: "benchPress", equipment: "dumbbell" }, "lb", 40);
+    expect(result).to.equal(RulerTape_spec("weight", "lb"));
   });
 });

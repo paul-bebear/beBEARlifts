@@ -1,6 +1,6 @@
 import { JSX, useState } from "react";
 import { Image, View } from "react-native";
-import { IBearState } from "../models/bear";
+import { IBearMood, IBearState } from "../models/bear";
 import { BearArt_sprite } from "../models/bearArt";
 import { IBearBoardLine, IBearBoardTarget } from "../models/bearBoard";
 import { BearHouse_art, IBearHouseObject, IBearHouseTarget } from "../models/bearHouse";
@@ -15,6 +15,7 @@ import { HouseFrameView } from "./houseFrameView";
 
 interface IProps {
   state: IBearState;
+  mood: IBearMood;
   room: string;
   wall: string;
   lines: IBearBoardLine[];
@@ -44,9 +45,9 @@ interface IArtProps extends IProps {
 
 function HouseArt(props: IArtProps): JSX.Element {
   const { state } = props;
-  const breathing = BearScene_breathing(state.mood);
+  const breathing = BearScene_breathing(props.mood);
   const scaleY = useBearBreathing(breathing.durationMs, breathing.scaleY);
-  const spritePath = BearArt_sprite(state.line, state.fur, state.level.tier.level, state.mood);
+  const spritePath = BearArt_sprite(state.line, state.fur, state.level.tier.level, props.mood);
   const layout = BearScene_layout(props.width, props.art);
   const pivot = BearScene_breathingPivot(spritePath, layout.sprite.height);
   const unit = layout.width / props.art.canvas.width;

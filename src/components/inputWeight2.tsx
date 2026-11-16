@@ -19,7 +19,7 @@ import { Tailwind_colors } from "../utils/tailwindConfig";
 import { Subscriptions_hasSubscription } from "../utils/subscriptions";
 import { Equipment_getUnitOrDefaultForExerciseType } from "../models/equipment";
 import { PlatesLine_shouldShow } from "../utils/workoutSetPlates";
-import { IRulerKind, RulerTape_spec } from "../models/rulerTape";
+import { IRulerKind, RulerTape_spec, RulerTape_weightSpec } from "../models/rulerTape";
 
 interface IInputWeight2Props {
   value: IWeight | IPercentage | undefined;
@@ -142,7 +142,16 @@ function InputWeight2Inner(props: IInputWeight2Props): JSX.Element {
     setValue(weight);
   }, []);
 
-  const rulerSpec = useMemo(() => (props.ruler ? RulerTape_spec(props.ruler, unit) : undefined), [props.ruler, unit]);
+  const mountValueRef = useRef(props.value?.value ?? props.initialValue?.value);
+  const rulerSpec = useMemo(() => {
+    if (props.ruler == null) {
+      return undefined;
+    }
+    if (props.ruler === "weight") {
+      return RulerTape_weightSpec(props.settings, props.exerciseType, unit, mountValueRef.current);
+    }
+    return RulerTape_spec(props.ruler, unit);
+  }, [props.ruler, props.settings, props.exerciseType, unit]);
 
   const showPlates =
     props.subscription &&

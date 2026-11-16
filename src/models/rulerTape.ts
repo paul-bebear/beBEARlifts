@@ -1,4 +1,7 @@
 import { MathUtils_roundFloat, n } from "../utils/math";
+import { IExerciseType, ISettings, IUnit } from "../types";
+import { Exercise_toKey } from "./exercise";
+import { Weight_build, Weight_convertTo, Weight_increment, Weight_round } from "./weight";
 
 export type IRulerKind = "reps" | "weight" | "weighIn";
 export type IRulerUnit = "kg" | "lb";
@@ -14,6 +17,7 @@ export interface IRulerSpec {
   tallEvery: number;
   labelEvery: number;
   startValue: number;
+  stops?: number[];
 }
 
 export interface IRulerTick {
@@ -125,7 +129,112 @@ export function RulerTape_spec(kind: IRulerKind, unit: string | undefined): IRul
   return undefined;
 }
 
+const STOPS_CEILING_KG = 300;
+const STOPS_CEILING_LB = 700;
+const STOPS_MAX_COUNT = 2000;
+const STOPS_TALL_EVERY = 5;
+const STOPS_LABEL_EVERY = 5;
+
+const stopsCache = new WeakMap<ISettings, Map<string, number[]>>();
+
+function stopsCeiling(unit: IRulerUnit, current: number | undefined): number {
+  const base = unit === "kg" ? STOPS_CEILING_KG : STOPS_CEILING_LB;
+  const wanted = current != null && isFinite(current) ? current * 2 : 0;
+  return base * Math.max(1, Math.ceil(wanted / base));
+}
+
+function nextAchievable(cursor: number, unit: IUnit, settings: ISettings, exerciseType: IExerciseType): number {
+  const raw = Weight_increment(Weight_build(cursor, unit), settings, exerciseType);
+  const inUnit = raw.unit === unit ? raw : Weight_convertTo(raw, unit);
+  return MathUtils_roundFloat(Weight_round(inUnit, settings, unit, exerciseType).value, 3);
+}
+
+export function RulerTape_buildStops(
+  settings: ISettings,
+  exerciseType: IExerciseType,
+  unit: IUnit,
+  ceiling: number
+): number[] {
+  let cursor = MathUtils_roundFloat(Weight_round(Weight_build(0, unit), settings, unit, exerciseType).value, 3);
+  const stops = [cursor];
+  while (stops.length < STOPS_MAX_COUNT) {
+    const next = nextAchievable(cursor, unit, settings, exerciseType);
+    if (!(next > cursor) || next > ceiling) {
+      break;
+    }
+    stops.push(next);
+    cursor = next;
+  }
+  return stops;
+}
+
+function cachedStops(settings: ISettings, exerciseType: IExerciseType, unit: IUnit, ceiling: number): number[] {
+  let perSettings = stopsCache.get(settings);
+  if (perSettings == null) {
+    perSettings = new Map();
+    stopsCache.set(settings, perSettings);
+  }
+  const key = `${Exercise_toKey(exerciseType)}|${unit}|${ceiling}`;
+  let stops = perSettings.get(key);
+  if (stops == null) {
+    stops = RulerTape_buildStops(settings, exerciseType, unit, ceiling);
+    perSettings.set(key, stops);
+  }
+  return stops;
+}
+
+function nearestStopIndex(stops: number[], value: number): number {
+  if (isNaN(value) || stops.length === 0) {
+    return 0;
+  }
+  let low = 0;
+  let high = stops.length - 1;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (stops[mid] < value) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  if (low > 0 && value - stops[low - 1] < stops[low] - value) {
+    return low - 1;
+  }
+  return low;
+}
+
+export function RulerTape_weightSpec(
+  settings: ISettings,
+  exerciseType: IExerciseType | undefined,
+  unit: string | undefined,
+  current: number | undefined
+): IRulerSpec | undefined {
+  const flat = RulerTape_spec("weight", unit);
+  if (flat == null || exerciseType == null) {
+    return flat;
+  }
+  const rulerUnit = unit as IRulerUnit;
+  const stops = cachedStops(settings, exerciseType, rulerUnit, stopsCeiling(rulerUnit, current));
+  if (stops.length < 2) {
+    return flat;
+  }
+  const last = stops[stops.length - 1];
+  return {
+    ...flat,
+    min: stops[0],
+    max: last,
+    step: MathUtils_roundFloat((last - stops[0]) / (stops.length - 1), 3),
+    tallEvery: STOPS_TALL_EVERY,
+    labelEvery: STOPS_LABEL_EVERY,
+    startValue: stops[nearestStopIndex(stops, flat.startValue)],
+    stops,
+  };
+}
+
 export function RulerTape_lastIndex(spec: IRulerSpec): number {
+  if (spec.stops) {
+    return spec.stops.length - 1;
+  }
   return Math.round((spec.max - spec.min) / spec.step);
 }
 
@@ -137,10 +246,16 @@ export function RulerTape_clampIndex(spec: IRulerSpec, index: number): number {
 }
 
 export function RulerTape_indexForValue(spec: IRulerSpec, value: number): number {
+  if (spec.stops) {
+    return nearestStopIndex(spec.stops, value);
+  }
   return RulerTape_clampIndex(spec, Math.round((value - spec.min) / spec.step));
 }
 
 export function RulerTape_valueForIndex(spec: IRulerSpec, index: number): number {
+  if (spec.stops) {
+    return spec.stops[RulerTape_clampIndex(spec, index)];
+  }
   return MathUtils_roundFloat(spec.min + RulerTape_clampIndex(spec, index) * spec.step, spec.decimals);
 }
 

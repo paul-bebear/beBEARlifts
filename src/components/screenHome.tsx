@@ -8,6 +8,7 @@ import { IDispatch } from "../ducks/types";
 import { BearHouseScene } from "./bearHouseScene";
 import { useBear } from "../utils/useBear";
 import { useBearHouse } from "../utils/useBearHouse";
+import { BearHouseView_mood } from "../models/bearHouseView";
 import { useFoodLog } from "../utils/foodLogStore";
 import { ProgramGoalStore } from "../utils/programGoalStore";
 import { WeekScheduleStore } from "../utils/weekScheduleStore";
@@ -105,6 +106,7 @@ export function ScreenHome(props: IProps): JSX.Element {
     <View style={{ flex: 1 }} testID="home" data-testid="home">
       <BearHouseScene
         state={state}
+        mood={BearHouseView_mood(isOngoingProgress, state.mood)}
         room={house.room}
         wall={house.wall}
         lines={lines}
