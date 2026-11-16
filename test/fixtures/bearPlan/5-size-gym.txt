@@ -14,6 +14,8 @@ Overhead Press / ...build / 65lb
 Lat Pulldown / ...build / 70lb
 Chest Fly, Cable / ...iso / 15lb
 Lateral Raise, Cable / ...iso / 10lb
+Preacher Curl / ...iso / 20lb
+Triceps Pushdown / ...iso / 40lb
 
 ## Lower 1
 Squat / ...build / 95lb / progress: dp(10lb, 8, 12)

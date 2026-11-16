@@ -13,7 +13,8 @@ Pike Push Up / ...bw
 // Hit 3x12? Add a backpack with books and log its weight.
 Pull Up / ...bw
 Chest Dip / ...bw
-Hanging Knee Raise / ...bw
+Chin Up / ...bw
+Triceps Dip / ...bw
 
 ## Lower 1
 Squat, Bodyweight / ...bw

@@ -64,7 +64,16 @@ const weeks: Record<IBearPlanParams["days"], IBearDay[]> = {
   5: [
     {
       name: "Upper",
-      slots: ["horizontalPush", "horizontalPull", "verticalPush", "verticalPull", "chestFly", "lateral"],
+      slots: [
+        "horizontalPush",
+        "horizontalPull",
+        "verticalPush",
+        "verticalPull",
+        "chestFly",
+        "lateral",
+        "curl",
+        "triceps",
+      ],
       fill: ["core", "crunch"],
     },
     { name: "Lower 1", slots: ["squat", "rdl", "lunge", "quad", "calf", "core"], fill: ["crunch", "backExt"] },
