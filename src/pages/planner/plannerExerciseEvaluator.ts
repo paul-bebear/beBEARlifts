@@ -486,7 +486,7 @@ export class PlannerExerciseEvaluator {
   }
 
   private validateProgress(fnName: string, fnArgs: string[], fnNameNode: SyntaxNode, valueNode: SyntaxNode): void {
-    if (["lp", "sum", "dp", "custom", "none"].indexOf(fnName) === -1) {
+    if (["lp", "sum", "dp", "beat", "custom", "none"].indexOf(fnName) === -1) {
       this.error(`There's no such progression exists - '${fnName}'`, fnNameNode, {
         type: "unknownProgression",
         data: { name: fnName },
@@ -583,6 +583,27 @@ export class PlannerExerciseEvaluator {
         this.error(`3rd argument of 'dp' should be max reps in the range - i.e. a number, like 12`, valueNode, {
           type: "progressionArgument",
           data: { fn: "dp", index: 2, expected: "number" },
+        });
+      }
+    } else if (fnName === "beat") {
+      if (fnArgs.length !== 2) {
+        this.error(`Beat Progression 'beat' should have 2 arguments`, valueNode, {
+          type: "progressionArity",
+          data: { fn: "beat", max: 2 },
+        });
+      } else if (
+        fnArgs[0] == null ||
+        (!fnArgs[0].endsWith("lb") && !fnArgs[0].endsWith("kg") && !fnArgs[0].endsWith("%"))
+      ) {
+        this.error(
+          `1st argument of 'beat' should be weight (ending with 'lb' or 'kg') or percentage (ending with '%'). For example '10lb' or '30%'.`,
+          valueNode,
+          { type: "progressionArgument", data: { fn: "beat", index: 0, expected: "weightOrPercentage" } }
+        );
+      } else if (fnArgs[1] == null || isNaN(parseInt(fnArgs[1], 10))) {
+        this.error(`2nd argument of 'beat' should be max reps - i.e. a number, like 12`, valueNode, {
+          type: "progressionArgument",
+          data: { fn: "beat", index: 1, expected: "number" },
         });
       }
     } else if (fnName === "custom") {

@@ -252,6 +252,14 @@ function getEditorSetup(plannerEditor: PlannerEditor): [Extension[], IEditorComp
                     "<li><strong><code>sum(40, 10%)</code></strong> - increment by 10% if hit 40 or more reps across all sets</li>" +
                     "</ul>" +
                     "<p>You can use lb or kg units, and also percentages (%)</p>";
+                } else if (completion.label === "beat") {
+                  description.innerHTML =
+                    "<p><strong>Beat Last Time</strong>. Each set's target is the pair of reps and weight that moved the most. A missed set changes nothing.</p>" +
+                    "<p>For example:</p>" +
+                    "<ul>" +
+                    "<li><strong><code>beat(5lb, 12)</code></strong> - after a workout each set keeps whichever is bigger by reps times weight, the old target or what you did. Past 12 reps the set adds 5lb instead.</li>" +
+                    "</ul>" +
+                    "<p>You can use lb or kg units, and also percentages (%)</p>";
                 } else if (completion.label === "dp") {
                   description.innerHTML =
                     "<p><strong>Double Progression</strong>. Increases reps within a range, and after that resets the reps and increase weight.</p>" +

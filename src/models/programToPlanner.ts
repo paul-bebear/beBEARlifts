@@ -930,6 +930,11 @@ export class ProgramToPlanner {
       const maxReps = state.maxReps as number;
       const args = [Weight_print(increment), `${minReps}`, `${maxReps}`];
       progressStr += `(${args.join(", ")})`;
+    } else if (progress.type === "beat") {
+      const increment = state.increment as IWeight | IPercentage;
+      const maxReps = state.maxReps as number;
+      const args = [Weight_print(increment), `${maxReps}`];
+      progressStr += `(${args.join(", ")})`;
     } else if (progress.type === "sum") {
       const reps = state.reps as number;
       const increment = state.increment as IWeight | IPercentage;

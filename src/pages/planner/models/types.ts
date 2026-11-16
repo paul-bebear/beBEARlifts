@@ -147,7 +147,7 @@ export interface IPlannerProgramReuse {
   exercise?: IPlannerProgramExercise;
 }
 
-export type IProgramExerciseProgressType = "custom" | "lp" | "dp" | "sum" | "none";
+export type IProgramExerciseProgressType = "custom" | "lp" | "dp" | "sum" | "beat" | "none";
 type IProgramExerciseUpdateType = "custom" | "lp" | "dp" | "sum";
 
 export interface IProgramExerciseDescriptions {

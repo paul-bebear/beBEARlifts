@@ -601,9 +601,30 @@ export function PlannerProgramExercise_getProgressDefaultArgs(type: IProgramExer
       return ["5lb", "8", "12"];
     case "sum":
       return ["30", "5lb"];
+    case "beat":
+      return ["5lb", "12"];
     case "custom":
       return [];
   }
+}
+
+function buildBeatScript(): string {
+  return `for (var.i in completedReps) {
+  if (weights[var.i] == 0 && completedWeights[var.i] != 0) {
+    weights[var.i] = completedWeights[var.i]
+  }
+  if (completedReps[var.i] * completedWeights[var.i] > reps[var.i] * weights[var.i]) {
+    if (completedReps[var.i] > state.maxReps) {
+      if (state.maxReps * (completedWeights[var.i] + state.increment) > reps[var.i] * weights[var.i]) {
+        reps[var.i] = state.maxReps
+        weights[var.i] = completedWeights[var.i] + state.increment
+      }
+    } else {
+      reps[var.i] = completedReps[var.i]
+      weights[var.i] = completedWeights[var.i]
+    }
+  }
+}`;
 }
 
 function buildDpScript(): string {
@@ -743,6 +764,22 @@ if (state.decrement > 0 && state.failures > 0) {
           state,
           stateMetadata: {},
           script,
+        },
+      };
+    }
+    case "beat": {
+      const increment = args[0] ? Weight_parsePct(args[0]) : Weight_build(0, "lb");
+      const state: IProgramState = {
+        increment: increment ?? Weight_build(0, "lb"),
+        maxReps: args[1] ? parseInt(args[1], 10) : 0,
+      };
+      return {
+        success: true,
+        data: {
+          type: "beat",
+          state,
+          stateMetadata: {},
+          script: buildBeatScript(),
         },
       };
     }
