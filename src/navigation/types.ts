@@ -165,7 +165,6 @@ export type IRootStackParamList = {
   bearPanelModal: undefined;
   phoneSheetModal: undefined;
   gymBagCheckModal: undefined;
-  gymExitModal: undefined;
   addFriendModal: undefined;
   noteEditorModal: { day: string; noteId?: string };
   whatsnewModal: undefined;

@@ -61,7 +61,6 @@ export interface IBearHouseManifest {
   canvas: number[];
   whiteboard: number[];
   bearFoot: number[];
-  gymExit: IManifestSlot;
   images: Record<string, number[]>;
   rooms: Record<string, { room: string; door?: string; wall: string; objects: Record<string, IManifestSlot> }>;
   gymWalls: Record<string, string>;
@@ -249,22 +248,6 @@ export function BearHouse_objects(
           : { kind: spec.overlay.kind, text: spec.overlay.text, rect: inside(rect, spec.overlay.share) },
     };
   });
-}
-
-export function BearHouse_gymExit(gymImage: string): IBearHouseObject {
-  const image = /spaceship|moon|mars/.test(gymImage) ? "door-exit-space" : "door-exit-gym";
-  return {
-    id: "door",
-    image: BearHouse_image(image),
-    isPainted: false,
-    label: "Exit",
-    pill: "Exit",
-    target: { kind: "door" },
-    rect: fit(manifest.gymExit.rect, image),
-    pillAt: { x: manifest.gymExit.pill[0], y: manifest.gymExit.pill[1] },
-    layer: "front",
-    isNew: false,
-  };
 }
 
 export function BearHouse_box(rect: IBearRect, unit: number): IBearBox {

@@ -1,4 +1,4 @@
-import { BearScene_canvas, BearScene_gymArt, IBearRect, IBearSceneArt } from "./bearScene";
+import { BearScene_canvas, IBearRect } from "./bearScene";
 
 export interface IHouseFrameBox {
   width: number;
@@ -61,19 +61,6 @@ export function HouseFrame_safeRect(fit: IHouseFrameFit, box: IHouseFrameBox, in
     round(clampY(toCanvas(box.height - insets.bottom))),
   ];
 }
-
-// Moves a scene measured on the old 1024 by 1536 picture onto the tall canvas.
-export function HouseFrame_tall(art: IBearSceneArt): IBearSceneArt {
-  const [x1, y1, x2, y2] = art.board;
-  return {
-    canvas: HouseFrame_canvas,
-    foot: { x: art.foot.x, y: art.foot.y + HouseFrame_oldTop },
-    board: [x1, y1 + HouseFrame_oldTop, x2, y2 + HouseFrame_oldTop],
-    inkBottom: art.inkBottom + HouseFrame_oldTop,
-  };
-}
-
-export const HouseFrame_gymArt: IBearSceneArt = HouseFrame_tall(BearScene_gymArt);
 
 function luminance(hex: string): number {
   const channel = (at: number): number => {
