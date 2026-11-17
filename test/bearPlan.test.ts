@@ -137,6 +137,20 @@ describe("BearPlan", () => {
     expect(text).to.include("\nvolume: Bench Press / ...build / 95lb");
   });
 
+  it("ends the 5-day Upper day with a curl and a triceps exercise on the iso template", () => {
+    const text = BearPlan_text({ days: 5, goal: "size", places: ["gym"], agile: false, youth: false });
+    const upper = text.split(/^## /m).find((day) => day.startsWith("Upper"));
+    const lines = (upper ?? "")
+      .split("\n")
+      .filter((line) => line.includes(" / ..."))
+      .slice(-3);
+    expect(lines).to.deep.equal([
+      "Lateral Raise, Cable / ...iso / 10lb",
+      "Preacher Curl / ...iso / 20lb",
+      "Triceps Pushdown / ...iso / 40lb",
+    ]);
+  });
+
   it("keeps the run on day A and swaps the stretch block on day C for jumps when agile", () => {
     const text = BearPlan_text({ days: 3, goal: "size", places: ["gym", "floor"], agile: true, youth: false });
     const [, dayA, , dayC] = text.split(/^## /m);

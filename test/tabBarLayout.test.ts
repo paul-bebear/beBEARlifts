@@ -29,6 +29,16 @@ describe("TabBarLayout", () => {
     expect(TabBarLayout_scrollPadding({ tabBarHeight: 0, footerHeight: 50 })).to.equal(50);
   });
 
+  it("keeps the bar's own gap under scroll content while the bar is hidden", () => {
+    expect(TabBarLayout_scrollPadding({ tabBarHeight: 0, footerHeight: 0, bottomInset: 34 })).to.equal(34);
+    expect(TabBarLayout_scrollPadding({ tabBarHeight: 0, footerHeight: 0, bottomInset: 0 })).to.equal(12);
+  });
+
+  it("leaves padding unchanged while the bar shows or a footer is present", () => {
+    expect(TabBarLayout_scrollPadding({ tabBarHeight: 94, footerHeight: 0, bottomInset: 34 })).to.equal(110);
+    expect(TabBarLayout_scrollPadding({ tabBarHeight: 0, footerHeight: 50, bottomInset: 34 })).to.equal(50);
+  });
+
   it("stacks a screen footer on top of the bar", () => {
     expect(TabBarLayout_scrollPadding({ tabBarHeight: 94, footerHeight: 50 })).to.equal(160);
     expect(TabBarLayout_coveredBottom({ tabBarHeight: 94, footerHeight: 50 })).to.equal(144);
@@ -72,10 +82,10 @@ describe("TabBarLayout", () => {
   });
 
   it("hides the footer plus on the food add screen and the screens that never had it", () => {
-    for (const screen of ["foodAdd", "subscription", "onerms"]) {
+    for (const screen of ["foodAdd", "subscription", "onerms", "progress", "finishDay", "foodDay"]) {
       expect(TabBarLayout_hidesFooter(screen), screen).to.equal(true);
     }
-    for (const screen of ["main", "food", "foodDay", "history", undefined]) {
+    for (const screen of ["main", "food", "history", undefined]) {
       expect(TabBarLayout_hidesFooter(screen), String(screen)).to.equal(false);
     }
   });

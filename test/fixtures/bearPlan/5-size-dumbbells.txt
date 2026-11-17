@@ -15,6 +15,8 @@ Shoulder Press / ...build / 20lb
 Pullover / ...build / 25lb
 Chest Fly / ...iso / 15lb
 Lateral Raise / ...iso / 10lb
+Bicep Curl / ...iso / 15lb
+Skullcrusher, Dumbbell / ...iso / 15lb
 
 ## Lower 1
 Goblet Squat / ...build / 30lb

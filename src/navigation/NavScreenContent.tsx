@@ -2,6 +2,7 @@ import { Children, JSX, ReactNode, useCallback, useContext, useEffect, useState 
 import { Animated, View, LayoutChangeEvent, Platform } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { BottomTabBarHeightContext } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useReportSheetHeight } from "./ActiveSheetHeightContext";
 import { useCustomKeyboardAnimatedHeight } from "./CustomKeyboardContext";
 import { NavScreenScrollContext } from "./NavScreenScrollContext";
@@ -27,6 +28,7 @@ export function NavScreenContent(props: {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const tabBarHeight = useContext(BottomTabBarHeightContext) ?? 0;
+  const bottomInset = useSafeAreaInsets().bottom;
   const animatedKeyboardHeight = useCustomKeyboardAnimatedHeight();
   const [footerHeight, setFooterHeight] = useState(0);
   const [stickyHeaderHeight, setStickyHeaderHeight] = useState(0);
@@ -81,6 +83,7 @@ export function NavScreenContent(props: {
         paddingBottom: TabBarLayout_scrollPadding({
           tabBarHeight,
           footerHeight: props.footer != null ? footerHeight : 0,
+          bottomInset,
         }),
       }}
       automaticallyAdjustKeyboardInsets={true}

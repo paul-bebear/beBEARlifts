@@ -9,7 +9,14 @@ const TabBarLayout_pillHeight = 60;
 // Phones without a home indicator report a 0 inset, and a pill flush with the screen edge looks docked.
 const minBottomGap = 12;
 const contentGap = 16;
-const screensWithoutFooter: readonly string[] = ["subscription", "onerms", "foodAdd"];
+const screensWithoutFooter: readonly string[] = [
+  "subscription",
+  "onerms",
+  "foodAdd",
+  "progress",
+  "finishDay",
+  "foodDay",
+];
 
 export function TabBarLayout_hidesFooter(screen: string | undefined): boolean {
   return screen != null && screensWithoutFooter.includes(screen);
@@ -29,7 +36,15 @@ export function TabBarLayout_contentPadding(tabBarHeight: number): number {
   return tabBarHeight > 0 ? tabBarHeight + contentGap : 0;
 }
 
-export function TabBarLayout_scrollPadding(args: { tabBarHeight: number; footerHeight: number }): number {
+export function TabBarLayout_scrollPadding(args: {
+  tabBarHeight: number;
+  footerHeight: number;
+  bottomInset?: number;
+}): number {
+  const isBarHidden = args.tabBarHeight === 0;
+  if (isBarHidden && args.footerHeight === 0 && args.bottomInset != null) {
+    return TabBarLayout_hiddenBarFooterGap(args.bottomInset);
+  }
   return args.footerHeight + TabBarLayout_contentPadding(args.tabBarHeight);
 }
 
