@@ -1,4 +1,11 @@
-import { AiConsent_decide, AiConsent_empty, AiConsent_maySend, AiConsent_parse } from "../models/aiConsent";
+import {
+  AiConsent_decide,
+  AiConsent_empty,
+  AiConsent_maySend,
+  AiConsent_parse,
+  AiConsent_shouldAsk,
+  IAiConsentAsk,
+} from "../models/aiConsent";
 import { JsonStore_create } from "./jsonStore";
 import { AiConsentPrompt_show } from "./aiConsentPrompt";
 
@@ -6,13 +13,13 @@ export const AiConsentStore = JsonStore_create("bebear_ai_consent", AiConsent_pa
 export const AiConsent_disabledMessage = "AI is off. You can enable AI features in Settings.";
 let pending: Promise<boolean> | undefined;
 
-export function AiConsent_ensure(changeChoice = false): Promise<boolean> {
+export function AiConsent_ensure(ask: IAiConsentAsk = "auto"): Promise<boolean> {
   if (pending != null) {
     return pending;
   }
   pending = (async () => {
     const stored = await AiConsentStore.load();
-    if (!changeChoice && stored.choice !== "unknown") {
+    if (!AiConsent_shouldAsk(stored, ask)) {
       return AiConsent_maySend(stored);
     }
     const allowed = await AiConsentPrompt_show();

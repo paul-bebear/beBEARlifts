@@ -212,8 +212,8 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   };
 
   const onTile = async (tile: IFoodTile): Promise<void> => {
-    if (!AiConsent_isFoodAi(tile) || (await AiConsent_ensure())) {
-      send({ type: "tileOpened", tile, access });
+    if (!AiConsent_isFoodAi(tile) || (await AiConsent_ensure("tap"))) {
+      send({ type: "tileOpened", tile, access: { ...access, isAiDeclined: false } });
     }
   };
 

@@ -6,7 +6,7 @@ import { FoodCapture_mealPhoto, FoodCapture_label, IFoodCaptureDependencies } fr
 import { ImagePicker_ensureCameraPermission } from "./imagePicker.native";
 
 const dependencies: IFoodCaptureDependencies = {
-  allow: AiConsent_ensure,
+  allow: () => AiConsent_ensure("tap"),
   cameraPermission: ImagePicker_ensureCameraPermission,
   pick: (source, options) => (source === "camera" ? launchCamera(options) : launchImageLibrary(options)),
   readLabel: FoodApi_readLabel,
