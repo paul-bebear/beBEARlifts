@@ -119,8 +119,8 @@ Yes. Add one set to the curl and the triceps lift on each upper day. That adds a
 ```liftoscript
 # Week 1
 ## Upper A
-build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
-iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+build / used: none / 3x8 / 90s / progress: beat(5lb, 12)
+iso / used: none / 2x12 / 60s / progress: beat(2.5lb, 15)
 bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
   if (completedReps >= reps && reps[1] < 12) {
     reps += 1
@@ -136,8 +136,8 @@ Preacher Curl / ...iso / 20lb
 Triceps Pushdown / ...iso / 40lb
 
 ## Lower A
-Squat / ...build / 95lb / progress: dp(10lb, 8, 12)
-Romanian Deadlift, Barbell / ...build / 95lb / progress: dp(10lb, 8, 12)
+Squat / ...build / 95lb / progress: beat(10lb, 12)
+Romanian Deadlift, Barbell / ...build / 95lb / progress: beat(10lb, 12)
 Lunge, Dumbbell / ...build / 20lb
 Seated Leg Curl / ...iso / 60lb
 Calf Press on Leg Press / ...iso / 90lb
@@ -154,9 +154,9 @@ Hammer Curl / ...iso / 20lb
 Triceps Extension / ...iso / 20lb
 
 ## Lower B
-Deadlift / ...build / 135lb / progress: dp(10lb, 8, 12)
+Deadlift / ...build / 135lb / progress: beat(10lb, 12)
 Bulgarian Split Squat / ...build / 20lb
-Hip Thrust / ...build / 95lb / progress: dp(10lb, 8, 12)
+Hip Thrust / ...build / 95lb / progress: beat(10lb, 12)
 Leg Extension / ...iso / 60lb
 Hip Abductor / ...iso / 60lb
 Calf Press on Leg Press / ...iso / 90lb

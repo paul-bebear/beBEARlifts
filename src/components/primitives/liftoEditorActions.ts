@@ -495,6 +495,7 @@ export function LiftoEditorActions_warmupSetsPillsAt(
 const progressionDefaults: Record<string, string> = {
   lp: "lp(5lb)",
   dp: "dp(5lb, 8, 12)",
+  beat: "beat(5lb, 12)",
   sum: "sum(25, 5lb)",
   custom: "custom() {~ ~}",
   none: "none",

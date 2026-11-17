@@ -50,6 +50,11 @@ const editorProgressFunctionHints: Partial<Record<string, ILiftoEditorHint>> = {
     detail:
       "'dp(5lb, 8, 12)' — on success reps go up from 8 towards 12; at 12 the weight adds 5lb and reps reset to 8.",
   },
+  beat: {
+    short: "beat: each set's target is the best weight moved last time — reps times weight.",
+    detail:
+      "'beat(5lb, 12)' — after a workout a set keeps whichever is bigger, the old target or what you did. A missed set changes nothing. Past 12 reps the set gains 5lb instead.",
+  },
   sum: {
     short: "sum: progress when total reps across all sets reach a target.",
     detail: "'sum(30, 5lb)' — if completed reps across all sets add up to 30 or more, add 5lb.",

@@ -101,10 +101,10 @@ const agilitySlots: IBearSlot[] = ["jumpSquat", "lateralJump", "jumpRope"];
 const templateOrder: IBearTemplate[] = ["main", "mainYouth", "build", "iso", "bw", "run", "mobility", "jump"];
 
 const templateLines: Record<IBearTemplate, string> = {
-  main: "main / used: none / 2x5, 1x5+ / 150s / progress: lp(5lb)",
-  mainYouth: "mainYouth / used: none / 3x6 / 150s / progress: dp(2.5lb, 6, 8)",
-  build: "build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)",
-  iso: "iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)",
+  main: "main / used: none / 2x5, 1x5+ / 150s / progress: beat(5lb, 8)",
+  mainYouth: "mainYouth / used: none / 3x6 / 150s / progress: beat(2.5lb, 8)",
+  build: "build / used: none / 3x8 / 90s / progress: beat(5lb, 12)",
+  iso: "iso / used: none / 2x12 / 60s / progress: beat(2.5lb, 15)",
   bw: [
     "bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~",
     "  if (completedReps >= reps && reps[1] < 12) {",
@@ -198,11 +198,11 @@ function progressOverride(entry: IBearEntry): string | undefined {
   const step = entry.pick.step;
   switch (entry.template) {
     case "main":
-      return `lp(${step}lb)`;
+      return `beat(${step}lb, 8)`;
     case "mainYouth":
-      return `dp(${step / 2}lb, 6, 8)`;
+      return `beat(${step / 2}lb, 8)`;
     case "build":
-      return `dp(${step}lb, 8, 12)`;
+      return `beat(${step}lb, 12)`;
     default:
       return undefined;
   }

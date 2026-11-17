@@ -394,6 +394,9 @@ function progressionText(exercise: IPlannerProgramExercise): string | undefined 
     if (progress.type === "dp") {
       return `dp(${print(state.increment)}, ${state.minReps}, ${state.maxReps})`;
     }
+    if (progress.type === "beat") {
+      return `beat(${print(state.increment)}, ${state.maxReps})`;
+    }
     if (progress.type === "sum") {
       return `sum(${state.reps}, ${print(state.increment)})`;
     }

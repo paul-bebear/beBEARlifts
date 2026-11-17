@@ -1,7 +1,7 @@
 # Week 1
 ## Full Body A
-build / used: none / 3x8 / 90s / progress: dp(5lb, 8, 12)
-iso / used: none / 2x12 / 60s / progress: dp(2.5lb, 12, 15)
+build / used: none / 3x8 / 90s / progress: beat(5lb, 12)
+iso / used: none / 2x12 / 60s / progress: beat(2.5lb, 15)
 bw / used: none / 3x6 / 0lb / 60s / warmup: none / progress: custom() {~
   if (completedReps >= reps && reps[1] < 12) {
     reps += 1

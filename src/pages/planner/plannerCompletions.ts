@@ -293,7 +293,7 @@ function plannerCandidates(text: string, pos: number, args: IPlannerCandidatesAr
       from: propertyMatch.from + offset,
       query,
       to: tokenEnd(text, pos, /^\w*/),
-      options: ["lp", "sum", "dp", "custom"]
+      options: ["lp", "sum", "dp", "beat", "custom"]
         .filter((fn) => fn.startsWith(query))
         .map((fn) => ({ label: fn, type: "function" })),
     };
