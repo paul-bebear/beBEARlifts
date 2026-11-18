@@ -4,6 +4,7 @@ import sinon from "sinon";
 import {
   FeedClient_flush,
   FeedClient_refresh,
+  FeedClient_removeMeal,
   FeedClient_report,
   FeedClient_setShared,
   FeedClient_shareMeal,
@@ -152,6 +153,31 @@ describe("FeedClient", () => {
     await FeedClient_setShared(7, undefined);
     expect(url(0)).to.equal("/rest/v1/workout_posts?workout_id=eq.7");
     expect(fetchStub.firstCall.args[1].method).to.equal("DELETE");
+  });
+
+  it("removes a shared meal row, then its photo, and drops it from the feed", async () => {
+    feed = {
+      ...feed,
+      userId: "me",
+      meals: [{ ...meal, userId: "me", postedAt: now - 1000, photoPath: `me/${mealId}.jpg` }],
+    };
+    fetchStub.resolves(new Response("[]", { status: 200 }));
+    expect(await FeedClient_removeMeal(mealId)).to.deep.equal({ ok: true, value: undefined });
+    expect(url(0)).to.equal(`/rest/v1/meal_posts?id=eq.${mealId}`);
+    expect(fetchStub.getCall(0).args[1].method).to.equal("DELETE");
+    expect(url(1)).to.equal("/storage/v1/object/meal-photos");
+    expect(fetchStub.getCall(1).args[1].method).to.equal("DELETE");
+    expect(JSON.parse(fetchStub.getCall(1).args[1].body)).to.deep.equal({ prefixes: [`me/${mealId}.jpg`] });
+    expect(feed.outbox).to.deep.equal([]);
+    expect(feed.meals).to.deep.equal([]);
+  });
+
+  it("keeps a meal removal queued while the photo delete fails", async () => {
+    fetchStub.callsFake(async (input: RequestInfo) =>
+      String(input).includes("/storage/") ? new Response("{}", { status: 500 }) : new Response(null, { status: 204 })
+    );
+    expect((await FeedClient_removeMeal(mealId)).ok).to.equal(false);
+    expect(feed.outbox.map((o) => o.type)).to.deep.equal(["mealRemove"]);
   });
 
   it("loads meals with signed photo URLs after the workouts", async () => {

@@ -64,9 +64,28 @@ async function sendMeal(op: Extract<IFeedOp, { type: "meal" }>): Promise<ICloudR
   });
 }
 
+// The row goes first, so friends lose the post and its photo link at once. The prefix delete answers
+// 200 for a photo that is already gone, so a retry after a dropped answer still clears the op.
+async function removeMeal(op: Extract<IFeedOp, { type: "mealRemove" }>): Promise<ICloudResult<unknown>> {
+  const row = await SupabaseClient_authed(`/rest/v1/meal_posts?id=eq.${op.mealId}`, {
+    method: "DELETE",
+    headers: { Prefer: "return=minimal" },
+  });
+  if (!row.ok) {
+    return row;
+  }
+  return SupabaseClient_authed(
+    `/storage/v1/object/${MealPost_bucket}`,
+    SupabaseClient_json({ prefixes: [MealPost_photoPath(op.userId, op.mealId)] }, "DELETE")
+  );
+}
+
 async function send(op: IFeedOp): Promise<ICloudResult<unknown>> {
   if (op.type === "meal") {
     return sendMeal(op);
+  }
+  if (op.type === "mealRemove") {
+    return removeMeal(op);
   }
   if (op.type === "remove") {
     return SupabaseClient_authed(`/rest/v1/workout_posts?workout_id=eq.${op.workoutId}`, {
@@ -182,6 +201,15 @@ export async function FeedClient_shareMeal(meal: IMealPostDraft, photo: string |
   const op: IFeedOp = { type: "meal", userId, queuedAt: Date.now(), meal, ...(photo != null ? { photo } : {}) };
   await FeedStore.update((state) => Feed_queue(state, op));
   FeedClient_flush().catch(() => undefined);
+}
+
+export async function FeedClient_removeMeal(mealId: string): Promise<ICloudResult<undefined>> {
+  const userId = (await CloudStore.load()).session?.userId;
+  if (userId == null) {
+    return { ok: false, error: Supabase_notSignedIn };
+  }
+  await FeedStore.update((state) => Feed_queue(state, { type: "mealRemove", userId, queuedAt: Date.now(), mealId }));
+  return FeedClient_flush();
 }
 
 export async function FeedClient_report(

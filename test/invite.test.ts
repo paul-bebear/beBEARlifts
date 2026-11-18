@@ -9,8 +9,61 @@ import {
   Invite_link,
   Invite_parseHandle,
   Invite_reduce,
+  Invite_share,
   Invite_surface,
+  IInviteSharePlatform,
 } from "../src/models/invite";
+
+describe("Invite share", () => {
+  function platform(
+    share: IInviteSharePlatform["share"],
+    copyFails = false
+  ): IInviteSharePlatform & { copied: string[] } {
+    const copied: string[] = [];
+    return {
+      share,
+      copied,
+      copy: async (text) => {
+        if (copyFails) {
+          throw new Error("no clipboard");
+        }
+        copied.push(text);
+      },
+    };
+  }
+
+  it("shares through the share sheet and passes text and link apart", async () => {
+    const calls: string[][] = [];
+    const p = platform(async (text, url) => {
+      calls.push([text, url]);
+      return "shared";
+    });
+    expect(await Invite_share(p, "Hi", "https://x/app/?invite=paul")).to.equal("shared");
+    expect(calls).to.deep.equal([["Hi", "https://x/app/?invite=paul"]]);
+    expect(p.copied).to.deep.equal([]);
+  });
+
+  it("treats a closed sheet or an AbortError as cancelled, with no copy", async () => {
+    const closed = platform(async () => "cancelled");
+    expect(await Invite_share(closed, "Hi", "u")).to.equal("cancelled");
+    const abort = Object.assign(new Error("x"), { name: "AbortError" });
+    const aborted = platform(() => Promise.reject(abort));
+    expect(await Invite_share(aborted, "Hi", "u")).to.equal("cancelled");
+    expect([...closed.copied, ...aborted.copied]).to.deep.equal([]);
+  });
+
+  it("copies text and link when there is no share sheet or it fails", async () => {
+    const none = platform(undefined);
+    expect(await Invite_share(none, "Hi", "u")).to.equal("copied");
+    expect(none.copied).to.deep.equal(["Hi u"]);
+    const broken = platform(() => Promise.reject(new Error("boom")));
+    expect(await Invite_share(broken, "Hi", "u")).to.equal("copied");
+  });
+
+  it("fails only when the copy fails too", async () => {
+    expect(await Invite_share(platform(undefined, true), "Hi", "u")).to.equal("failed");
+  });
+});
 import { Friends_empty, IFriendsState } from "../src/models/friends";
 
 const paul = { handle: "paul", displayName: "Paul" };
