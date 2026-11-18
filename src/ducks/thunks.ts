@@ -1556,7 +1556,7 @@ export function Thunk_maybeShowOnloadModal(): IThunk {
   };
 }
 
-// Offline-only builds keep data on the phone. A recent cloud upload counts as a backup, as a JSON export does.
+// Offline-only builds keep data on the phone. A recent cloud upload counts as a backup, as an Export everything file does.
 export function Thunk_maybeRemindBackup(): IThunk {
   return async (dispatch, getState) => {
     const now = Date.now();
@@ -1791,8 +1791,9 @@ export function Thunk_exportEverything(): IThunk {
   return async (dispatch, getState) => {
     dispatch(Thunk_postevent("export-everything"));
     const { text, now } = await FullBackupFile_build(() => getState().storage);
-    Exporter_toFile(FullBackup_filename(now), text);
-    BackupReminderMarks_recordBackup(now);
+    if (await Exporter_toFile(FullBackup_filename(now), text)) {
+      BackupReminderMarks_recordBackup(now);
+    }
   };
 }
 

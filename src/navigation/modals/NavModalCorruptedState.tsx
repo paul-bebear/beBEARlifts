@@ -10,7 +10,9 @@ import { Link } from "../../components/link";
 import { IState, updateState } from "../../models/state";
 import { lb } from "lens-shmens";
 import { Support_email } from "../../utils/support";
-import { OfflineOnly_isEnabled } from "../../utils/offlineOnly";
+import { UnreadableCopy_screen } from "../../models/unreadableCopy";
+import { IndexedDBUtils_get } from "../../utils/indexeddb";
+import { Exporter_toFile } from "../../utils/exporter";
 
 export function NavModalCorruptedState(): JSX.Element {
   const { state, dispatch } = useAppState();
@@ -50,6 +52,14 @@ export function NavModalCorruptedState(): JSX.Element {
     return <></>;
   }
 
+  const screen = UnreadableCopy_screen(corruptedstorage);
+  const onSaveCopy = async (copyKey: string | undefined): Promise<void> => {
+    const raw = copyKey != null ? await IndexedDBUtils_get(copyKey) : undefined;
+    if (typeof raw === "string") {
+      await Exporter_toFile(screen.filename, raw);
+    }
+  };
+
   return (
     <ModalScreenContainer onClose={onReset}>
       <FormSheet>
@@ -64,7 +74,7 @@ export function NavModalCorruptedState(): JSX.Element {
           </Text>
         </View>
         <View className="pb-4">
-          {corruptedstorage.backup && OfflineOnly_isEnabled() ? (
+          {corruptedstorage.copyKey != null ? (
             <Text className="font-bold text-center text-text-success">
               A copy of the damaged data was kept on this phone. Resetting does not delete it, so it can still be
               repaired.
@@ -84,17 +94,15 @@ export function NavModalCorruptedState(): JSX.Element {
           </Text>
         </View>
         <View className="pb-4">
-          {corruptedstorage.local ? (
-            <Text>
-              You can either wait until this is fixed (and close the app for now), or start with the empty state (but
-              your history and programs will be gone).
-            </Text>
-          ) : (
-            <Text className="pb-4">
-              We will log out for now, and won't sync the changes to the cloud, to avoid even bigger mess.
-            </Text>
-          )}
+          <Text className={corruptedstorage.local ? undefined : "pb-4"}>{screen.resetText}</Text>
         </View>
+        {screen.canSave && corruptedstorage.copyKey != null && (
+          <View className="items-center pb-4">
+            <Button name="corrupted-state-save-copy" kind="purple" onClick={() => onSaveCopy(corruptedstorage.copyKey)}>
+              Save the damaged data
+            </Button>
+          </View>
+        )}
         <View className="items-center">
           <Button name="corrupted-state-reset" kind="red" onClick={onReset}>
             {corruptedstorage.local ? "Reset and start from scratch" : "Continue"}

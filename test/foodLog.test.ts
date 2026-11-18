@@ -22,6 +22,7 @@ import {
   FoodLog_applyGoals,
   FoodLog_toRecent,
   FoodLog_saveMeal,
+  FoodLog_saveFood,
   FoodLog_scale,
   FoodLog_setGrams,
   FoodLog_setGoals,
@@ -345,5 +346,23 @@ describe("FoodLog_applyGoals", () => {
     const log = FoodLog_applyGoals(start, goals, undefined);
     expect(log.goals).to.deep.equal(goals);
     expect(log.profile).to.equal(saved);
+  });
+});
+
+describe("FoodLog_parseImport damaged and partial files", () => {
+  it("refuses a file where some entries, meals or recipes are broken", () => {
+    const raw = JSON.parse(JSON.stringify(FoodLog_add(FoodLog_empty(), entry({}))));
+    expect(FoodLog_parseImport({ ...raw, entries: [...raw.entries, { id: "x", name: "No nutrients" }] })).to.equal(
+      undefined
+    );
+    expect(FoodLog_parseImport({ ...raw, meals: [{ id: "m" }] })).to.equal(undefined);
+    expect(FoodLog_parseImport({ ...raw, recipes: [{ id: "r" }] })).to.equal(undefined);
+  });
+
+  it("accepts a log with only saved foods", () => {
+    const product = { name: "Oats", per100g: { calories: 380, protein: 13, carbs: 60, fat: 7 } };
+    const log = FoodLog_saveFood(FoodLog_empty(), product);
+    expect(log.savedFoods.length).to.equal(1);
+    expect(FoodLog_parseImport(JSON.parse(JSON.stringify(log)))?.savedFoods.length).to.equal(1);
   });
 });

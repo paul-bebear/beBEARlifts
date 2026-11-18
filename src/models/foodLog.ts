@@ -219,8 +219,13 @@ export function FoodLog_parseImport(raw: unknown): IFoodLog | undefined {
     return undefined;
   }
   const log = FoodLog_parse(raw);
-  const hasContent = log.entries.length + log.meals.length + log.recipes.length > 0;
-  return hasContent ? log : undefined;
+  const rawCount = (list: unknown): number => (Array.isArray(list) ? list.length : 0);
+  const dropped =
+    log.entries.length < rawCount(r.entries) ||
+    log.meals.length < rawCount(r.meals) ||
+    log.recipes.length < rawCount(r.recipes);
+  const hasContent = log.entries.length + log.meals.length + log.recipes.length + log.savedFoods.length > 0;
+  return hasContent && !dropped ? log : undefined;
 }
 
 function parseRecents(raw: unknown): IFoodRecent[] {

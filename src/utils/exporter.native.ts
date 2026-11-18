@@ -17,8 +17,8 @@ function mimeTypeFromFilename(filename: string): string {
   return "text/plain";
 }
 
-export function Exporter_toFile(filename: string, contents: string): void {
-  exportToFile(filename, contents);
+export function Exporter_toFile(filename: string, contents: string): Promise<boolean> {
+  return exportToFile(filename, contents);
 }
 
 export function Exporter_toZip(filename: string, files: Record<string, string>): void {
@@ -29,22 +29,28 @@ export function Exporter_toZip(filename: string, files: Record<string, string>):
   exportToFile(filename, btoa(strFromU8(zipSync(entries), true)), "base64");
 }
 
-async function exportToFile(filename: string, contents: string, encoding: "utf8" | "base64" = "utf8"): Promise<void> {
+async function exportToFile(
+  filename: string,
+  contents: string,
+  encoding: "utf8" | "base64" = "utf8"
+): Promise<boolean> {
   const tempPath = `${RNFS.CachesDirectoryPath}/${filename}`;
   try {
     await RNFS.writeFile(tempPath, contents, encoding);
-    await Share.open({
+    const result = await Share.open({
       url: `file://${tempPath}`,
       type: mimeTypeFromFilename(filename),
       filename,
       failOnCancel: false,
     });
+    return result.success && result.dismissedAction !== true;
   } catch (e) {
     const err = e as { message?: string };
     if (err.message && /cancel|cancelled|user did not share/i.test(err.message)) {
-      return;
+      return false;
     }
     Alert.alert("Export failed", err.message ?? "Unknown error");
+    return false;
   } finally {
     try {
       if (await RNFS.exists(tempPath)) {

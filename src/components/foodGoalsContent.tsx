@@ -61,6 +61,7 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
     const message = `Replace your food log with ${imported.entries.length} foods from this file?`;
     if (await Dialog_confirm(message)) {
       await FoodLogStore_replace(imported);
+      setFilledProfile(undefined);
       setForm(FoodGoals_toForm(imported.goals));
     }
   };

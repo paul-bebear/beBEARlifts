@@ -148,18 +148,18 @@ export async function getInitialState(
       finalStorage = maybeStorage.data;
     } else if (OfflineOnly_isEnabled()) {
       const userid = (storage.storage?.tempUserId || `missing-${UidFactory_generateUid(8)}`) as string;
-      let backup = false;
+      let copyKey: string | undefined;
       try {
         const copy = UnreadableCopy_keep(await IndexedDBUtils_getAllKeys(), Date.now());
         await IndexedDBUtils_setMany([
           [copy.key, args.rawStorage ?? JSON.stringify(storage)],
           ...copy.remove.map((key): [string, undefined] => [key, undefined]),
         ]);
-        backup = true;
+        copyKey = copy.key;
       } catch (e) {
-        backup = false;
+        copyKey = undefined;
       }
-      errors.corruptedstorage = { userid, backup, confirmed: false, local: true };
+      errors.corruptedstorage = { userid, backup: copyKey != null, confirmed: false, local: true, copyKey };
       finalStorage = Storage_getDefault();
     } else {
       const service = new Service(client);
