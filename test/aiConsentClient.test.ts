@@ -39,16 +39,24 @@ describe("AI consent persistence", () => {
     expect(stored.choice).to.equal("allowed");
   });
 
-  it("remembers Not now and permits a new choice only from Settings", async () => {
+  it("remembers Not now for background checks and asks again on a tap", async () => {
     ask.resolves(false);
     expect(await AiConsent_ensure()).to.equal(false);
     expect(await AiConsent_ensure()).to.equal(false);
     expect(ask.callCount).to.equal(1);
     ask.resolves(true);
-    expect(await AiConsent_ensure(true)).to.equal(true);
+    expect(await AiConsent_ensure("tap")).to.equal(true);
     expect(stored.choice).to.equal("allowed");
+    expect(await AiConsent_ensure("tap")).to.equal(true);
     expect(await AiConsent_ensure()).to.equal(true);
     expect(ask.callCount).to.equal(2);
+  });
+
+  it("lets Settings change an existing choice", async () => {
+    stored = AiConsent_decide(false, 123);
+    ask.resolves(true);
+    expect(await AiConsent_ensure("settings")).to.equal(true);
+    expect(stored.choice).to.equal("allowed");
   });
 
   it("fails closed when saving Allow fails", async () => {
@@ -60,7 +68,7 @@ describe("AI consent persistence", () => {
   it("lets Settings revoke an existing allowance", async () => {
     stored = AiConsent_decide(true, 123);
     ask.resolves(false);
-    expect(await AiConsent_ensure(true)).to.equal(false);
+    expect(await AiConsent_ensure("settings")).to.equal(false);
     expect(stored.choice).to.equal("declined");
   });
 });

@@ -5,7 +5,7 @@ import { BottomTabBarHeightCallbackContext, type BottomTabBarProps } from "@reac
 import type { NavigationState } from "@react-navigation/native";
 import { useTrackedState } from "../TrackedStateContext";
 import { Footer2View } from "../../components/footer2";
-import { TabBarLayout_compute, TabBarLayout_hidesFooter } from "../../models/tabBarLayout";
+import { TabBarLayout_compute, TabBarLayout_showsPlus } from "../../models/tabBarLayout";
 import type { IScreen } from "../../models/screen";
 
 function getTopScreenOfActiveTab(tabState: BottomTabBarProps["state"]): IScreen | undefined {
@@ -15,6 +15,10 @@ function getTopScreenOfActiveTab(tabState: BottomTabBarProps["state"]): IScreen 
     return undefined;
   }
   return tabStackState.routes[tabStackState.index ?? 0].name as IScreen;
+}
+
+function getActiveTab(tabState: BottomTabBarProps["state"]): string {
+  return tabState.routes[tabState.index].name;
 }
 
 export function Footer2Wrapper(props: BottomTabBarProps): JSX.Element | null {
@@ -29,8 +33,7 @@ export function Footer2Wrapper(props: BottomTabBarProps): JSX.Element | null {
   // Screens pad their content and lift their footers by this value, so report the floating bar's.
   const setTabBarHeight = useContext(BottomTabBarHeightCallbackContext);
   const layout = TabBarLayout_compute(useSafeAreaInsets().bottom);
-  const topScreen = getTopScreenOfActiveTab(props.state);
-  const isHidden = TabBarLayout_hidesFooter(topScreen);
+  const isHidden = !TabBarLayout_showsPlus(getActiveTab(props.state), getTopScreenOfActiveTab(props.state));
   const reportedHeight = isHidden ? 0 : layout.height;
   useEffect(() => {
     setTabBarHeight?.(reportedHeight);

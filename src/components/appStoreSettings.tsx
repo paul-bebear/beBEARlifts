@@ -32,7 +32,7 @@ export function AppStoreSettings(): JSX.Element {
       <Text className="text-sm text-text-secondary">
         {consent.choice === "allowed" ? "Allowed" : "Permission required"}
       </Text>
-      <Button name="settings-ai-consent" kind="lightgrayv3" onClick={() => AiConsent_ensure(true)}>
+      <Button name="settings-ai-consent" kind="lightgrayv3" onClick={() => AiConsent_ensure("settings")}>
         {AiConsent_showFeatures(consent) ? "Change AI permission" : "Enable AI features"}
       </Button>
       {userId != null && (

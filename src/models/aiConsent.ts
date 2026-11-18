@@ -30,6 +30,19 @@ export function AiConsent_maySend(consent: IAiConsent): boolean {
   return AiConsent_parse(consent).choice === "allowed";
 }
 
+export type IAiConsentAsk = "auto" | "tap" | "settings";
+
+export function AiConsent_shouldAsk(consent: IAiConsent, ask: IAiConsentAsk): boolean {
+  switch (ask) {
+    case "settings":
+      return true;
+    case "tap":
+      return consent.choice !== "allowed";
+    case "auto":
+      return consent.choice === "unknown";
+  }
+}
+
 export function AiConsent_showFeatures(consent: IAiConsent): boolean {
   return consent.choice !== "declined";
 }

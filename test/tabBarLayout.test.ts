@@ -5,9 +5,9 @@ import {
   TabBarLayout_contentPadding,
   TabBarLayout_coveredBottom,
   TabBarLayout_hiddenBarFooterGap,
-  TabBarLayout_hidesFooter,
   TabBarLayout_keyboardOccluded,
   TabBarLayout_scrollPadding,
+  TabBarLayout_showsPlus,
 } from "../src/models/tabBarLayout";
 
 describe("TabBarLayout", () => {
@@ -81,12 +81,25 @@ describe("TabBarLayout", () => {
     expect(system).to.equal(40 + 336);
   });
 
-  it("hides the footer plus on the food add screen and the screens that never had it", () => {
-    for (const screen of ["foodAdd", "subscription", "onerms", "progress", "finishDay", "foodDay"]) {
-      expect(TabBarLayout_hidesFooter(screen), screen).to.equal(true);
+  it("shows the plus on the home screen only", () => {
+    expect(TabBarLayout_showsPlus("home", "main")).to.equal(true);
+    expect(TabBarLayout_showsPlus("home", undefined)).to.equal(true);
+    for (const screen of ["progress", "exerciseStats"]) {
+      expect(TabBarLayout_showsPlus("home", screen), screen).to.equal(false);
     }
-    for (const screen of ["main", "food", "history", undefined]) {
-      expect(TabBarLayout_hidesFooter(screen), String(screen)).to.equal(false);
+    const others: [string, string | undefined][] = [
+      ["food", "food"],
+      ["food", "foodDay"],
+      ["food", "foodAdd"],
+      ["food", undefined],
+      ["workout", "progress"],
+      ["workout", "finishDay"],
+      ["workout", "music"],
+      ["graphs", "progressDashboard"],
+      ["me", undefined],
+    ];
+    for (const [tab, screen] of others) {
+      expect(TabBarLayout_showsPlus(tab, screen), `${tab}/${screen}`).to.equal(false);
     }
   });
 

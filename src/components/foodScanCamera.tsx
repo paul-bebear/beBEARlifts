@@ -54,7 +54,7 @@ export function FoodScanCamera(props: IProps): JSX.Element {
   const [aiNotice, setAiNotice] = useState<string>();
 
   const pickMode = async (mode: IScanMode): Promise<void> => {
-    if (mode !== "ai" || (await AiConsent_ensure())) {
+    if (mode !== "ai" || (await AiConsent_ensure("tap"))) {
       setAiNotice(undefined);
       props.onMode(mode);
     } else {
