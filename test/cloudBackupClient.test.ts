@@ -115,12 +115,14 @@ describe("CloudBackupClient", () => {
     expect(state.lastBackupAt).to.equal(now);
   });
 
-  it("leaves the last backup time unchanged when either upload fails", async () => {
+  it("leaves the last backup time unchanged when either upload fails, and records a written latest.json", async () => {
     state.lastBackupAt = now - 1000;
     fetchStub.onFirstCall().resolves(new Response("{}"));
     fetchStub.onSecondCall().resolves(new Response(JSON.stringify({ message: "Quota exceeded" }), { status: 413 }));
     expect(await CloudBackupClient_upload("backup", marks)).to.deep.equal({ ok: false, error: "Quota exceeded" });
     expect(state.lastBackupAt).to.equal(now - 1000);
+    expect(state.syncedExportedAt).to.equal(marks.exportedAt);
+    state.syncedExportedAt = undefined;
     fetchStub.reset();
     fetchStub.resolves(new Response(JSON.stringify({ message: "Permission denied" }), { status: 403 }));
     expect(await CloudBackupClient_upload("backup", marks)).to.deep.equal({ ok: false, error: "Permission denied" });

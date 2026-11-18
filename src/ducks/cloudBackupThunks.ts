@@ -2,6 +2,7 @@ import { IEnv, IState } from "../models/state";
 import { IDispatch, IThunk } from "./types";
 import { Thunk_importStorage } from "./thunks";
 import {
+  CloudBackup_afterAttempt,
   CloudBackup_isAutoDue,
   CloudBackup_isCatchUpDue,
   CloudBackup_ownerAnswer,
@@ -164,6 +165,8 @@ export function Thunk_cloudBackup(
     } catch (error) {
       result = { ok: false, error: errorText(error, "Could not save cloud backup") };
     }
+    const attempt = result;
+    await CloudStore.update((state) => CloudBackup_afterAttempt(state, attempt)).catch(() => undefined);
     if (result.ok) {
       await ProgressPhotoCloud_sync().catch(() => undefined);
     }

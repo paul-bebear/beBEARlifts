@@ -20,6 +20,7 @@ import { WarmupPlan_empty } from "../src/models/warmupPlan";
 import { WorkoutReport_empty } from "../src/models/workoutReport";
 import { FullBackup_build, IFullBackupParts } from "../src/models/fullBackup";
 import {
+  CloudBackup_blockedText,
   CloudBackup_storesMark,
   CloudBackup_workoutsMark,
   ICloudState,
@@ -279,6 +280,18 @@ describe("Cloud backup thunks", () => {
     await run(Thunk_cloudBackup("manual", result));
     expect(result.firstCall.args[0]).to.deep.equal({ ok: false, error: "Could not read saved data" });
     expect(upload.called).to.equal(false);
+  });
+
+  it("records why automatic backups stopped when a store cannot be read, and clears it after an upload", async () => {
+    state.storage.history = workouts([now - 2000]);
+    (NotesStore.loadStrict as sinon.SinonStub).rejects(new Error("Could not read saved data"));
+    await run(Thunk_cloudBackup("auto"));
+    expect(upload.called).to.equal(false);
+    expect(cloudState.backupBlocked).to.be.a("string").and.equal(CloudBackup_blockedText);
+    (NotesStore.loadStrict as sinon.SinonStub).callsFake(async () => notes);
+    await run(Thunk_cloudBackup("auto"));
+    expect(upload.callCount).to.equal(1);
+    expect(cloudState.backupBlocked).to.equal(undefined);
   });
 
   it("asks before replacing a cloud file another device wrote, even with nothing new in it", async () => {

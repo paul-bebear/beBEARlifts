@@ -1,4 +1,5 @@
 import { IOAuthPending, OAuthFlow_parsePending } from "./oauthFlow";
+import { StoreRecovery_readError } from "./storeRecovery";
 
 export interface ICloudSession {
   email: string;
@@ -36,6 +37,7 @@ export interface ICloudState {
   restoreOffer?: ICloudRestoreOffer;
   pending?: IOAuthPending;
   signInError?: string;
+  backupBlocked?: string;
 }
 
 export interface ICloudStoresInput {
@@ -132,7 +134,25 @@ export function CloudBackup_parse(raw: unknown): ICloudState {
   if (str(r.signInError) != null) {
     state.signInError = r.signInError as string;
   }
+  if (str(r.backupBlocked) != null) {
+    state.backupBlocked = r.backupBlocked as string;
+  }
   return state;
+}
+
+export const CloudBackup_blockedText =
+  "Automatic backups are paused. Some saved data on this phone could not be read. " +
+  "Close and reopen the app, then answer the question about that data.";
+
+// A damaged store fails every later backup the same way. A network error can pass on the next try, so it changes nothing.
+export function CloudBackup_afterAttempt(
+  state: ICloudState,
+  result: { ok: true; value: number | undefined } | { ok: false; error: string }
+): ICloudState {
+  if (!result.ok) {
+    return result.error === StoreRecovery_readError ? { ...state, backupBlocked: CloudBackup_blockedText } : state;
+  }
+  return result.value != null && state.backupBlocked != null ? { ...state, backupBlocked: undefined } : state;
 }
 
 function summary(raw: unknown): ICloudBackupSummary | undefined {

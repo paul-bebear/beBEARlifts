@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   AccountPlan_accept,
+  AccountPlan_activatingTries,
   AccountPlan_empty,
   AccountPlan_isPlus,
   AccountPlan_parse,
@@ -49,6 +50,18 @@ describe("AccountPlan", () => {
       plan: "free",
     });
     expect(AccountPlan_accept(plusA, undefined, plusA)).to.deep.equal(AccountPlan_empty());
+  });
+
+  it("keeps a purchase activating through 4 free answers and gives up on the 5th", () => {
+    let state: IAccountPlanState = { status: "activating", userId: "a" };
+    for (let answer = 1; answer < AccountPlan_activatingTries; answer += 1) {
+      state = AccountPlan_accept(state, "a", free);
+      expect(state).to.deep.equal({ status: "activating", userId: "a", tries: answer });
+      expect(AccountPlan_parse(state)).to.deep.equal(state);
+    }
+    expect(AccountPlan_accept(state, "a", free)).to.deep.equal(free);
+    expect(AccountPlan_accept(state, "a", plusA)).to.deep.equal(plusA);
+    expect(AccountPlan_accept({ status: "activating", userId: "b" }, "a", free)).to.deep.equal(free);
   });
 
   it("counts plus only for the signed-in user", () => {

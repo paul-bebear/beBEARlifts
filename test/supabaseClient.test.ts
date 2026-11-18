@@ -120,13 +120,27 @@ describe("SupabaseClient_accessToken", () => {
     });
   });
 
-  it("keeps the old session and reports the server's reason when the refresh is refused", async () => {
-    fetchStub.resolves(
-      new Response(JSON.stringify({ error: "invalid_grant", error_description: "Refresh Token Not Found" }), {
-        status: 400,
-      })
-    );
-    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "Refresh Token Not Found" });
+  it("signs out this phone when the server refuses the refresh token", async () => {
+    for (const status of [400, 401]) {
+      state = { version: 1, session, ownerUserId: "u1", lastBackupAt: now - 1000 };
+      fetchStub.resolves(
+        new Response(JSON.stringify({ error: "invalid_grant", error_description: "Refresh Token Not Found" }), {
+          status,
+        })
+      );
+      expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: Supabase_notSignedIn });
+      expect(state.session).to.equal(undefined);
+      expect(state.lastBackupAt).to.equal(undefined);
+      expect(state.ownerUserId).to.equal("u1");
+    }
+  });
+
+  it("keeps the session when the refresh fails for a server or network reason", async () => {
+    fetchStub.resolves(new Response(JSON.stringify({ message: "Service unavailable" }), { status: 503 }));
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "Service unavailable" });
+    expect(state.session).to.deep.equal(session);
+    fetchStub.rejects(new TypeError("Load failed"));
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "No connection" });
     expect(state.session).to.deep.equal(session);
   });
 

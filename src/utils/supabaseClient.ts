@@ -1,5 +1,6 @@
 import {
   CloudBackup_afterSignIn,
+  CloudBackup_afterSignOut,
   CloudBackup_empty,
   CloudBackup_needsRefresh,
   CloudBackup_parse,
@@ -21,11 +22,11 @@ export const SentCodeStore = JsonStore_create<ISentCode>("bebear_sent_code", Clo
 
 export type ICloudResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
-export async function SupabaseClient_call(
+async function callWithStatus(
   path: string,
   init: RequestInit,
   token?: string
-): Promise<ICloudResult<Response>> {
+): Promise<{ result: ICloudResult<Response>; status?: number }> {
   const headers: Record<string, string> = { apikey: publishableKey, ...(init.headers as Record<string, string>) };
   if (token != null) {
     headers.Authorization = `Bearer ${token}`;
@@ -34,13 +35,24 @@ export async function SupabaseClient_call(
   try {
     response = await fetch(`${Supabase_origin}${path}`, { ...init, headers });
   } catch {
-    return { ok: false, error: "No connection" };
+    return { result: { ok: false, error: "No connection" } };
   }
   if (!response.ok) {
     const body = await response.json().catch(() => undefined);
-    return { ok: false, error: SupabaseClient_errorText(path, response.status, body) };
+    return {
+      result: { ok: false, error: SupabaseClient_errorText(path, response.status, body) },
+      status: response.status,
+    };
   }
-  return { ok: true, value: response };
+  return { result: { ok: true, value: response }, status: response.status };
+}
+
+export async function SupabaseClient_call(
+  path: string,
+  init: RequestInit,
+  token?: string
+): Promise<ICloudResult<Response>> {
+  return (await callWithStatus(path, init, token)).result;
 }
 
 // Supabase Auth answers a wrong or expired code with 403. It answers 429 both for a second code to one
@@ -82,11 +94,19 @@ async function SupabaseClient_session(): Promise<ICloudResult<ICloudSession>> {
   if (!CloudBackup_needsRefresh(current, Date.now())) {
     return { ok: true, value: current };
   }
-  const result = await SupabaseClient_call(
+  const { result, status } = await callWithStatus(
     "/auth/v1/token?grant_type=refresh_token",
     SupabaseClient_json({ refresh_token: current.refreshToken })
   );
-  return result.ok ? SupabaseClient_saveSession(result.value) : result;
+  if (result.ok) {
+    return SupabaseClient_saveSession(result.value);
+  }
+  // Supabase answers a revoked or unknown refresh token with 400 invalid_grant. No retry can succeed.
+  if (status === 400 || status === 401) {
+    await CloudStore.update((state) => CloudBackup_afterSignOut(state));
+    return { ok: false, error: Supabase_notSignedIn };
+  }
+  return result;
 }
 
 export async function SupabaseClient_exchangeCode(

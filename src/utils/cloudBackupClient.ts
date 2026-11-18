@@ -67,6 +67,8 @@ export async function CloudBackupClient_upload(
   if (!latest.ok) {
     return latest;
   }
+  // The cloud now holds this file, so a failed weekday put must not make the next check see another device.
+  await CloudStore.update((state) => ({ ...state, syncedExportedAt: marks.exportedAt }));
   const daily = await put(paths.daily, text);
   if (!daily.ok) {
     return daily;
@@ -74,7 +76,6 @@ export async function CloudBackupClient_upload(
   await CloudStore.update((state) => ({
     ...state,
     lastBackupAt: now,
-    syncedExportedAt: marks.exportedAt,
     backedUpWorkouts: marks.workouts,
     backedUpStores: marks.stores,
     ownerUserId: session.userId,

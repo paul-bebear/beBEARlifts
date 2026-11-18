@@ -18,6 +18,8 @@ import {
   CloudBackup_afterSignOut,
   CloudBackup_afterSignIn,
   CloudBackup_canSyncPhotos,
+  CloudBackup_afterAttempt,
+  CloudBackup_blockedText,
   ICloudSession,
   ICloudState,
   ICloudStoresInput,
@@ -217,5 +219,16 @@ describe("CloudBackup", () => {
       signInError: "Sign-in was cancelled.",
     });
     expect(CloudBackup_parse({ pending: { provider: "apple" }, signInError: "" })).to.deep.equal({ version: 1 });
+  });
+
+  it("keeps a blocked reason after a local read error until a backup uploads", () => {
+    const start: ICloudState = { version: 1, session };
+    const blocked = CloudBackup_afterAttempt(start, { ok: false, error: "Could not read saved data" });
+    expect(blocked.backupBlocked).to.equal(CloudBackup_blockedText);
+    expect(CloudBackup_parse(blocked).backupBlocked).to.equal(CloudBackup_blockedText);
+    expect(CloudBackup_afterAttempt(blocked, { ok: false, error: "No connection" })).to.equal(blocked);
+    expect(CloudBackup_afterAttempt(blocked, { ok: true, value: undefined })).to.equal(blocked);
+    expect(CloudBackup_afterAttempt(blocked, { ok: true, value: now }).backupBlocked).to.equal(undefined);
+    expect(CloudBackup_afterAttempt(start, { ok: false, error: "No connection" })).to.equal(start);
   });
 });
