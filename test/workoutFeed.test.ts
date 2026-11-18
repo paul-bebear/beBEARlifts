@@ -156,7 +156,7 @@ describe("Workout report empty state", () => {
     const next = record(t1, [entry(bench, [set(80, 5)])]);
     const state = { storage: { history: [next, first] } } as IState;
     sinon.stub(trackedState, "useTrackedState").returns(state);
-    sinon.stub(AiConsentStore, "use").returns({ version: 1, choice: "declined" });
+    sinon.stub(AiConsentStore, "use").returns({ version: 2, choice: "declined" });
     const report: IWorkoutReport = { workoutId: first.id, timestamp: t0, dayName: "Push", items: [], answers: {} };
     const firstHtml = renderToStaticMarkup(createElement(WorkoutReportView, { report }));
     expect(firstHtml).to.contain("First workout logged. Reports compare from the second one.");

@@ -17,7 +17,7 @@ export async function aiChat(ai, { messages, maxTokens, temperature }, timeoutMs
       {
         method: "POST",
         headers: { Authorization: `Bearer ${ai.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: ai.model, messages, max_tokens: maxTokens, temperature }),
+        body: JSON.stringify({ model: ai.model, messages, max_tokens: maxTokens, temperature, ...ai.extraBody }),
       },
       timeoutMs
     );
@@ -42,6 +42,8 @@ export async function aiChat(ai, { messages, maxTokens, temperature }, timeoutMs
 const defaultGatewayModel = "anthropic/claude-haiku-5.5";
 // The "-latest" alias follows Google's newest Flash-Lite, which has a free tier.
 const defaultGeminiModel = "gemini-flash-lite-latest";
+
+export const Gateway_anthropicOnly = { providerOptions: { gateway: { only: ["anthropic"] } } };
 
 async function gatewayToken() {
   if (process.env.AI_GATEWAY_API_KEY) {
@@ -69,5 +71,7 @@ export async function aiProvider() {
     url: "https://ai-gateway.vercel.sh/v1/chat/completions",
     token: await gatewayToken(),
     model: process.env.AI_GATEWAY_MODEL || defaultGatewayModel,
+    // The privacy policy names Anthropic. Without this the gateway can fail over to Bedrock or Vertex for Claude.
+    extraBody: Gateway_anthropicOnly,
   };
 }

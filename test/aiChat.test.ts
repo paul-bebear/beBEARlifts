@@ -1,7 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { aiChat, aiUnavailableMessage } from "../api/_ai.mjs";
+import { aiChat, aiProvider, aiUnavailableMessage, Gateway_anthropicOnly } from "../api/_ai.mjs";
 import { AiAuth_check } from "../api/_auth.mjs";
 import { POST as report } from "../api/ai/report.mjs";
 import { POST as warmup } from "../api/ai/warmup.mjs";
@@ -50,6 +50,34 @@ describe("aiChat", () => {
       max_tokens: 300,
       temperature: 0.4,
     });
+  });
+
+  it("limits gateway requests to Anthropic and sends no filter to Gemini", async () => {
+    const saved = { gemini: process.env.GEMINI_API_KEY, gateway: process.env.AI_GATEWAY_API_KEY };
+    try {
+      delete process.env.GEMINI_API_KEY;
+      process.env.AI_GATEWAY_API_KEY = "gateway-key";
+      const gateway = await aiProvider();
+      expect(gateway.extraBody).to.deep.equal({ providerOptions: { gateway: { only: ["anthropic"] } } });
+      const fetchStub = sinon.stub(globalThis, "fetch").resolves(answer());
+      await aiChat(gateway, options, 30000);
+      const [, init] = fetchStub.firstCall.args as [string, RequestInit];
+      expect(JSON.parse(init.body as string)).to.deep.include(Gateway_anthropicOnly);
+
+      process.env.GEMINI_API_KEY = "gemini-key";
+      expect((await aiProvider()).extraBody).to.equal(undefined);
+    } finally {
+      for (const [key, value] of [
+        ["GEMINI_API_KEY", saved.gemini],
+        ["AI_GATEWAY_API_KEY", saved.gateway],
+      ] as const) {
+        if (value == null) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      }
+    }
   });
 
   it("logs array, object and non-JSON provider errors and returns a fixed message", async () => {
