@@ -11,18 +11,15 @@ import { useTrackedState } from "../navigation/TrackedStateContext";
 import { WorkoutPost_hasEarlierExercise } from "../models/workoutPost";
 import {
   IWorkoutReport,
-  WorkoutReport_answer,
   WorkoutReport_answerLabels,
   WorkoutReport_build,
   WorkoutReport_find,
   WorkoutReport_options,
   WorkoutReport_previous,
   WorkoutReport_put,
+  WorkoutReport_withAnswer,
+  WorkoutReport_withSummary,
 } from "../models/workoutReport";
-
-function save(report: IWorkoutReport): Promise<void> {
-  return ReportStore.update((log) => WorkoutReport_put(log, report));
-}
 
 export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Element {
   const history = useTrackedState().storage.history;
@@ -36,7 +33,7 @@ export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Elemen
     const result = await ReportApi_summary(report);
     setError(result.ok ? undefined : result.error);
     if (result.ok) {
-      await save({ ...report, summary: result.text });
+      await ReportStore.update((log) => WorkoutReport_withSummary(log, report.workoutId, result.text));
     }
     setIsBusy(false);
   };
@@ -64,7 +61,9 @@ export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Elemen
                   <Pressable
                     key={answer}
                     testID={`report-answer-${answer}`}
-                    onPress={() => save(WorkoutReport_answer(report, item.key, answer))}
+                    onPress={() =>
+                      ReportStore.update((log) => WorkoutReport_withAnswer(log, report.workoutId, item.key, answer))
+                    }
                     className={`px-3 py-1 rounded-full border ${
                       isPicked ? "bg-button-primarybackground border-button-primarybackground" : "border-border-neutral"
                     }`}
