@@ -1,4 +1,4 @@
--- The backups bucket allows 50 MB per file for the JSON backups, and a JPEG in <uid>/photos/ had the same limit with no count.
+-- The backups bucket allowed 50 MB per file, and a JPEG in <uid>/photos/ had the same limit with no count. It is now 30 MB.
 -- A separate photo bucket would need a new upload path in src/utils/cloudBackupClient.ts, so a trigger caps the photos instead.
 -- Storage first inserts the row without metadata to test the policies, then upserts it with metadata.size after the upload.
 -- A row with no size yet passes the size check, and the final upsert meets it.
@@ -25,15 +25,36 @@ declare
   max_meal_photos_without_post constant int := 10;
   -- A heavy user: 9 backup copies of 10 MB, 200 photos of 250 KB and 2 years of daily 150 KB meal photos is 250 MB.
   max_user_bytes constant bigint := 314572800;
+  is_move boolean := tg_op = 'UPDATE' and (old.bucket_id, old.name) is distinct from (new.bucket_id, new.name);
+  other_bytes bigint;
+  replaced_bytes bigint;
 begin
-  if size_bytes is not null and size_bytes + (
-    select coalesce(sum((o.metadata->>'size')::bigint), 0) from storage.objects o
-    where o.bucket_id in ('backups', 'meal-photos')
-      and o.name like owner_folder || '/%'
-      and not (o.bucket_id = new.bucket_id and o.name = new.name)
-  ) > max_user_bytes then
+  -- The sums and counts below read only committed rows, so parallel uploads of one user wait for each other here.
+  perform pg_advisory_xact_lock(hashtext('storage_quota:' || owner_folder));
+
+  select coalesce(sum((o.metadata->>'size')::bigint), 0) into other_bytes
+  from storage.objects o
+  where o.bucket_id in ('backups', 'meal-photos')
+    and o.name like owner_folder || '/%'
+    and not (o.bucket_id = new.bucket_id and o.name = new.name)
+    and not (is_move and o.bucket_id = old.bucket_id and o.name = old.name);
+  if tg_op = 'UPDATE' then
+    replaced_bytes := case
+      when old.bucket_id in ('backups', 'meal-photos') and (storage.foldername(old.name))[1] = owner_folder
+      then (old.metadata->>'size')::bigint
+    end;
+  else
+    select (o.metadata->>'size')::bigint into replaced_bytes
+    from storage.objects o
+    where o.bucket_id = new.bucket_id and o.name = new.name;
+  end if;
+  -- A user over the cap may still replace a file with a smaller one, so the daily latest.json keeps working.
+  if size_bytes is not null
+    and other_bytes + size_bytes > max_user_bytes
+    and size_bytes > coalesce(replaced_bytes, 0) then
     raise exception 'This account has used its 300 MB of cloud storage.';
   end if;
+
   if new.bucket_id = 'backups' and (storage.foldername(new.name))[2] = 'photos' then
     if size_bytes > max_photo_bytes then
       raise exception 'A photo can be at most 2 MB.';
@@ -43,6 +64,7 @@ begin
       where o.bucket_id = 'backups'
         and o.name like owner_folder || '/photos/%'
         and o.name <> new.name
+        and not (is_move and o.bucket_id = old.bucket_id and o.name = old.name)
     ) >= max_backup_photos then
       raise exception 'The cloud backup keeps at most 250 photos.';
     end if;
@@ -52,6 +74,7 @@ begin
       where o.bucket_id = 'meal-photos'
         and o.name like owner_folder || '/%'
         and o.name <> new.name
+        and not (is_move and o.bucket_id = old.bucket_id and o.name = old.name)
         and not exists (select 1 from public.meal_posts m where m.photo_path = o.name)
     ) >= max_meal_photos_without_post then
       raise exception 'Too many meal photos without a post. Share the meals first.';

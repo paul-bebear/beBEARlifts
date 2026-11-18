@@ -33,7 +33,7 @@ insert into public.profiles(user_id, handle, display_name) values
   ('00000000-0000-0000-0000-0000000000d1', 'storage_d1', 'Storage');
 
 -- The trigger runs for every role, so the rows go in as the test owner without the bucket policies.
--- A photo over 2 MB is refused, at insert and at the upsert that adds the size. A JSON backup keeps the 50 MB bucket limit.
+-- A photo over 2 MB is refused, at insert and at the upsert that adds the size. A JSON backup only has the 30 MB bucket limit.
 insert into storage.objects(bucket_id, name, metadata) values
   ('backups', '00000000-0000-0000-0000-0000000000d1/latest.json', '{"size": 10485760}'),
   ('backups', '00000000-0000-0000-0000-0000000000d1/photos/1.jpg', null),
@@ -115,5 +115,29 @@ select pg_temp.assert_rejected_with(
   $q$update storage.objects set metadata = '{"size": 2000000}' where name = '00000000-0000-0000-0000-0000000000d2/photos/17.jpg'$q$,
   'This account has used its 300 MB of cloud storage.'
 );
+
+-- A move counts the file once. d1 holds 250 photos, and moving one to a new name passes.
+update storage.objects set name = '00000000-0000-0000-0000-0000000000d1/photos/300.jpg'
+where bucket_id = 'backups' and name = '00000000-0000-0000-0000-0000000000d1/photos/250.jpg';
+select pg_temp.assert_text(
+  $q$select count(*)::text from storage.objects where name like '00000000-0000-0000-0000-0000000000d1/photos/%'$q$,
+  '250'
+);
+
+-- A user over the cap may replace a file with a smaller one, but not with a larger one.
+-- Accounts over the cap exist only from before this migration, so the trigger is skipped to set one up.
+set local session_replication_role = replica;
+insert into storage.objects(bucket_id, name, metadata) values
+  ('meal-photos', '00000000-0000-0000-0000-0000000000d2/dddddddd-0000-4000-8000-000000000000.jpg', '{"size": 5000000}');
+set local session_replication_role = origin;
+insert into storage.objects(bucket_id, name, metadata)
+values ('backups', '00000000-0000-0000-0000-0000000000d2/latest.json', '{"size": 30000000}')
+on conflict (bucket_id, name) do update set metadata = excluded.metadata;
+select pg_temp.assert_rejected_with(
+  $q$insert into storage.objects(bucket_id, name, metadata) values ('backups', '00000000-0000-0000-0000-0000000000d2/latest.json', '{"size": 31457280}') on conflict (bucket_id, name) do update set metadata = excluded.metadata$q$,
+  'This account has used its 300 MB of cloud storage.'
+);
+update storage.objects set name = '00000000-0000-0000-0000-0000000000d2/photos/18.jpg'
+where bucket_id = 'backups' and name = '00000000-0000-0000-0000-0000000000d2/photos/2.jpg';
 
 rollback;
