@@ -206,6 +206,9 @@ describe("PlusOffer_reduce", () => {
     expect(run([{ type: "synced", result: "error" }], restored.state).effects).to.deep.equal([
       { type: "alert", message: PlusOffer_activating },
     ]);
+    expect(run([{ type: "synced", result: "free" }], restored.state).effects).to.deep.equal([
+      { type: "alert", message: PlusOffer_nothingToRestore },
+    ]);
     expect(run([{ type: "restoreDone", outcome: "none" }], restoring.state).effects).to.deep.equal([
       { type: "alert", message: PlusOffer_nothingToRestore },
     ]);

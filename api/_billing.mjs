@@ -181,7 +181,10 @@ export async function Billing_sync(userId, config) {
     return Billing_readPlan(userId, config.serviceKey);
   }
   if (step.kind === "wait") {
-    return { ok: false, status: 429, error: Billing_waitMessage, retryAfterSeconds: step.retryAfterSeconds };
+    const stored = await Billing_readPlan(userId, config.serviceKey);
+    return !stored.ok || stored.plan === "plus"
+      ? stored
+      : { ok: false, status: 429, error: Billing_waitMessage, retryAfterSeconds: step.retryAfterSeconds };
   }
   return Billing_refresh(userId, config);
 }

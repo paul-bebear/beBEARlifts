@@ -336,13 +336,23 @@ describe("api/billing routes", () => {
   it("sync answers 429 and saves nothing for a fresh inactive snapshot right after a purchase", async () => {
     fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).resolves(reply({ id: userA }));
     stubSnapshot(reply([{ active: false, expires_at: null, snapshot_at: new Date(Date.now() - 5000).toISOString() }]));
-    stubRefresh(userA, { plan: "plus", grant: "subscription", canManageSubscription: true });
+    stubRefresh(userA, { plan: "free", grant: null });
     const response = await syncPost(syncRequest());
     expect(response.status).to.equal(429);
     expect(Number(response.headers.get("retry-after"))).to.be.within(24, 26);
     expect(await response.json()).to.deep.equal({ error: Billing_waitMessage });
     expect(calledRevenueCat()).to.equal(false);
-    expect(fetchStub.getCalls().some((c) => String(c.args[0]).includes("/rpc/"))).to.equal(false);
+    expect(fetchStub.getCalls().some((c) => String(c.args[0]).endsWith("store_entitlement_put"))).to.equal(false);
+  });
+
+  it("sync answers a code grant during the 30 seconds instead of 429", async () => {
+    fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).resolves(reply({ id: userA }));
+    stubSnapshot(reply([{ active: false, expires_at: null, snapshot_at: new Date(Date.now() - 5000).toISOString() }]));
+    stubRefresh(userA, { plan: "plus", grant: "code", canManageSubscription: false });
+    const response = await syncPost(syncRequest());
+    expect(response.status).to.equal(200);
+    expect(await response.json()).to.deep.equal({ plan: "plus", grant: "code", canManageSubscription: false });
+    expect(calledRevenueCat()).to.equal(false);
   });
 
   it("sync calls RevenueCat when the snapshot is older than 30 seconds", async () => {

@@ -6,8 +6,8 @@ import {
   IAccountPlanState,
   IAccountPlanSync,
 } from "../models/accountPlan";
-import { ApiUrl_for } from "./apiUrl";
 import { JsonStore_create } from "./jsonStore";
+import { PlanSyncFetch_post } from "./planSyncFetch";
 import { CloudStore, SupabaseClient_signedIn } from "./supabaseClient";
 
 export const AccountPlanStore = JsonStore_create("bebear_account_plan", AccountPlan_parse, AccountPlan_empty);
@@ -38,10 +38,11 @@ export async function AccountPlanClient_sync(): Promise<IAccountPlanSync> {
     return "error";
   }
   try {
-    const response = await fetch(ApiUrl_for("/api/billing/sync"), {
-      method: "POST",
-      headers: { Authorization: `Bearer ${auth.value.accessToken}` },
-    });
+    const response = await PlanSyncFetch_post(
+      auth.value.accessToken,
+      () => request === latestSync,
+      () => AccountPlanStore.get().status === "activating"
+    );
     const next = AccountPlan_parseSync(auth.value.userId, await response.json().catch(() => undefined));
     if (!response.ok || next == null || next.status !== "known") {
       return "error";
