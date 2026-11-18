@@ -14,7 +14,6 @@ import { FoodRepeatList } from "./foodRepeatList";
 interface IProps {
   day: string;
   mode: IScanMode;
-  isOffline: boolean;
   resume?: IScanResume;
   onMode: (mode: IScanMode) => void;
   onBarcode: (code: string) => void;
@@ -76,7 +75,7 @@ export function FoodScanCamera(props: IProps): JSX.Element {
       )}
       {props.mode === "quick" && <FoodQuickAddPanel onBack={() => props.onMode("barcode")} onSubmit={props.onQuick} />}
       <View className="mt-4">
-        <ModeToggle modes={FoodScanSteps_modes(props.isOffline)} mode={props.mode} onPick={pickMode} />
+        <ModeToggle modes={FoodScanSteps_modes()} mode={props.mode} onPick={pickMode} />
         {aiNotice != null && <Text className="pt-2 text-sm text-center text-text-secondary">{aiNotice}</Text>}
       </View>
       <View className="flex-row justify-center mt-4" style={{ gap: 24 }}>
