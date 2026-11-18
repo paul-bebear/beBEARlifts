@@ -10,6 +10,7 @@ import { Link } from "../../components/link";
 import { IState, updateState } from "../../models/state";
 import { lb } from "lens-shmens";
 import { Support_email } from "../../utils/support";
+import { OfflineOnly_isEnabled } from "../../utils/offlineOnly";
 
 export function NavModalCorruptedState(): JSX.Element {
   const { state, dispatch } = useAppState();
@@ -63,7 +64,12 @@ export function NavModalCorruptedState(): JSX.Element {
           </Text>
         </View>
         <View className="pb-4">
-          {corruptedstorage.backup ? (
+          {corruptedstorage.backup && OfflineOnly_isEnabled() ? (
+            <Text className="font-bold text-center text-text-success">
+              A copy of the damaged data was kept on this phone. Resetting does not delete it, so it can still be
+              repaired.
+            </Text>
+          ) : corruptedstorage.backup ? (
             <Text className="font-bold text-center text-text-success">
               History was successfully backed up, user: <Text className="font-bold">{corruptedstorage.userid}</Text>
             </Text>

@@ -1784,7 +1784,6 @@ export function Thunk_exportStorage(): IThunk {
   return async (dispatch, getState, env) => {
     dispatch(Thunk_postevent("export-storage-to-json"));
     ImportExporter_exportStorage(getState().storage);
-    BackupReminderMarks_recordBackup(Date.now());
   };
 }
 

@@ -49,7 +49,8 @@ import {
   ISubscription,
   IStats,
 } from "../types";
-import { IndexedDBUtils_get } from "../utils/indexeddb";
+import { IndexedDBUtils_get, IndexedDBUtils_getAllKeys, IndexedDBUtils_setMany } from "../utils/indexeddb";
+import { UnreadableCopy_keep } from "../models/unreadableCopy";
 import { Persistence } from "../utils/persistence";
 import { basicBeginnerProgram } from "../programs/basicBeginnerProgram";
 import { AdminDebug_isDebugAccountId } from "../models/adminDebug";
@@ -147,7 +148,18 @@ export async function getInitialState(
       finalStorage = maybeStorage.data;
     } else if (OfflineOnly_isEnabled()) {
       const userid = (storage.storage?.tempUserId || `missing-${UidFactory_generateUid(8)}`) as string;
-      errors.corruptedstorage = { userid, backup: false, confirmed: false, local: true };
+      let backup = false;
+      try {
+        const copy = UnreadableCopy_keep(await IndexedDBUtils_getAllKeys(), Date.now());
+        await IndexedDBUtils_setMany([
+          [copy.key, args.rawStorage ?? JSON.stringify(storage)],
+          ...copy.remove.map((key): [string, undefined] => [key, undefined]),
+        ]);
+        backup = true;
+      } catch (e) {
+        backup = false;
+      }
+      errors.corruptedstorage = { userid, backup, confirmed: false, local: true };
       finalStorage = Storage_getDefault();
     } else {
       const service = new Service(client);

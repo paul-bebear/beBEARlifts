@@ -1,7 +1,8 @@
 import { JSX, useRef, useState } from "react";
 import { View, Platform } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_hasGoals, FoodLog_parse, FoodLog_setGoals, FoodLog_setProfile, IFoodGoals } from "../models/foodLog";
+import { FoodLog_applyGoals, FoodLog_hasGoals, FoodLog_parseImport, IFoodGoals } from "../models/foodLog";
+import { IFoodProfile } from "../models/foodTargets";
 import { FoodGoals_parseForm, IFoodGoalsForm, FoodGoals_toForm } from "../models/foodGoals";
 import { FoodLogStore_replace, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Exporter_toFile } from "../utils/exporter";
@@ -23,6 +24,7 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
   const log = useFoodLog();
   const [form, setForm] = useState<IFoodGoalsForm>(FoodGoals_toForm(log.goals));
   const [view, setView] = useState<"form" | "calculator" | "filled">("form");
+  const [filledProfile, setFilledProfile] = useState<IFoodProfile | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement>(null);
   const parsed = FoodGoals_parseForm(form);
 
@@ -35,8 +37,8 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
         onCancel={() => setView("form")}
         onFill={(goals, profile) => {
           setForm(FoodGoals_toForm(goals));
+          setFilledProfile(profile);
           setView("filled");
-          FoodLogStore_update((l) => FoodLog_setProfile(l, profile));
         }}
       />
     );
@@ -48,9 +50,12 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
     }
     let imported;
     try {
-      imported = FoodLog_parse(JSON.parse(await file.text()));
+      imported = FoodLog_parseImport(JSON.parse(await file.text()));
     } catch {
-      Dialog_alert("That file is not a food log export.");
+      imported = undefined;
+    }
+    if (imported == null) {
+      Dialog_alert("That file is not a food log export, or it has no foods, meals or recipes.");
       return;
     }
     const message = `Replace your food log with ${imported.entries.length} foods from this file?`;
@@ -122,7 +127,7 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
           disabled={parsed == null}
           onPress={async () => {
             if (parsed != null) {
-              await FoodLogStore_update((l) => FoodLog_setGoals(l, parsed));
+              await FoodLogStore_update((l) => FoodLog_applyGoals(l, parsed, filledProfile));
               props.onClose();
             }
           }}

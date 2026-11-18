@@ -210,6 +210,19 @@ export function FoodLog_parse(raw: unknown): IFoodLog {
   };
 }
 
+export function FoodLog_parseImport(raw: unknown): IFoodLog | undefined {
+  if (raw == null || typeof raw !== "object") {
+    return undefined;
+  }
+  const r = raw as Record<string, unknown>;
+  if (r.version !== 1 || !Array.isArray(r.entries)) {
+    return undefined;
+  }
+  const log = FoodLog_parse(raw);
+  const hasContent = log.entries.length + log.meals.length + log.recipes.length > 0;
+  return hasContent ? log : undefined;
+}
+
 function parseRecents(raw: unknown): IFoodRecent[] {
   return Array.isArray(raw)
     ? raw
@@ -484,6 +497,10 @@ export function FoodLog_setGoals(log: IFoodLog, goals: IFoodGoals): IFoodLog {
 
 export function FoodLog_setProfile(log: IFoodLog, profile: IFoodProfile): IFoodLog {
   return { ...log, profile };
+}
+
+export function FoodLog_applyGoals(log: IFoodLog, goals: IFoodGoals, profile: IFoodProfile | undefined): IFoodLog {
+  return { ...log, goals, profile: profile ?? log.profile };
 }
 
 export interface IFoodProgress {
