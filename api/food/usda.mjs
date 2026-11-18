@@ -1,5 +1,7 @@
 import { fetchJson, json } from "../_food.mjs";
 
+export const UsdaFood_busyMessage = "USDA is busy. Try again in a minute.";
+
 // DEMO_KEY allows about 30 requests an hour, shared by everyone calling from the same IP. Set FDC_API_KEY.
 export function UsdaFood_apiKey(env, log) {
   if (env.FDC_API_KEY) {
@@ -33,11 +35,13 @@ export async function GET(request) {
         "https://api.nal.usda.gov/fdc/v1/foods/search" +
         `?query=${query}&dataType=Branded&pageSize=5&api_key=${encodeURIComponent(apiKey)}`;
       const { status, body } = await fetchJson(url, {}, 8000);
-      if (status === 429) {
-        return json({ error: "USDA FoodData Central is rate limited. Set FDC_API_KEY on Vercel." }, 502);
-      }
       if (status !== 200 || body == null) {
-        return json({ error: `USDA FoodData Central returned ${status}` }, 502);
+        console.warn(
+          status === 429
+            ? "USDA FoodData Central answered 429. Set FDC_API_KEY in Vercel or raise its limit."
+            : `USDA FoodData Central returned ${status}`
+        );
+        return json({ error: UsdaFood_busyMessage }, 502);
       }
       const foods = (Array.isArray(body.foods) ? body.foods : []).filter(
         (food) => typeof food?.gtinUpc === "string" && barcodeKey(food.gtinUpc) === barcodeKey(code)
@@ -48,6 +52,7 @@ export async function GET(request) {
     }
     return json({ foods: [] }, 200, 3600);
   } catch {
-    return json({ error: "USDA FoodData Central did not answer" }, 504);
+    console.warn("USDA FoodData Central did not answer");
+    return json({ error: UsdaFood_busyMessage }, 504);
   }
 }

@@ -7,7 +7,8 @@ import {
   Billing_isUserId,
   Billing_planAnswer,
   Billing_signInMessage,
-  Billing_snapshotIsFresh,
+  Billing_syncStep,
+  Billing_waitMessage,
   Billing_userFromAuth,
   Billing_webhookAuthorized,
 } from "../api/_billing.mjs";
@@ -201,13 +202,31 @@ describe("api/_billing", () => {
     expect(Billing_planAnswer({ plan: "gold" })).to.equal(undefined);
   });
 
-  it("treats a snapshot under 30 seconds old as fresh", () => {
+  it("answers a fresh active row from the store, and refreshes an old or missing one", () => {
     const now = Date.parse("2026-11-18T12:00:30Z");
-    expect(Billing_snapshotIsFresh([{ snapshot_at: "2026-11-18T12:00:01Z" }], now)).to.equal(true);
-    expect(Billing_snapshotIsFresh([{ snapshot_at: "2026-11-18T12:00:00Z" }], now)).to.equal(false);
-    expect(Billing_snapshotIsFresh([], now)).to.equal(false);
-    expect(Billing_snapshotIsFresh([{ snapshot_at: "not a date" }], now)).to.equal(false);
-    expect(Billing_snapshotIsFresh(undefined, now)).to.equal(false);
+    const active = { active: true, expires_at: "2026-12-18T12:00:00Z" };
+    expect(Billing_syncStep([{ ...active, snapshot_at: "2026-11-18T12:00:01Z" }], now)).to.deep.equal({
+      kind: "stored",
+    });
+    expect(
+      Billing_syncStep([{ active: true, expires_at: null, snapshot_at: "2026-11-18T12:00:01Z" }], now)
+    ).to.deep.equal({ kind: "stored" });
+    expect(Billing_syncStep([{ ...active, snapshot_at: "2026-11-18T12:00:00Z" }], now)).to.deep.equal({
+      kind: "refresh",
+    });
+    expect(Billing_syncStep([], now)).to.deep.equal({ kind: "refresh" });
+    expect(Billing_syncStep([{ ...active, snapshot_at: "not a date" }], now)).to.deep.equal({ kind: "refresh" });
+    expect(Billing_syncStep(undefined, now)).to.deep.equal({ kind: "refresh" });
+  });
+
+  it("asks a fresh inactive or ended row to wait out the 30 seconds", () => {
+    const now = Date.parse("2026-11-18T12:00:30Z");
+    expect(
+      Billing_syncStep([{ active: false, expires_at: null, snapshot_at: "2026-11-18T12:00:20Z" }], now)
+    ).to.deep.equal({ kind: "wait", retryAfterSeconds: 20 });
+    expect(
+      Billing_syncStep([{ active: true, expires_at: "2026-11-18T12:00:10Z", snapshot_at: "2026-11-18T12:00:20Z" }], now)
+    ).to.deep.equal({ kind: "wait", retryAfterSeconds: 20 });
   });
 });
 
@@ -302,9 +321,9 @@ describe("api/billing routes", () => {
 
   const calledRevenueCat = (): boolean => fetchStub.getCalls().some((c) => String(c.args[0]).includes("revenuecat"));
 
-  it("sync answers the stored plan without calling RevenueCat when the snapshot is under 30 seconds old", async () => {
+  it("sync answers the stored plan without calling RevenueCat when an active snapshot is under 30 seconds old", async () => {
     fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).resolves(reply({ id: userA }));
-    stubSnapshot(reply([{ snapshot_at: new Date(Date.now() - 5000).toISOString() }]));
+    stubSnapshot(reply([{ active: true, expires_at: later, snapshot_at: new Date(Date.now() - 5000).toISOString() }]));
     stubRefresh(userA, { plan: "plus", grant: "subscription", canManageSubscription: true });
     const response = await syncPost(syncRequest());
     expect(await response.json()).to.deep.equal({ plan: "plus", grant: "subscription", canManageSubscription: true });
@@ -312,6 +331,18 @@ describe("api/billing routes", () => {
     expect(fetchStub.getCalls().some((c) => String(c.args[0]).endsWith("store_entitlement_put"))).to.equal(false);
     const lookup = fetchStub.getCalls().find((c) => String(c.args[0]).includes("store_entitlements?"));
     expect(String(lookup?.args[0])).to.include(`user_id=eq.${userA}`);
+  });
+
+  it("sync answers 429 and saves nothing for a fresh inactive snapshot right after a purchase", async () => {
+    fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).resolves(reply({ id: userA }));
+    stubSnapshot(reply([{ active: false, expires_at: null, snapshot_at: new Date(Date.now() - 5000).toISOString() }]));
+    stubRefresh(userA, { plan: "plus", grant: "subscription", canManageSubscription: true });
+    const response = await syncPost(syncRequest());
+    expect(response.status).to.equal(429);
+    expect(Number(response.headers.get("retry-after"))).to.be.within(24, 26);
+    expect(await response.json()).to.deep.equal({ error: Billing_waitMessage });
+    expect(calledRevenueCat()).to.equal(false);
+    expect(fetchStub.getCalls().some((c) => String(c.args[0]).includes("/rpc/"))).to.equal(false);
   });
 
   it("sync calls RevenueCat when the snapshot is older than 30 seconds", async () => {

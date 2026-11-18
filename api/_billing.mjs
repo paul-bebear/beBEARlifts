@@ -141,28 +141,47 @@ export async function Billing_readPlan(userId, serviceKey) {
 // RevenueCat limits reads per project key, so one user looping the sync route could block every purchase.
 const syncCooldownMs = 30 * 1000;
 
-export function Billing_snapshotIsFresh(rows, nowMs) {
-  const snapshot = Array.isArray(rows) ? time(rows[0]?.snapshot_at) : undefined;
-  return snapshot != null && nowMs - snapshot < syncCooldownMs;
+export const Billing_waitMessage = "Checking your purchase. Try again in a few seconds.";
+
+// A fresh inactive row may predate a purchase made seconds ago, so it never answers "free".
+export function Billing_syncStep(rows, nowMs) {
+  const row = Array.isArray(rows) ? rows[0] : undefined;
+  const snapshot = time(row?.snapshot_at);
+  const age = snapshot == null ? undefined : nowMs - snapshot;
+  if (age == null || age >= syncCooldownMs) {
+    return { kind: "refresh" };
+  }
+  const expires = time(row.expires_at);
+  if (row.active === true && expires !== undefined && (expires == null || expires > nowMs)) {
+    return { kind: "stored" };
+  }
+  return { kind: "wait", retryAfterSeconds: Math.max(1, Math.ceil((syncCooldownMs - age) / 1000)) };
 }
 
-async function snapshotIsFresh(userId, serviceKey) {
+async function storedRows(userId, serviceKey) {
   try {
-    const url = `${Supabase_origin}/rest/v1/store_entitlements?user_id=eq.${encodeURIComponent(userId)}&select=snapshot_at`;
+    const url = `${Supabase_origin}/rest/v1/store_entitlements?user_id=eq.${encodeURIComponent(userId)}&select=active,expires_at,snapshot_at`;
     const read = await fetchJson(
       url,
       { method: "GET", headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
       timeoutMs
     );
-    return read.status === 200 && Billing_snapshotIsFresh(read.body, Date.now());
+    return read.status === 200 ? read.body : undefined;
   } catch {
-    return false;
+    return undefined;
   }
 }
 
 export async function Billing_sync(userId, config) {
-  if (config.revenueCatKey == null || (await snapshotIsFresh(userId, config.serviceKey))) {
+  if (config.revenueCatKey == null) {
     return Billing_readPlan(userId, config.serviceKey);
+  }
+  const step = Billing_syncStep(await storedRows(userId, config.serviceKey), Date.now());
+  if (step.kind === "stored") {
+    return Billing_readPlan(userId, config.serviceKey);
+  }
+  if (step.kind === "wait") {
+    return { ok: false, status: 429, error: Billing_waitMessage, retryAfterSeconds: step.retryAfterSeconds };
   }
   return Billing_refresh(userId, config);
 }

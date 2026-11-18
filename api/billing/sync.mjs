@@ -24,9 +24,14 @@ export async function POST(request) {
         : json({ error: `Supabase Auth returned ${user.status}` }, 502);
     }
     const result = await Billing_sync(userId, config);
-    return result.ok
-      ? json({ plan: result.plan, grant: result.grant, canManageSubscription: result.canManageSubscription })
-      : json({ error: result.error }, result.status);
+    if (result.ok) {
+      return json({ plan: result.plan, grant: result.grant, canManageSubscription: result.canManageSubscription });
+    }
+    const response = json({ error: result.error }, result.status);
+    if (result.retryAfterSeconds != null) {
+      response.headers.set("Retry-After", String(result.retryAfterSeconds));
+    }
+    return response;
   } catch {
     return json({ error: "The billing check did not answer. Try again." }, 504);
   }
