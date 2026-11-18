@@ -78,4 +78,34 @@ describe("Onboarding API", () => {
     fetchStub.onSecondCall().rejects(new Error("network"));
     expect((await POST(request(payload, true))).status).to.equal(504);
   });
+  it("gives the setup back when the provider fails", async () => {
+    sinon.stub(console, "error");
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "sb_secret_x";
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub.onFirstCall().resolves(new Response(JSON.stringify({ plan: "free", lifetime: 0, userId: "u1" })));
+    fetchStub.onSecondCall().resolves(new Response("{}", { status: 500 }));
+    fetchStub.onThirdCall().resolves(new Response("true"));
+    expect((await POST(request(payload, true))).status).to.equal(502);
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(fetchStub.thirdCall.args[0]).to.match(/rpc\/ai_usage_refund$/);
+    expect(JSON.parse((fetchStub.thirdCall.args[1] as RequestInit).body as string)).to.deep.equal({
+      p_user: "u1",
+      p_kind: "onboard",
+      p_ref: null,
+    });
+  });
+  it("passes on why the provider stopped", async () => {
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub.onFirstCall().resolves(new Response(JSON.stringify({ plan: "free", lifetime: 0, userId: "u1" })));
+    fetchStub
+      .onSecondCall()
+      .resolves(
+        new Response(JSON.stringify({ choices: [{ message: { content: '{"lifto' }, finish_reason: "length" }] }))
+      );
+    expect(await (await POST(request(payload, true))).json()).to.deep.equal({
+      text: '{"lifto',
+      finishReason: "length",
+    });
+    expect(fetchStub.callCount).to.equal(2);
+  });
 });

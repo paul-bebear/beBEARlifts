@@ -199,6 +199,17 @@ describe("Onboarding commands", () => {
     expect(request.callCount).to.equal(1);
     expect(events[0]).to.deep.equal({ type: "fallback", run: 0, reason: "No connection" });
   });
+  it("does not spend a second setup on an answer the provider cut off", async () => {
+    const request = sinon
+      .stub(ai, "AiRequest_post")
+      .resolves({ ok: true, body: { text: '{"liftoscript":"# Week 1', finishReason: "length" } });
+    await run({ ...Onboarding_empty(), command: "prepare" });
+    expect(request.callCount).to.equal(1);
+    expect(events[0].type).to.equal("failed");
+    if (events[0].type === "failed") {
+      expect(events[0].error).to.include("too long");
+    }
+  });
   it("tags every answer with the run that asked for it", async () => {
     sinon.stub(ai, "AiRequest_post").resolves({ ok: false, error: "No connection" });
     await run({ ...Onboarding_empty(), command: "prepare", run: 7 });

@@ -3,12 +3,12 @@ import { expect } from "chai";
 import sinon from "sinon";
 import {
   AiAuth_bearerToken,
-  AiAuth_capValue,
   AiAuth_caps,
   AiAuth_ceilingNotice,
   AiAuth_check,
   AiAuth_decide,
   AiAuth_decideUsage,
+  AiAuth_refund,
   AiAuth_signInMessage,
 } from "../api/_auth.mjs";
 
@@ -37,19 +37,15 @@ describe("AiAuth", () => {
     expect(AiAuth_bearerToken(null)).to.equal(undefined);
   });
 
-  it("uses the fallback unless the variable is a positive whole number", () => {
-    expect(AiAuth_capValue(undefined, 3)).to.equal(3);
-    expect(AiAuth_capValue("abc", 3)).to.equal(3);
-    expect(AiAuth_capValue("0", 3)).to.equal(3);
-    expect(AiAuth_capValue("2.5", 3)).to.equal(3);
-    expect(AiAuth_capValue("20", 3)).to.equal(20);
-  });
-
-  it("defaults to 3 a day, 10 a week, 30 and 150 for beBEAR+, and 3 setups", () => {
-    expect(AiAuth_caps({})).to.deep.equal(caps);
-    expect(
-      AiAuth_caps({ AI_DAILY_CAP: "5", AI_WEEKLY_CAP: "20", AI_PLUS_DAILY_CAP: "40", AI_PLUS_WEEKLY_CAP: "200" })
-    ).to.deep.equal({ day: 5, week: 20, plusDay: 40, plusWeek: 200, lifetime: 3 });
+  it("reads the caps from the Supabase answer and defaults to 3, 10, 30, 150 and 3 setups", () => {
+    expect(AiAuth_caps(undefined)).to.deep.equal(caps);
+    expect(AiAuth_caps({ caps: { day: 5, week: "20", plusDay: 0, plusWeek: 200, lifetime: 4 } })).to.deep.equal({
+      day: 5,
+      week: 10,
+      plusDay: 30,
+      plusWeek: 200,
+      lifetime: 4,
+    });
   });
 
   it("allows the 3rd capped call of the day and refuses the 4th with the counts", () => {
@@ -155,7 +151,7 @@ describe("AiAuth", () => {
     expect(fetchStub.called).to.equal(false);
   });
 
-  it("sends the kind, the workout id and the Vercel caps with the user's own token", async () => {
+  it("sends the kind and the workout id with the user's own token, and no caps", async () => {
     process.env.AI_DAILY_CAP = "4";
     const fetchStub = sinon.stub(globalThis, "fetch").resolves(answer({ refUsed: false }));
     expect(await AiAuth_check(post({ Authorization: "Bearer user-jwt" }), undefined, "report", "1700")).to.equal(
@@ -164,11 +160,56 @@ describe("AiAuth", () => {
     const [url, init] = fetchStub.firstCall.args as [string, RequestInit];
     expect(url).to.equal("https://qvqwvuuwfueccrmzwyct.supabase.co/rest/v1/rpc/ai_usage_take");
     expect((init.headers as Record<string, string>).Authorization).to.equal("Bearer user-jwt");
-    expect(JSON.parse(init.body as string)).to.deep.equal({
-      p_kind: "report",
-      p_ref: "1700",
-      p_caps: { day: 4, week: 10, plusDay: 30, plusWeek: 150, lifetime: 3 },
-    });
+    expect(JSON.parse(init.body as string)).to.deep.equal({ p_kind: "report", p_ref: "1700" });
+  });
+
+  it("refunds a counted call once, with the service key and the user id", async () => {
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "sb_secret_x";
+    const request = post({ Authorization: "Bearer t" });
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub.onFirstCall().resolves(answer({ userId: "u1" }));
+    fetchStub.onSecondCall().resolves(new Response("true"));
+    expect(await AiAuth_check(request, undefined, "report", "1700")).to.equal(undefined);
+    await AiAuth_refund(request);
+    await AiAuth_refund(request);
+    expect(fetchStub.callCount).to.equal(2);
+    const [url, init] = fetchStub.secondCall.args as [string, RequestInit];
+    expect(url).to.equal("https://qvqwvuuwfueccrmzwyct.supabase.co/rest/v1/rpc/ai_usage_refund");
+    expect((init.headers as Record<string, string>).Authorization).to.equal("Bearer sb_secret_x");
+    expect(JSON.parse(init.body as string)).to.deep.equal({ p_user: "u1", p_kind: "report", p_ref: "1700" });
+  });
+
+  it("refunds nothing for a refused call, an unknown user or a missing service key", async () => {
+    const error = sinon.stub(console, "error");
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "sb_secret_x";
+    const refused = post({ Authorization: "Bearer t" });
+    fetchStub.resolves(answer({ userId: "u1", day: 3, week: 3 }));
+    expect((await AiAuth_check(refused))?.status).to.equal(429);
+    await AiAuth_refund(refused);
+    const noUser = post({ Authorization: "Bearer t" });
+    fetchStub.resolves(answer({}));
+    await AiAuth_check(noUser);
+    await AiAuth_refund(noUser);
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const noKey = post({ Authorization: "Bearer t" });
+    fetchStub.resolves(answer({ userId: "u1" }));
+    await AiAuth_check(noKey);
+    await AiAuth_refund(noKey);
+    expect(fetchStub.callCount).to.equal(3);
+    sinon.assert.calledOnce(error);
+  });
+
+  it("keeps the AI answer when the refund call fails", async () => {
+    sinon.stub(console, "error");
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "sb_secret_x";
+    const request = post({ Authorization: "Bearer t" });
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub.onFirstCall().resolves(answer({ userId: "u1" }));
+    fetchStub.onSecondCall().rejects(new TypeError("fetch failed"));
+    await AiAuth_check(request);
+    await AiAuth_refund(request);
+    expect(fetchStub.callCount).to.equal(2);
   });
 
   it("counts as capped when the route names no kind", async () => {

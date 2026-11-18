@@ -14,19 +14,16 @@ export function AiAuth_bearerToken(header) {
   return match?.[1];
 }
 
-export function AiAuth_capValue(value, fallback) {
-  const cap = Number(value);
-  return Number.isInteger(cap) && cap > 0 ? cap : fallback;
+const defaultCaps = { day: 3, week: 10, plusDay: 30, plusWeek: 150, lifetime: AiAuth_onboardRuns };
+
+function capValue(value, fallback) {
+  return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
-export function AiAuth_caps(env) {
-  return {
-    day: AiAuth_capValue(env.AI_DAILY_CAP, 3),
-    week: AiAuth_capValue(env.AI_WEEKLY_CAP, 10),
-    plusDay: AiAuth_capValue(env.AI_PLUS_DAILY_CAP, 30),
-    plusWeek: AiAuth_capValue(env.AI_PLUS_WEEKLY_CAP, 150),
-    lifetime: AiAuth_onboardRuns,
-  };
+// ai_usage_take reads the caps from public.ai_settings and sends them back, so the messages quote the numbers it used.
+export function AiAuth_caps(answer) {
+  const sent = answer?.caps;
+  return Object.fromEntries(Object.entries(defaultCaps).map(([name, cap]) => [name, capValue(sent?.[name], cap)]));
 }
 
 function count(value) {
@@ -141,7 +138,6 @@ export async function AiAuth_check(request, ai, kind = "capped", ref) {
   if (ai != null && !ai.token) {
     return json({ error: aiUnavailableMessage }, 503);
   }
-  const caps = AiAuth_caps(process.env);
   let answer;
   try {
     answer = await fetchJson(
@@ -153,7 +149,7 @@ export async function AiAuth_check(request, ai, kind = "capped", ref) {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ p_kind: kind, p_ref: ref ?? null, p_caps: caps }),
+        body: JSON.stringify({ p_kind: kind, p_ref: ref ?? null }),
       },
       5000
     );
@@ -164,6 +160,42 @@ export async function AiAuth_check(request, ai, kind = "capped", ref) {
   if (notice != null) {
     console.warn(notice);
   }
-  const decision = AiAuth_decide(answer.status, answer.body, kind, caps);
-  return decision.ok ? undefined : json(decision.body, decision.status);
+  const decision = AiAuth_decide(answer.status, answer.body, kind, AiAuth_caps(answer.body));
+  if (!decision.ok) {
+    return json(decision.body, decision.status);
+  }
+  counted.set(request, { userId: answer.body?.userId, kind, ref: ref ?? null });
+  return undefined;
+}
+
+const counted = new WeakMap();
+
+// ai_usage_refund is granted to service_role only. A user who could call it would undo every count they make.
+export async function AiAuth_refund(request) {
+  const call = counted.get(request);
+  counted.delete(request);
+  if (typeof call?.userId !== "string") {
+    return;
+  }
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) {
+    console.error("AI refund skipped: no SUPABASE_SERVICE_ROLE_KEY");
+    return;
+  }
+  try {
+    const result = await fetchJson(
+      `${Supabase_origin}/rest/v1/rpc/ai_usage_refund`,
+      {
+        method: "POST",
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_user: call.userId, p_kind: call.kind, p_ref: call.ref }),
+      },
+      5000
+    );
+    if (result.status !== 200) {
+      console.error("AI refund failed", result.status, result.text?.slice(0, 200));
+    }
+  } catch (error) {
+    console.error("AI refund failed", error);
+  }
 }

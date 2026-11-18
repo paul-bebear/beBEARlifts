@@ -63,6 +63,7 @@ select pg_temp.assert_text($q$select public.ai_usage_take('capped', null, '{"day
 
 -- A user alone in the day's total is refused at 50 calls (10 reports and 40 capped), even with caps they raised themselves.
 reset role;
+update public.ai_settings set free_day_cap = 9999, free_week_cap = 9999;
 update public.ai_usage_kinds set count = 39 where user_id = '00000000-0000-0000-0000-0000000000b1' and kind = 'capped';
 set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000b1';

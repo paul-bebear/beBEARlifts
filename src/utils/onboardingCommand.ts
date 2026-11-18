@@ -36,6 +36,13 @@ import {
 
 // api/ai/onboard.mjs gives the model 90 s, so the phone waits a little longer before it gives up.
 const onboardTimeoutMs = 100_000;
+const cutOffMessage =
+  "The AI plan was too long and got cut off. Pick a beBEAR plan, or use fewer screenshots and try again.";
+
+// A correction resends the cut text, so the second answer stops at the same token limit and spends one more setup.
+export function OnboardingCommand_wasCutOff(body: unknown): boolean {
+  return (body as { finishReason?: unknown } | undefined)?.finishReason === "length";
+}
 
 export async function OnboardingCommand_images(
   files: FileList | null,
@@ -194,6 +201,9 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
           return;
         } catch (error) {
           validationError = error instanceof Error ? error.message : "The answer could not be read.";
+          if (OnboardingCommand_wasCutOff(result.body)) {
+            throw new Error(cutOffMessage);
+          }
         }
       }
       throw new Error(`${validationError} Pick a beBEAR plan, or change the details and try again.`);
