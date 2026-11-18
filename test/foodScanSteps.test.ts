@@ -38,9 +38,8 @@ const scanNutella: IScanEvent[] = [
   { type: "barcodeFound", code: nutellaCode, pick: nutella },
 ];
 
-const online = { isOffline: false, isAiDeclined: false };
-const declined = { isOffline: false, isAiDeclined: true };
-const offline = { isOffline: true, isAiDeclined: false };
+const online = { isAiDeclined: false };
+const declined = { isAiDeclined: true };
 
 function run(events: IScanEvent[], from: IScanStep = FoodScanSteps_initial(undefined, online)): IScanStep {
   return events.reduce(FoodScanSteps_reduce, from);
@@ -78,29 +77,20 @@ describe("FoodScanSteps start", () => {
     expect(FoodScanSteps_initial("describe", declined)).to.deep.equal({ kind: "camera", mode: "barcode" });
   });
 
-  it("opens Quick add instead of AI in the offline build", () => {
-    expect(FoodScanSteps_initial("photo", offline)).to.deep.equal({ kind: "camera", mode: "quick" });
-    expect(FoodScanSteps_initial("describe", { isOffline: true, isAiDeclined: true })).to.deep.equal({
-      kind: "camera",
-      mode: "quick",
-    });
-  });
-
   it("opens the tile's tab by the same rule when a tile is tapped", () => {
     const tapped = (tile: "photo" | "describe", access: typeof online): IScanStep =>
       FoodScanSteps_reduce({ kind: "browse" }, { type: "tileOpened", tile, access });
     expect(tapped("photo", online)).to.deep.equal({ kind: "camera", mode: "ai" });
+    expect(tapped("describe", online)).to.deep.equal({ kind: "camera", mode: "ai" });
     expect(tapped("describe", declined)).to.deep.equal({ kind: "camera", mode: "barcode" });
-    expect(tapped("describe", offline)).to.deep.equal({ kind: "camera", mode: "quick" });
   });
 
   it("opens quick log directly", () => {
     expect(FoodScanSteps_initial("quick", online)).to.deep.equal({ kind: "quick" });
   });
 
-  it("shows Barcode and AI to everyone, and Barcode and Quick add in the offline build", () => {
-    expect(FoodScanSteps_modes(false)).to.deep.equal(["barcode", "ai"]);
-    expect(FoodScanSteps_modes(true)).to.deep.equal(["barcode", "quick"]);
+  it("shows Barcode and AI in every build", () => {
+    expect(FoodScanSteps_modes()).to.deep.equal(["barcode", "ai"]);
   });
 
   it("leaves the screen only from the camera", () => {

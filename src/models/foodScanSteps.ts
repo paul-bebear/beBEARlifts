@@ -45,7 +45,6 @@ export type IScanStep =
 export type IScanTile = "barcode" | "photo" | "describe" | "quick";
 
 export interface IScanAccess {
-  isOffline: boolean;
   isAiDeclined: boolean;
 }
 
@@ -70,8 +69,10 @@ export type IScanEvent =
   | { type: "shareToggled"; isShared: boolean }
   | { type: "back" };
 
-export function FoodScanSteps_modes(isOffline: boolean): IScanMode[] {
-  return isOffline ? ["barcode", "quick"] : ["barcode", "ai"];
+// Every beBEAR build sets the offline-only flag, which blocks only upstream Liftosaur servers.
+// Food AI goes to beBEAR's own API, so the flag never hides it.
+export function FoodScanSteps_modes(): IScanMode[] {
+  return ["barcode", "ai"];
 }
 
 export function FoodScanSteps_initial(entry: IScanEntryMode, access: IScanAccess): IScanStep {
@@ -79,9 +80,6 @@ export function FoodScanSteps_initial(entry: IScanEntryMode, access: IScanAccess
     return { kind: "quick" };
   }
   if (entry === "describe" || entry === "photo") {
-    if (access.isOffline) {
-      return { kind: "camera", mode: "quick" };
-    }
     return { kind: "camera", mode: access.isAiDeclined ? "barcode" : "ai" };
   }
   return { kind: "camera", mode: "barcode" };

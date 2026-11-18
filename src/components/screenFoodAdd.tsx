@@ -63,7 +63,6 @@ import {
 } from "../models/recipeCatalog";
 import { FoodMealPicker } from "./foodUi";
 import { Button } from "./button";
-import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore, AiConsent_ensure } from "../utils/aiConsentClient";
 import { MealPost_fromServing, MealPost_newId, MealPost_shareSwitch } from "../models/mealPost";
@@ -122,10 +121,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   const isLoggingRef = useRef(false);
   const isSavingGroupRef = useRef(false);
   const log = useFoodLog();
-  const access: IScanAccess = {
-    isOffline: OfflineOnly_isEnabled(),
-    isAiDeclined: !AiConsent_showFeatures(AiConsentStore.use()),
-  };
+  const access: IScanAccess = { isAiDeclined: !AiConsent_showFeatures(AiConsentStore.use()) };
   const [step, send] = useReducer(FoodScanSteps_reduce, undefined, () =>
     FoodScanSteps_initial(props.params.mode, access)
   );
@@ -241,7 +237,6 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
           <FoodScanCamera
             day={props.params.day}
             mode={step.mode}
-            isOffline={access.isOffline}
             resume={step.resume}
             onMode={(mode) => send({ type: "modePicked", mode })}
             onBarcode={onBarcode}
