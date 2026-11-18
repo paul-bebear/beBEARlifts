@@ -56,9 +56,10 @@ describe("AI consent", () => {
 });
 
 describe("AI consent disclosure", () => {
-  it("names the provider, the gateway and that nothing is kept", () => {
+  it("names the provider, the gateway and that Anthropic may keep requests", () => {
     expect(AiConsent_disclosure).to.contain("Anthropic");
     expect(AiConsent_disclosure).to.contain("Vercel's AI Gateway");
-    expect(AiConsent_disclosure).to.contain("are not kept");
+    expect(AiConsent_disclosure).to.contain("may keep them for a limited time");
+    expect(AiConsent_disclosure).not.to.contain("not kept");
   });
 });

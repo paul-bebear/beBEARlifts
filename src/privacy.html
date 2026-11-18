@@ -14,7 +14,7 @@
   </head>
   <body>
     <h1>beBEAR Privacy Policy</h1>
-    <p class="updated">Last updated October 21, 2026</p>
+    <p class="updated">Last updated November 18, 2026</p>
 
     <p>
       beBEAR is a workout and nutrition tracker made by Paul, an independent developer
@@ -25,7 +25,7 @@
     <h2>The short version</h2>
     <ul>
       <li>Your workouts, food log, measurements, photos and runs are stored on your phone.</li>
-      <li>Nothing leaves your phone unless you turn on a feature that needs it: cloud backup, friends and the feed, AI features or Spotify.</li>
+      <li>Your data leaves your phone only for features that need it: your account, cloud backup, friends and the feed, AI features, beBEAR+ purchases and Spotify.</li>
       <li>beBEAR shows no ads, sells no data and runs no tracking or analytics.</li>
       <li>You can export everything, and you can delete your account and everything we hold from inside the app.</li>
     </ul>
@@ -49,25 +49,31 @@
 
     <h2>Your account</h2>
     <p>
-      An account is optional. You need one for cloud backup, friends and AI features. To sign in you give an email
-      address, and we send a one-time code to it. We store your email address and a user id. If you use friends, we also
-      store the handle and display name you choose.
+      An account is optional. You need one for cloud backup, friends and AI features. You can sign in three ways: with
+      a one-time code we send to your email, with Apple, or with Google. Apple or Google tells us your email address. If
+      you use Apple's "Hide My Email", we get the relay address Apple makes for you. We store your email address and a
+      user id. If you use friends, we also store the handle and display name you choose.
     </p>
 
     <h2>Cloud backup</h2>
     <p>
       When you run a backup, beBEAR uploads one file with your workout data, food log, measurements, body scans, run
       routes (GPS points), goals, steps, checklist, music log, warmups, reports and small thumbnails of filmed sets.
-      Progress photos are not included. We keep the latest backup plus one copy per weekday, so at most 8 files. Only
-      you can read them. They stay until you delete your account.
+      We keep the latest backup, one copy per weekday, and one copy saved before you tap "Keep this phone's data".
+      Your progress photos are uploaded too, one file per photo, up to 200. When you delete a photo on your phone, the
+      app deletes it from the backup at the next sync. Only you can read your backup and photos. They stay until you
+      delete them or your account.
     </p>
 
     <h2>Friends and the feed</h2>
     <p>
       Sharing is off by default, and you choose it per workout. A shared post contains the program and day name, when
       you trained, how long, the total volume and number of sets, your top sets and personal records, and how many songs
-      you kept. Only people you have accepted as friends can see it. If you report a post, we store the reason and any
-      note you write, and only we can read reports. If you block someone, we store that and remove the friendship.
+      you kept. You can also share a meal. A meal post contains the meal's description, its calories and macros, and
+      the meal photo if it has one. Only people you have accepted as friends can see your posts. If you report a post,
+      we store the reason and any note you write, and only we can read reports. We also get each report by email. The
+      email holds the report, your user id, your note and the reported post's text. If you block someone, we store that
+      and remove the friendship.
     </p>
 
     <h2>AI features</h2>
@@ -77,21 +83,31 @@
     </p>
     <ul>
       <li>Meal scan and Describe: the meal photo or the text you typed.</li>
+      <li>Label scan: the photo of a nutrition label.</li>
+      <li>Body scan: the photo of a body-composition scale printout or screen, which can show your weight, body fat and other body numbers.</li>
       <li>Warmup: the exercises in that day's workout.</li>
       <li>Workout report: a summary of the workout, such as exercises, sets, weights and reps.</li>
-      <li>Setup chat: your answers and any screenshots of a plan you choose to add.</li>
+      <li>Setup chat: your answers, such as your age, height, weight and experience, and any screenshots of a plan you choose to add.</li>
     </ul>
     <p>
-      The provider is Google Gemini or Anthropic Claude (reached through Vercel's AI Gateway). Requests carry no name or
-      email address. When we use Google's free Gemini tier, Google may use the content to improve its products. Anthropic
-      does not train on requests sent through its API by default. We count how many AI requests each account makes per
-      day, to enforce limits.
+      The provider is Google Gemini or Anthropic Claude. Requests to Anthropic go through Vercel's AI Gateway. beBEAR adds
+      no name or email address to a request. Anthropic may keep requests for a limited time under its API terms, and
+      longer if its safety checks flag them. When we use Google's free Gemini tier, Google may use the content to improve
+      its products. Anthropic does not train on requests sent through its API by default. We count how many AI requests
+      each account makes per day, to enforce limits.
     </p>
 
     <h2>Food databases</h2>
     <p>
       When you search for a food or scan a barcode, the search text or barcode goes to Open Food Facts and the U.S.
       Department of Agriculture's FoodData Central to find nutrition values. Nothing else about you is sent.
+    </p>
+
+    <h2>Purchases</h2>
+    <p>
+      beBEAR+ is bought through the App Store. Apple handles the payment, and we never see your card. On iPhone the app
+      uses RevenueCat to check if you have beBEAR+. RevenueCat gets your user id, or a random id if you have no account,
+      and your App Store purchases in beBEAR. We store your plan and when it ends.
     </p>
 
     <h2>Spotify</h2>
@@ -103,9 +119,12 @@
 
     <h2>Who handles data for us</h2>
     <ul>
-      <li>Supabase: accounts, backups, friends and the feed. Stored in the EU (Ireland).</li>
-      <li>Vercel: hosts the web app, the exercise pictures and the small server functions for AI, food search and account deletion.</li>
+      <li>Supabase: accounts, backups, progress photos, friends, the feed and meal photos. Stored in the EU (Ireland).</li>
+      <li>Vercel: hosts the web app, the exercise pictures and the small server functions for AI, food search, purchases, reports and account deletion. Its AI Gateway passes AI requests to Anthropic.</li>
       <li>Google and Anthropic: AI features, as described above.</li>
+      <li>Apple and Google: sign-in, if you choose it. Apple also handles App Store payments.</li>
+      <li>RevenueCat: checks your beBEAR+ purchases, as described above.</li>
+      <li>Resend: sends us the report emails, as described above.</li>
       <li>Open Food Facts and USDA FoodData Central: food search.</li>
     </ul>
     <p>We do not sell personal data, and we do not share it for advertising.</p>
@@ -114,7 +133,7 @@
     <ul>
       <li>See and copy your data: Settings → Export everything gives you a full file at any time.</li>
       <li>Correct it: edit any entry in the app.</li>
-      <li>Delete it: delete entries in the app, or delete your account in Settings → Cloud backup → Delete account. This removes your account, backups, profile, friends, posts, reports and AI usage counts from our servers right away. The data on your phone stays until you delete the app. If you can't sign in any more, email <a href="mailto:support@paulbebear.com">support@paulbebear.com</a> and we delete it within 30 days.</li>
+      <li>Delete it: delete entries in the app, or delete your account in Settings → Cloud backup → Delete account. This removes your account, backups, progress photos, profile, friends, workout and meal posts, meal photos, reports, AI usage counts and your RevenueCat purchase record right away. Report emails we already got stay in our inbox. The data on your phone stays until you delete the app. If you can't sign in any more, email <a href="mailto:support@paulbebear.com">support@paulbebear.com</a> and we delete it within 30 days.</li>
       <li>If you live in the EU or UK, you can also object to processing or complain to your data protection authority.</li>
     </ul>
     <p>
