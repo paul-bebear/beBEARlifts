@@ -128,6 +128,11 @@ export function Feed_queue(state: IFeedState, op: IFeedOp): IFeedState {
   return { ...state, outbox: [...others, op] };
 }
 
+// The flush sends only the signed-in account's ops, so an unsent post waits for its owner to sign in again.
+export function Feed_afterForcedSignOut(state: IFeedState): IFeedState {
+  return { ...Feed_empty(), outbox: state.outbox };
+}
+
 // An op waits for the account that queued it, so a sign-in switch never posts under the other account.
 export function Feed_pendingOps(state: IFeedState, userId: string): IFeedOp[] {
   return state.outbox.filter((o) => o.userId === userId);

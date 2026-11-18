@@ -10,6 +10,7 @@ import {
   CloudBackupClient_saveReplaced,
   CloudBackupClient_sendCode,
   CloudBackupClient_signOut,
+  CloudBackupClient_start,
   CloudBackupClient_upload,
   CloudBackupClient_verify,
 } from "../src/utils/cloudBackupClient";
@@ -20,7 +21,7 @@ import { FriendsStore } from "../src/utils/friendsClient";
 import { BlocksStore } from "../src/utils/moderationStore";
 import { FeedStore } from "../src/utils/feedClient";
 import { InviteStore } from "../src/utils/inviteClient";
-import { Feed_empty } from "../src/models/feed";
+import { Feed_afterForcedSignOut, Feed_empty, IFeedOp, IFeedState } from "../src/models/feed";
 
 const now = Date.UTC(2026, 9, 20, 18);
 const session = {
@@ -143,15 +144,40 @@ describe("CloudBackupClient", () => {
     );
   });
 
-  it("clears the same account caches as Sign out when the server refuses the refresh token", async () => {
+  it("clears the account caches after the launch start when the server refuses the refresh token", async () => {
+    const stop = CloudBackupClient_start();
+    try {
+      state = { ...state, session: { ...session, expiresAt: now } };
+      fetchStub.resolves(new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 }));
+      expect(await CloudBackupClient_download()).to.deep.equal({ ok: false, error: "Not signed in" });
+      expect(state.session).to.equal(undefined);
+      for (const store of Object.values(stores)) {
+        expect(store.calledOnce).to.equal(true);
+      }
+      expect(stores.invite.firstCall.args[0]({ handle: "x" })).to.deep.equal({});
+      const op: IFeedOp = { type: "remove", userId: "u1", workoutId: 7, queuedAt: 1 };
+      const feed: IFeedState = { ...Feed_empty(), userId: "u1", posts: [], outbox: [op] };
+      expect(stores.feed.firstCall.args[0](feed)).to.deep.equal({ ...Feed_empty(), outbox: [op] });
+    } finally {
+      stop();
+    }
+  });
+
+  it("clears nothing on a refused refresh token once the launch registration stops", async () => {
+    CloudBackupClient_start()();
     state = { ...state, session: { ...session, expiresAt: now } };
     fetchStub.resolves(new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 }));
-    expect(await CloudBackupClient_download()).to.deep.equal({ ok: false, error: "Not signed in" });
-    expect(state.session).to.equal(undefined);
-    for (const store of Object.values(stores)) {
-      expect(store.calledOnce).to.equal(true);
-    }
-    expect(stores.invite.firstCall.args[0]({ handle: "x" })).to.deep.equal({});
+    await CloudBackupClient_download();
+    expect(stores.feed.called).to.equal(false);
+  });
+
+  it("keeps unsent posts and meals through a forced sign-out and drops the cached feed", () => {
+    const ops: IFeedOp[] = [
+      { type: "remove", userId: "u1", workoutId: 7, queuedAt: 1 },
+      { type: "remove", userId: "u2", workoutId: 8, queuedAt: 2 },
+    ];
+    const feed: IFeedState = { ...Feed_empty(), userId: "u1", loadedAt: 5, outbox: ops };
+    expect(Feed_afterForcedSignOut(feed)).to.deep.equal({ ...Feed_empty(), outbox: ops });
   });
 
   it("refreshes expired tokens before downloading and keeps the backup time", async () => {

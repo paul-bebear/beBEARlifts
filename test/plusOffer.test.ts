@@ -12,10 +12,10 @@ import {
   PlusOffer_idle,
   PlusOffer_reduce,
   PlusOffer_startFailed,
-  PlusOffer_activating,
   PlusOffer_restoredMessage,
   PlusOffer_nothingToRestore,
   PlusOffer_restoreFailed,
+  PlusOffer_restorePending,
   IPlusOfferEvent,
   IPlusOfferFlow,
   IPlusOfferStep,
@@ -192,7 +192,7 @@ describe("PlusOffer_reduce", () => {
     ]);
   });
 
-  it("restores with a sync and no activating mark, so a free answer is saved as free", () => {
+  it("restores with a sync and no activating mark, and says the purchase was found while the server lags", () => {
     const restoring = run([
       { type: "open", trigger: "restore", userId: "a" },
       { type: "identified", ready: true },
@@ -204,10 +204,10 @@ describe("PlusOffer_reduce", () => {
       { type: "alert", message: PlusOffer_restoredMessage },
     ]);
     expect(run([{ type: "synced", result: "free" }], restored.state).effects).to.deep.equal([
-      { type: "alert", message: PlusOffer_nothingToRestore },
+      { type: "alert", message: PlusOffer_restorePending },
     ]);
     expect(run([{ type: "synced", result: "error" }], restored.state).effects).to.deep.equal([
-      { type: "alert", message: PlusOffer_activating },
+      { type: "alert", message: PlusOffer_restorePending },
     ]);
     expect(run([{ type: "restoreDone", outcome: "none" }], restoring.state).effects).to.deep.equal([
       { type: "alert", message: PlusOffer_nothingToRestore },

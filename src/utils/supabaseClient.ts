@@ -107,25 +107,32 @@ async function SupabaseClient_session(): Promise<ICloudResult<ICloudSession>> {
     return result;
   }
   let signedOut = false;
+  let goneAlready = false;
   await CloudStore.update((state) => {
+    goneAlready = state.session == null;
     if (state.session?.refreshToken !== current.refreshToken) {
       return state;
     }
     signedOut = true;
     return CloudBackup_afterSignOut(state);
   });
-  if (!signedOut) {
-    return result;
+  if (signedOut) {
+    await forcedSignOut().catch(() => undefined);
   }
-  await forcedSignOut().catch(() => undefined);
-  return { ok: false, error: Supabase_notSignedIn };
+  return signedOut || goneAlready ? { ok: false, error: Supabase_notSignedIn } : result;
 }
 
-let forcedSignOut: () => Promise<void> = async () => undefined;
+const noClear = async (): Promise<void> => undefined;
+let forcedSignOut: () => Promise<void> = noClear;
 
 // The friends, feed and invite stores import this file, so the module that owns them hands in their clear.
-export function SupabaseClient_onForcedSignOut(clear: () => Promise<void>): void {
+export function SupabaseClient_onForcedSignOut(clear: () => Promise<void>): () => void {
   forcedSignOut = clear;
+  return () => {
+    if (forcedSignOut === clear) {
+      forcedSignOut = noClear;
+    }
+  };
 }
 
 export async function SupabaseClient_exchangeCode(

@@ -74,6 +74,7 @@ describe("SupabaseClient_accessToken", () => {
   };
   let state: ICloudState;
   let fetchStub: sinon.SinonStub;
+  let stopClear = (): void => undefined;
 
   beforeEach(() => {
     state = { version: 1, session };
@@ -84,7 +85,11 @@ describe("SupabaseClient_accessToken", () => {
     });
     fetchStub = sinon.stub(globalThis, "fetch");
   });
-  afterEach(() => sinon.restore());
+  afterEach(() => {
+    stopClear();
+    stopClear = () => undefined;
+    sinon.restore();
+  });
 
   it("reports not signed in without calling the server", async () => {
     state = { version: 1 };
@@ -128,7 +133,7 @@ describe("SupabaseClient_accessToken", () => {
     ];
     for (const body of bodies) {
       const cleared = sinon.stub().resolves();
-      SupabaseClient_onForcedSignOut(cleared);
+      stopClear = SupabaseClient_onForcedSignOut(cleared);
       state = { version: 1, session, ownerUserId: "u1", lastBackupAt: now - 1000 };
       fetchStub.resolves(new Response(JSON.stringify(body), { status: 400 }));
       expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: Supabase_notSignedIn });
@@ -147,7 +152,7 @@ describe("SupabaseClient_accessToken", () => {
 
   it("keeps a session that signed in while the refused refresh was on its way", async () => {
     const cleared = sinon.stub().resolves();
-    SupabaseClient_onForcedSignOut(cleared);
+    stopClear = SupabaseClient_onForcedSignOut(cleared);
     const next = { ...session, userId: "u2", refreshToken: "new-refresh" };
     fetchStub.callsFake(async () => {
       state = { version: 1, session: next };
@@ -156,6 +161,19 @@ describe("SupabaseClient_accessToken", () => {
     const result = await SupabaseClient_accessToken();
     expect(result.ok).to.equal(false);
     expect(state.session).to.deep.equal(next);
+    sinon.assert.notCalled(cleared);
+  });
+
+  it("reports not signed in when the user signed out while the refused refresh was on its way", async () => {
+    const cleared = sinon.stub().resolves();
+    stopClear = SupabaseClient_onForcedSignOut(cleared);
+    fetchStub.callsFake(async () => {
+      state = { version: 1 };
+      return new Response(JSON.stringify({ error: "invalid_grant", error_description: "Refresh Token Not Found" }), {
+        status: 400,
+      });
+    });
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: Supabase_notSignedIn });
     sinon.assert.notCalled(cleared);
   });
 
