@@ -312,4 +312,38 @@ Bench Press / 3x5 50lb
       }
     });
   });
+
+  describe("nextDay", () => {
+    const threeDays = `# Week 1
+## Day A
+Squat / 3x5 100lb
+
+## Day B
+Bench Press / 3x5 50lb
+
+## Day C
+Deadlift / 1x5 200lb
+`;
+    function nextDayAfter(nextDay: number, from: number, to: number): number | undefined {
+      const program: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay };
+      const result = ProgramDayOrder_apply(program, program, from, to, settings);
+      return result.success ? result.data.draft.nextDay : undefined;
+    }
+
+    it("follows the next workout when its day moves", () => {
+      expect(nextDayAfter(3, 2, 0)).to.equal(1);
+      expect(nextDayAfter(1, 0, 2)).to.equal(3);
+    });
+
+    it("follows the next workout when another day moves past it", () => {
+      expect(nextDayAfter(2, 2, 0)).to.equal(3);
+      expect(nextDayAfter(2, 0, 2)).to.equal(1);
+    });
+
+    it("also updates the saved copy", () => {
+      const program: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const result = ProgramDayOrder_apply(program, program, 2, 0, settings);
+      expect(result.success && result.data.saved?.nextDay).to.equal(1);
+    });
+  });
 });

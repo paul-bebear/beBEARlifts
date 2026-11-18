@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { IMusicWorkout, MusicTracking_finishOthers, MusicTracking_pollMs } from "../models/musicTracking";
-import { IMusicPollEffects, MusicPoll_catchUp, MusicPoll_nowPlaying } from "../models/musicPoll";
+import { IMusicPollEffects, MusicPoll_catchUp, MusicPoll_finish, MusicPoll_nowPlaying } from "../models/musicPoll";
 import { MusicStore_load, MusicStore_update } from "../utils/musicStore";
 import {
   SpotifyClient_history,
@@ -57,6 +57,11 @@ export function MusicTracker(props: IProps): null {
     const subscription = AppState.addEventListener("change", catchUp);
     return () => {
       isStopped = true;
+      MusicPoll_finish(
+        workout,
+        pollEffects(() => false),
+        Date.now()
+      );
       clearInterval(interval);
       subscription.remove();
     };

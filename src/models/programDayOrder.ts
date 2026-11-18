@@ -180,6 +180,20 @@ export function ProgramDayOrder_move(
   return { success: true, data: moved.data };
 }
 
+function remapNextDay(planner: IPlannerProgram, fromIndex: number, toIndex: number, nextDay: number): number {
+  const perWeek = oldIndexesPerWeek(planner, fromIndex, toIndex);
+  let offset = 0;
+  for (let weekIndex = 0; weekIndex < planner.weeks.length; weekIndex += 1) {
+    const count = planner.weeks[weekIndex].days.length;
+    if (nextDay <= offset + count) {
+      const newIndex = perWeek[weekIndex].indexOf(nextDay - offset - 1);
+      return newIndex === -1 ? nextDay : offset + newIndex + 1;
+    }
+    offset += count;
+  }
+  return nextDay;
+}
+
 export interface IProgramDayOrderSave {
   draft: IProgram;
   // Present when the editor held no unsaved edits, so writing the move to storage saves only the
@@ -209,11 +223,12 @@ export function ProgramDayOrder_apply(
     return moved;
   }
   const isClean = saved.planner != null && !ProgramDayOrder_hasUnsavedEdits(saved, draft);
+  const nextDay = remapNextDay(draft.planner, fromIndex, toIndex, draft.nextDay);
   return {
     success: true,
     data: {
-      draft: { ...draft, planner: moved.data },
-      saved: isClean ? Program_cleanPlannerProgram({ ...saved, planner: moved.data }) : undefined,
+      draft: { ...draft, planner: moved.data, nextDay },
+      saved: isClean ? Program_cleanPlannerProgram({ ...saved, planner: moved.data, nextDay }) : undefined,
     },
   };
 }
