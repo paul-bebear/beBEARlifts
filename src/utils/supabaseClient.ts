@@ -2,6 +2,7 @@ import {
   CloudBackup_afterSignIn,
   CloudBackup_afterSignOut,
   CloudBackup_empty,
+  CloudBackup_isDeadRefresh,
   CloudBackup_needsRefresh,
   CloudBackup_parse,
   CloudBackup_sessionFromAuth,
@@ -26,7 +27,7 @@ async function callWithStatus(
   path: string,
   init: RequestInit,
   token?: string
-): Promise<{ result: ICloudResult<Response>; status?: number }> {
+): Promise<{ result: ICloudResult<Response>; status?: number; body?: unknown }> {
   const headers: Record<string, string> = { apikey: publishableKey, ...(init.headers as Record<string, string>) };
   if (token != null) {
     headers.Authorization = `Bearer ${token}`;
@@ -42,6 +43,7 @@ async function callWithStatus(
     return {
       result: { ok: false, error: SupabaseClient_errorText(path, response.status, body) },
       status: response.status,
+      body,
     };
   }
   return { result: { ok: true, value: response }, status: response.status };
@@ -94,19 +96,36 @@ async function SupabaseClient_session(): Promise<ICloudResult<ICloudSession>> {
   if (!CloudBackup_needsRefresh(current, Date.now())) {
     return { ok: true, value: current };
   }
-  const { result, status } = await callWithStatus(
+  const { result, status, body } = await callWithStatus(
     "/auth/v1/token?grant_type=refresh_token",
     SupabaseClient_json({ refresh_token: current.refreshToken })
   );
   if (result.ok) {
     return SupabaseClient_saveSession(result.value);
   }
-  // Supabase answers a revoked or unknown refresh token with 400 invalid_grant. No retry can succeed.
-  if (status === 400 || status === 401) {
-    await CloudStore.update((state) => CloudBackup_afterSignOut(state));
-    return { ok: false, error: Supabase_notSignedIn };
+  if (!CloudBackup_isDeadRefresh(status, body)) {
+    return result;
   }
-  return result;
+  let signedOut = false;
+  await CloudStore.update((state) => {
+    if (state.session?.refreshToken !== current.refreshToken) {
+      return state;
+    }
+    signedOut = true;
+    return CloudBackup_afterSignOut(state);
+  });
+  if (!signedOut) {
+    return result;
+  }
+  await forcedSignOut().catch(() => undefined);
+  return { ok: false, error: Supabase_notSignedIn };
+}
+
+let forcedSignOut: () => Promise<void> = async () => undefined;
+
+// The friends, feed and invite stores import this file, so the module that owns them hands in their clear.
+export function SupabaseClient_onForcedSignOut(clear: () => Promise<void>): void {
+  forcedSignOut = clear;
 }
 
 export async function SupabaseClient_exchangeCode(

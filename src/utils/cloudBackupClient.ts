@@ -22,6 +22,7 @@ import {
   SupabaseClient_authed,
   SupabaseClient_call,
   SupabaseClient_json,
+  SupabaseClient_onForcedSignOut,
   SupabaseClient_saveSession,
   Supabase_notSignedIn,
 } from "./supabaseClient";
@@ -146,14 +147,19 @@ export async function CloudBackupClient_download(
   return { ok: true, value: await result.value.response.text() };
 }
 
-async function clearAccountCaches(): Promise<void> {
+async function clearOtherAccountCaches(): Promise<void> {
   await Promise.all([
-    CloudStore.update((state) => CloudBackup_afterSignOut(state)),
     FriendsStore.update(() => Friends_empty()),
     BlocksStore.update(() => FeedModeration_empty()),
     FeedStore.update(() => Feed_empty()),
     InviteStore.update(() => ({})),
   ]);
+}
+
+SupabaseClient_onForcedSignOut(clearOtherAccountCaches);
+
+async function clearAccountCaches(): Promise<void> {
+  await Promise.all([CloudStore.update((state) => CloudBackup_afterSignOut(state)), clearOtherAccountCaches()]);
 }
 
 // scope=local ends only this phone's session. The default, global, would also sign out the user's other phone.

@@ -3,6 +3,7 @@ import { IDispatch, IThunk } from "./types";
 import { Thunk_importStorage } from "./thunks";
 import {
   CloudBackup_afterAttempt,
+  CloudBackup_attemptWrites,
   CloudBackup_isAutoDue,
   CloudBackup_isCatchUpDue,
   CloudBackup_ownerAnswer,
@@ -166,7 +167,9 @@ export function Thunk_cloudBackup(
       result = { ok: false, error: errorText(error, "Could not save cloud backup") };
     }
     const attempt = result;
-    await CloudStore.update((state) => CloudBackup_afterAttempt(state, attempt)).catch(() => undefined);
+    if (CloudBackup_attemptWrites(attempt)) {
+      await CloudStore.update((state) => CloudBackup_afterAttempt(state, attempt)).catch(() => undefined);
+    }
     if (result.ok) {
       await ProgressPhotoCloud_sync().catch(() => undefined);
     }
@@ -243,7 +246,11 @@ async function restore(
   if (copy !== "latest") {
     // An older copy becomes the cloud backup too, and keep saves the replaced latest.json first.
     const kept = await backUp("keep", getState);
-    return kept.ok ? { ok: true, value: true } : kept;
+    if (!kept.ok) {
+      return kept;
+    }
+    await CloudStore.update((state) => ({ ...state, backupBlocked: undefined }));
+    return { ok: true, value: true };
   }
   const stores = CloudBackup_storesMark(await storesNow());
   await CloudStore.update((state) => ({
@@ -253,6 +260,7 @@ async function restore(
     backedUpWorkouts: CloudBackup_workoutsMark(getState().storage.history),
     backedUpStores: stores,
     restoreOffer: undefined,
+    backupBlocked: undefined,
   }));
   return { ok: true, value: true };
 }

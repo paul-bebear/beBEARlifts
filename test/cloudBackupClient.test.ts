@@ -143,6 +143,17 @@ describe("CloudBackupClient", () => {
     );
   });
 
+  it("clears the same account caches as Sign out when the server refuses the refresh token", async () => {
+    state = { ...state, session: { ...session, expiresAt: now } };
+    fetchStub.resolves(new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 }));
+    expect(await CloudBackupClient_download()).to.deep.equal({ ok: false, error: "Not signed in" });
+    expect(state.session).to.equal(undefined);
+    for (const store of Object.values(stores)) {
+      expect(store.calledOnce).to.equal(true);
+    }
+    expect(stores.invite.firstCall.args[0]({ handle: "x" })).to.deep.equal({});
+  });
+
   it("refreshes expired tokens before downloading and keeps the backup time", async () => {
     state = { ...state, session: { ...session, expiresAt: now }, lastBackupAt: now - 1000 };
     fetchStub.onFirstCall().resolves(

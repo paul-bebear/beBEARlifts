@@ -192,16 +192,19 @@ describe("PlusOffer_reduce", () => {
     ]);
   });
 
-  it("restores through the same activation, and says what happened", () => {
+  it("restores with a sync and no activating mark, so a free answer is saved as free", () => {
     const restoring = run([
       { type: "open", trigger: "restore", userId: "a" },
       { type: "identified", ready: true },
     ]);
     expect(types(restoring)).to.deep.equal(["restore"]);
     const restored = run([{ type: "restoreDone", outcome: "restored" }], restoring.state);
-    expect(types(restored)).to.deep.equal(["markActivating", "sync"]);
+    expect(types(restored)).to.deep.equal(["sync"]);
     expect(run([{ type: "synced", result: "plus" }], restored.state).effects).to.deep.equal([
       { type: "alert", message: PlusOffer_restoredMessage },
+    ]);
+    expect(run([{ type: "synced", result: "free" }], restored.state).effects).to.deep.equal([
+      { type: "alert", message: PlusOffer_nothingToRestore },
     ]);
     expect(run([{ type: "synced", result: "error" }], restored.state).effects).to.deep.equal([
       { type: "alert", message: PlusOffer_activating },

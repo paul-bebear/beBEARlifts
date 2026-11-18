@@ -282,6 +282,16 @@ describe("Cloud backup thunks", () => {
     expect(upload.called).to.equal(false);
   });
 
+  it("does not write the cloud store after a skipped or offline backup", async () => {
+    const update = supabase.CloudStore.update as sinon.SinonStub;
+    await run(Thunk_cloudBackup("auto"));
+    expect(update.called).to.equal(false);
+    state.storage.history = workouts([now - 2000]);
+    download.resolves({ ok: false, error: "No connection" });
+    await run(Thunk_cloudBackup("auto"));
+    expect(update.called).to.equal(false);
+  });
+
   it("records why automatic backups stopped when a store cannot be read, and clears it after an upload", async () => {
     state.storage.history = workouts([now - 2000]);
     (NotesStore.loadStrict as sinon.SinonStub).rejects(new Error("Could not read saved data"));
@@ -462,6 +472,7 @@ describe("Cloud backup thunks", () => {
     cloudState = {
       ...cloudState,
       restoreOffer: { cloud: { workouts: 0, foodDays: 0 }, phone: { workouts: 0, foodDays: 0 } },
+      backupBlocked: CloudBackup_blockedText,
     };
     const replaceFood = sinon.stub(food, "FoodLogStore_replace").resolves();
     const replaceMusic = sinon.stub(music, "MusicStore_update").resolves();
@@ -496,6 +507,7 @@ describe("Cloud backup thunks", () => {
     expect(schedule).to.deep.equal(parts.schedule);
     expect(cloudState.syncedExportedAt).to.equal(file.exportedAt);
     expect(cloudState.restoreOffer).to.equal(undefined);
+    expect(cloudState.backupBlocked).to.equal(undefined);
     expect(cloudState.session).to.deep.equal(session);
     expect(cloudState.ownerUserId).to.equal("u1");
     expect(photoRestore.firstCall.args[0]).to.deep.equal([]);

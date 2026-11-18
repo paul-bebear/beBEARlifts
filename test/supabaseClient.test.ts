@@ -6,6 +6,7 @@ import {
   SupabaseClient_accessToken,
   SupabaseClient_call,
   SupabaseClient_errorText,
+  SupabaseClient_onForcedSignOut,
   Supabase_notSignedIn,
   Supabase_origin,
 } from "../src/utils/supabaseClient";
@@ -120,19 +121,42 @@ describe("SupabaseClient_accessToken", () => {
     });
   });
 
-  it("signs out this phone when the server refuses the refresh token", async () => {
-    for (const status of [400, 401]) {
+  it("signs out this phone and clears the account caches when the server refuses the refresh token", async () => {
+    const bodies = [
+      { error: "invalid_grant", error_description: "Refresh Token Not Found" },
+      { code: 400, error_code: "refresh_token_not_found", msg: "Invalid Refresh Token: Refresh Token Not Found" },
+    ];
+    for (const body of bodies) {
+      const cleared = sinon.stub().resolves();
+      SupabaseClient_onForcedSignOut(cleared);
       state = { version: 1, session, ownerUserId: "u1", lastBackupAt: now - 1000 };
-      fetchStub.resolves(
-        new Response(JSON.stringify({ error: "invalid_grant", error_description: "Refresh Token Not Found" }), {
-          status,
-        })
-      );
+      fetchStub.resolves(new Response(JSON.stringify(body), { status: 400 }));
       expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: Supabase_notSignedIn });
       expect(state.session).to.equal(undefined);
       expect(state.lastBackupAt).to.equal(undefined);
       expect(state.ownerUserId).to.equal("u1");
+      sinon.assert.calledOnce(cleared);
     }
+  });
+
+  it("keeps the session on a 401, which the gateway can send for any user", async () => {
+    fetchStub.resolves(new Response(JSON.stringify({ message: "Invalid API key" }), { status: 401 }));
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "Invalid API key" });
+    expect(state.session).to.deep.equal(session);
+  });
+
+  it("keeps a session that signed in while the refused refresh was on its way", async () => {
+    const cleared = sinon.stub().resolves();
+    SupabaseClient_onForcedSignOut(cleared);
+    const next = { ...session, userId: "u2", refreshToken: "new-refresh" };
+    fetchStub.callsFake(async () => {
+      state = { version: 1, session: next };
+      return new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 });
+    });
+    const result = await SupabaseClient_accessToken();
+    expect(result.ok).to.equal(false);
+    expect(state.session).to.deep.equal(next);
+    sinon.assert.notCalled(cleared);
   });
 
   it("keeps the session when the refresh fails for a server or network reason", async () => {

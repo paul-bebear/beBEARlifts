@@ -157,7 +157,11 @@ function fail(flow: IPlusOfferFlow, message: string): IPlusOfferStep {
   return flow.trigger === "firstProgram" ? to(idle) : to(idle, { type: "alert", message });
 }
 
+// An activating plan survives free answers for a new purchase. A restore that finds nothing must end on free.
 function activate(flow: IPlusOfferFlow): IPlusOfferStep {
+  if (flow.trigger === "restore") {
+    return to({ ...flow, step: "activating" }, { type: "sync" });
+  }
   const userId = flow.userId ?? "";
   return to({ ...flow, step: "activating" }, { type: "markActivating", userId }, { type: "sync" });
 }
