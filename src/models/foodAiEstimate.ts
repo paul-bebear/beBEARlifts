@@ -7,6 +7,7 @@ export interface IFoodAiState {
   text: string;
   photo?: string;
   isSending: boolean;
+  requestId: number;
   error?: string;
   authError?: string;
   note?: string;
@@ -17,10 +18,10 @@ export type IFoodAiEvent =
   | { type: "typed"; text: string }
   | { type: "picked"; result: IFoodCapturePhoto }
   | { type: "photoRemoved" }
-  | { type: "sent" }
-  | { type: "signedOut"; error: string }
-  | { type: "estimated"; estimate: IFoodPhotoEstimate }
-  | { type: "failed"; error: string }
+  | { type: "sent"; requestId: number }
+  | { type: "signedOut"; error: string; requestId: number }
+  | { type: "estimated"; estimate: IFoodPhotoEstimate; requestId: number }
+  | { type: "failed"; error: string; requestId: number }
   | { type: "choicesChanged"; choices: IFoodPhotoChoice[] }
   | { type: "added" };
 
@@ -28,9 +29,9 @@ export type IFoodAiRequest = { kind: "photo"; photo: string; text: string } | { 
 
 export function FoodAiEstimate_initial(resume?: IScanResume): IFoodAiState {
   if (resume == null) {
-    return { text: "", isSending: false };
+    return { text: "", isSending: false, requestId: 0 };
   }
-  const state: IFoodAiState = { text: resume.text ?? "", isSending: false, choices: resume.choices };
+  const state: IFoodAiState = { text: resume.text ?? "", isSending: false, requestId: 0, choices: resume.choices };
   return resume.photo != null ? { ...state, photo: resume.photo } : state;
 }
 
@@ -54,10 +55,28 @@ export function FoodAiEstimate_hasChoices(state: IFoodAiState): boolean {
 }
 
 function withoutEstimate(state: IFoodAiState): IFoodAiState {
-  return { ...state, error: undefined, authError: undefined, note: undefined, choices: undefined };
+  return {
+    ...state,
+    isSending: false,
+    requestId: state.requestId + 1,
+    error: undefined,
+    authError: undefined,
+    note: undefined,
+    choices: undefined,
+  };
+}
+
+export function FoodAiEstimate_nextRequestId(state: IFoodAiState): number {
+  return state.requestId + 1;
 }
 
 export function FoodAiEstimate_reduce(state: IFoodAiState, event: IFoodAiEvent): IFoodAiState {
+  if (
+    (event.type === "estimated" || event.type === "failed" || event.type === "signedOut") &&
+    event.requestId !== state.requestId
+  ) {
+    return state;
+  }
   switch (event.type) {
     case "typed":
       return { ...state, text: event.text };
@@ -69,7 +88,7 @@ export function FoodAiEstimate_reduce(state: IFoodAiState, event: IFoodAiEvent):
     case "photoRemoved":
       return { ...withoutEstimate(state), photo: undefined };
     case "sent":
-      return { ...state, isSending: true, error: undefined, authError: undefined };
+      return { ...state, isSending: true, requestId: event.requestId, error: undefined, authError: undefined };
     case "signedOut":
       return { ...state, isSending: false, authError: event.error };
     case "estimated":
@@ -85,6 +104,6 @@ export function FoodAiEstimate_reduce(state: IFoodAiState, event: IFoodAiEvent):
     case "choicesChanged":
       return { ...state, choices: event.choices };
     case "added":
-      return FoodAiEstimate_initial();
+      return { ...FoodAiEstimate_initial(), requestId: state.requestId + 1 };
   }
 }
