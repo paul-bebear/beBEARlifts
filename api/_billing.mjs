@@ -138,6 +138,35 @@ export async function Billing_readPlan(userId, serviceKey) {
     : { ok: true, ...answer };
 }
 
+// RevenueCat limits reads per project key, so one user looping the sync route could block every purchase.
+const syncCooldownMs = 30 * 1000;
+
+export function Billing_snapshotIsFresh(rows, nowMs) {
+  const snapshot = Array.isArray(rows) ? time(rows[0]?.snapshot_at) : undefined;
+  return snapshot != null && nowMs - snapshot < syncCooldownMs;
+}
+
+async function snapshotIsFresh(userId, serviceKey) {
+  try {
+    const url = `${Supabase_origin}/rest/v1/store_entitlements?user_id=eq.${encodeURIComponent(userId)}&select=snapshot_at`;
+    const read = await fetchJson(
+      url,
+      { method: "GET", headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
+      timeoutMs
+    );
+    return read.status === 200 && Billing_snapshotIsFresh(read.body, Date.now());
+  } catch {
+    return false;
+  }
+}
+
+export async function Billing_sync(userId, config) {
+  if (config.revenueCatKey == null || (await snapshotIsFresh(userId, config.serviceKey))) {
+    return Billing_readPlan(userId, config.serviceKey);
+  }
+  return Billing_refresh(userId, config);
+}
+
 export async function Billing_refresh(userId, config) {
   if (config.revenueCatKey == null) {
     return { ok: false, status: 500, error: "The server has no RevenueCat key. Set REVENUECAT_SECRET_KEY in Vercel." };

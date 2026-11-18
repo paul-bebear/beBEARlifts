@@ -1,7 +1,15 @@
 import { fetchJson, json } from "../_food.mjs";
 
 // DEMO_KEY allows about 30 requests an hour, shared by everyone calling from the same IP. Set FDC_API_KEY.
-const apiKey = () => process.env.FDC_API_KEY || "DEMO_KEY";
+export function UsdaFood_apiKey(env, log) {
+  if (env.FDC_API_KEY) {
+    return env.FDC_API_KEY;
+  }
+  log(
+    "FDC_API_KEY is not set, so the USDA lookup uses DEMO_KEY (about 30 requests an hour). Set FDC_API_KEY in Vercel."
+  );
+  return "DEMO_KEY";
+}
 
 function barcodeKey(code) {
   return code.replace(/^0+/, "");
@@ -18,11 +26,12 @@ export async function GET(request) {
   if (!/^\d{8,14}$/.test(code)) {
     return json({ error: "Barcode must be 8 to 14 digits" }, 400);
   }
+  const apiKey = UsdaFood_apiKey(process.env, console.warn);
   try {
     for (const query of queries(code)) {
       const url =
         "https://api.nal.usda.gov/fdc/v1/foods/search" +
-        `?query=${query}&dataType=Branded&pageSize=5&api_key=${encodeURIComponent(apiKey())}`;
+        `?query=${query}&dataType=Branded&pageSize=5&api_key=${encodeURIComponent(apiKey)}`;
       const { status, body } = await fetchJson(url, {}, 8000);
       if (status === 429) {
         return json({ error: "USDA FoodData Central is rate limited. Set FDC_API_KEY on Vercel." }, 502);
