@@ -3,6 +3,10 @@
 -- Storage first inserts the row without metadata to test the policies, then upserts it with metadata.size after the upload.
 -- A row with no size yet passes the size check, and the final upsert meets it.
 
+-- A backup is JSON.stringify with indent 2 (src/utils/fullBackupFile.ts). screenshots/fixtures/demo.json is 17.3 KB per workout.
+-- 5 years at 4 workouts a week is about 18 MB, so 30 MB per file leaves room.
+update storage.buckets set file_size_limit = 31457280 where id = 'backups';
+
 create schema if not exists private;
 
 create or replace function private.limit_photo_objects()
@@ -19,7 +23,17 @@ declare
   max_backup_photos constant int := 250;
   -- The app uploads a meal photo just before its meal_posts row, so only a failed post leaves one with no row.
   max_meal_photos_without_post constant int := 10;
+  -- A heavy user: 9 backup copies of 10 MB, 200 photos of 250 KB and 2 years of daily 150 KB meal photos is 250 MB.
+  max_user_bytes constant bigint := 314572800;
 begin
+  if size_bytes is not null and size_bytes + (
+    select coalesce(sum((o.metadata->>'size')::bigint), 0) from storage.objects o
+    where o.bucket_id in ('backups', 'meal-photos')
+      and o.name like owner_folder || '/%'
+      and not (o.bucket_id = new.bucket_id and o.name = new.name)
+  ) > max_user_bytes then
+    raise exception 'This account has used its 300 MB of cloud storage.';
+  end if;
   if new.bucket_id = 'backups' and (storage.foldername(new.name))[2] = 'photos' then
     if size_bytes > max_photo_bytes then
       raise exception 'A photo can be at most 2 MB.';

@@ -85,4 +85,35 @@ select pg_temp.assert_rejected_with(
 insert into storage.objects(bucket_id, name, metadata) values
   ('meal-photos', '00000000-0000-0000-0000-0000000000d2/bbbbbbbb-0000-4000-8000-000000000000.jpg', '{"size": 300000}');
 
+-- JSON files may be 30 MB. Storage itself enforces the bucket limit, so only the value is checked here.
+select pg_temp.assert_text($q$select file_size_limit::text from storage.buckets where id = 'backups'$q$, '31457280');
+
+-- 300 MB per user across both buckets. d2 holds 500,000 bytes so far.
+-- 9 JSON copies at 30 MB plus 15 photos of 2,000,000 bytes is 313,615,520 bytes.
+insert into storage.objects(bucket_id, name, metadata)
+select 'backups', '00000000-0000-0000-0000-0000000000d2/' || n || '.json', '{"size": 31457280}'
+from unnest(array['latest', 'replaced', 'day-0', 'day-1', 'day-2', 'day-3', 'day-4', 'day-5', 'day-6']) n;
+insert into storage.objects(bucket_id, name, metadata)
+select 'backups', '00000000-0000-0000-0000-0000000000d2/photos/' || g || '.jpg', '{"size": 2000000}'
+from generate_series(2, 16) g;
+-- A replaced file counts once, so the daily upsert of latest.json passes.
+insert into storage.objects(bucket_id, name, metadata)
+values ('backups', '00000000-0000-0000-0000-0000000000d2/latest.json', '{"size": 31457280}')
+on conflict (bucket_id, name) do update set metadata = excluded.metadata;
+select pg_temp.assert_rejected_with(
+  $q$insert into storage.objects(bucket_id, name, metadata) values ('backups', '00000000-0000-0000-0000-0000000000d2/photos/17.jpg', '{"size": 2000000}')$q$,
+  'This account has used its 300 MB of cloud storage.'
+);
+select pg_temp.assert_rejected_with(
+  $q$insert into storage.objects(bucket_id, name, metadata) values ('meal-photos', '00000000-0000-0000-0000-0000000000d2/cccccccc-0000-4000-8000-000000000000.jpg', '{"size": 1000000}')$q$,
+  'This account has used its 300 MB of cloud storage.'
+);
+-- The first write has no size yet, so it passes. Its upsert with the size is the one refused.
+insert into storage.objects(bucket_id, name, metadata)
+values ('backups', '00000000-0000-0000-0000-0000000000d2/photos/17.jpg', null);
+select pg_temp.assert_rejected_with(
+  $q$update storage.objects set metadata = '{"size": 2000000}' where name = '00000000-0000-0000-0000-0000000000d2/photos/17.jpg'$q$,
+  'This account has used its 300 MB of cloud storage.'
+);
+
 rollback;
