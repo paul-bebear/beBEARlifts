@@ -112,7 +112,7 @@ describe("BearBoard_lines", () => {
       ["Weight: Sunday", "plus", true],
       ["Streak · 1 day", "streak", false],
       ["Goal: tap to set one", "goal", false],
-      ["72.4 kg · +0.8 in 30 d", "bear", false],
+      ["72.4 kg · +0.8 in 31 d", "bear", false],
       ["Level 6 · 150,000 kg to go", "bear", false],
       ["Lifted 310,000 kg", "bear", false],
     ]);
@@ -143,6 +143,24 @@ describe("BearBoard_lines", () => {
     const lines = BearBoard_lines(input({ goal: goal({ startedAt: thursday }), stats, units: "lb" }));
     expect(lines[2].text).to.equal("Weight: Thursday");
     expect(lines[6].text).to.equal("141.0 lb");
+  });
+
+  it("prints the real span of the weight change", () => {
+    const stats: IStats = {
+      weight: { weight: [weight(now - 10 * dayMs, 70), weight(now - hourMs, 71)] },
+      length: {},
+      percentage: {},
+    };
+    expect(BearBoard_lines(input({ stats })).find((l) => l.id === "weight")!.text).to.equal("71.0 kg · +1.0 in 10 d");
+  });
+
+  it("drops the change when the span is over 60 days", () => {
+    const stats: IStats = {
+      weight: { weight: [weight(now - 200 * dayMs, 66), weight(now - hourMs, 71)] },
+      length: {},
+      percentage: {},
+    };
+    expect(BearBoard_lines(input({ stats })).find((l) => l.id === "weight")!.text).to.equal("71.0 kg");
   });
 
   it("shortens the lifted, level and goal-since lines for the two-column board", () => {

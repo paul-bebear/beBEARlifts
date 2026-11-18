@@ -42,6 +42,7 @@ export interface IBearBoardInput {
 const dayMs = 86400000;
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const trendDays = 30;
+const maxChangeSpanDays = 60;
 
 function oneDecimal(value: number): string {
   return (Math.round(value * 10) / 10).toFixed(1);
@@ -99,11 +100,15 @@ function weightLine(input: IBearBoardInput): IBearBoardLine {
   if (base === latest) {
     return { id: "weight", text: value, isDone: false, target: "bear" };
   }
+  const spanDays = Math.max(1, Math.round((latest.timestamp - base.timestamp) / dayMs));
+  if (spanDays > maxChangeSpanDays) {
+    return { id: "weight", text: value, isDone: false, target: "bear" };
+  }
   const change = inUnits(latest) - inUnits(base);
   const sign = change > 0 ? "+" : change < 0 ? "−" : "±";
   return {
     id: "weight",
-    text: `${value} · ${sign}${oneDecimal(Math.abs(change))} in ${trendDays} d`,
+    text: `${value} · ${sign}${oneDecimal(Math.abs(change))} in ${spanDays} d`,
     isDone: false,
     target: "bear",
   };
