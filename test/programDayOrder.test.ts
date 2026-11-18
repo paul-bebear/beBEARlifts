@@ -340,6 +340,14 @@ Deadlift / 1x5 200lb
       expect(nextDayAfter(2, 0, 2)).to.equal(1);
     });
 
+    it("remaps the saved copy from its own next day, not the draft's", () => {
+      const saved: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const draft: IProgram = { ...saved, nextDay: 2 };
+      const result = ProgramDayOrder_apply(saved, draft, 2, 0, settings);
+      expect(result.success && result.data.draft.nextDay).to.equal(3);
+      expect(result.success && result.data.saved?.nextDay).to.equal(1);
+    });
+
     it("also updates the saved copy", () => {
       const program: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
       const result = ProgramDayOrder_apply(program, program, 2, 0, settings);

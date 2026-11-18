@@ -228,7 +228,13 @@ export function ProgramDayOrder_apply(
     success: true,
     data: {
       draft: { ...draft, planner: moved.data, nextDay },
-      saved: isClean ? Program_cleanPlannerProgram({ ...saved, planner: moved.data, nextDay }) : undefined,
+      saved: isClean
+        ? Program_cleanPlannerProgram({
+            ...saved,
+            planner: moved.data,
+            nextDay: remapNextDay(draft.planner, fromIndex, toIndex, saved.nextDay),
+          })
+        : undefined,
     },
   };
 }
