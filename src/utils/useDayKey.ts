@@ -1,21 +1,28 @@
 import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
-import { DayKey_at, DayKey_next } from "../models/dayKey";
+import { DayClock_msToMidnight, DayClock_refresh, DayClock_start, IDayClock } from "../models/dayKey";
 
-export function useDayKey(): string {
-  const [dayKey, setDayKey] = useState(() => DayKey_at(Date.now()));
+export function useDayKey(): IDayClock {
+  const [clock, setClock] = useState(() => DayClock_start(Date.now()));
   const isFocused = useIsFocused();
   useEffect(() => {
-    setDayKey((current) => DayKey_next(current, Date.now()));
+    setClock((current) => DayClock_refresh(current, Date.now()));
   }, [isFocused]);
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (status) => {
       if (status === "active") {
-        setDayKey((current) => DayKey_next(current, Date.now()));
+        setClock((current) => DayClock_refresh(current, Date.now()));
       }
     });
     return () => subscription.remove();
   }, []);
-  return dayKey;
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setClock((current) => DayClock_refresh(current, Date.now())),
+      DayClock_msToMidnight(Date.now()) + 1000
+    );
+    return () => clearTimeout(timer);
+  }, [clock.dayKey]);
+  return clock;
 }

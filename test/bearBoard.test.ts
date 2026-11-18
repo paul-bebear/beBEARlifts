@@ -163,6 +163,15 @@ describe("BearBoard_lines", () => {
     expect(BearBoard_lines(input({ stats })).find((l) => l.id === "weight")!.text).to.equal("71.0 kg");
   });
 
+  it("uses the first weigh-in inside the window when the old one is over 60 days back", () => {
+    const stats: IStats = {
+      weight: { weight: [weight(now - 200 * dayMs, 66), weight(now - 20 * dayMs, 70), weight(now - hourMs, 71)] },
+      length: {},
+      percentage: {},
+    };
+    expect(BearBoard_lines(input({ stats })).find((l) => l.id === "weight")!.text).to.equal("71.0 kg · +1.0 in 20 d");
+  });
+
   it("shortens the lifted, level and goal-since lines for the two-column board", () => {
     const lines = BearBoard_lines(
       input({

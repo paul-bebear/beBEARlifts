@@ -27,7 +27,7 @@ export function useBear(): IBearView {
   );
   const foodLog = useFoodLog();
   const store = BearStore.use();
-  const dayKey = useDayKey();
+  const dayClock = useDayKey();
   const plannedPerWeek = useMemo(
     () =>
       ProgressHub_plannedPerWeek(
@@ -49,7 +49,7 @@ export function useBear(): IBearView {
         },
         Date.now()
       ),
-    [history, foodLog, stats, settings, plannedPerWeek, store, dayKey]
+    [history, foodLog, stats, settings, plannedPerWeek, store, dayClock]
   );
   useEffect(() => {
     FoodLogStore_load()

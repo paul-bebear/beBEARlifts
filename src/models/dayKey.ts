@@ -1,10 +1,19 @@
 import { FoodLog_dayKey } from "./foodLog";
 
-export function DayKey_at(now: number): string {
-  return FoodLog_dayKey(new Date(now));
+export interface IDayClock {
+  dayKey: string;
+  tick: number;
 }
 
-export function DayKey_next(current: string, now: number): string {
-  const next = DayKey_at(now);
-  return next === current ? current : next;
+export function DayClock_start(now: number): IDayClock {
+  return { dayKey: FoodLog_dayKey(new Date(now)), tick: 0 };
+}
+
+export function DayClock_refresh(clock: IDayClock, now: number): IDayClock {
+  return { dayKey: FoodLog_dayKey(new Date(now)), tick: clock.tick + 1 };
+}
+
+export function DayClock_msToMidnight(now: number): number {
+  const date = new Date(now);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime() - now;
 }

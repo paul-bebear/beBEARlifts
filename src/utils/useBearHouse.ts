@@ -12,7 +12,7 @@ export function useBearHouse(hasWorkout: boolean, level: number): IBearHouseView
   const tracked = useTrackedState();
   const stats = untrack(tracked.storage.stats);
   const units = untrack(tracked.storage.settings).units;
-  const dayKey = useDayKey();
+  const { dayKey } = useDayKey();
   const foodLog = useFoodLog();
   const userId = CloudStore.use().session?.userId;
   const pendingRequests = Friends_lists(Friends_forUser(FriendsStore.use(), userId)).incoming.length;

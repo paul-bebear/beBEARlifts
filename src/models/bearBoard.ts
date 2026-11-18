@@ -95,15 +95,14 @@ function weightLine(input: IBearBoardInput): IBearBoardLine {
   }
   const inUnits = (e: (typeof entries)[number]): number => Weight_convertTo(e.value, input.units).value;
   const windowStart = input.now - trendDays * dayMs;
-  const base = [...entries].reverse().find((e) => e.timestamp <= windowStart) ?? entries[0];
+  const oldBase = [...entries].reverse().find((e) => e.timestamp <= windowStart) ?? entries[0];
+  const oldSpan = Math.round((latest.timestamp - oldBase.timestamp) / dayMs);
+  const base = oldSpan > maxChangeSpanDays ? (entries.find((e) => e.timestamp > windowStart) ?? latest) : oldBase;
   const value = `${oneDecimal(inUnits(latest))} ${input.units}`;
   if (base === latest) {
     return { id: "weight", text: value, isDone: false, target: "bear" };
   }
   const spanDays = Math.max(1, Math.round((latest.timestamp - base.timestamp) / dayMs));
-  if (spanDays > maxChangeSpanDays) {
-    return { id: "weight", text: value, isDone: false, target: "bear" };
-  }
   const change = inUnits(latest) - inUnits(base);
   const sign = change > 0 ? "+" : change < 0 ? "−" : "±";
   return {
