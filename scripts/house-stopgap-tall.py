@@ -1,4 +1,4 @@
-# Stopgap until the Codex tall rooms and gyms land (HANDOFF-codex-tall-rooms.md): pads each 768 by 1152 room and
+# Stopgap until the Codex tall rooms and gyms land (docs/archive/HANDOFF-codex-tall-rooms.md): pads each 768 by 1152 room and
 # gym picture to 768 by 1728, the tall canvas at 0.75 scale. 336 rows of the top colour go above and 240 rows of
 # the bottom colour below. The last 24 padding rows fade into the picture's edge row, so the seam does not show as
 # a hard line. A picture that is not 768 by 1152 is skipped, so a second run changes nothing. Run it once with `python3 -I scripts/house-stopgap-tall.py`.
