@@ -1,5 +1,7 @@
 import {
   FoodLog_addAll,
+  FoodLog_dayKey,
+  FoodLog_dayLabel,
   FoodLog_entriesFor,
   FoodLog_formatNumber,
   FoodLog_meals,
@@ -60,7 +62,11 @@ export function FoodRepeat_fallback(log: IFoodLog, today: string): string | unde
 export function FoodRepeat_offer(day: string): string {
   const [year, month, date] = day.split("-").map(Number);
   const weekday = new Date(year, month - 1, date, 12).toLocaleDateString("en-US", { weekday: "long" });
-  return `Nothing yesterday. Show ${weekday}?`;
+  return `Nothing on the day before. Show ${weekday}?`;
+}
+
+export function FoodRepeat_heading(state: IFoodRepeatState, now: Date): { title: string; source: string } {
+  return { title: "Copy from another day", source: FoodLog_dayLabel(state.day, FoodLog_dayKey(now)) };
 }
 
 export function FoodRepeat_details(entry: IFoodEntry): string {

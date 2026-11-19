@@ -11,7 +11,6 @@ import {
   FoodLog_entriesFor,
   FoodLog_formatRange,
   FoodLog_hasGoals,
-  FoodLog_mealForHour,
   FoodLog_parse,
   FoodLog_parseNutrients,
   FoodLog_progress,
@@ -57,14 +56,6 @@ describe("FoodLog days", () => {
   it("shifts across month and year ends", () => {
     expect(FoodLog_shiftDay("2026-10-31", 1)).to.equal("2026-11-01");
     expect(FoodLog_shiftDay("2027-01-01", -1)).to.equal("2026-12-31");
-  });
-
-  it("picks a meal from the hour", () => {
-    expect(FoodLog_mealForHour(8)).to.equal("breakfast");
-    expect(FoodLog_mealForHour(13)).to.equal("lunch");
-    expect(FoodLog_mealForHour(20)).to.equal("dinner");
-    expect(FoodLog_mealForHour(16)).to.equal("snacks");
-    expect(FoodLog_mealForHour(2)).to.equal("snacks");
   });
 });
 
@@ -162,6 +153,12 @@ describe("FoodLog_progress", () => {
     expect(FoodLog_progress(742, range, "remaining").value).to.equal(2358);
     expect(FoodLog_progress(3300, range, "remaining").value).to.equal(0);
     expect(FoodLog_progress(3300, range, "remaining").isOver).to.equal(true);
+  });
+
+  it("is never over a target that is not set", () => {
+    const unset = { min: 0, max: 0 };
+    expect(FoodLog_progress(500, unset, "consumed").isOver).to.equal(false);
+    expect(FoodLog_progress(500, unset, "remaining").isOver).to.equal(false);
   });
 
   it("formats a range and a single target", () => {

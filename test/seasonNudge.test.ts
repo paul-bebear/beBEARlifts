@@ -180,4 +180,12 @@ describe("SeasonNudge hungry bear", () => {
     });
     expect(entry.nutrients.calories).to.equal(590);
   });
+
+  it("picks the same meal as the Journal Add button", () => {
+    const meal = (hours: number, minutes: number): string =>
+      SeasonNudge_entry(SeasonNudge_foods[1], new Date(2026, 9, 23, hours, minutes), "id").meal;
+    expect(meal(15, 30)).to.equal("snacks");
+    expect(meal(23, 30)).to.equal("dinner");
+    expect(meal(2, 0)).to.equal("breakfast");
+  });
 });

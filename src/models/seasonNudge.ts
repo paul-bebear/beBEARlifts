@@ -2,7 +2,6 @@ import type { IWeight } from "../types";
 import {
   FoodLog_dayKey,
   FoodLog_dayTotals,
-  FoodLog_mealForHour,
   FoodLog_setGoals,
   FoodLog_setProfile,
   IFoodEntry,
@@ -11,6 +10,7 @@ import {
   INutrients,
 } from "./foodLog";
 import { FoodTargets_compute } from "./foodTargets";
+import { FoodMealForTime_pick } from "./foodMealForTime";
 import { ProgramGoal_body } from "./programGoal";
 import { ISeason, Season_for, Season_lastDay, Season_names } from "./season";
 
@@ -117,7 +117,7 @@ export function SeasonNudge_entry(food: ISeasonFood, now: Date, id: string): IFo
   return {
     id,
     day: FoodLog_dayKey(now),
-    meal: FoodLog_mealForHour(now.getHours()),
+    meal: FoodMealForTime_pick(now),
     name: food.name,
     source: "manual",
     nutrients: food.nutrients,

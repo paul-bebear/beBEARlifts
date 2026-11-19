@@ -5,7 +5,6 @@ import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } fr
 import { NumberText_round1, NumberText_round3 } from "./numberText";
 import { LocalDay_key, LocalDay_parse } from "./localDay";
 import { DayNames_monthDay, DayNames_weekdaysShort } from "./dayNames";
-
 export type IFoodMeal = "breakfast" | "lunch" | "dinner" | "snacks";
 
 export const FoodLog_meals: IFoodMeal[] = ["breakfast", "lunch", "dinner", "snacks"];
@@ -289,19 +288,6 @@ export function FoodLog_dayLabel(day: string, today: string): string {
   return `${DayNames_weekdaysShort[date.getDay()]}, ${monthDay}`;
 }
 
-export function FoodLog_mealForHour(hour: number): IFoodMeal {
-  if (hour >= 4 && hour < 11) {
-    return "breakfast";
-  }
-  if (hour >= 11 && hour < 16) {
-    return "lunch";
-  }
-  if (hour >= 18 && hour < 23) {
-    return "dinner";
-  }
-  return "snacks";
-}
-
 export function FoodLog_mapMicros(micros: IMicros | undefined, change: (value: number) => number): IMicros | undefined {
   if (micros == null) {
     return undefined;
@@ -499,7 +485,7 @@ export interface IFoodProgress {
 
 export function FoodLog_progress(consumed: number, range: IFoodRange, mode: IFoodProgressMode): IFoodProgress {
   const fraction = range.max > 0 ? Math.min(1, Math.max(0, consumed / range.max)) : 0;
-  const isOver = consumed > range.max;
+  const isOver = range.max > 0 && consumed > range.max;
   const value = mode === "consumed" ? consumed : Math.max(0, Math.round((range.min - consumed) * 10) / 10);
   return { value, fraction, isOver };
 }
