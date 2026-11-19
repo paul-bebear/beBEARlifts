@@ -441,4 +441,12 @@ describe("Spotify listen links", () => {
       expect(ListenLinks_spotifyUri(url)).to.equal(undefined);
     }
   });
+
+  it("returns the same session when the song only moved a poll-noise step", () => {
+    const a = track("a");
+    const s = MusicSession_observe(MusicSession_start(1, t0), playing(a, 30000), t0 + 30000);
+    expect(MusicSession_observe(s, playing(a, 30500), t0 + 30500)).to.equal(s);
+    expect(MusicSession_observe(s, playing(a, 20000), t0 + 31000)).to.equal(s);
+    expect(MusicSession_observe(s, playing(a, 38000), t0 + 38000).current?.maxProgressMs).to.equal(38000);
+  });
 });

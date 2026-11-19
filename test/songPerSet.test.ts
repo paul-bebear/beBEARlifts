@@ -4,6 +4,7 @@ import { IHistoryRecord, ISet } from "../src/types";
 import { IMusicPlay, IMusicSession } from "../src/models/musicSession";
 import { ISpotifyTrack } from "../src/models/spotifyTracks";
 import {
+  SongPerSet_byEntry,
   SongPerSet_forEntry,
   SongPerSet_hasAny,
   SongPerSet_label,
@@ -123,5 +124,13 @@ describe("SongPerSet", () => {
       "Squat set 1 · no song",
       "Squat set 2 · Song a · Artist",
     ]);
+  });
+
+  it("returns one shared empty array for entries without songs", () => {
+    const songs = [{ entryIndex: 0, setIndex: 0 }];
+    expect(SongPerSet_forEntry(songs, 0)).to.equal(SongPerSet_forEntry([], 3));
+    const byEntry = SongPerSet_byEntry(songs, 2);
+    expect(byEntry.length).to.equal(2);
+    expect(byEntry[0]).to.equal(byEntry[1]);
   });
 });

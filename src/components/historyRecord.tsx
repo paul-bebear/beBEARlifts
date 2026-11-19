@@ -28,7 +28,7 @@ import { HistoryCollapse_canCollapse } from "../models/historyCollapse";
 import { HistoryRecordCollapsed } from "./historyRecordCollapsed";
 import { useMusicLog } from "../utils/musicStore";
 import { MusicLog_sessionForWorkout } from "../models/musicLog";
-import { SongPerSet_forEntry, SongPerSet_match } from "../models/songPerSet";
+import { SongPerSet_byEntry, SongPerSet_match } from "../models/songPerSet";
 import { SetClipStore } from "../utils/setClipStore";
 import { SetClips_workoutId } from "../models/setClips";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
@@ -71,6 +71,7 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
     () => (isCurrent ? [] : SongPerSet_match(historyRecord, MusicLog_sessionForWorkout(musicLog, historyRecord))),
     [isCurrent, historyRecord, musicLog]
   );
+  const songsByEntry = useMemo(() => SongPerSet_byEntry(songs, entries.length), [songs, entries.length]);
 
   const handleCardPress = (): void => {
     if (Progress_isCurrent(historyRecord)) {
@@ -161,7 +162,7 @@ export const HistoryRecordView = memo((props: IProps): JSX.Element => {
                   supersetColor={entry.superset != null ? supersetToColor[entry.superset] : undefined}
                   settings={props.settings}
                   showNotes={true}
-                  songs={SongPerSet_forEntry(songs, i)}
+                  songs={songsByEntry[i]}
                   clips={!isCurrent && OfflineOnly_isEnabled() && Platform.OS === "web" ? clips : undefined}
                   clipWorkoutId={SetClips_workoutId(historyRecord)}
                 />
