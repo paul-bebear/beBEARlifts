@@ -1,13 +1,10 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import {
-  AccountDelete_listingEntries,
-  AccountDelete_signInMessage,
-  AccountDelete_userId,
-  POST,
-} from "../api/account/delete.mjs";
+import { AccountDelete_listingEntries, AccountDelete_signInMessage, POST } from "../api/account/delete.mjs";
 import { Supabase_origin } from "../api/_auth.mjs";
+
+const u1 = "11111111-1111-4111-8111-111111111111";
 
 function post(headers: Record<string, string> = { authorization: "Bearer user-jwt" }): Request {
   return new Request("https://lifts.paulbebear.com/api/account/delete", { method: "POST", headers });
@@ -41,13 +38,6 @@ describe("api/account/delete", () => {
     }
   });
 
-  it("reads the user id only from a 200 answer", () => {
-    expect(AccountDelete_userId(200, { id: "u1" })).to.equal("u1");
-    expect(AccountDelete_userId(200, { id: "" })).to.equal(undefined);
-    expect(AccountDelete_userId(401, { id: "u1" })).to.equal(undefined);
-    expect(AccountDelete_userId(200, undefined)).to.equal(undefined);
-  });
-
   it("splits a storage listing into full file paths and folder prefixes", () => {
     const listing = [
       { id: "a", name: "latest.json" },
@@ -63,7 +53,7 @@ describe("api/account/delete", () => {
   });
 
   it("deletes the progress photos inside the photos folder", async () => {
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(
       reply([
         { id: "a", name: "latest.json" },
@@ -75,17 +65,17 @@ describe("api/account/delete", () => {
     fetchStub.onCall(4).resolves(reply([]));
     fetchStub.onCall(5).resolves(reply({}));
     expect((await POST(post())).status).to.equal(200);
-    expect(JSON.parse(fetchStub.getCall(2).args[1].body).prefix).to.equal("u1/photos");
+    expect(JSON.parse(fetchStub.getCall(2).args[1].body).prefix).to.equal(`${u1}/photos`);
     expect(JSON.parse(fetchStub.getCall(3).args[1].body)).to.deep.equal({
-      prefixes: ["u1/latest.json", "u1/photos/1700000000000.jpg"],
+      prefixes: [`${u1}/latest.json`, `${u1}/photos/1700000000000.jpg`],
     });
-    expect(fetchStub.lastCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
+    expect(fetchStub.lastCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/${u1}`);
   });
 
   it("pages past 1000 objects and deletes them in batches of 1000", async () => {
     const files = (from: number, n: number): Array<{ id: string; name: string }> =>
       Array.from({ length: n }, (_, i) => ({ id: `m${from + i}`, name: `${from + i}.jpg` }));
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([]));
     fetchStub.onCall(2).resolves(reply(files(0, 1000)));
     fetchStub.onCall(3).resolves(reply(files(1000, 5)));
@@ -93,15 +83,15 @@ describe("api/account/delete", () => {
     fetchStub.onCall(5).resolves(reply([]));
     fetchStub.onCall(6).resolves(reply({}));
     expect((await POST(post())).status).to.equal(200);
-    expect(JSON.parse(fetchStub.getCall(3).args[1].body)).to.include({ prefix: "u1", offset: 1000 });
+    expect(JSON.parse(fetchStub.getCall(3).args[1].body)).to.include({ prefix: u1, offset: 1000 });
     expect(JSON.parse(fetchStub.getCall(4).args[1].body).prefixes).to.have.length(1000);
     const second = JSON.parse(fetchStub.getCall(5).args[1].body).prefixes;
-    expect(second).to.deep.equal(["u1/1000.jpg", "u1/1001.jpg", "u1/1002.jpg", "u1/1003.jpg", "u1/1004.jpg"]);
+    expect(second).to.deep.equal([1000, 1001, 1002, 1003, 1004].map((n) => `${u1}/${n}.jpg`));
     expect(fetchStub.callCount).to.equal(7);
   });
 
   it("keeps the account when a folder inside the backups cannot be listed", async () => {
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([{ id: null, name: "photos" }]));
     fetchStub.onCall(2).resolves(reply({ message: "boom" }, 500));
     const response = await POST(post());
@@ -121,25 +111,54 @@ describe("api/account/delete", () => {
   });
 
   it("answers 401 when Supabase rejects the token and deletes nothing", async () => {
-    fetchStub.resolves(reply({ msg: "invalid JWT" }, 401));
+    for (const status of [401, 403]) {
+      fetchStub.reset();
+      fetchStub.resolves(reply({ msg: "invalid JWT" }, status));
+      const response = await POST(post());
+      expect(response.status).to.equal(401);
+      expect(await response.json()).to.deep.equal({ error: AccountDelete_signInMessage });
+      expect(fetchStub.callCount).to.equal(1);
+      expect(fetchStub.firstCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/user`);
+      expect(fetchStub.firstCall.args[1].headers.Authorization).to.equal("Bearer user-jwt");
+    }
+  });
+
+  it("deletes an anonymous user's account like any other", async () => {
+    fetchStub.onCall(0).resolves(reply({ id: u1, is_anonymous: true }));
+    fetchStub.onCall(1).resolves(reply([]));
+    fetchStub.onCall(2).resolves(reply([]));
+    fetchStub.onCall(3).resolves(reply({}));
     const response = await POST(post());
-    expect(response.status).to.equal(401);
-    expect(fetchStub.callCount).to.equal(1);
-    expect(fetchStub.firstCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/user`);
-    expect(fetchStub.firstCall.args[1].headers.Authorization).to.equal("Bearer user-jwt");
+    expect(response.status).to.equal(200);
+    expect(await response.json()).to.deep.equal({ deleted: true });
+    expect(fetchStub.lastCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/${u1}`);
+  });
+
+  it("answers 502 and deletes nothing when Supabase Auth fails or sends no user id", async () => {
+    for (const [body, status] of [
+      [{}, 500],
+      [{ id: "" }, 200],
+    ] as const) {
+      fetchStub.reset();
+      fetchStub.resolves(reply(body, status));
+      const response = await POST(post());
+      expect(response.status).to.equal(502);
+      expect(await response.json()).to.deep.equal({ error: `Supabase Auth returned ${status}` });
+      expect(fetchStub.callCount).to.equal(1);
+    }
   });
 
   it("deletes the user's backups and meal photos, then the auth user, with the service key", async () => {
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(
       reply([
         { id: "a", name: "latest.json" },
         { id: "b", name: "day-0.json" },
       ])
     );
-    fetchStub.onCall(2).resolves(reply([{ name: "u1/latest.json" }, { name: "u1/day-0.json" }]));
+    fetchStub.onCall(2).resolves(reply([{ name: `${u1}/latest.json` }, { name: `${u1}/day-0.json` }]));
     fetchStub.onCall(3).resolves(reply([{ id: "c", name: "p1.jpg" }]));
-    fetchStub.onCall(4).resolves(reply([{ name: "u1/p1.jpg" }]));
+    fetchStub.onCall(4).resolves(reply([{ name: `${u1}/p1.jpg` }]));
     fetchStub.onCall(5).resolves(reply({}));
     const response = await POST(post());
     expect(response.status).to.equal(200);
@@ -147,38 +166,38 @@ describe("api/account/delete", () => {
 
     const [list, remove, listMeals, removeMeals, deleteUser] = [1, 2, 3, 4, 5].map((i) => fetchStub.getCall(i));
     expect(list.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/list/backups`);
-    expect(JSON.parse(list.args[1].body).prefix).to.equal("u1");
+    expect(JSON.parse(list.args[1].body).prefix).to.equal(u1);
     expect(list.args[1].headers.apikey).to.equal("sb_secret_test");
     expect(remove.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/backups`);
     expect(remove.args[1].method).to.equal("DELETE");
-    expect(JSON.parse(remove.args[1].body)).to.deep.equal({ prefixes: ["u1/latest.json", "u1/day-0.json"] });
+    expect(JSON.parse(remove.args[1].body)).to.deep.equal({ prefixes: [`${u1}/latest.json`, `${u1}/day-0.json`] });
     expect(listMeals.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/list/meal-photos`);
     expect(removeMeals.args[0]).to.equal(`${Supabase_origin}/storage/v1/object/meal-photos`);
-    expect(JSON.parse(removeMeals.args[1].body)).to.deep.equal({ prefixes: ["u1/p1.jpg"] });
-    expect(deleteUser.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
+    expect(JSON.parse(removeMeals.args[1].body)).to.deep.equal({ prefixes: [`${u1}/p1.jpg`] });
+    expect(deleteUser.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/${u1}`);
     expect(deleteUser.args[1].method).to.equal("DELETE");
     expect(deleteUser.args[1].headers.Authorization).to.equal("Bearer sb_secret_test");
   });
 
   it("deletes the RevenueCat customer after the storage and before the auth user", async () => {
     process.env.REVENUECAT_SECRET_KEY = "sk_rc_test";
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([]));
     fetchStub.onCall(2).resolves(reply([]));
-    fetchStub.onCall(3).resolves(reply({ app_user_id: "u1" }));
+    fetchStub.onCall(3).resolves(reply({ app_user_id: u1 }));
     fetchStub.onCall(4).resolves(reply({}));
     const response = await POST(post());
     expect(response.status).to.equal(200);
     const customer = fetchStub.getCall(3);
-    expect(customer.args[0]).to.equal("https://api.revenuecat.com/v1/subscribers/u1");
+    expect(customer.args[0]).to.equal(`https://api.revenuecat.com/v1/subscribers/${u1}`);
     expect(customer.args[1].method).to.equal("DELETE");
     expect(customer.args[1].headers.Authorization).to.equal("Bearer sk_rc_test");
-    expect(fetchStub.getCall(4).args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
+    expect(fetchStub.getCall(4).args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/${u1}`);
   });
 
   it("treats a RevenueCat 404 as already deleted", async () => {
     process.env.REVENUECAT_SECRET_KEY = "sk_rc_test";
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([]));
     fetchStub.onCall(2).resolves(reply([]));
     fetchStub.onCall(3).resolves(reply({ message: "not found" }, 404));
@@ -189,7 +208,7 @@ describe("api/account/delete", () => {
 
   it("keeps the account when RevenueCat cannot delete the customer", async () => {
     process.env.REVENUECAT_SECRET_KEY = "sk_rc_test";
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([]));
     fetchStub.onCall(2).resolves(reply([]));
     fetchStub.onCall(3).resolves(reply({ message: "boom" }, 500));
@@ -200,17 +219,17 @@ describe("api/account/delete", () => {
   });
 
   it("skips the storage delete when the user has no stored files", async () => {
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([]));
     fetchStub.onCall(2).resolves(reply([]));
     fetchStub.onCall(3).resolves(new Response(null, { status: 204 }));
     expect((await POST(post())).status).to.equal(200);
     expect(fetchStub.callCount).to.equal(4);
-    expect(fetchStub.lastCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
+    expect(fetchStub.lastCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/${u1}`);
   });
 
   it("keeps the account when the meal photos cannot be deleted", async () => {
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([]));
     fetchStub.onCall(2).resolves(reply([{ id: "c", name: "p1.jpg" }]));
     fetchStub.onCall(3).resolves(reply({ message: "boom" }, 500));
@@ -221,7 +240,7 @@ describe("api/account/delete", () => {
   });
 
   it("keeps the account when the backups cannot be deleted", async () => {
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([{ id: "a", name: "latest.json" }]));
     fetchStub.onCall(2).resolves(reply({ message: "boom" }, 500));
     const response = await POST(post());
@@ -231,13 +250,15 @@ describe("api/account/delete", () => {
   });
 
   it("reports a failed auth delete and a Supabase timeout", async () => {
-    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(0).resolves(reply({ id: u1 }));
     fetchStub.onCall(1).resolves(reply([]));
     fetchStub.onCall(2).resolves(reply([]));
     fetchStub.onCall(3).resolves(reply({ msg: "Database error deleting user" }, 500));
     expect((await POST(post())).status).to.equal(502);
     fetchStub.reset();
     fetchStub.rejects(new Error("aborted"));
-    expect((await POST(post())).status).to.equal(504);
+    const timedOut = await POST(post());
+    expect(timedOut.status).to.equal(504);
+    expect(await timedOut.json()).to.deep.equal({ error: "Supabase did not answer. Try again." });
   });
 });

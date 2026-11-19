@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { fetchJson } from "./_food.mjs";
-import { Supabase_origin } from "./_auth.mjs";
+import { Auth_isUserId, Supabase_origin } from "./_auth.mjs";
 
 export const Billing_entitlementId = "plus";
 export const Billing_signInMessage = "Sign in with Apple or Google to use beBEAR+.";
@@ -9,11 +9,6 @@ const revenueCatOrigin = "https://api.revenuecat.com";
 const timeoutMs = 8000;
 // App Review and TestFlight buy with sandbox money. Each read of RevenueCat renews the grant, but a free test purchase never becomes lifetime.
 const sandboxGrantMs = 7 * 24 * 60 * 60 * 1000;
-const userIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export function Billing_isUserId(value) {
-  return typeof value === "string" && userIdPattern.test(value);
-}
 
 export function Billing_webhookAuthorized(header, secret) {
   if (typeof header !== "string" || typeof secret !== "string" || secret === "") {
@@ -33,14 +28,7 @@ export function Billing_eventUserIds(event) {
     ...(Array.isArray(event?.transferred_from) ? event.transferred_from : []),
     ...(Array.isArray(event?.transferred_to) ? event.transferred_to : []),
   ];
-  return [...new Set(ids.filter(Billing_isUserId).map((id) => id.toLowerCase()))];
-}
-
-export function Billing_userFromAuth(status, body) {
-  if (status !== 200 || !Billing_isUserId(body?.id) || body.is_anonymous === true) {
-    return undefined;
-  }
-  return body.id.toLowerCase();
+  return [...new Set(ids.filter(Auth_isUserId).map((id) => id.toLowerCase()))];
 }
 
 function time(value) {

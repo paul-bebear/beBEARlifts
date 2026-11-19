@@ -1,7 +1,19 @@
 import { getVercelOidcToken } from "@vercel/oidc";
-import { fetchJson } from "./_food.mjs";
+import { fetchJson, json } from "./_food.mjs";
 
 export const aiUnavailableMessage = "AI is unavailable. Try again or use the app without AI.";
+
+export async function AiRoute_readJson(request, errorText) {
+  try {
+    return { body: await request.json() };
+  } catch {
+    return { response: json({ error: errorText }, 400) };
+  }
+}
+
+export function AiRoute_clean(value, max) {
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max) : "";
+}
 
 function providerError(answer, raw) {
   return answer?.error?.message ?? answer?.[0]?.error?.message ?? raw.slice(0, 200);

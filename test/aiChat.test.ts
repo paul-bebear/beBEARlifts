@@ -2,7 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import { aiChat, aiProvider, aiUnavailableMessage, Gateway_anthropicOnly } from "../api/_ai.mjs";
-import { AiAuth_check } from "../api/_auth.mjs";
+import { AiAuth_check, AiAuth_signInMessage } from "../api/_auth.mjs";
 import { POST as report } from "../api/ai/report.mjs";
 import { POST as warmup } from "../api/ai/warmup.mjs";
 import { POST as onboard } from "../api/ai/onboard.mjs";
@@ -177,6 +177,52 @@ describe("AI routes", () => {
       expect((await route.post(request(route.body, false))).status).to.equal(401);
     }
     expect(fetchStub.called).to.equal(false);
+  });
+
+  it("answers the sign-in text for a bad token and an anonymous user without calling the provider", async () => {
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    for (const route of routes) {
+      for (const status of [401, 403]) {
+        fetchStub.reset();
+        fetchStub.resolves(new Response(JSON.stringify({ message: "refused" }), { status }));
+        const response = await route.post(request(route.body));
+        expect(response.status).to.equal(401);
+        expect(await response.json()).to.deep.equal({ error: AiAuth_signInMessage });
+        expect(fetchStub.calledOnce).to.equal(true);
+      }
+    }
+  });
+
+  it("answers each route's own text for a body that is not JSON", async () => {
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    const texts = [
+      "Send JSON with a facts list",
+      "Send JSON with an exercises list",
+      "Send JSON with an image or text field",
+    ];
+    for (const [i, post] of [report, warmup, photo].entries()) {
+      const response = await post(new Request("https://app.test/api/ai/test", { method: "POST", body: "{" }));
+      expect(response.status).to.equal(400);
+      expect(await response.json()).to.deep.equal({ error: texts[i] });
+    }
+    expect(fetchStub.called).to.equal(false);
+  });
+
+  it("joins runs of spaces and newlines in the warmup and report fields", async () => {
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    const sent = async (post: (r: Request) => Promise<Response>, body: unknown): Promise<string> => {
+      fetchStub.reset();
+      fetchStub.onFirstCall().resolves(allowance());
+      fetchStub.onSecondCall().resolves(answer());
+      await post(request(body));
+      return JSON.parse((fetchStub.secondCall.args[1] as RequestInit).body as string).messages[1].content;
+    };
+    expect(await sent(report, { dayName: " Leg \n day ", facts: ["All  sets\n done"] })).to.equal(
+      "Session: Leg day\nFacts:\n- All sets done"
+    );
+    expect(
+      await sent(warmup, { exercises: [{ name: " Back \n squat", muscles: [" quads "], sets: "5 x\t100" }] })
+    ).to.equal("Today's workout:\n1. Back squat (quads): 5 x 100");
   });
 
   it("keeps each route's token limit and temperature after authentication", async () => {
