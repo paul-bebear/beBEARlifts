@@ -396,7 +396,7 @@ describe("FoodLog_macroLine", () => {
   });
 
   it("rounds to whole grams from 100 up", () => {
-    expect(FoodLog_macroLine({ calories: 0, protein: 120.4, carbs: 0, fat: 100 })).to.equal("120 P · 0 C · 100 F");
+    expect(FoodLog_macroLine({ protein: 120.4, carbs: 0, fat: 100 })).to.equal("120 P · 0 C · 100 F");
   });
 
   it("keeps the order when parts are picked", () => {
