@@ -55,4 +55,19 @@ describe("ShareAchievements", () => {
     expect(result.lifetimeKg.get(2)).to.deep.equal({ beforeKg: 10, afterKg: 30 });
     expect(result.lifetimeKg.get(3)).to.deep.equal({ beforeKg: 30, afterKg: 60 });
   });
+
+  it("keeps early bear from a 1-second record on the share card", () => {
+    const start = new Date("2026-10-01T06:00:00").getTime();
+    const short = workout(1, start + 1000, 20);
+    const result = ShareAchievements_build({
+      history: [short],
+      prs: {},
+      doneDays: new Set(),
+      foodLog: FoodLog_empty(),
+      settings: { ...Settings_build(), units: "kg" },
+      tierSet: "male",
+      celebratedLevel: 1,
+    });
+    expect(result.badges).to.deep.equal([{ id: "earlyBear", recordId: 1, at: short.endTime }]);
+  });
 });
