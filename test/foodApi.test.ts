@@ -37,4 +37,15 @@ describe("FoodApi request time limit", () => {
     const result = await FoodApi_lookupBarcode("111", []);
     expect(result.ok).to.equal(true);
   });
+
+  it("returns the USDA error when Open Food Facts has no product and USDA fails", async () => {
+    sinon
+      .stub(globalThis, "fetch")
+      .callsFake(async (url) =>
+        String(url).includes("/api/food/usda")
+          ? new Response(JSON.stringify({ error: "USDA is busy." }), { status: 429 })
+          : new Response(JSON.stringify({ status: 0 }), { status: 200 })
+      );
+    expect(await FoodApi_lookupBarcode("111", [])).to.deep.equal({ ok: false, error: "USDA is busy." });
+  });
 });

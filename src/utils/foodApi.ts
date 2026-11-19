@@ -76,10 +76,13 @@ export async function FoodApi_lookupBarcode(
   }
   const usda = await request(`/api/food/usda${path}`);
   const fromUsda = usda.ok ? UsdaFoodData_parseBarcodeResponse(usda.value, code) : undefined;
-  if (fromUsda != null || openFoodFacts.ok) {
+  if (fromUsda != null) {
     return { ok: true, value: fromUsda };
   }
-  return openFoodFacts;
+  if (!usda.ok) {
+    return usda;
+  }
+  return openFoodFacts.ok ? { ok: true, value: undefined } : openFoodFacts;
 }
 
 export async function FoodApi_find(query: string, saved: IFoodProduct[]): Promise<IFoodApiResult<IFoodProduct[]>> {

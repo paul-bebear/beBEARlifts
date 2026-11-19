@@ -24,6 +24,14 @@ describe("SavedFoods_find", () => {
 });
 
 describe("SavedFoods_save", () => {
+  it("keeps two foods with the same name and different brands when neither has a barcode", () => {
+    const per100g = { calories: 130, protein: 2.7, carbs: 28, fat: 0.3 };
+    const a: IFoodProduct = { name: "Yogurt", brand: "Alpha", per100g };
+    const b: IFoodProduct = { name: "yogurt", brand: "Beta", per100g };
+    expect(SavedFoods_save([a], b).map((p) => p.brand)).to.deep.equal(["Beta", "Alpha"]);
+    expect(SavedFoods_save([a], { ...a, brand: "ALPHA" }).map((p) => p.brand)).to.deep.equal(["ALPHA"]);
+  });
+
   it("replaces the food with the same barcode and puts it first", () => {
     const other: IFoodProduct = { name: "Rice", per100g: { calories: 130, protein: 2.7, carbs: 28, fat: 0.3 } };
     const updated = SavedFoods_save([other, buldak], { ...buldak, name: "Buldak" });
