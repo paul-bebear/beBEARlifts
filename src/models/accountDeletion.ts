@@ -1,4 +1,5 @@
 import { IAccountPlanState } from "./accountPlan";
+import { ApiRequest_errorText } from "../utils/apiRequest";
 
 export const AccountDeletion_confirmWord = "DELETE";
 export const AccountDeletion_signInMessage = "Sign in again, then delete the account.";
@@ -17,8 +18,7 @@ export function AccountDeletion_result(status: number, body: unknown): IAccountD
   if (status === 401) {
     return { ok: false, error: AccountDeletion_signInMessage };
   }
-  const error = (body as { error?: unknown } | undefined)?.error;
-  return { ok: false, error: typeof error === "string" ? error : `The server returned ${status}.` };
+  return { ok: false, error: ApiRequest_errorText(status, body) };
 }
 
 export const AccountDeletion_subscriptionLine =

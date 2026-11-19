@@ -1,5 +1,5 @@
 import { SupabaseClient_accessToken, Supabase_notSignedIn } from "./supabaseClient";
-import { ApiUrl_for } from "./apiUrl";
+import { ApiRequest_errorText, ApiRequest_send } from "./apiRequest";
 import { AiConsent_disabledMessage, AiConsent_ensure, AiConsentStore } from "./aiConsentClient";
 import { AiConsent_maySend } from "../models/aiConsent";
 import { AiCaps_parse, AiCaps_refusalText } from "../models/aiCaps";
@@ -28,43 +28,30 @@ export async function AiRequest_post(
   if (!auth.ok) {
     return { ok: false, error: auth.error === Supabase_notSignedIn ? AiRequest_signInMessage : auth.error };
   }
-  let response: Response;
   if (!AiConsent_maySend(await AiConsentStore.load())) {
     return { ok: false, error: AiConsent_disabledMessage };
   }
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let body: unknown;
-  try {
-    response = await fetch(ApiUrl_for(path), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth.value}` },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    body = await response.json().catch(() => undefined);
-  } catch {
-    return { ok: false, error: controller.signal.aborted ? AiRequest_timeoutMessage : AiRequest_offlineMessage };
-  } finally {
-    clearTimeout(timer);
+  const sent = await ApiRequest_send(path, { method: "POST", token: auth.value, json: payload }, timeoutMs);
+  if (sent.kind !== "reply") {
+    return { ok: false, error: sent.kind === "timeout" ? AiRequest_timeoutMessage : AiRequest_offlineMessage };
   }
-  if (response.status === 504) {
+  const { status, body } = sent;
+  if (status === 504) {
     return { ok: false, error: AiRequest_timeoutMessage };
   }
-  if (response.status === 401) {
+  if (status === 401) {
     return { ok: false, error: AiRequest_signInMessage };
   }
-  const refusal = response.status === 429 ? AiCaps_parse(body) : undefined;
+  const refusal = status === 429 ? AiCaps_parse(body) : undefined;
   if (refusal != null) {
     PlusOfferClient_onRefusal(refusal);
   }
-  const capped = response.status === 429 ? AiCaps_refusalText(body) : undefined;
+  const capped = status === 429 ? AiCaps_refusalText(body) : undefined;
   if (capped != null) {
     return { ok: false, error: capped };
   }
-  if (!response.ok) {
-    const error = (body as { error?: unknown } | undefined)?.error;
-    return { ok: false, error: typeof error === "string" ? error : `The server returned ${response.status}.` };
+  if (!sent.ok) {
+    return { ok: false, error: ApiRequest_errorText(status, body) };
   }
   return { ok: true, body };
 }
