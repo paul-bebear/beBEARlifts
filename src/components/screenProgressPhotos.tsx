@@ -6,6 +6,7 @@ import { PhotoSourceMenu } from "./photoSourceMenu";
 import { useNavOptions } from "../navigation/useNavOptions";
 import {
   ProgressPhotos_base64,
+  ProgressPhotos_refusal,
   ProgressPhotos_fullMessage,
   ProgressPhotos_isFull,
   ProgressPhotos_nextId,
@@ -16,6 +17,11 @@ import { ProgressPhotoStore } from "../utils/progressPhotoStore";
 import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
 import { ProgressPhotoFiles_delete, ProgressPhotoFiles_dir, ProgressPhotoFiles_put } from "../utils/progressPhotoFiles";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
+
+const refusalMessages = {
+  "too-large": "This photo is too large to keep. Try another one.",
+  "not-jpeg": "This file is not a photo the app can use. Try another one.",
+};
 
 export function ScreenProgressPhotos(): JSX.Element {
   const log = ProgressPhotoStore.use();
@@ -29,6 +35,11 @@ export function ScreenProgressPhotos(): JSX.Element {
   const save = async (dataUrl: string): Promise<void> => {
     const takenAt = Date.now();
     const id = ProgressPhotos_nextId(ProgressPhotoStore.get(), takenAt);
+    const refusal = ProgressPhotos_refusal(dataUrl);
+    if (refusal != null) {
+      Dialog_alert(refusalMessages[refusal]);
+      return;
+    }
     const base64 = ProgressPhotos_base64(dataUrl);
     const added = base64 != null && (await ProgressPhotoFiles_put(id, takenAt, base64).catch(() => false));
     if (added) {

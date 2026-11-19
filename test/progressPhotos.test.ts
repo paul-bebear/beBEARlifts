@@ -18,6 +18,7 @@ import {
   ProgressPhotos_parse,
   ProgressPhotos_parseIndex,
   ProgressPhotos_remove,
+  ProgressPhotos_refusal,
   ProgressPhotos_removeTakenAt,
   ProgressPhotos_syncPlan,
   ProgressPhotos_uri,
@@ -144,5 +145,14 @@ describe("ProgressPhotos", () => {
   it("fits the long side to 1080 px and never enlarges", () => {
     expect(ProgressPhotos_fitSize(4032, 3024)).to.deep.equal({ width: 1080, height: 810 });
     expect(ProgressPhotos_fitSize(600, 800)).to.deep.equal({ width: 600, height: 800 });
+  });
+
+  it("says why a photo is refused", () => {
+    const big = `data:image/jpeg;base64,${"A".repeat(1024 * 1024)}`;
+    expect(ProgressPhotos_refusal(jpeg)).to.equal(undefined);
+    expect(ProgressPhotos_refusal(big)).to.equal("too-large");
+    expect(ProgressPhotos_base64(big)).to.equal(undefined);
+    expect(ProgressPhotos_refusal("data:image/png;base64,AAAA")).to.equal("not-jpeg");
+    expect(ProgressPhotos_refusal("not base64!")).to.equal("not-jpeg");
   });
 });
