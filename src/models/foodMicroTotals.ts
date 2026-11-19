@@ -1,5 +1,6 @@
 import { FoodLog_dayTotals, FoodLog_entriesFor, IFoodLog } from "./foodLog";
 import { FoodMicros_coreKeys, FoodMicros_saltPerSodium, FoodMicros_table, IMicroKey, IMicroUnit } from "./foodMicros";
+import { StringUtils_pluralize } from "../utils/string";
 
 export const FoodMicroTotals_warning =
   "Estimate only. Many foods have no micro data, so your real totals are likely higher.";
@@ -47,7 +48,7 @@ function valueText(key: IMicroKey, amount: number | undefined, unit: IMicroUnit)
 }
 
 function coverageText(withValue: number, foods: number): string {
-  return `${withValue} of ${foods} ${foods === 1 ? "food" : "foods"}`;
+  return `${withValue} of ${foods} ${StringUtils_pluralize("food", foods)}`;
 }
 
 export function FoodMicroTotals_forDay(log: IFoodLog, day: string, today: string = day): IMicroTotals {

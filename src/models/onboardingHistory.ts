@@ -1,5 +1,6 @@
 import { ICustomExercise, IHistoryRecord } from "../types";
 import { ImportUtils_findDuplicates } from "../utils/importTypes";
+import { StringUtils_pluralize } from "../utils/string";
 
 export interface IOnboardingHistory {
   records: IHistoryRecord[];
@@ -35,5 +36,5 @@ export function OnboardingHistory_summary(history: IOnboardingHistory): string {
   const first = history.records[0].startTime;
   const last = history.records[count - 1].startTime;
   const range = day(first) === day(last) ? `on ${day(first)}` : `from ${day(first)} to ${day(last)}`;
-  return `The AI read ${count} ${count === 1 ? "workout" : "workouts"} ${range}.${skipped}`;
+  return `The AI read ${count} ${StringUtils_pluralize("workout", count)} ${range}.${skipped}`;
 }

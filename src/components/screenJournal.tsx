@@ -26,7 +26,7 @@ import { IconChevronRight } from "./icons/iconFoodUi";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { Notes_firstLine, Notes_preview } from "../models/notes";
 import { FoodMealForTime_pick } from "../models/foodMealForTime";
-import { DailyChecklist_doneDays, DailyChecklist_streak } from "../models/dailyChecklist";
+import { DailyChecklist_streakOf } from "../models/dailyChecklist";
 import {
   MonthCalendar_build,
   MonthCalendar_monthOf,
@@ -255,7 +255,7 @@ export function ScreenJournal(): JSX.Element {
   );
   const header = useMemo(() => JournalDay_header({ history }), [history]);
   const streak = useMemo(
-    () => DailyChecklist_streak(DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts }), today),
+    () => DailyChecklist_streakOf({ foodLog: food, workouts: bear.workouts }, today),
     [food, bear.workouts, today]
   );
   const startsMonday = !!sources.settings.startWeekFromMonday;

@@ -15,6 +15,7 @@ import { ScrollableTabs } from "./scrollableTabs";
 import { GraphStats, getHealthDataForGraph } from "./graphStats";
 import { Locker } from "./locker";
 import { Subscriptions_hasSubscription } from "../utils/subscriptions";
+import { StringUtils_pluralize } from "../utils/string";
 
 interface IProps {
   dispatch: IDispatch;
@@ -158,7 +159,7 @@ function HealthMetricList(props: IHealthMetricListProps): JSX.Element {
             onPress={() => setShowHidden((s) => !s)}
           >
             <Text className="text-center text-text-link">
-              {showHidden ? "Hide" : "Show"} {hidden.length} hidden {hidden.length === 1 ? "record" : "records"}
+              {showHidden ? "Hide" : "Show"} {hidden.length} hidden {StringUtils_pluralize("record", hidden.length)}
             </Text>
           </Pressable>
           {showHidden &&

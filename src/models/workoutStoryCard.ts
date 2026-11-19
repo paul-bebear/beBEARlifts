@@ -15,6 +15,7 @@ import { IBearFur, IBearLine } from "./bearStoreData";
 import { BearBadges_forRecord, IBearBadgeCard } from "./bearBadges";
 import { IShareAchievements } from "./shareAchievements";
 import { ILiftEquivalent, LiftEquivalents_pick } from "./liftEquivalents";
+import { StringUtils_pluralize } from "../utils/string";
 
 export type IShareCardStyle = "rank" | "receipt" | "count" | "photo";
 export type IShareCardPage = IShareCardStyle | "collage";
@@ -105,7 +106,7 @@ export interface IWorkoutHeadline {
 }
 
 function setsWord(sets: number): string {
-  return sets === 1 ? "set" : "sets";
+  return StringUtils_pluralize("set", sets);
 }
 
 export function WorkoutStoryCard_hasWeight(stats: IWorkoutStoryStats): boolean {

@@ -7,6 +7,7 @@ import {
   DailyChecklist_empty,
   DailyChecklist_parse,
   DailyChecklist_streak,
+  DailyChecklist_streakOf,
   DailyChecklist_toggleCheckIn,
   DailyChecklist_weighInWeekday,
   IChecklistDayInput,
@@ -213,6 +214,8 @@ describe("DailyChecklist", () => {
     expect(DailyChecklist_streak(done, "2026-10-21")).to.equal(4);
     expect(DailyChecklist_streak(done, "2026-10-22")).to.equal(0);
     expect(DailyChecklist_streak(new Set(), "2026-10-22")).to.equal(0);
+    expect(DailyChecklist_streakOf({ foodLog, workouts }, "2026-10-21")).to.equal(4);
+    expect(DailyChecklist_streakOf({ foodLog, workouts }, "2026-10-22")).to.equal(0);
   });
 
   it("dates a workout by the day it started, like the calendar dots", () => {
