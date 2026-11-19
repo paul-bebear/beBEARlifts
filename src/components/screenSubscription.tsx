@@ -1,4 +1,4 @@
-import { JSX } from "react";
+import { JSX, useEffect, useState } from "react";
 import { View, Pressable, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "./primitives/text";
@@ -9,7 +9,10 @@ import { useNavOptions } from "../navigation/useNavOptions";
 import { IconClose } from "./icons/iconClose";
 import { IconCrown } from "./icons/iconCrown";
 import { goBack } from "../navigation/navigationService";
-import { IPlusFeatureInfo, PlusAccess_list, PlusAccess_prices } from "../models/plusAccess";
+import { IPlusFeatureInfo, IPlusPrices, PlusAccess_list, PlusAccess_pricesLine } from "../models/plusAccess";
+import { AccountPlan_aiCaps } from "../models/accountPlan";
+import { AccountPlanStore } from "../utils/accountPlanClient";
+import { Purchases_prices } from "../utils/purchases";
 import { useHasPlus } from "../utils/usePlusAccess";
 import { StoreBuild_showsProCodes } from "../models/storeBuild";
 import { StoreReceipt_name } from "../utils/storeReceipt";
@@ -21,17 +24,27 @@ interface IProps {
 export function ScreenSubscription(props: IProps): JSX.Element {
   const insets = useSafeAreaInsets();
   const hasPlus = useHasPlus();
+  const aiCaps = AccountPlan_aiCaps(AccountPlanStore.use());
+  const [prices, setPrices] = useState<IPlusPrices | undefined>(undefined);
   useNavOptions({ navHidden: true });
+
+  useEffect(() => {
+    let mounted = true;
+    Purchases_prices().then((p) => mounted && setPrices(p));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <NavScreenContent>
       <PlusHero hasPlus={hasPlus} />
       <View className="flex-1 px-gutter" style={{ paddingBottom: insets.bottom + 16 }}>
-        <FeatureGroup title="What beBEAR+ adds" features={PlusAccess_list("plus")} testID="plus-features" />
+        <FeatureGroup title="What beBEAR+ adds" features={PlusAccess_list("plus", aiCaps)} testID="plus-features" />
         <FeatureGroup title="Free for everyone" features={PlusAccess_list("free")} testID="free-features" />
         {!hasPlus && (
           <View className="p-4 mb-4 rounded-xl bg-background-cardpurple" testID="plus-prices">
-            <Text className="text-base font-semibold">{PlusAccess_prices}</Text>
+            <Text className="text-base font-semibold">{PlusAccess_pricesLine(prices, Platform.OS === "web")}</Text>
             <Text className="mt-1 text-sm text-text-secondary">Purchases open soon.</Text>
             {StoreBuild_showsProCodes(Platform.OS, StoreReceipt_name(), __DEV__) && (
               <Text className="mt-1 text-sm text-text-secondary">

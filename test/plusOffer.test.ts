@@ -20,7 +20,7 @@ import {
   IPlusOfferFlow,
   IPlusOfferStep,
 } from "../src/models/plusOffer";
-import { IAiCapsRefusal } from "../src/models/aiCaps";
+import { AiCaps_plus, IAiCapsRefusal, IAiCapsUsage } from "../src/models/aiCaps";
 import { IAccountPlanState } from "../src/models/accountPlan";
 
 const free: IAccountPlanState = { status: "known", userId: "a", plan: "free" };
@@ -70,9 +70,19 @@ describe("PlusOffer", () => {
   });
 
   it("names the limit that was hit and the plus limit", () => {
-    expect(PlusOffer_capSheetTitle(dayCap)).to.equal("You used today's 3 AI uses. beBEAR+ gives 30 a day.");
-    expect(PlusOffer_capSheetTitle({ ...dayCap, reason: "week" })).to.equal(
+    expect(PlusOffer_capSheetTitle(dayCap, AiCaps_plus)).to.equal(
+      "You used today's 3 AI uses. beBEAR+ gives 30 a day."
+    );
+    expect(PlusOffer_capSheetTitle({ ...dayCap, reason: "week" }, AiCaps_plus)).to.equal(
       "You used this week's 10 AI uses. beBEAR+ gives 150 a week."
+    );
+  });
+
+  it("quotes the plus limit the server holds", () => {
+    const server: IAiCapsUsage = { day: 40, week: 200 };
+    expect(PlusOffer_capSheetTitle(dayCap, server)).to.equal("You used today's 3 AI uses. beBEAR+ gives 40 a day.");
+    expect(PlusOffer_capSheetTitle({ ...dayCap, reason: "week" }, server)).to.equal(
+      "You used this week's 10 AI uses. beBEAR+ gives 200 a week."
     );
   });
 
@@ -155,6 +165,18 @@ describe("PlusOffer_reduce", () => {
     expect(run([capEvent, { type: "capChoice", see: true }]).effects).to.deep.equal([
       { type: "identify", userId: "a" },
     ]);
+  });
+
+  it("puts the server's plus limit in the limit sheet, and the app's when the event has none", () => {
+    const withServer = run([{ ...capEvent, plus: { day: 40, week: 200 } } as IPlusOfferEvent]);
+    expect(withServer.effects[1]).to.deep.equal({
+      type: "askCap",
+      title: "You used today's 3 AI uses. beBEAR+ gives 40 a day.",
+    });
+    expect(run([capEvent]).effects[1]).to.deep.equal({
+      type: "askCap",
+      title: "You used today's 3 AI uses. beBEAR+ gives 30 a day.",
+    });
   });
 
   it("checks the first-program offer again after the wait", () => {

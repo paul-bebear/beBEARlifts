@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 import Purchases from "react-native-purchases";
 import RevenueCatUI from "react-native-purchases-ui";
+import { IPlusPrices, PlusAccess_pricesFromOffering } from "../models/plusAccess";
 import { IPaywallOutcome, IRestoreOutcome, PlusOffer_paywallOutcome } from "../models/plusOffer";
 import {
   IPurchasesIdentity,
@@ -111,5 +112,16 @@ export async function Purchases_restore(): Promise<IRestoreOutcome> {
 export async function Purchases_manage(): Promise<void> {
   if (identity != null) {
     await Purchases.showManageSubscriptions().catch(() => undefined);
+  }
+}
+
+export async function Purchases_prices(): Promise<IPlusPrices | undefined> {
+  if (identity == null) {
+    return undefined;
+  }
+  try {
+    return PlusAccess_pricesFromOffering((await Purchases.getOfferings()).current);
+  } catch {
+    return undefined;
   }
 }

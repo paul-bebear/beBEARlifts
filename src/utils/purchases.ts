@@ -1,3 +1,4 @@
+import { IPlusPrices } from "../models/plusAccess";
 import { IPaywallOutcome, IRestoreOutcome } from "../models/plusOffer";
 
 export function Purchases_isAvailable(): boolean {
@@ -26,4 +27,8 @@ export async function Purchases_restore(): Promise<IRestoreOutcome> {
 
 export async function Purchases_manage(): Promise<void> {
   return;
+}
+
+export async function Purchases_prices(): Promise<IPlusPrices | undefined> {
+  return undefined;
 }

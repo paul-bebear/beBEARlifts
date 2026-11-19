@@ -13,15 +13,22 @@ export const AccountPlan_activatingTries = 5;
 
 export type IAccountPlanSync = "plus" | "free" | "stale" | "error";
 
+export type IAccountPlanAction = "open" | "manage" | "none";
+
 export interface IAccountPlanRow {
   title: string;
   subtitle?: string;
-  action: "open" | "manage" | "none";
+  action: IAccountPlanAction;
+  actionLabel: string;
 }
+
+type IAccountPlanRowText = Omit<IAccountPlanRow, "actionLabel">;
 
 const grants: IAccountGrant[] = ["code", "subscription", "lifetime"];
 
-function offerRow(state: IAccountPlanState): IAccountPlanRow {
+const actionLabels: Record<IAccountPlanAction, string> = { open: "Get beBEAR+", manage: "Manage", none: "View" };
+
+function offerRow(state: IAccountPlanState): IAccountPlanRowText {
   return { title: "beBEAR+", subtitle: AiCaps_offerSubtitle(AccountPlan_aiCaps(state)), action: "open" };
 }
 
@@ -99,6 +106,15 @@ export function AccountPlan_isPlus(state: IAccountPlanState, userId: string | un
 }
 
 export function AccountPlan_settingsRow(state: IAccountPlanState, userId: string | undefined): IAccountPlanRow {
+  const row = planRow(state, userId);
+  return { ...row, actionLabel: actionLabels[row.action] };
+}
+
+export function AccountPlan_accountRowOpens(row: IAccountPlanRow, storeAvailable: boolean): "manage" | "plusScreen" {
+  return row.action === "manage" && storeAvailable ? "manage" : "plusScreen";
+}
+
+function planRow(state: IAccountPlanState, userId: string | undefined): IAccountPlanRowText {
   if (userId == null || state.status === "unknown" || state.userId !== userId) {
     return offerRow(state);
   }

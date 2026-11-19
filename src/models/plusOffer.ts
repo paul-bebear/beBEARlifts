@@ -1,4 +1,4 @@
-import { AiCaps_plus, IAiCapsRefusal } from "./aiCaps";
+import { AiCaps_plus, IAiCapsRefusal, IAiCapsUsage } from "./aiCaps";
 import { IAccountPlanState, IAccountPlanSync } from "./accountPlan";
 import { LocalDay_key } from "./localDay";
 
@@ -25,7 +25,14 @@ export type IPlusOfferEvent =
   | { type: "open"; trigger: "settings" | "restore"; userId: string | undefined }
   | { type: "firstProgram" }
   | { type: "waited"; eligible: boolean; userId: string | undefined }
-  | { type: "capRefused"; refusal: IAiCapsRefusal; userId: string; memory: IPlusOfferMemory; today: string }
+  | {
+      type: "capRefused";
+      refusal: IAiCapsRefusal;
+      userId: string;
+      memory: IPlusOfferMemory;
+      today: string;
+      plus?: IAiCapsUsage;
+    }
   | { type: "capChoice"; see: boolean }
   | { type: "signInChoice"; provider?: "apple" | "google" }
   | { type: "signedIn"; userId?: string; error?: string }
@@ -125,14 +132,14 @@ export function PlusOffer_capSheetDue(lastDay: string | undefined, today: string
   return lastDay !== today;
 }
 
-export function PlusOffer_capSheetTitle(refusal: IAiCapsRefusal): string {
+export function PlusOffer_capSheetTitle(refusal: IAiCapsRefusal, plus: IAiCapsUsage): string {
   if (refusal.reason === "week") {
-    return `You used this week's ${refusal.caps.week} AI uses. beBEAR+ gives ${AiCaps_plus.week} a week.`;
+    return `You used this week's ${refusal.caps.week} AI uses. beBEAR+ gives ${plus.week} a week.`;
   }
   if (refusal.reason === "day") {
-    return `You used today's ${refusal.caps.day} AI uses. beBEAR+ gives ${AiCaps_plus.day} a day.`;
+    return `You used today's ${refusal.caps.day} AI uses. beBEAR+ gives ${plus.day} a day.`;
   }
-  return `beBEAR+ gives ${AiCaps_plus.day} AI uses a day.`;
+  return `beBEAR+ gives ${plus.day} AI uses a day.`;
 }
 
 const idle: IPlusOfferFlow = { step: "idle" };
@@ -183,7 +190,7 @@ function start(flow: IPlusOfferFlow, event: IPlusOfferEvent): IPlusOfferStep {
       return to(
         { step: "askingCap", trigger: "aiLimit", userId: event.userId },
         { type: "rememberCapDay", userId: event.userId, day: event.today },
-        { type: "askCap", title: PlusOffer_capSheetTitle(event.refusal) }
+        { type: "askCap", title: PlusOffer_capSheetTitle(event.refusal, event.plus ?? AiCaps_plus) }
       );
     }
     default:

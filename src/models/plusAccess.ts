@@ -23,10 +23,20 @@ export interface IPlusFeatureInfo {
   description: string;
 }
 
-export interface IPlusAccountRow {
-  title: string;
-  subtitle: string;
-  actionLabel: string;
+export interface IPlusPrices {
+  monthly?: string;
+  annual?: string;
+  lifetime?: string;
+}
+
+export interface IPlusStorePackage {
+  product: { priceString: string };
+}
+
+export interface IPlusStoreOffering {
+  monthly: IPlusStorePackage | null;
+  annual: IPlusStorePackage | null;
+  lifetime: IPlusStorePackage | null;
 }
 
 // Decided 2026-10-25: anything that logs is free. Anything that analyzes, uses AI or connects to another tool is beBEAR+.
@@ -76,6 +86,41 @@ const screenFeatures: Partial<Record<string, IPlusFeature>> = {
 };
 
 export const PlusAccess_prices = "$6.99 a month, $39.99 a year, or $79.99 once for life.";
+export const PlusAccess_pricesInStore = "Prices show in the App Store.";
+
+const priceKinds: (keyof IPlusPrices)[] = ["monthly", "annual", "lifetime"];
+const priceWords: Record<keyof IPlusPrices, string> = {
+  monthly: "a month",
+  annual: "a year",
+  lifetime: "once for life",
+};
+
+export function PlusAccess_pricesFromOffering(offering: IPlusStoreOffering | null | undefined): IPlusPrices {
+  const prices: IPlusPrices = {};
+  for (const kind of priceKinds) {
+    const priceString = offering?.[kind]?.product.priceString;
+    if (priceString) {
+      prices[kind] = priceString;
+    }
+  }
+  return prices;
+}
+
+export function PlusAccess_pricesLine(prices: IPlusPrices | undefined, isWeb: boolean): string {
+  const parts = priceKinds.flatMap((kind) => {
+    const price = prices?.[kind];
+    return price == null ? [] : [`${price} ${priceWords[kind]}`];
+  });
+  if (parts.length === 0) {
+    return isWeb ? PlusAccess_prices : PlusAccess_pricesInStore;
+  }
+  if (parts.length === 1) {
+    return `${parts[0]}.`;
+  }
+  const last = parts[parts.length - 1];
+  const head = parts.slice(0, -1).join(", ");
+  return parts.length === 2 ? `${head} or ${last}.` : `${head}, or ${last}.`;
+}
 
 export function PlusAccess_list(tier: IPlusTier, caps?: IAiCapsPlan): IPlusFeatureInfo[] {
   return features
@@ -101,10 +146,4 @@ export function PlusAccess_allows(
 
 export function PlusAccess_screenFeature(screen: string): IPlusFeature | undefined {
   return screenFeatures[screen];
-}
-
-export function PlusAccess_accountRow(hasPlus: boolean): IPlusAccountRow {
-  return hasPlus
-    ? { title: "beBEAR+ is on", subtitle: "Insights, AI and the API are unlocked", actionLabel: "View" }
-    : { title: "Free plan", subtitle: "Tracking is free for everyone", actionLabel: "Get beBEAR+" };
 }

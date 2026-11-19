@@ -3,13 +3,27 @@ import { expect } from "chai";
 import { AccountPlan_empty, IAccountPlanState } from "../src/models/accountPlan";
 import {
   IPlusFeature,
-  PlusAccess_accountRow,
+  IPlusStoreOffering,
   PlusAccess_allows,
   PlusAccess_hasPlus,
   PlusAccess_list,
   PlusAccess_needsPlus,
+  PlusAccess_prices,
+  PlusAccess_pricesFromOffering,
+  PlusAccess_pricesInStore,
+  PlusAccess_pricesLine,
   PlusAccess_screenFeature,
 } from "../src/models/plusAccess";
+
+function storePackage(priceString: string): { product: { priceString: string } } {
+  return { product: { priceString } };
+}
+
+const euroOffering: IPlusStoreOffering = {
+  monthly: storePackage("6,99 €"),
+  annual: storePackage("39,99 €"),
+  lifetime: storePackage("79,99 €"),
+};
 
 const plusUser: IAccountPlanState = { status: "known", userId: "u1", plan: "plus", grant: "code", canManage: false };
 const freeUser: IAccountPlanState = { status: "known", userId: "u1", plan: "free" };
@@ -52,8 +66,23 @@ describe("PlusAccess", () => {
     expect(PlusAccess_list("free").map((f) => f.key)).to.deep.equal(free);
   });
 
-  it("offers beBEAR+ on the account row of a free account", () => {
-    expect(PlusAccess_accountRow(false).actionLabel).to.equal("Get beBEAR+");
-    expect(PlusAccess_accountRow(true).title).to.equal("beBEAR+ is on");
+  it("shows the prices the store sends, in the store's currency", () => {
+    const prices = PlusAccess_pricesFromOffering(euroOffering);
+    expect(prices).to.deep.equal({ monthly: "6,99 €", annual: "39,99 €", lifetime: "79,99 €" });
+    expect(PlusAccess_pricesLine(prices, false)).to.equal("6,99 € a month, 39,99 € a year, or 79,99 € once for life.");
+  });
+
+  it("lists only the plans the store offers", () => {
+    const prices = PlusAccess_pricesFromOffering({ ...euroOffering, lifetime: null });
+    expect(prices).to.deep.equal({ monthly: "6,99 €", annual: "39,99 €" });
+    expect(PlusAccess_pricesLine(prices, false)).to.equal("6,99 € a month or 39,99 € a year.");
+    expect(PlusAccess_pricesLine({ annual: "39,99 €" }, false)).to.equal("39,99 € a year.");
+  });
+
+  it("never quotes a dollar price on iPhone when the store sends none", () => {
+    expect(PlusAccess_pricesFromOffering(null)).to.deep.equal({});
+    expect(PlusAccess_pricesLine(undefined, false)).to.equal(PlusAccess_pricesInStore);
+    expect(PlusAccess_pricesLine({}, false)).to.equal(PlusAccess_pricesInStore);
+    expect(PlusAccess_pricesLine(undefined, true)).to.equal(PlusAccess_prices);
   });
 });
