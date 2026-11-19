@@ -1,5 +1,5 @@
 import { json } from "../_food.mjs";
-import { aiChat, aiProvider } from "../_ai.mjs";
+import { aiChat, aiProvider, AiRoute_readJson } from "../_ai.mjs";
 import { AiAuth_check } from "../_auth.mjs";
 
 // The phone shrinks plates to 1024px and labels to 1600px JPEG, under 1 MB as base64. Vercel caps bodies at 4.5 MB.
@@ -100,11 +100,9 @@ function userContent(task, image, text) {
 }
 
 export async function POST(request) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "Send JSON with an image or text field" }, 400);
+  const { body, response } = await AiRoute_readJson(request, "Send JSON with an image or text field");
+  if (response != null) {
+    return response;
   }
   const task = Object.hasOwn(tasks, body?.kind) ? tasks[body.kind] : tasks.meal;
   const image = typeof body?.image === "string" ? body.image : undefined;

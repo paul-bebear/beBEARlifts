@@ -1,5 +1,5 @@
 import { json } from "../_food.mjs";
-import { aiChat, aiProvider } from "../_ai.mjs";
+import { aiChat, aiProvider, AiRoute_clean, AiRoute_readJson } from "../_ai.mjs";
 import { AiAuth_check, AiAuth_refund } from "../_auth.mjs";
 
 // About 400 tokens in and 400 out, so one warmup is about $0.0003 on Claude Haiku 5.5.
@@ -19,7 +19,7 @@ Answer with JSON only, no other text, in this shape:
 {"items":[{"name":"Easy bike","detail":"Easy pace, enough to get a little warm.","seconds":150},{"name":"Leg swings","detail":"10 front to back and 10 side to side, each leg."}]}`;
 
 function clean(value) {
-  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, maxFieldChars) : "";
+  return AiRoute_clean(value, maxFieldChars);
 }
 
 function describe(exercises) {
@@ -33,11 +33,9 @@ function describe(exercises) {
 }
 
 export async function POST(request) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "Send JSON with an exercises list" }, 400);
+  const { body, response } = await AiRoute_readJson(request, "Send JSON with an exercises list");
+  if (response != null) {
+    return response;
   }
   const exercises = Array.isArray(body?.exercises) ? body.exercises.filter((e) => clean(e?.name) !== "") : [];
   if (exercises.length === 0) {

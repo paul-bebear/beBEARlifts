@@ -2,7 +2,6 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import {
-  AiAuth_bearerToken,
   AiAuth_caps,
   AiAuth_ceilingNotice,
   AiAuth_check,
@@ -10,6 +9,8 @@ import {
   AiAuth_decideUsage,
   AiAuth_refund,
   AiAuth_signInMessage,
+  Auth_bearerToken,
+  Auth_userId,
 } from "../api/_auth.mjs";
 
 const caps = { day: 3, week: 10, plusDay: 30, plusWeek: 150, lifetime: 3 };
@@ -30,11 +31,21 @@ describe("AiAuth", () => {
   });
 
   it("reads only a well-formed bearer header", () => {
-    expect(AiAuth_bearerToken("Bearer abc.def")).to.equal("abc.def");
-    expect(AiAuth_bearerToken("bearer abc")).to.equal("abc");
-    expect(AiAuth_bearerToken("Basic abc")).to.equal(undefined);
-    expect(AiAuth_bearerToken("Bearer ")).to.equal(undefined);
-    expect(AiAuth_bearerToken(null)).to.equal(undefined);
+    expect(Auth_bearerToken("Bearer abc.def")).to.equal("abc.def");
+    expect(Auth_bearerToken("bearer abc")).to.equal("abc");
+    expect(Auth_bearerToken("Basic abc")).to.equal(undefined);
+    expect(Auth_bearerToken("Bearer ")).to.equal(undefined);
+    expect(Auth_bearerToken(null)).to.equal(undefined);
+  });
+
+  it("reads a lowercased Supabase user id from a 200 answer, and a guest only when the route allows guests", () => {
+    const id = "AAAAAAAA-1111-4111-8111-111111111111";
+    expect(Auth_userId(200, { id }, false)).to.equal(id.toLowerCase());
+    expect(Auth_userId(200, { id, is_anonymous: true }, false)).to.equal(undefined);
+    expect(Auth_userId(200, { id, is_anonymous: true }, true)).to.equal(id.toLowerCase());
+    expect(Auth_userId(401, { id }, true)).to.equal(undefined);
+    expect(Auth_userId(200, { id: "u1" }, true)).to.equal(undefined);
+    expect(Auth_userId(200, undefined, true)).to.equal(undefined);
   });
 
   it("reads the caps from the Supabase answer and defaults to 3, 10, 30, 150 and 3 setups", () => {

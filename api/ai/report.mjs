@@ -1,5 +1,5 @@
 import { json } from "../_food.mjs";
-import { aiChat, aiProvider } from "../_ai.mjs";
+import { aiChat, aiProvider, AiRoute_clean, AiRoute_readJson } from "../_ai.mjs";
 import { AiAuth_check, AiAuth_refund } from "../_auth.mjs";
 
 // About 300 tokens in and 150 out, so one summary is well under $0.001 on Claude Haiku 5.5.
@@ -16,28 +16,22 @@ Write 2 to 4 short sentences in plain words, speaking to the lifter as "you".
 - Use only the facts given. Do not invent numbers.
 Answer with the note only, no greeting, no list, no markdown.`;
 
-function clean(value, max) {
-  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max) : "";
-}
-
 export async function POST(request) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "Send JSON with a facts list" }, 400);
+  const { body, response } = await AiRoute_readJson(request, "Send JSON with a facts list");
+  if (response != null) {
+    return response;
   }
   const facts = Array.isArray(body?.facts)
     ? body.facts
-        .map((f) => clean(f, maxFactChars))
+        .map((f) => AiRoute_clean(f, maxFactChars))
         .filter(Boolean)
         .slice(0, maxFacts)
     : [];
   if (facts.length === 0) {
     return json({ error: "The report has no facts" }, 400);
   }
-  const dayName = clean(body?.dayName, 80) || "Workout";
-  const workoutId = Number.isSafeInteger(body?.workoutId) ? String(body.workoutId) : clean(body?.workoutId, 64);
+  const dayName = AiRoute_clean(body?.dayName, 80) || "Workout";
+  const workoutId = Number.isSafeInteger(body?.workoutId) ? String(body.workoutId) : AiRoute_clean(body?.workoutId, 64);
   const ai = await aiProvider();
   // App builds from before the cap send no workoutId, so their reports count against the daily cap instead.
   const denied = await AiAuth_check(request, ai, workoutId ? "report" : "capped", workoutId || undefined);

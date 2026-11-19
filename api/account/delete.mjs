@@ -1,5 +1,5 @@
 import { fetchJson, json } from "../_food.mjs";
-import { AiAuth_bearerToken, Supabase_origin, Supabase_publishableKey } from "../_auth.mjs";
+import { Auth_user, Supabase_origin } from "../_auth.mjs";
 
 const buckets = [
   { bucket: "backups", label: "cloud backups" },
@@ -14,10 +14,6 @@ export const AccountDelete_signInMessage = "Sign in again, then delete the accou
 // The gateway swaps a "Bearer sb_secret_…" header for a service_role JWT and passes a legacy service_role JWT as it is, so both key kinds work here.
 function adminHeaders(serviceKey) {
   return { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" };
-}
-
-export function AccountDelete_userId(status, body) {
-  return status === 200 && typeof body?.id === "string" && body.id !== "" ? body.id : undefined;
 }
 
 // Supabase lists one folder level and shows each subfolder as an entry with id null.
@@ -70,22 +66,16 @@ export async function POST(request) {
   if (!serviceKey) {
     return json({ error: "The server has no Supabase service key. Set SUPABASE_SERVICE_ROLE_KEY in Vercel." }, 500);
   }
-  const token = AiAuth_bearerToken(request.headers.get("authorization"));
-  if (token == null) {
-    return json({ error: AccountDelete_signInMessage }, 401);
-  }
   try {
-    const user = await fetchJson(
-      `${Supabase_origin}/auth/v1/user`,
-      { method: "GET", headers: { apikey: Supabase_publishableKey, Authorization: `Bearer ${token}` } },
-      timeoutMs
-    );
-    const userId = AccountDelete_userId(user.status, user.body);
-    if (userId == null) {
-      return user.status === 401 || user.status === 403
-        ? json({ error: AccountDelete_signInMessage }, 401)
-        : json({ error: `Supabase Auth returned ${user.status}` }, 502);
+    const auth = await Auth_user(request, {
+      signInMessage: AccountDelete_signInMessage,
+      allowAnonymous: true,
+      timeoutMs,
+    });
+    if (auth.response != null) {
+      return auth.response;
     }
+    const userId = auth.userId;
 
     for (const { bucket, label } of buckets) {
       const listed = await listAllObjects(bucket, userId, serviceKey);

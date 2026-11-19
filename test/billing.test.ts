@@ -4,14 +4,13 @@ import sinon from "sinon";
 import {
   Billing_entitlementRow,
   Billing_eventUserIds,
-  Billing_isUserId,
   Billing_planAnswer,
   Billing_signInMessage,
   Billing_syncStep,
   Billing_waitMessage,
-  Billing_userFromAuth,
   Billing_webhookAuthorized,
 } from "../api/_billing.mjs";
+import { Auth_isUserId } from "../api/_auth.mjs";
 import { POST as syncPost } from "../api/billing/sync.mjs";
 import { POST as webhookPost } from "../api/billing/revenuecat.mjs";
 
@@ -44,9 +43,9 @@ function rowOf(body: object, options = live): NonNullable<ReturnType<typeof Bill
 
 describe("api/_billing", () => {
   it("accepts only Supabase user ids", () => {
-    expect(Billing_isUserId(userA)).to.equal(true);
-    expect(Billing_isUserId("$RCAnonymousID:abc")).to.equal(false);
-    expect(Billing_isUserId(undefined)).to.equal(false);
+    expect(Auth_isUserId(userA)).to.equal(true);
+    expect(Auth_isUserId("$RCAnonymousID:abc")).to.equal(false);
+    expect(Auth_isUserId(undefined)).to.equal(false);
   });
 
   it("compares the webhook header with the secret", () => {
@@ -69,12 +68,6 @@ describe("api/_billing", () => {
       userB,
     ]);
     expect(Billing_eventUserIds(undefined)).to.deep.equal([]);
-  });
-
-  it("refuses an anonymous Supabase user", () => {
-    expect(Billing_userFromAuth(200, { id: userA })).to.equal(userA);
-    expect(Billing_userFromAuth(200, { id: userA, is_anonymous: true })).to.equal(undefined);
-    expect(Billing_userFromAuth(401, { id: userA })).to.equal(undefined);
   });
 
   it("reads an active subscription and its end date", () => {
@@ -284,12 +277,34 @@ describe("api/billing routes", () => {
     expect(JSON.parse(put?.args[1].body)).to.deep.include({ p_user: userA, p_active: true });
   });
 
-  it("sync refuses a missing token and an anonymous user", async () => {
-    expect((await syncPost(syncRequest({}))).status).to.equal(401);
+  it("sync refuses a missing token, a bad token and an anonymous user", async () => {
+    const missing = await syncPost(syncRequest({}));
+    expect(missing.status).to.equal(401);
+    expect(await missing.json()).to.deep.equal({ error: Billing_signInMessage });
+    expect(fetchStub.called).to.equal(false);
+    for (const status of [401, 403]) {
+      fetchStub.reset();
+      fetchStub.resolves(reply({ msg: "invalid JWT" }, status));
+      const bad = await syncPost(syncRequest());
+      expect(bad.status).to.equal(401);
+      expect(await bad.json()).to.deep.equal({ error: Billing_signInMessage });
+      expect(fetchStub.callCount).to.equal(1);
+    }
+    fetchStub.reset();
     fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).resolves(reply({ id: userA, is_anonymous: true }));
     const anonymous = await syncPost(syncRequest());
     expect(anonymous.status).to.equal(401);
     expect(await anonymous.json()).to.deep.equal({ error: Billing_signInMessage });
+    fetchStub.reset();
+    fetchStub.resolves(reply({}, 500));
+    const down = await syncPost(syncRequest());
+    expect(down.status).to.equal(502);
+    expect(await down.json()).to.deep.equal({ error: "Supabase Auth returned 500" });
+    fetchStub.reset();
+    fetchStub.rejects(new Error("aborted"));
+    const timedOut = await syncPost(syncRequest());
+    expect(timedOut.status).to.equal(504);
+    expect(await timedOut.json()).to.deep.equal({ error: "The billing check did not answer. Try again." });
   });
 
   it("sync writes nothing when RevenueCat fails", async () => {

@@ -9,9 +9,46 @@ export const AiAuth_onboardRuns = 3;
 export const AiAuth_signInMessage = "Sign in to use AI features. Open Settings → Cloud backup.";
 const checkFailedMessage = "The app could not check today's AI allowance. Try again.";
 
-export function AiAuth_bearerToken(header) {
+export function Auth_bearerToken(header) {
   const match = /^Bearer\s+(\S+)$/i.exec(header ?? "");
   return match?.[1];
+}
+
+const userIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function Auth_isUserId(value) {
+  return typeof value === "string" && userIdPattern.test(value);
+}
+
+export function Auth_userId(status, body, allowAnonymous) {
+  if (status !== 200 || !Auth_isUserId(body?.id) || (body.is_anonymous === true && !allowAnonymous)) {
+    return undefined;
+  }
+  return body.id.toLowerCase();
+}
+
+// Answers { userId } or { response }. A fetch that throws reaches the route, which words its own timeout.
+export async function Auth_user(request, { signInMessage, allowAnonymous, timeoutMs }) {
+  const token = Auth_bearerToken(request.headers.get("authorization"));
+  if (token == null) {
+    return { response: json({ error: signInMessage }, 401) };
+  }
+  const user = await fetchJson(
+    `${Supabase_origin}/auth/v1/user`,
+    { method: "GET", headers: { apikey: Supabase_publishableKey, Authorization: `Bearer ${token}` } },
+    timeoutMs
+  );
+  const userId = Auth_userId(user.status, user.body, allowAnonymous);
+  if (userId != null) {
+    return { userId };
+  }
+  const refused =
+    user.status === 401 || user.status === 403 || (user.status === 200 && user.body?.is_anonymous === true);
+  return {
+    response: refused
+      ? json({ error: signInMessage }, 401)
+      : json({ error: `Supabase Auth returned ${user.status}` }, 502),
+  };
 }
 
 const defaultCaps = { day: 3, week: 10, plusDay: 30, plusWeek: 150, lifetime: AiAuth_onboardRuns };
@@ -131,7 +168,7 @@ export function AiAuth_decide(status, answer, kind, caps) {
 
 // Supabase checks the token's signature and expiry before it runs ai_usage_take, so one call both signs the user in and counts the call.
 export async function AiAuth_check(request, ai, kind = "capped", ref) {
-  const token = AiAuth_bearerToken(request.headers.get("authorization"));
+  const token = Auth_bearerToken(request.headers.get("authorization"));
   if (token == null) {
     return json({ error: AiAuth_signInMessage }, 401);
   }
