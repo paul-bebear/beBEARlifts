@@ -13,6 +13,7 @@ import {
   WarmupPlan_put,
   WarmupPlan_rules,
   WarmupPlan_toggle,
+  WarmupPlan_toggleIn,
 } from "../src/models/warmupPlan";
 import { PlannerTestUtils_get } from "./utils/plannerTestUtils";
 import { Program_nextHistoryRecord } from "../src/models/program";
@@ -77,6 +78,14 @@ describe("WarmupPlan", () => {
     const log = WarmupPlan_put(WarmupPlan_put(WarmupPlan_empty(), plan), ticked);
     expect(log.plans).to.have.length(1);
     expect(WarmupPlan_find(log, 7)?.done[1]).to.equal(true);
+  });
+
+  it("keeps both ticks when two taps read the same older log", () => {
+    const log = WarmupPlan_put(WarmupPlan_empty(), WarmupPlan_build(7, "rules", WarmupPlan_rules(legDay), 1));
+    const afterFirst = WarmupPlan_toggleIn(log, 7, 0);
+    const afterSecond = WarmupPlan_toggleIn(afterFirst, 7, 1);
+    expect(WarmupPlan_find(afterSecond, 7)?.done.slice(0, 2)).to.deep.equal([true, true]);
+    expect(WarmupPlan_toggleIn(log, 99, 0)).to.equal(log);
   });
 
   it("restores a stored log", () => {

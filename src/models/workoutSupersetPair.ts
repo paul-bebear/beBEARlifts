@@ -31,7 +31,12 @@ export function WorkoutSupersetPair_join(
   if (entry.superset === group && partner.superset === group) {
     return entries;
   }
-  return entries.map((e) => (e.id === entryId || e.id === partnerId ? { ...e, superset: group } : e));
+  const oldGroup = entry.superset;
+  const joined = entries.map((e) => (e.id === entryId || e.id === partnerId ? { ...e, superset: group } : e));
+  if (oldGroup == null || oldGroup === group || joined.filter((e) => e.superset === oldGroup).length !== 1) {
+    return joined;
+  }
+  return joined.map((e) => (e.superset === oldGroup ? { ...e, superset: undefined } : e));
 }
 
 export function WorkoutSupersetPair_isPaired(entry: IHistoryEntry, other: IHistoryEntry): boolean {

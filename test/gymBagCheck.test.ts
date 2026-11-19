@@ -1,6 +1,11 @@
 import "mocha";
 import { expect } from "chai";
-import { GymBagCheck_items, GymBagCheck_plan, IGymBagCheckDay } from "../src/models/gymBagCheck";
+import {
+  GymBagCheck_items,
+  GymBagCheck_needsStraps,
+  GymBagCheck_plan,
+  IGymBagCheckDay,
+} from "../src/models/gymBagCheck";
 import { Settings_build } from "../src/models/settings";
 import { Weight_build } from "../src/models/weight";
 import { IScheduleProgram, WeekSchedule_empty, WeekSchedule_save } from "../src/models/weekSchedule";
@@ -78,6 +83,14 @@ describe("GymBagCheck_items", () => {
   it("ignores sets the user did not finish when it looks for the best", () => {
     const history = [record([entry("deadlift", [200])], monday - 7 * 24 * hourMs)];
     expect(ids(GymBagCheck_items(day([entry("deadlift", [100])]), history, settings))).to.not.include("belt");
+  });
+
+  it("asks for straps only for a real row or deadlift", () => {
+    expect(GymBagCheck_needsStraps("Narrow Stance Squat")).to.equal(false);
+    expect(GymBagCheck_needsStraps("Medicine Ball Throw")).to.equal(false);
+    expect(GymBagCheck_needsStraps("Bent Over Row")).to.equal(true);
+    expect(GymBagCheck_needsStraps("Row")).to.equal(true);
+    expect(GymBagCheck_needsStraps("Romanian Deadlift")).to.equal(true);
   });
 
   it("packs straps for a row or a deadlift and shoes for a run", () => {

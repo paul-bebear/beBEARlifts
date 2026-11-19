@@ -43,6 +43,12 @@ const maxPastSessions = 4;
 // One year at 4 workouts a week.
 export const WorkoutReport_maxReports = 210;
 
+export function WorkoutReport_keepNote(count: number): string | undefined {
+  return count >= WorkoutReport_maxReports
+    ? `beBEAR keeps the newest ${WorkoutReport_maxReports} workout reports. Older ones are removed.`
+    : undefined;
+}
+
 export const WorkoutReport_answerLabels: Record<IReportAnswer, string> = {
   onPurpose: "On purpose",
   feltOff: "Felt off",

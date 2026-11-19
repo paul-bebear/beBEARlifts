@@ -13,6 +13,8 @@ import {
   WorkoutReport_parseLog,
   WorkoutReport_previous,
   WorkoutReport_put,
+  WorkoutReport_keepNote,
+  WorkoutReport_maxReports,
   WorkoutReport_weekLine,
   WorkoutReport_weeks,
 } from "../src/models/workoutReport";
@@ -158,6 +160,11 @@ describe("WorkoutReport", () => {
     const weeks = WorkoutReport_weeks(log, true);
     expect(weeks.reduce((n, w) => n + w.workouts, 0)).to.equal(2);
     expect(weeks.reduce((n, w) => n + w.lighter, 0)).to.equal(2);
+  });
+
+  it("tells the user about the cap only when the log is full", () => {
+    expect(WorkoutReport_keepNote(WorkoutReport_maxReports - 1)).to.equal(undefined);
+    expect(WorkoutReport_keepNote(WorkoutReport_maxReports)).to.contain("210");
   });
 
   it("writes one line per week with only the counts that happened", () => {
