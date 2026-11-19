@@ -29,7 +29,7 @@ import {
   MusicLog_workoutLookup,
 } from "../models/musicLog";
 import { IMusicSession, MusicSession_counts, MusicSession_keptTracks } from "../models/musicSession";
-import { SpotifyPlaylist_name } from "../models/spotifyPlaylist";
+import { ISpotifyPlaylistRef, SpotifyPlaylist_name } from "../models/spotifyPlaylist";
 import { IHistoryRecord, ISettings } from "../types";
 import { SongPerSet_hasAny, SongPerSet_match, SongPerSet_rowLabel } from "../models/songPerSet";
 import { Exercise_get } from "../models/exercise";
@@ -48,6 +48,7 @@ function SessionCard(props: {
 }): JSX.Element {
   const { session, record } = props;
   const [status, setStatus] = useState<IStatus | undefined>(undefined);
+  const [unfilled, setUnfilled] = useState<ISpotifyPlaylistRef | undefined>(undefined);
   const semantic = Tailwind_semantic();
   const counts = MusicSession_counts(session);
   const uris = MusicSession_keptTracks(session).map((t) => t.uri);
@@ -63,7 +64,8 @@ function SessionCard(props: {
 
   const save = async (): Promise<void> => {
     setStatus({ kind: "busy" });
-    const result = await SpotifyClient_savePlaylist(SpotifyPlaylist_name(session.startedAt), uris);
+    const result = await SpotifyClient_savePlaylist(SpotifyPlaylist_name(session.startedAt), uris, unfilled);
+    setUnfilled(result.ok ? undefined : result.created);
     setStatus(
       result.ok
         ? { kind: "message", text: MusicLog_saveStatus(uris.length), url: result.value.url }

@@ -24,6 +24,7 @@ import {
   SpotifyPlaylist_playError,
   SpotifyPlaylist_shouldFallBack,
 } from "../models/spotifyPlaylist";
+import { ListenLinks_normalize, ListenLinks_spotifyUri } from "../models/listenLinks";
 import { MusicLog_disconnect } from "../models/musicLog";
 import { MusicStore_load, MusicStore_update } from "./musicStore";
 import {
@@ -45,6 +46,35 @@ export const SpotifyClient_testerLimitMessage =
   "This Spotify app allows 5 testers. Ask Paul to add your Spotify email.";
 
 export type ISpotifyResult<T> = { ok: true; value: T } | { ok: false; message: string };
+
+export type ISpotifyPlaylistResult =
+  | { ok: true; value: ISpotifyPlaylistRef }
+  | { ok: false; message: string; created?: ISpotifyPlaylistRef };
+
+export const SpotifyClient_noSongsMessage = "There are no kept songs to save.";
+
+// Only invalid_grant means the refresh token is dead. Every other answer, a 5xx or an unreadable body keeps the link.
+export function SpotifyClient_refreshMeansSignedOut(status: number, body: unknown): boolean {
+  if (status !== 400 || typeof body !== "object" || body == null) {
+    return false;
+  }
+  return (body as { error?: unknown }).error === "invalid_grant";
+}
+
+export interface IListenTarget {
+  url: string;
+  appUri?: string;
+}
+
+// A restored backup can hold any text in listenLinks, so a saved link is checked again before it is opened.
+export function SpotifyClient_listenTarget(saved: string): IListenTarget | undefined {
+  const url = ListenLinks_normalize(saved);
+  return url == null ? undefined : { url, appUri: ListenLinks_spotifyUri(url) };
+}
+
+export function SpotifyClient_hasSongsToSave(uris: string[]): boolean {
+  return uris.length > 0;
+}
 
 // The web leaves the page here. The iPhone app returns after the login sheet closes, with the tokens saved.
 export async function SpotifyClient_login(): Promise<void> {
@@ -130,14 +160,12 @@ function refresh(tokens: ISpotifyTokens): Promise<ISpotifyTokens | undefined> {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: SpotifyAuth_refreshBody(clientId, tokens.refreshToken),
       });
-      if (response.status === 400) {
-        // invalid_grant: the user revoked access or the refresh token expired, so only a new login helps.
+      const body: unknown = await response.json().catch(() => undefined);
+      if (SpotifyClient_refreshMeansSignedOut(response.status, body)) {
         await MusicStore_update(MusicLog_disconnect);
         return undefined;
       }
-      const next = response.ok
-        ? SpotifyAuth_parseTokens(await response.json(), Date.now(), tokens.refreshToken)
-        : undefined;
+      const next = response.ok ? SpotifyAuth_parseTokens(body, Date.now(), tokens.refreshToken) : undefined;
       if (next != null) {
         await MusicStore_update((log) => ({ ...log, tokens: next }));
       }
@@ -245,15 +273,19 @@ async function addTracks(playlistId: string, uris: string[]): Promise<ISpotifyRe
 
 export async function SpotifyClient_savePlaylist(
   name: string,
-  uris: string[]
-): Promise<ISpotifyResult<ISpotifyPlaylistRef>> {
+  uris: string[],
+  existing?: ISpotifyPlaylistRef
+): Promise<ISpotifyPlaylistResult> {
+  if (!SpotifyClient_hasSongsToSave(uris)) {
+    return { ok: false, message: SpotifyClient_noSongsMessage };
+  }
   try {
-    const created = await createPlaylist(name);
+    const created = existing != null ? { ok: true as const, value: existing } : await createPlaylist(name);
     if (!created.ok) {
       return created;
     }
     const added = await addTracks(created.value.id, uris);
-    return added.ok ? created : added;
+    return added.ok ? created : { ok: false, message: added.message, created: created.value };
   } catch {
     return { ok: false, message: "Could not reach Spotify. Check the connection and try again." };
   }

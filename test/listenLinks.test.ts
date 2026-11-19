@@ -1,5 +1,6 @@
 import "mocha";
 import { expect } from "chai";
+import { SpotifyClient_listenTarget } from "../src/utils/spotifyClient";
 import { ListenLinks_normalize, ListenLinks_set } from "../src/models/listenLinks";
 
 describe("ListenLinks", () => {
@@ -24,5 +25,19 @@ describe("ListenLinks", () => {
     const links = ListenLinks_set({ mantra: "https://a" }, "cooldown", "https://b");
     expect(links).to.deep.equal({ mantra: "https://a", cooldown: "https://b" });
     expect(ListenLinks_set(links, "mantra", undefined)).to.deep.equal({ cooldown: "https://b" });
+  });
+
+  it("opens a saved link only after it passes the check again", () => {
+    expect(SpotifyClient_listenTarget("javascript:alert(1)")).to.equal(undefined);
+    expect(SpotifyClient_listenTarget("data:text/html,hi")).to.equal(undefined);
+    expect(SpotifyClient_listenTarget("http://example.com")).to.equal(undefined);
+    expect(SpotifyClient_listenTarget("https://open.spotify.com/playlist/abc123")).to.deep.equal({
+      url: "https://open.spotify.com/playlist/abc123",
+      appUri: "spotify:playlist:abc123",
+    });
+    expect(SpotifyClient_listenTarget("https://example.com/x")).to.deep.equal({
+      url: "https://example.com/x",
+      appUri: undefined,
+    });
   });
 });
