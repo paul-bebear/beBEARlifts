@@ -33,3 +33,11 @@ describe("BackupReminder_message", () => {
     expect(BackupReminder_message(now - 9 * day - 1000, now)).to.contain("Last backup: 9 days ago.");
   });
 });
+
+describe("BackupReminder_message export button", () => {
+  it("names Export everything, which holds food, notes, runs and the bear", () => {
+    const message = BackupReminder_message(undefined, now);
+    expect(message).to.contain('"Export everything"');
+    expect(message).not.to.contain("JSON");
+  });
+});
