@@ -55,7 +55,10 @@ export async function AccountPlanClient_sync(): Promise<IAccountPlanSync> {
     }
     await save(next);
     const saved = AccountPlanStore.get();
-    return saved.status === "known" && saved.userId === auth.value.userId ? saved.plan : "stale";
+    if (saved.status === "unknown" || saved.userId !== auth.value.userId) {
+      return "stale";
+    }
+    return saved.status === "known" ? saved.plan : next.plan;
   } catch {
     return "error";
   }

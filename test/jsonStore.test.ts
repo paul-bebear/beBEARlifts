@@ -182,6 +182,20 @@ describe("JsonStore", () => {
     await rejection(fresh.loadStrict());
   });
 
+  it("offers recovery once per launch when a strict load finds a damaged store", async () => {
+    saved.set("damaged-strict", "{");
+    const choice = sinon.stub(dialogs, "Dialog_choice").resolves(1);
+    const store = counter("damaged-strict");
+    await rejection(store.loadStrict());
+    await rejection(store.loadStrict());
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(choice.callCount).to.equal(1);
+    expect(await store.load()).to.equal(0);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(choice.callCount).to.equal(1);
+    expect(saved.get("damaged-strict")).to.equal("{");
+  });
+
   it("replaces a value without reading it, so a damaged store can be written again", async () => {
     saved.set("damaged", "{");
     const store = counter("damaged");

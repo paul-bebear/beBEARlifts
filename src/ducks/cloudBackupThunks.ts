@@ -2,6 +2,8 @@ import { IEnv, IState } from "../models/state";
 import { IDispatch, IThunk } from "./types";
 import { Thunk_importStorage } from "./thunks";
 import {
+  CloudBackup_afterAttempt,
+  CloudBackup_attemptWrites,
   CloudBackup_isAutoDue,
   CloudBackup_isCatchUpDue,
   CloudBackup_ownerAnswer,
@@ -164,6 +166,10 @@ export function Thunk_cloudBackup(
     } catch (error) {
       result = { ok: false, error: errorText(error, "Could not save cloud backup") };
     }
+    const attempt = result;
+    if (CloudBackup_attemptWrites(attempt)) {
+      await CloudStore.update((state) => CloudBackup_afterAttempt(state, attempt)).catch(() => undefined);
+    }
     if (result.ok) {
       await ProgressPhotoCloud_sync().catch(() => undefined);
     }
@@ -205,6 +211,15 @@ export function Thunk_cloudKeepPhone(onResult?: (result: ICloudResult<boolean>) 
   };
 }
 
+async function strictReadAll(getState: () => IState): Promise<ICloudResult<number>> {
+  try {
+    const { now } = await FullBackupFile_build(() => getState().storage);
+    return { ok: true, value: now };
+  } catch (error) {
+    return { ok: false, error: errorText(error, "Could not read saved data") };
+  }
+}
+
 async function restore(
   copy: ICloudCopy,
   dispatch: IDispatch,
@@ -240,17 +255,27 @@ async function restore(
   if (copy !== "latest") {
     // An older copy becomes the cloud backup too, and keep saves the replaced latest.json first.
     const kept = await backUp("keep", getState);
+    if (CloudBackup_attemptWrites(kept)) {
+      await CloudStore.update((state) => CloudBackup_afterAttempt(state, kept));
+    }
     return kept.ok ? { ok: true, value: true } : kept;
   }
   const stores = CloudBackup_storesMark(await storesNow());
-  await CloudStore.update((state) => ({
-    ...state,
-    lastBackupAt: Date.now(),
-    syncedExportedAt: cloud.summary.exportedAt,
-    backedUpWorkouts: CloudBackup_workoutsMark(getState().storage.history),
-    backedUpStores: stores,
-    restoreOffer: undefined,
-  }));
+  // The import does not rewrite every store, so the paused line goes only once a strict read of all of them passes.
+  const readAll = await strictReadAll(getState);
+  await CloudStore.update((state) =>
+    CloudBackup_afterAttempt(
+      {
+        ...state,
+        lastBackupAt: Date.now(),
+        syncedExportedAt: cloud.summary.exportedAt,
+        backedUpWorkouts: CloudBackup_workoutsMark(getState().storage.history),
+        backedUpStores: stores,
+        restoreOffer: undefined,
+      },
+      readAll
+    )
+  );
   return { ok: true, value: true };
 }
 

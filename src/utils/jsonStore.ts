@@ -104,11 +104,22 @@ export function JsonStore_create<T>(
     }
   }
 
+  function offerRecoveryOnce(error: unknown): void {
+    if (error instanceof UnreadableError && !offeredRecovery) {
+      reportReadError(error);
+    }
+  }
+
   function loadStrict(): Promise<T> {
     return writeChain
       .catch(() => undefined)
       .then(async () => {
-        current = await read();
+        try {
+          current = await read();
+        } catch (error) {
+          offerRecoveryOnce(error);
+          throw error;
+        }
         loadPromise = Promise.resolve();
         notify();
         return current;
@@ -125,9 +136,7 @@ export function JsonStore_create<T>(
         })
         .catch((error) => {
           loadPromise = undefined;
-          if (error instanceof UnreadableError && !offeredRecovery) {
-            reportReadError(error);
-          }
+          offerRecoveryOnce(error);
         });
     }
     return loadPromise.then(() => current);

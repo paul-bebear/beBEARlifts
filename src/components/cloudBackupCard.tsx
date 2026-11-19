@@ -96,6 +96,11 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
           <Text className="text-sm text-text-secondary">
             Last backup: {cloud.lastBackupAt == null ? "Never" : new Date(cloud.lastBackupAt).toLocaleString()}
           </Text>
+          {cloud.backupBlocked != null && (
+            <Text className="text-sm text-text-error" accessibilityRole="alert">
+              {cloud.backupBlocked}
+            </Text>
+          )}
           {cloud.restoreOffer != null && (
             <CloudRestoreChoice
               offer={cloud.restoreOffer}

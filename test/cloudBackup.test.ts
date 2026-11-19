@@ -18,6 +18,10 @@ import {
   CloudBackup_afterSignOut,
   CloudBackup_afterSignIn,
   CloudBackup_canSyncPhotos,
+  CloudBackup_afterAttempt,
+  CloudBackup_attemptWrites,
+  CloudBackup_isDeadRefresh,
+  CloudBackup_blockedText,
   ICloudSession,
   ICloudState,
   ICloudStoresInput,
@@ -217,5 +221,31 @@ describe("CloudBackup", () => {
       signInError: "Sign-in was cancelled.",
     });
     expect(CloudBackup_parse({ pending: { provider: "apple" }, signInError: "" })).to.deep.equal({ version: 1 });
+  });
+
+  it("keeps a blocked reason after a local read error until a backup uploads", () => {
+    const start: ICloudState = { version: 1, session };
+    const blocked = CloudBackup_afterAttempt(start, { ok: false, error: "Could not read saved data" });
+    expect(blocked.backupBlocked).to.equal(CloudBackup_blockedText);
+    expect(CloudBackup_parse(blocked).backupBlocked).to.equal(CloudBackup_blockedText);
+    expect(CloudBackup_afterAttempt(blocked, { ok: false, error: "No connection" })).to.equal(blocked);
+    expect(CloudBackup_afterAttempt(blocked, { ok: true, value: undefined })).to.equal(blocked);
+    expect(CloudBackup_afterAttempt(blocked, { ok: true, value: now }).backupBlocked).to.equal(undefined);
+    expect(CloudBackup_afterAttempt(start, { ok: false, error: "No connection" })).to.equal(start);
+  });
+
+  it("treats only a 400 with a dead-token code as a dead refresh token", () => {
+    expect(CloudBackup_isDeadRefresh(400, { error: "invalid_grant" })).to.equal(true);
+    expect(CloudBackup_isDeadRefresh(400, { error_code: "refresh_token_not_found" })).to.equal(true);
+    expect(CloudBackup_isDeadRefresh(401, { error: "invalid_grant" })).to.equal(false);
+    expect(CloudBackup_isDeadRefresh(400, { error_code: "validation_failed" })).to.equal(false);
+    expect(CloudBackup_isDeadRefresh(undefined, undefined)).to.equal(false);
+  });
+
+  it("writes the cloud store only after a local read error or an upload", () => {
+    expect(CloudBackup_attemptWrites({ ok: false, error: "Could not read saved data" })).to.equal(true);
+    expect(CloudBackup_attemptWrites({ ok: true, value: now })).to.equal(true);
+    expect(CloudBackup_attemptWrites({ ok: true, value: undefined })).to.equal(false);
+    expect(CloudBackup_attemptWrites({ ok: false, error: "No connection" })).to.equal(false);
   });
 });

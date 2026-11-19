@@ -17,6 +17,7 @@ import {
 } from "../ducks/thunks";
 import { Thunk_cloudCatchUp } from "../ducks/cloudBackupThunks";
 import { StoreRecoveryWiring_start } from "../utils/storeRecoveryWiring";
+import { CloudBackupClient_start } from "../utils/cloudBackupClient";
 import { Service } from "../api/service";
 import { NativeEffects_apply } from "../models/nativeEffects";
 import { ITimerBridge } from "../utils/timerBridge";
@@ -141,6 +142,7 @@ export function AppView(props: IProps): JSX.Element | null {
     return ScreenRemovalCleanup_subscribe(dispatch);
   }, []);
   useEffect(() => StoreRecoveryWiring_start(dispatch), []);
+  useEffect(() => CloudBackupClient_start(), []);
 
   useEffect(() => {
     if (!OfflineOnly_isEnabled() || typeof document === "undefined") {

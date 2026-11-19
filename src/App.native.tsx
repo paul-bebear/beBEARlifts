@@ -14,6 +14,7 @@ import { ProgramsHost_fork } from "./utils/programsHost";
 import { OfflineOnly_isEnabled } from "./utils/offlineOnly";
 import { Thunk_cloudCatchUp } from "./ducks/cloudBackupThunks";
 import { StoreRecoveryWiring_start } from "./utils/storeRecoveryWiring";
+import { CloudBackupClient_start } from "./utils/cloudBackupClient";
 import { ProgressPhotoFiles_migrate } from "./utils/progressPhotoFiles";
 import { PlanFollowsSignIn_start } from "./utils/planFollowsSignIn";
 
@@ -333,6 +334,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
 
   useEffect(() => {
     const stopRecovery = StoreRecoveryWiring_start(dispatch);
+    const stopSignOutClear = CloudBackupClient_start();
     ProgressPhotoFiles_migrate()
       .catch(() => undefined)
       .then(() => {
@@ -340,7 +342,10 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
           dispatch(Thunk_cloudCatchUp());
         }
       });
-    return stopRecovery;
+    return () => {
+      stopRecovery();
+      stopSignOutClear();
+    };
   }, [dispatch]);
 
   const {
