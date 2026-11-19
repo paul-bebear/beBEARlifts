@@ -11,6 +11,7 @@ import {
   FoodLog_entriesFor,
   FoodLog_formatRange,
   FoodLog_hasGoals,
+  FoodLog_macroLine,
   FoodLog_parse,
   FoodLog_parseNutrients,
   FoodLog_progress,
@@ -385,4 +386,21 @@ describe("FoodLog_parseNutrients table", () => {
       expect(FoodLog_parseNutrients(input)).to.deep.equal(expected);
     });
   }
+});
+
+describe("FoodLog_macroLine", () => {
+  const food = { calories: 380, protein: 31.6, carbs: 40.4, fat: 11.5 };
+
+  it("writes protein, carbs, fat with one decimal", () => {
+    expect(FoodLog_macroLine(food)).to.equal("31.6 P · 40.4 C · 11.5 F");
+  });
+
+  it("rounds to whole grams from 100 up", () => {
+    expect(FoodLog_macroLine({ calories: 0, protein: 120.4, carbs: 0, fat: 100 })).to.equal("120 P · 0 C · 100 F");
+  });
+
+  it("keeps the order when parts are picked", () => {
+    expect(FoodLog_macroLine(food, ["fat", "protein"])).to.equal("31.6 P · 11.5 F");
+    expect(FoodLog_macroLine(food, ["protein"])).to.equal("31.6 P");
+  });
 });

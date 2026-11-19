@@ -1,7 +1,7 @@
 import { JSX } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_sum } from "../models/foodLog";
+import { FoodLog_macroLine, FoodLog_sum } from "../models/foodLog";
 import { FoodAddFlow_setPhotoGrams, IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodGramsField, FoodNutrientsRow } from "./foodUi";
 import { Button } from "./button";
@@ -29,8 +29,7 @@ function ChoiceRow(props: {
           {choice.name}
         </Text>
         <Text className="text-xs text-text-secondary">
-          {choice.nutrients.calories} cal · {Math.round(choice.nutrients.protein)} P ·{" "}
-          {Math.round(choice.nutrients.carbs)} C · {Math.round(choice.nutrients.fat)} F
+          {choice.nutrients.calories} cal · {FoodLog_macroLine(choice.nutrients)}
         </Text>
         {choice.isAmountSuspect && (
           <Text className="text-xs text-text-error" testID="food-ai-item-amount-warning">
