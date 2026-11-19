@@ -11,7 +11,6 @@ import {
   IFoodSex,
   IFoodTargetsResult,
 } from "./foodTargets";
-import { Weight_parsePositive } from "./weight";
 
 export type IProgramGoalKind = "buildMuscle" | "loseFat" | "maintain";
 export type IProgramGoalPace = "slow" | "moderate" | "fast";
@@ -76,6 +75,14 @@ function isOneOf<T extends string>(value: unknown, options: readonly T[]): value
   return options.includes(value as T);
 }
 
+function parseWeight(raw: unknown): IWeight | undefined {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  if (typeof r.value !== "number" || !isFinite(r.value) || r.value <= 0 || (r.unit !== "kg" && r.unit !== "lb")) {
+    return undefined;
+  }
+  return { value: r.value, unit: r.unit };
+}
+
 function parseGoal(raw: unknown): IProgramGoal | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const kinds = ProgramGoal_kinds.map((k) => k.key);
@@ -100,7 +107,7 @@ function parseGoal(raw: unknown): IProgramGoal | undefined {
   if (isOneOf(r.sex, ["male", "female"] as const)) {
     goal.sex = r.sex;
   }
-  const startWeight = Weight_parsePositive(r.startWeight);
+  const startWeight = parseWeight(r.startWeight);
   if (startWeight != null) {
     goal.startWeight = startWeight;
   }

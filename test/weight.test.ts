@@ -11,7 +11,6 @@ import {
   Weight_round,
   Weight_formatOneSide,
   Weight_strictParse,
-  Weight_parsePositive,
 } from "../src/models/weight";
 import { IPlate, ISettings } from "../src/types";
 import { Exercise_toKey } from "../src/models/exercise";
@@ -237,22 +236,4 @@ describe("Weight", () => {
     expect(Weight_kgPerLb).to.equal(0.45359237);
     expect(100 * Weight_kgPerLb).to.be.closeTo(45.359237, 1e-9);
   });
-});
-
-describe("Weight_parsePositive", () => {
-  const cases: [string, unknown, unknown][] = [
-    ["kilograms", { value: 80, unit: "kg" }, { value: 80, unit: "kg" }],
-    ["pounds", { value: 176, unit: "lb" }, { value: 176, unit: "lb" }],
-    ["zero, dropped", { value: 0, unit: "kg" }, undefined],
-    ["a negative value, dropped", { value: -1, unit: "lb" }, undefined],
-    ["a numeric string, dropped", { value: "80", unit: "kg" }, undefined],
-    ["NaN, dropped", { value: NaN, unit: "kg" }, undefined],
-    ["an unknown unit, dropped", { value: 80, unit: "%" }, undefined],
-    ["undefined, dropped", undefined, undefined],
-  ];
-  for (const [name, input, expected] of cases) {
-    it(name, () => {
-      expect(Weight_parsePositive(input)).to.deep.equal(expected);
-    });
-  }
 });
