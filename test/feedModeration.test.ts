@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   FeedModeration_empty,
+  FeedModeration_alreadyBlockedText,
   FeedModeration_alreadyReportedText,
   FeedModeration_filter,
   FeedModeration_items,
@@ -83,6 +84,13 @@ describe("Feed moderation", () => {
       message: "You already reported this post",
       keepOpen: true,
     });
+  });
+
+  it("says a second block of the same user was already done", () => {
+    expect(
+      FeedModeration_alreadyBlockedText('duplicate key value violates unique constraint "user_blocks_pkey"')
+    ).to.equal("You already blocked this user");
+    expect(FeedModeration_alreadyBlockedText("No connection")).to.equal("No connection");
   });
 
   it("closes a sent report and keeps a failed report open for retry", () => {

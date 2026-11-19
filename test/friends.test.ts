@@ -1,6 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  Friends_addSheetState,
   Friends_errorText,
   Friends_forUser,
   Friends_fromServer,
@@ -57,6 +58,27 @@ describe("Friends", () => {
     expect(Friends_forUser(parsed, "someone-else").links).to.deep.equal([]);
     expect(Friends_forUser(parsed, undefined).userId).to.equal(undefined);
     expect(Friends_parse({ links: [{}] })).to.deep.equal({ version: 1, links: [] });
+  });
+
+  it("picks the add sheet body and button label", () => {
+    const me = { userId: "u", handle: "paul", displayName: "Paul" };
+    expect(Friends_addSheetState(undefined, false, undefined)).to.deep.equal({
+      kind: "signedOut",
+      buttonLabel: "Sign in",
+    });
+    expect(Friends_addSheetState(undefined, true, me).kind).to.equal("signedOut");
+    expect(Friends_addSheetState("u", false, undefined)).to.deep.equal({
+      kind: "loading",
+      buttonLabel: "See friends and requests",
+    });
+    expect(Friends_addSheetState("u", true, undefined)).to.deep.equal({
+      kind: "needsHandle",
+      buttonLabel: "Pick a handle",
+    });
+    expect(Friends_addSheetState("u", true, me)).to.deep.equal({
+      kind: "ready",
+      buttonLabel: "See friends and requests",
+    });
   });
 });
 

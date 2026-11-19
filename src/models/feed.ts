@@ -56,7 +56,6 @@ export type IFeedShareStatus = "shared" | "sending" | "notShared";
 export type IFeedScreenView = "feed" | "people";
 
 export const Feed_limit = 50;
-const Feed_staleMs = 10 * 60000;
 
 const jpegDataUrl = /^data:image\/jpeg;base64,/;
 
@@ -250,11 +249,6 @@ export function Feed_reportTarget(item: IFeedItem): IFeedReportTarget | undefine
     return { kind: "meal", id: item.post.id };
   }
   return item.post.id != null ? { kind: "workout", id: item.post.id } : undefined;
-}
-
-// The TV reads the cache and asks for a refresh at most every 10 minutes, so visiting My bear stays offline-friendly.
-export function Feed_needsRefresh(state: IFeedState, userId: string | undefined, now: number): boolean {
-  return userId != null && (state.userId !== userId || state.loadedAt == null || now - state.loadedAt > Feed_staleMs);
 }
 
 // With no friends yet, the screen opens on the friends part, so "Add a friend" is the first thing (U28).

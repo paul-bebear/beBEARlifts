@@ -1,4 +1,4 @@
-import { JSX, useContext, useEffect, useReducer, useRef, useState } from "react";
+import { JSX, useContext, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { NavScreenScrollContext } from "../navigation/NavScreenScrollContext";
@@ -27,9 +27,9 @@ import { CloudBackupCard } from "./cloudBackupCard";
 import { InviteClient_share } from "../utils/inviteClient";
 import { Invite_shareMessage } from "../models/invite";
 import { FriendsStore } from "../utils/friendsClient";
-import { FriendsCommand_run } from "../utils/friendsCommand";
+import { useFriendsForm } from "../utils/useFriendsForm";
 import { Friends_forUser, Friends_lists, IProfile } from "../models/friends";
-import { FriendsForm_empty, FriendsForm_reduce, IFriendsForm, IFriendsFormEvent } from "../models/friendsForm";
+import { IFriendsForm, IFriendsFormEvent } from "../models/friendsForm";
 import { FriendsAdd, FriendsLists, FriendsRequests } from "./friendsPeople";
 
 const inputClass =
@@ -70,27 +70,15 @@ export function ScreenFriends(): JSX.Element {
   const friends = Friends_forUser(FriendsStore.use(), userId);
   const feed = FeedStore.use();
   const blocked = FeedModeration_users(BlocksStore.use(), userId);
-  const [form, emit] = useReducer(FriendsForm_reduce, undefined, FriendsForm_empty);
   const [chosenView, setChosenView] = useState<IFeedScreenView>();
   const lists = Friends_lists(friends);
   const view = Feed_screenView(chosenView, lists.friends.length);
   useNavOptions({ navTitle: view === "feed" ? "Feed" : "Friends" });
   const isFocused = useIsFocused();
+  const [form, emit] = useFriendsForm(userId != null && isFocused, userId);
   const scroll = useContext(NavScreenScrollContext);
   const pull = useRef<IPullState>(PullToRefresh_idle());
   const [pullReady, setPullReady] = useState(false);
-
-  useEffect(() => {
-    if (userId != null && isFocused) {
-      emit({ type: "load" });
-    }
-  }, [userId, isFocused]);
-
-  useEffect(() => {
-    if (form.command != null) {
-      FriendsCommand_run(form.command, emit);
-    }
-  }, [form.command]);
 
   if (userId == null) {
     return (
@@ -160,7 +148,7 @@ export function ScreenFriends(): JSX.Element {
       )}
       {friends.me != null && view === "people" && (
         <>
-          <FriendsAdd form={form} lists={lists} emit={emit} />
+          <FriendsAdd form={form} emit={emit} />
           <FriendsLists form={form} lists={lists} emit={emit} />
         </>
       )}
