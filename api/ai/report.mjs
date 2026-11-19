@@ -1,6 +1,6 @@
 import { json } from "../_food.mjs";
 import { aiChat, aiProvider } from "../_ai.mjs";
-import { AiAuth_check } from "../_auth.mjs";
+import { AiAuth_check, AiAuth_refund } from "../_auth.mjs";
 
 // About 300 tokens in and 150 out, so one summary is well under $0.001 on Claude Haiku 5.5.
 const maxFacts = 20;
@@ -56,5 +56,8 @@ export async function POST(request) {
     },
     30000
   );
+  if (!result.ok) {
+    await AiAuth_refund(request);
+  }
   return result.ok ? json({ text: result.text.trim().slice(0, 800) }) : json({ error: result.error }, result.status);
 }

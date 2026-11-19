@@ -1,6 +1,6 @@
 import { json } from "../_food.mjs";
 import { aiChat, aiProvider } from "../_ai.mjs";
-import { AiAuth_check } from "../_auth.mjs";
+import { AiAuth_check, AiAuth_refund } from "../_auth.mjs";
 
 // About 400 tokens in and 400 out, so one warmup is about $0.0003 on Claude Haiku 5.5.
 const maxExercises = 12;
@@ -60,5 +60,8 @@ export async function POST(request) {
     },
     30000
   );
+  if (!result.ok) {
+    await AiAuth_refund(request);
+  }
   return result.ok ? json({ text: result.text }) : json({ error: result.error }, result.status);
 }

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { json } from "../_food.mjs";
 import { aiChat, aiProvider, aiUnavailableMessage } from "../_ai.mjs";
-import { AiAuth_check } from "../_auth.mjs";
+import { AiAuth_check, AiAuth_refund } from "../_auth.mjs";
 
 export const maxDuration = 120;
 export const Onboard_maxBodyBytes = 4_200_000;
@@ -105,9 +105,14 @@ export async function POST(request) {
       messages.push({ role: "user", content: `The app rejected your answer: ${body.validationError}. Correct it.` });
     }
     const result = await aiChat(ai, { messages, temperature: 0.2, maxTokens: 12000 }, 90000);
-    return result.ok ? json({ text: result.text }) : json({ error: result.error }, result.status);
+    if (!result.ok) {
+      await AiAuth_refund(request);
+      return json({ error: result.error }, result.status);
+    }
+    return json({ text: result.text, finishReason: result.finishReason });
   } catch (failure) {
     console.error("AI onboarding failed", failure);
+    await AiAuth_refund(request);
     return json({ error: aiUnavailableMessage }, 504);
   }
 }
