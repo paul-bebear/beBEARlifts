@@ -91,6 +91,14 @@ export interface IHistoryEntryPersonalRecords {
   prevMax1RMSet?: ISet;
 }
 
+export function History_entryBeatenPrevious(pr: IHistoryEntryPersonalRecords | undefined): boolean {
+  return pr?.prevMaxWeightSet != null || pr?.prevMax1RMSet != null;
+}
+
+export function History_hasBeatenPrevious(prs: IPersonalRecords, recordId: number): boolean {
+  return Object.values(prs[recordId] ?? {}).some(History_entryBeatenPrevious);
+}
+
 export function History_generateId(timestamp: number): number {
   return timestamp + Math.floor(Math.random() * 1000);
 }

@@ -1,5 +1,6 @@
 import { IHistoryRecord, IScreenMuscle, ISettings, IWeight } from "../types";
 import {
+  History_entryBeatenPrevious,
   History_totalEntryWeight,
   History_totalRecordSets,
   History_totalRecordWeight,
@@ -176,8 +177,7 @@ export function WorkoutStoryCard_pageLabel(page: IShareCardPage): string {
 }
 
 export function WorkoutStoryCard_prCount(record: IHistoryRecord, prs: IPersonalRecords): number {
-  return Object.values(prs[record.id] ?? {}).filter((pr) => pr?.prevMaxWeightSet != null || pr?.prevMax1RMSet != null)
-    .length;
+  return Object.values(prs[record.id] ?? {}).filter(History_entryBeatenPrevious).length;
 }
 
 function setsDetail(reps: number[]): string {

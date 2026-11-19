@@ -5,6 +5,7 @@ import { Bear_state, IBearSources } from "../src/models/bear";
 import { BearStoreData_empty, BearStoreData_parse } from "../src/models/bearStoreData";
 import { FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
 import { Settings_build } from "../src/models/settings";
+import { History_hasBeatenPrevious } from "../src/models/history";
 import { IHistoryRecord } from "../src/types";
 import { Weight_build } from "../src/models/weight";
 
@@ -134,7 +135,32 @@ describe("Bear_state", () => {
     const short = { ...latest, startTime: now - 9 * 60000 };
     expect(Bear_state(sources({ history: [first, short], plannedDaysPerWeek: 3 }), now).energy).to.equal(0);
     const sameDay = [workout(now - 3 * hourMs), latest];
-    expect(Bear_state(sources({ history: sameDay }), now).lastCountedWorkoutAt).to.equal(now - 3 * hourMs);
+    const state = Bear_state(sources({ history: sameDay }), now);
+    expect(state.lastCountedWorkoutAt).to.equal(now);
+    expect(state.workouts).to.have.length(1);
+    expect(state.countedKg).to.equal(Bear_state(sources({ history: [sameDay[0]] }), now).countedKg);
+  });
+
+  it("makes the bear pumped after a second workout on the same day", () => {
+    const morning = workout(now - 10 * hourMs);
+    const evening = workout(now);
+    const data = sources({ history: [morning, evening] });
+    expect(Bear_state(data, now + hourMs).mood).to.equal("pumped");
+    expect(Bear_state(data, now + 3 * hourMs).mood).to.not.equal("pumped");
+  });
+
+  it("holds a personal record from a second same-day workout for 24 hours", () => {
+    const base = workout(now - 48 * hourMs, 40);
+    const data = sources({ history: [base, workout(now - 10 * hourMs, 40), workout(now, 50)] });
+    expect(Bear_state(data, now + 24 * hourMs).mood).to.equal("pumped");
+  });
+
+  it("keeps a celebrated level when the counted kg is far below its threshold", () => {
+    const store = { ...BearStoreData_empty(), celebratedLevel: 2 };
+    const history = [workout(now - 10 * hourMs), workout(now)];
+    const state = Bear_state(sources({ history, bear: store }), now);
+    expect(state.countedKg).to.be.lessThan(2000);
+    expect(state.level.tier.level).to.equal(2);
   });
 
   it("uses pumped before tired and hungry through the two-hour boundary", () => {
@@ -244,6 +270,20 @@ describe("Bear_state", () => {
     } finally {
       clock.restore();
     }
+  });
+});
+
+describe("History_hasBeatenPrevious", () => {
+  const prevSet = { vtype: "set" as const, id: "s", index: 0, isCompleted: true };
+
+  it("is true when any exercise of the record has a previous best", () => {
+    const prs = {
+      1: { a: { maxWeightSet: prevSet }, b: { prevMax1RMSet: prevSet } },
+      2: { a: { maxWeightSet: prevSet } },
+    };
+    expect(History_hasBeatenPrevious(prs, 1)).to.equal(true);
+    expect(History_hasBeatenPrevious(prs, 2)).to.equal(false);
+    expect(History_hasBeatenPrevious(prs, 3)).to.equal(false);
   });
 });
 

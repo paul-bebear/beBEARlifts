@@ -188,6 +188,15 @@ describe("BearGrowth", () => {
     expect(BearGrowth_countedKg(record, [], settings)).to.be.closeTo(400, 0.01);
   });
 
+  it("lists a second same-day workout apart, with no kg of its own", () => {
+    const first = workout(start, 30);
+    const second = workout(start + 3600000);
+    const result = BearGrowth_history([first, second], settings);
+    expect(result.workouts.map(({ record }) => record.id)).to.deep.equal([first.id]);
+    expect(result.sameDayExtras.map((record) => record.id)).to.deep.equal([second.id]);
+    expect(result.countedKg).to.equal(BearGrowth_history([first], settings).countedKg);
+  });
+
   it("keeps zero-volume qualifying workouts for energy and the daily limit", () => {
     const result = BearGrowth_history([workout(start, 30, [set(0)]), workout(start + 3600000)], settings);
     expect(result.workouts).to.have.length(1);
