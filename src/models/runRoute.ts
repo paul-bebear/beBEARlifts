@@ -1,3 +1,5 @@
+import { RunTrack_earthRadiusM } from "./runTrack";
+
 export type ILatLon = [number, number];
 
 export interface IXY {
@@ -32,7 +34,7 @@ export const RunRoute_hiddenEndsM = 50;
 
 const RunRoute_pointLimit = 300;
 
-const metresPerDegree = (6371000 * Math.PI) / 180;
+const metresPerDegree = (RunTrack_earthRadiusM * Math.PI) / 180;
 const startToleranceM = 1;
 const toleranceGrowth = 1.5;
 const maxRounds = 40;

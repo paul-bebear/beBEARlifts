@@ -1,13 +1,8 @@
 import { JSX, useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { IRun, RunLog_date, RunLog_pace, RunLog_put, RunLog_remove } from "../models/runLog";
-import {
-  IRunRecording,
-  RunRecording_permissionText,
-  RunRecording_restore,
-  RunRecording_snapshot,
-  RunRecording_start,
-} from "../models/runRecording";
+import { IRunRecording, RunRecording_permissionText } from "../models/runRecording";
+import { RunFinish_mountPlan, RunFinish_saveEffects, RunFinish_startPlan } from "../models/runFinish";
 import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPace } from "../models/runTrack";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
@@ -29,12 +24,13 @@ export function ScreenRuns(): JSX.Element {
     let active = true;
     RunDraftStore.load()
       .then(async (draft) => {
-        const restored = draft != null ? RunRecording_restore(draft) : undefined;
-        if (restored != null) {
+        const plan = RunFinish_mountPlan(draft);
+        if (plan.recording != null && plan.rewriteDraft) {
+          const restored = plan.recording;
           await RunDraftStore.update(() => restored);
         }
         if (active) {
-          setRecording(restored);
+          setRecording(plan.recording);
           setLoading(false);
         }
       })
@@ -48,12 +44,13 @@ export function ScreenRuns(): JSX.Element {
     setLoading(true);
     try {
       const blocked = RunRecording_permissionText(await RunSensors_requestPermission(), RunSensors_platform);
-      if (blocked != null) {
-        Dialog_alert(blocked);
+      const plan = RunFinish_startPlan(blocked, Date.now());
+      if (plan.type === "blocked") {
+        Dialog_alert(plan.text);
         setLoading(false);
         return;
       }
-      const next = RunRecording_snapshot(RunRecording_start(Date.now()), Date.now());
+      const next = plan.recording;
       await RunDraftStore.update(() => next);
       setSelected(undefined);
       setRecording(next);
@@ -64,14 +61,18 @@ export function ScreenRuns(): JSX.Element {
   };
 
   const finish = async (run: IRun | undefined): Promise<void> => {
-    if (run != null) {
-      await RunStore.update((value) => RunLog_put(value, run));
-    } else {
-      Dialog_alert("This run had too few GPS points to save.");
+    for (const effect of RunFinish_saveEffects(run)) {
+      if (effect.type === "save-run") {
+        await RunStore.update((value) => RunLog_put(value, effect.run));
+      } else if (effect.type === "alert-too-short") {
+        Dialog_alert("This run had too few GPS points to save.");
+      } else if (effect.type === "clear-draft") {
+        await RunDraftStore.update(() => undefined);
+      } else {
+        setRecording(undefined);
+        setSelected(effect.run);
+      }
     }
-    await RunDraftStore.update(() => undefined);
-    setRecording(undefined);
-    setSelected(run);
   };
 
   const remove = async (run: IRun): Promise<void> => {

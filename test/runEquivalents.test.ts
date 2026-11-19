@@ -22,3 +22,16 @@ describe("RunEquivalents", () => {
     expect(RunEquivalents_pick(NaN, 1)).to.equal(undefined);
   });
 });
+
+describe("RunEquivalents text", () => {
+  it("builds the same wording for fixed seeds", () => {
+    expect(RunEquivalents_pick(5000, 0)).to.deep.equal(RunEquivalents_pick(5000, 0));
+    const texts = [0, 1, 2, 3].map((seed) => RunEquivalents_pick(5000, seed)!.text);
+    expect(texts).to.deep.equal([
+      "That's 333,333 honeybees nose to tail",
+      "You ran 250,000 gummy bears",
+      "Same as 7,143 wild salmon lined up nose to tail",
+      "You covered 3,846 sun bears",
+    ]);
+  });
+});

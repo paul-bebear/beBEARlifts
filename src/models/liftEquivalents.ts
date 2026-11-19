@@ -37,7 +37,7 @@ const things: ILiftThing[] = [
   { one: "Kodiak bear", many: "Kodiak bears", kg: 600, emoji: "🐻" },
 ];
 
-const phrases: { lead: string; tail: string }[] = [
+const phrases: ILiftPhrase[] = [
   { lead: "That's", tail: "" },
   { lead: "You moved", tail: "" },
   { lead: "That's", tail: "of pure gains" },
@@ -72,7 +72,12 @@ function nameHash(name: string): number {
   return hash;
 }
 
-function wrap(seed: number, length: number): number {
+export interface ILiftPhrase {
+  lead: string;
+  tail: string;
+}
+
+export function LiftEquivalents_wrap(seed: number, length: number): number {
   return ((Math.floor(seed) % length) + length) % length;
 }
 
@@ -87,16 +92,22 @@ export function LiftEquivalents_count(totalKg: number): number {
   return fitting(totalKg).length;
 }
 
+export function LiftEquivalents_build(
+  thing: { many: string; emoji: string },
+  phrase: ILiftPhrase,
+  count: number
+): ILiftEquivalent {
+  const number = LiftEquivalents_formatCount(count);
+  const text = [phrase.lead, `${number} ${thing.many}`, phrase.tail].filter((s) => s !== "").join(" ");
+  return { count, number, noun: thing.many, lead: phrase.lead, tail: phrase.tail, emoji: thing.emoji, text };
+}
+
 // The seed comes from the shuffle button. Each press moves to the next thing and the next phrase.
 export function LiftEquivalents_pick(totalKg: number, seed: number): ILiftEquivalent | undefined {
   const candidates = fitting(totalKg);
   if (candidates.length === 0) {
     return undefined;
   }
-  const thing = candidates[wrap(seed, candidates.length)];
-  const phrase = phrases[wrap(seed, phrases.length)];
-  const count = totalKg / thing.kg;
-  const number = LiftEquivalents_formatCount(count);
-  const text = [phrase.lead, `${number} ${thing.many}`, phrase.tail].filter((s) => s !== "").join(" ");
-  return { count, number, noun: thing.many, lead: phrase.lead, tail: phrase.tail, emoji: thing.emoji, text };
+  const thing = candidates[LiftEquivalents_wrap(seed, candidates.length)];
+  return LiftEquivalents_build(thing, phrases[LiftEquivalents_wrap(seed, phrases.length)], totalKg / thing.kg);
 }

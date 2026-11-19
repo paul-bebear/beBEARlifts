@@ -14,14 +14,20 @@ import {
   RunRecording_onFix,
   RunRecording_onTick,
   RunRecording_pause,
-  RunRecording_pauseStale,
   RunRecording_recentPace,
   RunRecording_resume,
   RunRecording_screenHints,
   RunRecording_snapshot,
   RunRecording_stats,
-  RunRecording_toRun,
 } from "../models/runRecording";
+import {
+  IRunFinishEffect,
+  IRunFinishEvent,
+  RunFinish_close,
+  RunFinish_idle,
+  RunFinish_isClosing,
+  RunFinish_next,
+} from "../models/runFinish";
 import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPace } from "../models/runTrack";
 import { IRun } from "../models/runLog";
 import { RunDraftStore } from "../utils/runStore";
@@ -59,7 +65,7 @@ export function RunRecorder(props: {
 }): JSX.Element {
   const [recording, setRecording] = useState(props.initial);
   const current = useRef(recording);
-  const closing = useRef(false);
+  const finishState = useRef(RunFinish_idle());
   const [now, setNow] = useState(Date.now);
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -70,7 +76,7 @@ export function RunRecorder(props: {
   const persist = useCallback((next: IRunRecording): void => {
     const snapshot = RunRecording_snapshot(next, Date.now());
     current.current = snapshot;
-    RunDraftStore.update(() => snapshot).then(
+    RunDraftStore.replace(snapshot).then(
       () => setSaveError(undefined),
       () => setSaveError("Could not save this run on your phone. Keep this screen open and try again.")
     );
@@ -108,12 +114,12 @@ export function RunRecorder(props: {
     const timer = setInterval(() => {
       const at = Date.now();
       setNow(at);
-      if (!closing.current) {
+      if (!RunFinish_isClosing(finishState.current)) {
         apply(RunRecording_onTick(current.current, at, gapRule));
       }
     }, 1000);
     const onVisibility = (): void => {
-      if (document.visibilityState === "hidden" && !closing.current) {
+      if (document.visibilityState === "hidden" && !RunFinish_isClosing(finishState.current)) {
         persist(RunRecording_markHidden(current.current, Date.now()));
         setRecording(current.current);
       }
@@ -126,7 +132,7 @@ export function RunRecorder(props: {
       if (typeof document !== "undefined") {
         document.removeEventListener("visibilitychange", onVisibility);
       }
-      if (!closing.current) {
+      if (!RunFinish_isClosing(finishState.current)) {
         persist(RunRecording_pause(current.current, Date.now()));
       }
     };
@@ -139,16 +145,28 @@ export function RunRecorder(props: {
     setGpsError(undefined);
   };
 
+  const dispatchFinish = (event: IRunFinishEvent): IRunFinishEffect[] => {
+    const step = RunFinish_next(finishState.current, event);
+    finishState.current = step.state;
+    return step.effects;
+  };
+
   const finish = async (): Promise<void> => {
+    if (dispatchFinish({ type: "tapped" }).length === 0) {
+      return;
+    }
     setBusy(true);
-    if (await Dialog_confirm("Finish this run? Runs without enough GPS points will be discarded.")) {
-      closing.current = true;
-      change(RunRecording_pause(RunRecording_pauseStale(current.current, Date.now()), Date.now()));
+    const confirmed = await Dialog_confirm("Finish this run? Runs without enough GPS points will be discarded.");
+    if (dispatchFinish({ type: "answered", confirmed }).some((e) => e.type === "close")) {
+      const closed = RunFinish_close(current.current, Date.now());
+      change(closed.recording);
       try {
-        await props.onFinish(RunRecording_toRun(current.current, Date.now()));
+        await props.onFinish(closed.run);
+        dispatchFinish({ type: "saved" });
       } catch {
-        closing.current = false;
-        setSaveError("Could not finish saving. Your run is paused. Tap Finish to try again.");
+        if (dispatchFinish({ type: "failed" }).some((e) => e.type === "report-failure")) {
+          setSaveError("Could not finish saving. Your run is paused. Tap Finish to try again.");
+        }
       }
     }
     setBusy(false);

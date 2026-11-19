@@ -37,7 +37,7 @@ const RunTrack_minClimbM = 3;
 const RunTrack_minPaceDistanceM = 50;
 const RunTrack_recentPaceWindowMs = 30 * 1000;
 
-const earthRadiusM = 6371000;
+export const RunTrack_earthRadiusM = 6371000;
 const altitudeWindow = 5;
 
 function radians(degrees: number): number {
@@ -48,7 +48,7 @@ export function RunTrack_distanceM(a: Pick<IRunPoint, "lat" | "lon">, b: Pick<IR
   const dLat = radians(b.lat - a.lat);
   const dLon = radians(b.lon - a.lon);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(radians(a.lat)) * Math.cos(radians(b.lat)) * Math.sin(dLon / 2) ** 2;
-  return 2 * earthRadiusM * Math.asin(Math.min(1, Math.sqrt(h)));
+  return 2 * RunTrack_earthRadiusM * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
 export function RunTrack_judge(previous: IRunPoint | undefined, point: IRunPoint): IRunPointVerdict {
