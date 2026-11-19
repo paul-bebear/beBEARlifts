@@ -6,7 +6,6 @@ import {
   BearArt_cardSprite,
   BearArt_furColor,
   BearArt_gym,
-  BearArt_liftingSizes,
   BearArt_postSprite,
   BearArt_sprite,
 } from "../src/models/bearArt";
@@ -41,19 +40,12 @@ describe("BearArt", () => {
     });
   }
 
-  it("ships no lifting pose, so every card shows the pumped roar", () => {
-    expect(BearArt_liftingSizes).to.deep.equal([]);
+  it("every card shows the pumped roar", () => {
     sizes.forEach((size, index) => {
       for (const line of lines) {
         expect(BearArt_cardSprite(line, "brown", index + 1)).to.equal(`/images/bear/brown/mood-${size}-pumped.webp`);
       }
     });
-  });
-
-  it("shows a lifting pose on cards for the listed sizes only", () => {
-    const listed = ["medium", "space"] as const;
-    expect(BearArt_cardSprite("female", "brown", 5, listed)).to.equal("/images/bear/brown/lift-medium.webp");
-    expect(BearArt_cardSprite("male", "brown", 8, listed)).to.equal("/images/bear/brown/mood-big-pumped.webp");
   });
 
   it("draws a friend's post bear from the brown folder, and a post with no bear as a cub", () => {

@@ -20,18 +20,8 @@ export function BearArt_postSprite(bear: IPostBear | undefined): string {
   return BearArt_sprite(bear?.line ?? "male", bear?.fur ?? "brown", bear?.level ?? 1, bear?.mood ?? "normal");
 }
 
-export const BearArt_liftingSizes: readonly IBearLevel["size"][] = [];
-
-export function BearArt_cardSprite(
-  line: IBearLine,
-  fur: IBearFur,
-  level: number,
-  liftingSizes: readonly IBearLevel["size"][] = BearArt_liftingSizes
-): string {
-  const size = tierForLevel(level).size;
-  return liftingSizes.includes(size)
-    ? `/images/bear/${BearArt_folder}/lift-${size}.webp`
-    : BearArt_sprite(line, fur, level, "pumped");
+export function BearArt_cardSprite(line: IBearLine, fur: IBearFur, level: number): string {
+  return BearArt_sprite(line, fur, level, "pumped");
 }
 
 const furColors: Partial<Record<IBearFur, string>> = { black: "#2B2522", polar: "#F4EEE2" };
