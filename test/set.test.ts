@@ -68,6 +68,14 @@ describe("Reps_isCompletedSet", () => {
     );
   });
 
+  it("needs the target reps when the target or the logged weight is 0", () => {
+    expect(Reps_isCompletedSet(kg(10, 0, 3, 0))).to.equal(false);
+    expect(Reps_isCompletedSet(kg(10, 0, 10, 0))).to.equal(true);
+    expect(Reps_isCompletedSet(kg(10, 0, 3, 20))).to.equal(false);
+    expect(Reps_isCompletedSet(kg(10, 0, 10, 20))).to.equal(true);
+    expect(Reps_isCompletedSet(kg(10, 20, 30, 0))).to.equal(false);
+  });
+
   it("converts units before it compares", () => {
     const target = { reps: 5, weight: Weight_build(100, "kg") };
     const heavier = done({ ...target, completedReps: 5, completedWeight: Weight_build(230, "lb") });

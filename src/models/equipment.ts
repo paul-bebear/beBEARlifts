@@ -96,6 +96,11 @@ export function Equipment_loadsPlatesOnBar(settings: ISettings, exerciseType?: I
   return equipmentData.bar[unit].value > 0;
 }
 
+export const Equipment_defaultRounding = {
+  exactStep: { kg: 1, lb: 2.5 },
+  noEquipment: { kg: 2.5, lb: 5 },
+} as const;
+
 export function Equipment_exactWeightStep(settings: ISettings, exerciseType?: IExerciseType): number | undefined {
   const equipmentData = Equipment_getEquipmentDataForExerciseType(settings, exerciseType);
   if (exerciseType == null || equipmentData == null || equipmentData.isFixed) {
@@ -105,7 +110,8 @@ export function Equipment_exactWeightStep(settings: ISettings, exerciseType?: IE
     return undefined;
   }
   const rounding = settings.exerciseData[Exercise_toKey(exerciseType)]?.rounding;
-  return rounding ?? (Equipment_getUnitOrDefaultForExerciseType(settings, exerciseType) === "kg" ? 1 : 2.5);
+  const unit = Equipment_getUnitOrDefaultForExerciseType(settings, exerciseType);
+  return rounding ?? Equipment_defaultRounding.exactStep[unit];
 }
 
 export function Equipment_getEquipmentNameForExerciseType(

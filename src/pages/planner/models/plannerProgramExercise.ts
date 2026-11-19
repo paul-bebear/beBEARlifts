@@ -73,6 +73,11 @@ export type ISumRepsProgressionType = {
 export type ICustomProgressionType = {
   type: "custom";
 };
+export type IBeatProgressionType = {
+  type: "beat";
+  increase: IProgramState[string];
+  maxReps: number;
+};
 export type IProgressionType =
   | ILinearProgressionType
   | IDoubleProgressionType
@@ -871,6 +876,17 @@ export function PlannerProgramExercise_progressionType(
     return { type: "custom" };
   }
   return undefined;
+}
+
+// Kept out of IProgressionType so the editor's exhaustive switch in editProgramUiProgress.tsx still compiles.
+export function PlannerProgramExercise_beatProgression(
+  exercise: IPlannerProgramExercise
+): IBeatProgressionType | undefined {
+  if (exercise.progress?.type !== "beat") {
+    return undefined;
+  }
+  const state = PlannerProgramExercise_getState(exercise);
+  return { type: "beat", increase: state.increment, maxReps: state.maxReps as number };
 }
 
 export function PlannerProgramExercise_shortNameFromFullName(fullName: string, settings: ISettings): string {
