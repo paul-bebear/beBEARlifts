@@ -73,12 +73,12 @@ export function OAuthFlow_readReturn(href: string): IOAuthReturn {
   }
   const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
   const error = url.searchParams.get("error") ?? hash.get("error");
-  const description = url.searchParams.get("error_description") ?? hash.get("error_description");
   const code = url.searchParams.get("code");
+  // Anyone can craft this link, so the app never shows its error_description.
   if (error != null) {
     return {
       kind: "error",
-      message: error === "access_denied" ? "Sign-in was cancelled." : `Sign-in failed: ${description ?? error}`,
+      message: error === "access_denied" ? "Sign-in was cancelled." : "Sign-in failed. Try again.",
     };
   }
   if (code == null || code === "") {

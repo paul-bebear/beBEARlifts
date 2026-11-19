@@ -67,12 +67,19 @@ describe("OAuthFlow", () => {
     });
     expect(
       OAuthFlow_readReturn(`${app}/app/?auth=supabase&error=server_error&error_description=Email+not+confirmed`)
-    ).to.deep.equal({ kind: "error", message: "Sign-in failed: Email not confirmed" });
+    ).to.deep.equal({ kind: "error", message: "Sign-in failed. Try again." });
     expect(OAuthFlow_readReturn(`${app}/app/?auth=supabase#error=server_error`)).to.deep.equal({
       kind: "error",
-      message: "Sign-in failed: server_error",
+      message: "Sign-in failed. Try again.",
     });
     expect(OAuthFlow_readReturn(`${app}/app/?auth=supabase`).kind).to.equal("error");
+  });
+
+  it("never shows text that came in the link", () => {
+    const crafted = `${app}/app/?auth=supabase&error=x&error_description=Your+account+is+locked.+Email+help@evil.example`;
+    const ret = OAuthFlow_readReturn(crafted);
+    expect(ret).to.deep.equal({ kind: "error", message: "Sign-in failed. Try again." });
+    expect(OAuthFlow_readReturn(`${app}/app/?auth=supabase#error=Call+us+now`)).to.deep.equal(ret);
   });
 
   it("exchanges the code with the stored verifier for 10 minutes", () => {

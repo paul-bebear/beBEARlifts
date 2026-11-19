@@ -52,6 +52,25 @@ describe("AI consent persistence", () => {
     expect(ask.callCount).to.equal(2);
   });
 
+  it("asks on a tap that comes during a background check", async () => {
+    stored = AiConsent_decide(false, 123);
+    let finishLoad!: () => void;
+    (AiConsentStore.load as sinon.SinonStub).onFirstCall().callsFake(
+      () =>
+        new Promise<IAiConsent>((resolve) => {
+          finishLoad = () => resolve(stored);
+        })
+    );
+    ask.resolves(true);
+    const background = AiConsent_ensure();
+    const tap = AiConsent_ensure("tap");
+    finishLoad();
+    expect(await background).to.equal(false);
+    expect(await tap).to.equal(true);
+    expect(ask.callCount).to.equal(1);
+    expect(stored.choice).to.equal("allowed");
+  });
+
   it("lets Settings change an existing choice", async () => {
     stored = AiConsent_decide(false, 123);
     ask.resolves(true);
