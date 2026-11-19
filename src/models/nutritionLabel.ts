@@ -60,7 +60,9 @@ export function NutritionLabel_parse(text: string): INutritionLabel | undefined 
 
 export function NutritionLabel_note(text: string): string | undefined {
   const json = JsonInText_extract(text);
-  return json != null && typeof json === "object" ? UnknownValue_trimmedText((json as Record<string, unknown>).note) : undefined;
+  return json != null && typeof json === "object"
+    ? UnknownValue_trimmedText((json as Record<string, unknown>).note)
+    : undefined;
 }
 
 function formNumber(n: number | undefined): string {

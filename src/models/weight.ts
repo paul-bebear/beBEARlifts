@@ -9,6 +9,7 @@ import {
   Equipment_smallestPlate,
 } from "./equipment";
 import { Exercise_get, Exercise_onerm, Exercise_defaultRounding } from "./exercise";
+import { UnknownValue_isFinite } from "./unknownValue";
 
 const prebuiltWeights: Partial<Record<string, IWeight>> = {};
 
@@ -743,3 +744,11 @@ export function Weight_rpeMultiplier(reps: number, rpe: number): number {
 }
 
 export const Weight_zero: IWeight = { value: 0, unit: "lb" } as const;
+
+export function Weight_parsePositive(raw: unknown): IWeight | undefined {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  if (!UnknownValue_isFinite(r.value) || r.value <= 0 || (r.unit !== "kg" && r.unit !== "lb")) {
+    return undefined;
+  }
+  return { value: r.value, unit: r.unit };
+}
