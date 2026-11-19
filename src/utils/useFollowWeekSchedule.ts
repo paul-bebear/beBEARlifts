@@ -24,7 +24,7 @@ export function useFollowWeekSchedule(
       return step?.log ?? log;
     })
       .then(() => {
-        if (nextDay != null && nextDay !== program.nextDay) {
+        if (nextDay != null) {
           EditProgram_setNextDay(dispatch, program.id, nextDay);
         }
       })

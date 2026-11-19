@@ -1,6 +1,7 @@
-import { IHistoryRecord, ISet, ISettings } from "../types";
+import { IHistoryRecord, IProgram, ISet, ISettings, IStats } from "../types";
 import { Exercise_get } from "./exercise";
 import { Weight_convertTo } from "./weight";
+import { Program_evaluate, Program_isEmpty, Program_nextHistoryRecord } from "./program";
 import { DayNames_weekdaysLong } from "./dayNames";
 import {
   IScheduleProgram,
@@ -11,6 +12,7 @@ import {
   WeekSchedule_startChoice,
   WeekSchedule_today,
   WeekSchedule_todayFor,
+  WeekSchedule_workedOutToday,
 } from "./weekSchedule";
 
 export type IGymBagItemId = "water" | "belt" | "straps" | "shoes";
@@ -167,4 +169,27 @@ export function GymBagCheck_plan(
     case "next":
       return { kind: "next", day: program.nextDay, name: WeekSchedule_dayName(program, program.nextDay) };
   }
+}
+
+export function GymBagCheck_forProgram(
+  program: IProgram | undefined,
+  history: IHistoryRecord[],
+  settings: ISettings,
+  stats: IStats,
+  log: IWeekScheduleLog,
+  opts: { now: number; hasProgress: boolean }
+): { plan: IGymBagPlan; check: IGymBagCheck } {
+  if (program == null || Program_isEmpty(program)) {
+    const plan: IGymBagPlan = { kind: "next", day: 1, name: "" };
+    return { plan, check: GymBagCheck_items({ name: plan.name, isRest: false }, history, settings) };
+  }
+  const workedOutToday = WeekSchedule_workedOutToday(history, opts.now);
+  const plan = GymBagCheck_plan(Program_evaluate(program, settings), log, { ...opts, workedOutToday });
+  const record = Program_nextHistoryRecord(program, settings, stats, plan.day);
+  const day = { name: plan.name, record, isRest: plan.kind === "rest", nextWeekday: plan.nextWeekday };
+  return { plan, check: GymBagCheck_items(day, history, settings) };
+}
+
+export function GymBagCheck_startDay(programId: string | undefined, plan: IGymBagPlan): number | undefined {
+  return programId != null && plan.kind === "today" ? plan.day : undefined;
 }

@@ -223,6 +223,16 @@ describe("WeekSchedule", () => {
     expect(done?.nextDay).to.equal(undefined);
   });
 
+  it("never returns the day the program already holds, so the hook sets a day only when it changes", () => {
+    for (const nextDay of [1, 2, 3, 4, 5]) {
+      const p = { ...program(4, ulppl), id: "p", nextDay };
+      for (const now of [monday, tuesday, wednesday, thursday, friday]) {
+        const step = WeekSchedule_follow(WeekSchedule_empty(), p, { now, workedOutToday: false, hasProgress: false });
+        expect(step?.nextDay).to.not.equal(nextDay);
+      }
+    }
+  });
+
   it("waits while a workout is running", () => {
     const p = { ...program(4, ulppl), id: "p" };
     expect(

@@ -14,13 +14,13 @@ import { IProgram, ISettings } from "../../types";
 import { IEvaluatedProgram } from "../../models/program";
 import { IPlannerState } from "../../pages/planner/models/types";
 import { ILensDispatch } from "../../utils/useLensReducer";
-import { CollectionUtils_setBy } from "../../utils/collection";
 import { Dialog_alert } from "../../utils/dialog";
 import { Tailwind_semantic } from "../../utils/tailwindConfig";
 import {
+  ProgramDayOrder_afterMove,
   ProgramDayOrder_apply,
   ProgramDayOrder_hasUnsavedEdits,
-  ProgramDayOrder_pendingAfter,
+  ProgramDayOrder_savedPrograms,
 } from "../../models/programDayOrder";
 import {
   IProgramPlanCard,
@@ -91,10 +91,7 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
       plannerDispatch(
         lb<IPlannerState>()
           .p("current")
-          .recordModify((current) => ({
-            program: result.data.draft,
-            dayMoves: ProgramDayOrder_pendingAfter(current.dayMoves, result.data),
-          })),
+          .recordModify((current) => ProgramDayOrder_afterMove(current.dayMoves, result.data)),
         `Move day ${from + 1} to position ${to + 1}`
       );
       const saved = result.data.saved;
@@ -105,7 +102,7 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
             lb<IState>()
               .p("storage")
               .p("programs")
-              .recordModify((programs) => CollectionUtils_setBy(programs, "id", saved.id, saved)),
+              .recordModify((programs) => ProgramDayOrder_savedPrograms(programs, saved)),
           ],
           `Save day order of '${saved.name}'`
         );
