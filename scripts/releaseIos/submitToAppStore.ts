@@ -1,14 +1,24 @@
 import * as fs from "fs";
 import * as os from "os";
+import * as path from "path";
 import * as jwt from "jsonwebtoken";
 
 const API_BASE_URL = "https://api.appstoreconnect.apple.com/v1";
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing environment variable ${name}. Set it before running the App Store submit script.`);
+  }
+  return value;
+}
+
 const BUNDLE_ID = fs
-  .readFileSync("./ios/AppBranding.xcconfig", "utf8")
+  .readFileSync(path.resolve(__dirname, "../../ios/AppBranding.xcconfig"), "utf8")
   .match(/^APP_BUNDLE_PREFIX = (.+)$/m)![1]
   .trim();
-const ISSUER_ID = process.env.ASC_ISSUER_ID!;
-const KEY_ID = process.env.ASC_KEY_ID!;
+const ISSUER_ID = requireEnv("ASC_ISSUER_ID");
+const KEY_ID = requireEnv("ASC_KEY_ID");
 const KEY_PATH = process.env.ASC_KEY_PATH || `${os.homedir()}/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8`;
 const LOCALE = "en-US";
 const BUILD_POLL_INTERVAL_MS = 60 * 1000;

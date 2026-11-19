@@ -1,5 +1,6 @@
 import { UrlUtils_build } from "./utils/url";
 import { BundleNames_assetsInPage, BundleNames_hashedAsset } from "./utils/bundleNames";
+import { ServiceWorkerRoutes_decide, ServiceWorkerRoutes_isCacheable } from "./utils/serviceWorkerRoutes";
 
 declare let __COMMIT_HASH__: string;
 declare let __OFFLINE_ONLY__: boolean;
@@ -70,16 +71,11 @@ function initialize(service: ServiceWorkerGlobalScope): void {
   service.addEventListener("fetch", (e) => {
     const url = UrlUtils_build(e.request.url);
     // Returning without respondWith hands the request to the browser, so no cache read or write can happen.
-    if (url.pathname.startsWith("/api/food/") || url.hostname.endsWith(".spotify.com")) {
+    const route = ServiceWorkerRoutes_decide(url, e.request.method, e.request.mode);
+    if (route === "skip") {
       return;
     }
-    if (
-      e.request.method === "GET" &&
-      (e.request.mode === "navigate" ||
-        url.pathname === "/" ||
-        url.pathname === "index.html" ||
-        url.pathname === "/app")
-    ) {
+    if (route === "network-first") {
       console.log("[Service Worker] Fetching " + e.request.url);
       e.respondWith(
         caches.match(e.request).then((r) => {
@@ -107,18 +103,7 @@ function initialize(service: ServiceWorkerGlobalScope): void {
           } else {
             console.log("[Service Worker] Missing from cache, fetching resource: " + e.request.url);
             return fetch(e.request).then((response) => {
-              if (
-                e.request.method === "GET" &&
-                filesToCache.some((f) => {
-                  if (typeof f === "string") {
-                    const u = UrlUtils_build(e.request.url);
-                    return `${u.pathname}${u.search}` === f;
-                  } else {
-                    const u = UrlUtils_build(e.request.url);
-                    return f.test(`${u.pathname}${u.search}`);
-                  }
-                })
-              ) {
+              if (e.request.method === "GET" && ServiceWorkerRoutes_isCacheable(url, filesToCache)) {
                 return cacheRequest(e.request, response);
               } else {
                 return response;
