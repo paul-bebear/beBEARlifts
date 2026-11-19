@@ -5,12 +5,12 @@ import * as thunks from "../src/ducks/cloudBackupThunks";
 import * as client from "../src/utils/cloudBackupClient";
 import * as planClient from "../src/utils/accountPlanClient";
 import * as supabase from "../src/utils/supabaseClient";
-import { ICloudBackupEvent, ICloudBackupOperation } from "../src/models/cloudBackupForm";
+import { ICloudBackupCommand, ICloudBackupEvent, ICloudBackupOperation } from "../src/models/cloudBackupForm";
 import { CloudBackupCommand_run } from "../src/utils/cloudBackupCommand";
 
 async function run(
   operation: ICloudBackupOperation,
-  extra: { proCode?: string; copy?: "previous" } = {}
+  extra: Partial<Pick<ICloudBackupCommand, "proCode" | "copy">> = {}
 ): Promise<ICloudBackupEvent[]> {
   const events: ICloudBackupEvent[] = [];
   const thunk = CloudBackupCommand_run({ operation, email: "bear@example.com", code: "123456", ...extra }, (e) =>
