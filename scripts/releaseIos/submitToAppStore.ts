@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as os from "os";
-import * as path from "path";
+import * as nodePath from "path";
 import * as jwt from "jsonwebtoken";
 
 const API_BASE_URL = "https://api.appstoreconnect.apple.com/v1";
@@ -14,7 +14,7 @@ function requireEnv(name: string): string {
 }
 
 const BUNDLE_ID = fs
-  .readFileSync(path.resolve(__dirname, "../../ios/AppBranding.xcconfig"), "utf8")
+  .readFileSync(nodePath.resolve(__dirname, "../../ios/AppBranding.xcconfig"), "utf8")
   .match(/^APP_BUNDLE_PREFIX = (.+)$/m)![1]
   .trim();
 const ISSUER_ID = requireEnv("ASC_ISSUER_ID");
