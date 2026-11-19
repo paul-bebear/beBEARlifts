@@ -42,7 +42,8 @@ export function FullBackupFile_stores(parts: {
 
 // Every read is strict. A store that fails to read stops the backup, so its empty value never replaces the cloud copy.
 export async function FullBackupFile_build(
-  getStorage: () => IStorage
+  getStorage: () => IStorage,
+  compact: boolean = false
 ): Promise<{ text: string; now: number; stores: ICloudStoresInput }> {
   const [food, music, body, warmups, reports, clips, runs, goal, steps, checklist, bear, notes, schedule, photos] =
     await Promise.all([
@@ -83,7 +84,7 @@ export async function FullBackupFile_build(
     now
   );
   return {
-    text: JSON.stringify(backup, null, 2),
+    text: JSON.stringify(backup, null, compact ? undefined : 2),
     now,
     stores: FullBackupFile_stores({ food, notes, runs, body, checklist, photos }),
   };

@@ -118,6 +118,33 @@ describe("JsonStore", () => {
     expect(first.get()).to.equal(3);
   });
 
+  it("keeps the new value when a slow first load overlaps an update", async () => {
+    saved.set("slow", "1");
+    let releaseFirstRead: () => void = () => undefined;
+    const firstRead = new Promise<void>((resolve) => {
+      releaseFirstRead = resolve;
+    });
+    let reads = 0;
+    get.callsFake(async (key: string) => {
+      const value = saved.get(key);
+      reads += 1;
+      if (key === "slow" && reads === 1) {
+        await firstRead;
+      }
+      return value;
+    });
+    const store = counter("slow");
+    const seen: number[] = [];
+    store.subscribe((value) => seen.push(value));
+    const loaded = store.load();
+    const updated = store.update((value) => value + 1);
+    setTimeout(releaseFirstRead, 10);
+    await Promise.all([loaded, updated]);
+    expect(store.get()).to.equal(2);
+    expect(saved.get("slow")).to.equal("2");
+    expect(seen[seen.length - 1]).to.equal(2);
+  });
+
   it("rejects an update after a failed read and retries on the next call", async () => {
     const store = counter("unavailable");
     get.rejects(new Error("Read aborted"));

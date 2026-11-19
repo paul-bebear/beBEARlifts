@@ -143,7 +143,7 @@ async function backUp(mode: ICloudBackupMode, getState: () => IState): Promise<I
       return { ok: false, error: CloudBackup_offerPendingError };
     }
   }
-  const { text, now, stores } = await FullBackupFile_build(() => getState().storage);
+  const { text, now, stores } = await FullBackupFile_build(() => getState().storage, true);
   const result = await CloudBackupClient_upload(text, {
     exportedAt: new Date(now).toISOString(),
     workouts: CloudBackup_workoutsMark(getState().storage.history),

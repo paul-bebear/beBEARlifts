@@ -373,7 +373,7 @@ describe("Cloud backup thunks", () => {
     await run(Thunk_exportEverything());
     await run(Thunk_cloudBackup("manual"));
     const text = upload.firstCall.args[0] as string;
-    expect(text).to.equal(toFile.firstCall.args[1]);
+    expect(JSON.parse(text)).to.deep.equal(JSON.parse(toFile.firstCall.args[1]));
     const backup = JSON.parse(text);
     expect(backup).to.have.keys(
       "format",
@@ -698,6 +698,38 @@ describe("Cloud backup thunks", () => {
     (Date.now as sinon.SinonStub).returns(now + 30000);
     await run(Thunk_cloudCatchUp());
     expect(flush.callCount).to.equal(2);
+  });
+
+  it("reads no cloud store for the backup reminder on an online build", async () => {
+    const load = supabase.CloudStore.load as sinon.SinonStub;
+    load.resetHistory();
+    await run(Thunk_maybeRemindBackup());
+    expect(load.called).to.equal(false);
+    expect(confirm.called).to.equal(false);
+  });
+
+  it("keeps syncing photos on a run with no backup due, so a half-done batch continues", async () => {
+    state.storage.history = workouts([5]);
+    await run(Thunk_cloudBackup("auto"));
+    expect(upload.callCount).to.equal(1);
+    expect(photoSync.callCount).to.equal(1);
+    cloudState = {
+      ...cloudState,
+      lastBackupAt: now,
+      backedUpWorkouts: CloudBackup_workoutsMark(state.storage.history),
+      backedUpStores: CloudBackup_storesMark(none),
+    };
+    await run(Thunk_cloudBackup("auto"));
+    expect(upload.callCount).to.equal(1);
+    expect(photoSync.callCount).to.equal(2);
+  });
+
+  it("uploads the cloud copy without indentation", async () => {
+    state.storage.history = workouts([5]);
+    await run(Thunk_cloudBackup("auto"));
+    const text = upload.firstCall.args[0] as string;
+    expect(text).to.not.include("\n");
+    expect(JSON.parse(text)).to.be.an("object");
   });
 
   it("skips the weekly backup reminder after a recent cloud upload", async () => {
