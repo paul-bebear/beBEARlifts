@@ -12,23 +12,42 @@ function weigh(timestamp: number, value: number, unit: IUnit = "kg"): IStatsWeig
   return { vtype: "stat", value: { value, unit }, timestamp };
 }
 
+const now = new Date(2026, 9, 21, 18, 0).getTime();
+const hourMs = 3600000;
+const tomorrow = new Date(2026, 9, 22, 0, 0).getTime();
+
 describe("StatsLatest", () => {
-  it("sorts readable entries up to now, oldest first", () => {
-    const values = [weigh(30, 72), weigh(10, 70), weigh(20, Number.NaN), weigh(25, 0), weigh(40, 99)];
-    expect(StatsLatest_entries(values, 35).map((e) => e.timestamp)).to.deep.equal([10, 30]);
+  it("sorts readable entries up to the end of today, oldest first", () => {
+    const values = [
+      weigh(now - hourMs, 72),
+      weigh(now - 3 * hourMs, 70),
+      weigh(now - 2 * hourMs, Number.NaN),
+      weigh(now - 90 * 60000, 0),
+      weigh(tomorrow, 99),
+    ];
+    expect(StatsLatest_entries(values, now).map((e) => e.value.value)).to.deep.equal([70, 72]);
   });
 
-  it("picks the newest entry and ignores one dated after now", () => {
-    expect(StatsLatest_entry([weigh(10, 70), weigh(50, 90), weigh(30, 72)], 40)?.value.value).to.equal(72);
+  it("uses an entry stamped 30 seconds ahead of now", () => {
+    expect(StatsLatest_entry([weigh(now - hourMs, 70), weigh(now + 30000, 71)], now)?.value.value).to.equal(71);
+  });
+
+  it("uses an entry at 23:59 today", () => {
+    const lateToday = new Date(2026, 9, 21, 23, 59).getTime();
+    expect(StatsLatest_entry([weigh(now - hourMs, 70), weigh(lateToday, 71)], now)?.value.value).to.equal(71);
+  });
+
+  it("ignores an entry dated tomorrow", () => {
+    expect(StatsLatest_entry([weigh(now - hourMs, 70), weigh(tomorrow, 90)], now)?.value.value).to.equal(70);
   });
 
   it("takes the later-stored entry when two share a timestamp", () => {
-    expect(StatsLatest_entry([weigh(10, 70), weigh(10, 71)], 10)?.value.value).to.equal(71);
+    expect(StatsLatest_entry([weigh(now, 70), weigh(now, 71)], now)?.value.value).to.equal(71);
   });
 
   it("has no entry for an empty or missing list", () => {
-    expect(StatsLatest_entry(undefined, 10)).to.equal(undefined);
-    expect(StatsLatest_entry([weigh(20, 70)], 10)).to.equal(undefined);
+    expect(StatsLatest_entry(undefined, now)).to.equal(undefined);
+    expect(StatsLatest_entry([weigh(tomorrow, 70)], now)).to.equal(undefined);
   });
 
   it("finds the newest entry with no time limit", () => {
