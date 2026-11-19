@@ -1,45 +1,66 @@
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const testDir = "supabase/tests";
-const localHosts = ["localhost", "127.0.0.1"];
+const localHosts = { localhost: "localhost", "127.0.0.1": "127.0.0.1", "[::1]": "::1" };
 const localExample = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+// psql reads a -d value that holds "=" or starts with "postgresql://" as a whole connection string, host included.
+const plainName = /^[A-Za-z0-9_-]{1,63}$/;
+const redirectingEnv = ["PGHOST", "PGHOSTADDR", "PGPORT", "PGSERVICE", "PGSERVICEFILE", "PGDATABASE", "PGUSER"];
+
+// The live project has no branches, so a test run against it would write to real accounts.
+// Node's URL parser and libpq split "#", "," and a second "@" differently, so those URLs are refused,
+// and psql gets the parts as separate arguments, never the URL.
+export function SqlTests_connection(value) {
+  if (!value) {
+    return { ok: false, error: `Set SQL_TEST_DB_URL to a local database, for example ${localExample}` };
+  }
+  if (/[#,?]/.test(value) || value.split("@").length > 2) {
+    return { ok: false, error: "SQL_TEST_DB_URL must have no #, comma, query string or second @." };
+  }
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return { ok: false, error: "SQL_TEST_DB_URL is not a URL." };
+  }
+  if (!["postgres:", "postgresql:"].includes(url.protocol)) {
+    return { ok: false, error: "SQL_TEST_DB_URL must start with postgresql://" };
+  }
+  const host = Object.hasOwn(localHosts, url.hostname) ? localHosts[url.hostname] : undefined;
+  if (host == null) {
+    return {
+      ok: false,
+      error: `SQL_TEST_DB_URL points at ${url.hostname}. Only localhost, 127.0.0.1 and [::1] are allowed.`,
+    };
+  }
+  let user;
+  let password;
+  let database;
+  try {
+    user = decodeURIComponent(url.username) || "postgres";
+    password = decodeURIComponent(url.password);
+    database = decodeURIComponent(url.pathname.replace(/^\//, "")) || "postgres";
+  } catch {
+    return { ok: false, error: "SQL_TEST_DB_URL has a bad percent escape." };
+  }
+  if (!plainName.test(user) || !plainName.test(database)) {
+    return { ok: false, error: "The user and database names may hold only letters, digits, _ and -." };
+  }
+  return { ok: true, host, port: url.port || "5432", user, password, database };
+}
 
 function fail(message) {
   console.error(message);
   process.exit(1);
 }
 
-// The live project has no branches, so a test run against it would write to real accounts.
-// Query parameters are refused because psql reads host, hostaddr and service from them.
-function localUrlError(value) {
-  if (!value) {
-    return `Set SQL_TEST_DB_URL to a local database, for example ${localExample}`;
-  }
-  let url;
-  try {
-    url = new URL(value);
-  } catch {
-    return "SQL_TEST_DB_URL is not a URL.";
-  }
-  if (!["postgres:", "postgresql:"].includes(url.protocol)) {
-    return "SQL_TEST_DB_URL must start with postgresql://";
-  }
-  if (!localHosts.includes(url.hostname)) {
-    return `SQL_TEST_DB_URL points at ${url.hostname}. Only localhost and 127.0.0.1 are allowed.`;
-  }
-  if (url.search !== "") {
-    return "SQL_TEST_DB_URL must have no query parameters.";
-  }
-  return undefined;
-}
-
 function main() {
-  const dbUrl = process.env.SQL_TEST_DB_URL;
-  const urlError = localUrlError(dbUrl);
-  if (urlError != null) {
-    fail(urlError);
+  const connection = SqlTests_connection(process.env.SQL_TEST_DB_URL);
+  if (!connection.ok) {
+    fail(connection.error);
   }
   const given = process.argv.slice(2);
   const found = readdirSync(testDir)
@@ -47,13 +68,14 @@ function main() {
     .map((name) => path.join(testDir, name));
   const files = (given.length > 0 ? given : found).sort();
   const psql = process.env.PSQL || "psql";
-  const env = { ...process.env };
-  for (const key of ["PGHOST", "PGHOSTADDR", "PGSERVICE", "PGSERVICEFILE"]) {
+  const env = { ...process.env, PGPASSWORD: connection.password };
+  for (const key of redirectingEnv) {
     delete env[key];
   }
+  const target = ["-h", connection.host, "-p", connection.port, "-U", connection.user, "-d", connection.database];
   const failed = [];
   for (const file of files) {
-    const run = spawnSync(psql, ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", dbUrl, "-f", file], {
+    const run = spawnSync(psql, ["-X", "-q", "-v", "ON_ERROR_STOP=1", ...target, "-f", file], {
       env,
       encoding: "utf8",
     });
@@ -75,4 +97,6 @@ function main() {
   }
 }
 
-main();
+if (process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
