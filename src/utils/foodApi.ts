@@ -10,7 +10,7 @@ import {
   BodyScanRead_unreadable,
   IBodyScanRead,
 } from "../models/bodyScanRead";
-import { ApiUrl_for } from "./apiUrl";
+import { ApiRequest_errorText, ApiRequest_send } from "./apiRequest";
 import {
   IFoodProduct,
   OpenFoodFacts_isBarcode,
@@ -24,37 +24,18 @@ const offlineError = "No connection. Food lookup needs a signal.";
 export const FoodApi_timeoutError = "The food lookup took too long. Try again.";
 export const FoodApi_requestTimeoutMs = 15_000;
 
-async function request(path: string, init?: RequestInit): Promise<IFoodApiResult<unknown>> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FoodApi_requestTimeoutMs);
-  try {
-    let response: Response;
-    try {
-      response = await fetch(ApiUrl_for(path), { ...init, signal: controller.signal });
-    } catch {
-      return { ok: false, error: controller.signal.aborted ? FoodApi_timeoutError : offlineError };
-    }
-    return await readResponse(response, controller.signal);
-  } finally {
-    clearTimeout(timer);
+async function request(path: string): Promise<IFoodApiResult<unknown>> {
+  const sent = await ApiRequest_send(path, {}, FoodApi_requestTimeoutMs);
+  if (sent.kind !== "reply") {
+    return { ok: false, error: sent.kind === "timeout" ? FoodApi_timeoutError : offlineError };
   }
-}
-
-async function readResponse(response: Response, signal: AbortSignal): Promise<IFoodApiResult<unknown>> {
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
+  if (sent.body === undefined) {
     return {
       ok: false,
-      error: signal.aborted ? FoodApi_timeoutError : `The server returned ${response.status}.`,
+      error: sent.bodyTimedOut ? FoodApi_timeoutError : ApiRequest_errorText(sent.status, undefined),
     };
   }
-  if (!response.ok) {
-    const error = (body as { error?: unknown })?.error;
-    return { ok: false, error: typeof error === "string" ? error : `The server returned ${response.status}.` };
-  }
-  return { ok: true, value: body };
+  return sent.ok ? { ok: true, value: sent.body } : { ok: false, error: ApiRequest_errorText(sent.status, sent.body) };
 }
 
 export async function FoodApi_lookupBarcode(

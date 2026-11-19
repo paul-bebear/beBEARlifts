@@ -10,7 +10,7 @@ import { AccountDeletion_result, AccountDeletion_signInMessage } from "../models
 import { Friends_empty } from "../models/friends";
 import { FeedModeration_empty } from "../models/feedModeration";
 import { Feed_afterForcedSignOut, Feed_empty, IFeedState } from "../models/feed";
-import { ApiUrl_for } from "./apiUrl";
+import { ApiRequest_send } from "./apiRequest";
 import { FriendsStore } from "./friendsClient";
 import { BlocksStore } from "./moderationStore";
 import { FeedStore } from "./feedClient";
@@ -28,6 +28,10 @@ import {
 } from "./supabaseClient";
 
 const bucket = "backups";
+
+function isMissingObject(error: string): boolean {
+  return /^Object not found$/i.test(error);
+}
 
 export async function CloudBackupClient_sendCode(email: string): Promise<ICloudResult<undefined>> {
   const result = await SupabaseClient_call(
@@ -106,7 +110,7 @@ export async function CloudBackupClient_putPhoto(
 export async function CloudBackupClient_deletePhoto(userId: string, id: number): Promise<ICloudResult<undefined>> {
   const result = await SupabaseClient_authed(photoUrl(userId, id), { method: "DELETE" });
   if (!result.ok) {
-    return /^Object not found$/i.test(result.error) ? { ok: true, value: undefined } : result;
+    return isMissingObject(result.error) ? { ok: true, value: undefined } : result;
   }
   return { ok: true, value: undefined };
 }
@@ -118,7 +122,7 @@ export async function CloudBackupClient_getPhoto(
   const path = ProgressPhotos_cloudPath(userId, id);
   const result = await SupabaseClient_authed(`/storage/v1/object/authenticated/${bucket}/${path}`, { method: "GET" });
   if (!result.ok) {
-    return /^Object not found$/i.test(result.error) ? { ok: true, value: undefined } : result;
+    return isMissingObject(result.error) ? { ok: true, value: undefined } : result;
   }
   return { ok: true, value: new Uint8Array(await result.value.response.arrayBuffer()) };
 }
@@ -142,7 +146,7 @@ export async function CloudBackupClient_download(
   const path = CloudBackup_path(session.userId, copy);
   const result = await SupabaseClient_authed(`/storage/v1/object/authenticated/${bucket}/${path}`, { method: "GET" });
   if (!result.ok) {
-    return /^Object not found$/i.test(result.error) ? { ok: true, value: undefined } : result;
+    return isMissingObject(result.error) ? { ok: true, value: undefined } : result;
   }
   return { ok: true, value: await result.value.response.text() };
 }
@@ -181,16 +185,11 @@ export async function CloudBackupClient_deleteAccount(): Promise<ICloudResult<un
   if (!auth.ok) {
     return { ok: false, error: auth.error === Supabase_notSignedIn ? AccountDeletion_signInMessage : auth.error };
   }
-  let response: Response;
-  try {
-    response = await fetch(ApiUrl_for("/api/account/delete"), {
-      method: "POST",
-      headers: { Authorization: `Bearer ${auth.value}` },
-    });
-  } catch {
+  const sent = await ApiRequest_send("/api/account/delete", { method: "POST", token: auth.value });
+  if (sent.kind !== "reply") {
     return { ok: false, error: "No connection" };
   }
-  const result = AccountDeletion_result(response.status, await response.json().catch(() => undefined));
+  const result = AccountDeletion_result(sent.status, sent.body);
   if (!result.ok) {
     return result;
   }
