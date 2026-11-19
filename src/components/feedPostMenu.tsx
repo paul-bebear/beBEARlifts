@@ -3,6 +3,8 @@ import { Pressable, View } from "react-native";
 import { Feed_reportTarget, IFeedItem } from "../models/feed";
 import { FeedModeration_menu, FeedModeration_reasons, IPostMenuItem, IReportReason } from "../models/feedModeration";
 import { ModerationCommand_block, ModerationCommand_report } from "../utils/moderationCommand";
+import { FeedClient_removeMeal } from "../utils/feedClient";
+import { Dialog_confirm } from "../utils/dialog";
 import { Text } from "./primitives/text";
 import { TextInput } from "./primitives/textInput";
 import { Button } from "./button";
@@ -20,6 +22,16 @@ export function FeedPostMenu(props: { item: IFeedItem }): JSX.Element | null {
     "Block user": async () => {
       setBusy(true);
       await ModerationCommand_block(props.item.author);
+      setBusy(false);
+    },
+    "Remove post": async () => {
+      const item = props.item;
+      if (item.kind !== "meal" || !(await Dialog_confirm("Remove this meal from your friends' feed?"))) {
+        return;
+      }
+      setBusy(true);
+      const result = await FeedClient_removeMeal(item.post.id);
+      setMessage(result.ok ? undefined : result.error);
       setBusy(false);
     },
   };
