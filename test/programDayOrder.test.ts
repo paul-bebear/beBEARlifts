@@ -3,11 +3,13 @@ import { expect } from "chai";
 import * as fs from "fs";
 import * as path from "path";
 import {
+  ProgramDayOrder_afterMove,
   ProgramDayOrder_apply,
   ProgramDayOrder_move,
   ProgramDayOrder_nextDayOnSave,
   ProgramDayOrder_pendingAfter,
   ProgramDayOrder_rowCount,
+  ProgramDayOrder_savedPrograms,
 } from "../src/models/programDayOrder";
 import {
   PlannerProgram_evaluate,
@@ -464,6 +466,54 @@ Bench Press / 3x5 55lb
         throw new Error(clean.error);
       }
       expect(ProgramDayOrder_pendingAfter(afterSecond, clean.data)).to.eql([]);
+    });
+  });
+
+  describe("what the plan view records after a move", () => {
+    const threeDays = `# Week 1
+## Day A
+Squat / 3x5 100lb
+
+## Day B
+Bench Press / 3x5 50lb
+
+## Day C
+Deadlift / 1x5 200lb
+`;
+
+    it("points the next workout at the same day after a reorder, in the draft and in storage", () => {
+      const saved: IProgram = { ...Program_create("P"), id: "p1", planner: plannerOf(threeDays), nextDay: 3 };
+      const other: IProgram = { ...Program_create("Q"), id: "p2", nextDay: 2 };
+      const result = ProgramDayOrder_apply(saved, saved, 2, 0, settings);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      const update = ProgramDayOrder_afterMove(undefined, result.data);
+      expect(update.program).to.equal(result.data.draft);
+      expect(update.program.nextDay).to.equal(1);
+      expect(update.dayMoves).to.eql([]);
+      const programs = ProgramDayOrder_savedPrograms([other, saved], result.data.saved!);
+      expect(programs[0]).to.equal(other);
+      expect(programs[1].nextDay).to.equal(1);
+      expect(programs[1].planner?.weeks[0].days.map((d) => d.name)).to.eql(["Day C", "Day A", "Day B"]);
+    });
+
+    it("queues the move for Save when the editor holds unsaved edits", () => {
+      const saved: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const draft: IProgram = { ...saved, planner: plannerOf(threeDays.replace("3x5 100lb", "3x5 105lb")) };
+      const result = ProgramDayOrder_apply(saved, draft, 2, 0, settings);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      const earlier = [{ from: 1, to: 0, dayCounts: [3] }];
+      const update = ProgramDayOrder_afterMove(earlier, result.data);
+      expect(update.dayMoves).to.eql([...earlier, { from: 2, to: 0, dayCounts: [3] }]);
+    });
+
+    it("leaves a list without the saved id alone", () => {
+      const a: IProgram = { ...Program_create("A"), id: "a" };
+      const b: IProgram = { ...Program_create("B"), id: "b" };
+      expect(ProgramDayOrder_savedPrograms([a], b)).to.eql([a]);
     });
   });
 });

@@ -1,6 +1,6 @@
-import { FoodMicros_keys, FoodMicros_parse, IMicroKey, IMicros } from "./foodMicros";
+import { FoodMicros_keys, IMicroKey, IMicros } from "./foodMicros";
 import type { IFoodProduct } from "./openFoodFacts";
-import { SavedFoods_parse, SavedFoods_save } from "./savedFoods";
+import { SavedFoods_parse, SavedFoods_parseNutrients, SavedFoods_save } from "./savedFoods";
 import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } from "./foodTargets";
 import { NumberText_round1, NumberText_round3 } from "./numberText";
 import { LocalDay_key, LocalDay_parse } from "./localDay";
@@ -115,21 +115,7 @@ function isFiniteNumber(value: unknown): value is number {
 }
 
 export function FoodLog_parseNutrients(raw: unknown): INutrients | undefined {
-  if (raw == null || typeof raw !== "object") {
-    return undefined;
-  }
-  const r = raw as Record<string, unknown>;
-  if (![r.calories, r.protein, r.carbs, r.fat].every(isFiniteNumber)) {
-    return undefined;
-  }
-  const nutrients: INutrients = {
-    calories: r.calories as number,
-    protein: r.protein as number,
-    carbs: r.carbs as number,
-    fat: r.fat as number,
-  };
-  const micros = FoodMicros_parse(r.micros);
-  return micros != null ? { ...nutrients, micros } : nutrients;
+  return SavedFoods_parseNutrients(raw, { needs: "allFour", micros: "microsField" });
 }
 
 function parseRange(raw: unknown, fallback: IFoodRange): IFoodRange {

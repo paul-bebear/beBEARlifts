@@ -1,8 +1,8 @@
-import { JSX, useEffect, useReducer, useState } from "react";
+import { JSX, useState } from "react";
 import { View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Friends_forUser, IFriendsLists } from "../models/friends";
-import { FriendsForm_empty, FriendsForm_reduce, IFriendsForm, IFriendsFormEvent } from "../models/friendsForm";
+import { Friends_addSheetState, Friends_forUser } from "../models/friends";
+import { IFriendsForm, IFriendsFormEvent } from "../models/friendsForm";
 import { Invite_shareMessage } from "../models/invite";
 import { Button } from "./button";
 import { Text } from "./primitives/text";
@@ -13,12 +13,11 @@ import { useTrackedDispatch } from "../navigation/TrackedStateContext";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { CloudStore } from "../utils/supabaseClient";
 import { FriendsStore } from "../utils/friendsClient";
-import { FriendsCommand_run } from "../utils/friendsCommand";
+import { useFriendsForm } from "../utils/useFriendsForm";
 import { InviteClient_share } from "../utils/inviteClient";
 
 interface IProps {
   form: IFriendsForm;
-  lists: IFriendsLists;
   emit: (event: IFriendsFormEvent) => void;
 }
 
@@ -73,22 +72,11 @@ export function AddFriendModal(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const userId = CloudStore.use().session?.userId;
   const friends = Friends_forUser(FriendsStore.use(), userId);
-  const [form, emit] = useReducer(FriendsForm_reduce, undefined, FriendsForm_empty);
   const [shareMessage, setShareMessage] = useState<string>();
   const hasLoaded = friends.userId != null;
   const me = friends.me;
-
-  useEffect(() => {
-    if (userId != null && !hasLoaded) {
-      emit({ type: "load" });
-    }
-  }, [userId, hasLoaded]);
-
-  useEffect(() => {
-    if (form.command != null) {
-      FriendsCommand_run(form.command, emit);
-    }
-  }, [form.command]);
+  const [form, emit] = useFriendsForm(userId != null && !hasLoaded, userId);
+  const sheet = Friends_addSheetState(userId, hasLoaded, me);
 
   const close = (): void => navigation.goBack();
   const openFriends = (): void => {
@@ -100,15 +88,15 @@ export function AddFriendModal(): JSX.Element {
     <SheetScreenContainer onClose={close} shouldShowClose={true}>
       <FormSheet>
         <View testID="add-friend-sheet" data-testid="add-friend-sheet">
-          {userId == null ? (
+          {sheet.kind === "signedOut" ? (
             <Text className="pt-2 text-base">Sign in to add friends.</Text>
-          ) : !hasLoaded ? (
+          ) : sheet.kind === "loading" ? (
             <Text className="pt-2 text-sm text-text-secondary">Loading…</Text>
           ) : me == null ? (
             <Text className="pt-2 text-base">Pick your handle first. Friends find you by it.</Text>
           ) : (
             <>
-              <FriendsAdd form={form} lists={{ friends: [], incoming: [], outgoing: [] }} emit={emit} />
+              <FriendsAdd form={form} emit={emit} />
               {form.error != null && (
                 <Text className="mb-2 text-sm text-text-error" accessibilityRole="alert">
                   {form.error}
@@ -137,7 +125,7 @@ export function AddFriendModal(): JSX.Element {
           )}
           <View className="mt-3">
             <Button name="friends-open" kind="lightgrayv3" onClick={openFriends}>
-              {userId == null ? "Sign in" : me == null && hasLoaded ? "Pick a handle" : "See friends and requests"}
+              {sheet.buttonLabel}
             </Button>
           </View>
         </View>

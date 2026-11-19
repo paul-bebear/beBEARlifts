@@ -3,6 +3,8 @@ import { FoodMicros_fromCoreFields, IMicros } from "./foodMicros";
 import { JsonInText_extract } from "./jsonInText";
 import { NumberText_parseNonNegative, NumberText_round1, NumberText_round3 } from "./numberText";
 import { IFoodProduct } from "./openFoodFacts";
+import { INutrientsRule, SavedFoods_parseNutrients } from "./savedFoods";
+import { UnknownValue_nonNegative, UnknownValue_trimmedText } from "./unknownValue";
 
 export interface INutritionLabel {
   name?: string;
@@ -30,27 +32,7 @@ export type INutritionLabelResult = { ok: true; product: IFoodProduct } | { ok: 
 
 const gramsWhenUnknown = 100;
 
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) && value >= 0 ? value : undefined;
-}
-
-function str(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
-}
-
-function parseNutrients(raw: unknown): INutrients | undefined {
-  if (raw == null || typeof raw !== "object") {
-    return undefined;
-  }
-  const r = raw as Record<string, unknown>;
-  const calories = num(r.calories);
-  if (calories == null) {
-    return undefined;
-  }
-  const nutrients = { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
-  const micros = FoodMicros_fromCoreFields(r);
-  return micros != null ? { ...nutrients, micros } : nutrients;
-}
+const labelRule: INutrientsRule = { needs: "calories", micros: "coreFields" };
 
 export function NutritionLabel_parse(text: string): INutritionLabel | undefined {
   const json = JsonInText_extract(text);
@@ -58,27 +40,29 @@ export function NutritionLabel_parse(text: string): INutritionLabel | undefined 
     return undefined;
   }
   const r = json as Record<string, unknown>;
-  const stated = num(r.servingGrams);
+  const stated = UnknownValue_nonNegative(r.servingGrams);
   const servingGrams = stated != null && stated > 0 ? stated : undefined;
-  const perServing = parseNutrients(r.perServing);
-  const per100g = parseNutrients(r.per100g);
+  const perServing = SavedFoods_parseNutrients(r.perServing, labelRule);
+  const per100g = SavedFoods_parseNutrients(r.per100g, labelRule);
   const nutrients =
     perServing ?? (per100g != null ? FoodLog_scale(per100g, servingGrams ?? gramsWhenUnknown) : undefined);
   if (nutrients == null) {
     return undefined;
   }
   return {
-    name: str(r.name),
-    brand: str(r.brand),
+    name: UnknownValue_trimmedText(r.name),
+    brand: UnknownValue_trimmedText(r.brand),
     servingGrams: perServing != null ? servingGrams : (servingGrams ?? gramsWhenUnknown),
     perServing: nutrients,
-    note: str(r.note),
+    note: UnknownValue_trimmedText(r.note),
   };
 }
 
 export function NutritionLabel_note(text: string): string | undefined {
   const json = JsonInText_extract(text);
-  return json != null && typeof json === "object" ? str((json as Record<string, unknown>).note) : undefined;
+  return json != null && typeof json === "object"
+    ? UnknownValue_trimmedText((json as Record<string, unknown>).note)
+    : undefined;
 }
 
 function formNumber(n: number | undefined): string {

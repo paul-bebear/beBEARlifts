@@ -1,12 +1,8 @@
-import type { IHistoryRecord, ISettings, IStats, IWeight } from "../types";
+import type { IHistoryRecord, ISettings, IStats } from "../types";
 import { FoodLog_dayKey, FoodLog_shiftDay, IFoodLog } from "./foodLog";
-import {
-  IProgramGoalLog,
-  ProgramGoal_formatWeight,
-  ProgramGoal_kindLabel,
-  ProgramGoal_paceLabel,
-  ProgramGoal_weightIn,
-} from "./programGoal";
+import { IProgramGoalLog, ProgramGoal_formatWeight, ProgramGoal_kindLabel, ProgramGoal_paceLabel } from "./programGoal";
+import { NumberText_round1 } from "./numberText";
+import { StatsLatest_bodyWeightIn, StatsLatest_entry } from "./statsLatest";
 import { IStepsLog, Steps_count } from "./steps";
 import { IProgressPhotoLog } from "./progressPhotos";
 import { LocalDay_between, LocalDay_ms, LocalDay_start } from "./localDay";
@@ -63,19 +59,16 @@ function loggedAgo(daysAgo: number): string {
 
 function weightRow(input: IProgressHubInput): IProgressHub["weight"] {
   const { stats, settings, now, goalLog } = input;
-  const latest = (stats.weight.weight ?? []).reduce<{ value: IWeight; timestamp: number } | undefined>(
-    (best, v) => (best == null || v.timestamp > best.timestamp ? v : best),
-    undefined
-  );
+  const latest = StatsLatest_entry(stats.weight.weight, now);
   if (latest == null) {
     return { subtitle: "Tap to log your weight" };
   }
   const startWeight = goalLog.current?.startWeight;
   const delta =
     startWeight != null
-      ? Math.round(
-          (ProgramGoal_weightIn(latest.value, settings.units) - ProgramGoal_weightIn(startWeight, settings.units)) * 10
-        ) / 10
+      ? NumberText_round1(
+          StatsLatest_bodyWeightIn(latest.value, settings.units) - StatsLatest_bodyWeightIn(startWeight, settings.units)
+        )
       : undefined;
   return {
     value: ProgramGoal_formatWeight(latest.value, settings.units),

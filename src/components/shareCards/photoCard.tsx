@@ -1,5 +1,5 @@
 import { JSX } from "react";
-import { Image, View } from "react-native";
+import { View } from "react-native";
 import { IScreenMuscle } from "../../types";
 import {
   IWorkoutShareData,
@@ -8,7 +8,7 @@ import {
 } from "../../models/workoutStoryCard";
 import { FrontMusclesSvg } from "../muscles/images/frontMusclesSvg";
 import { BackMusclesSvg, IMuscleStyle } from "../muscles/images/backMusclesSvg";
-import { ShareCardBrand, ShareCardFrame, ShareCardScrim, ShareCardText } from "./cardParts";
+import { ShareCardBrand, ShareCardFrame, ShareCardPhotoBackground, ShareCardStat, ShareCardText } from "./cardParts";
 import { ShareCardTheme as T } from "./shareCardTheme";
 
 interface IProps {
@@ -27,14 +27,7 @@ function muscleStyles(levels: Partial<Record<IScreenMuscle, number>>): Partial<R
 
 function Stat(props: { label: string; value: string }): JSX.Element {
   return (
-    <View style={{ alignItems: "center", minWidth: 90 }}>
-      <ShareCardText size={30} weight="bold">
-        {props.value}
-      </ShareCardText>
-      <ShareCardText size={11} weight="semibold" spacing={2} style={{ opacity: 0.85 }}>
-        {props.label}
-      </ShareCardText>
-    </View>
+    <ShareCardStat label={props.label} value={props.value} valueSize={30} labelSize={11} style={{ minWidth: 90 }} />
   );
 }
 
@@ -47,16 +40,7 @@ export function PhotoCard(props: IProps): JSX.Element {
   const mapWidth = photo != null ? 44 : 100;
   return (
     <ShareCardFrame background={T.green}>
-      {photo != null && (
-        <Image
-          source={{ uri: photo }}
-          resizeMode="cover"
-          onLoad={() => props.onImageLoad?.(photo)}
-          style={{ position: "absolute", top: 0, left: 0, width: T.width, height: T.height }}
-        />
-      )}
-      <ShareCardScrim edge="top" height={300} opacity={photo != null ? 0.75 : 0.3} />
-      <ShareCardScrim edge="bottom" height={300} opacity={photo != null ? 0.85 : 0.3} />
+      <ShareCardPhotoBackground photo={photo} topHeight={300} bottomHeight={300} onImageLoad={props.onImageLoad} />
       <View style={{ alignItems: "center", paddingTop: 16 }}>
         <ShareCardBrand
           size={32}

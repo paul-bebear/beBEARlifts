@@ -122,6 +122,14 @@ describe("DailyChecklist", () => {
     expect(day.items[2].subtitle).to.equal("Weekly, every Sunday");
   });
 
+  it("skips an unreadable zero weigh-in when it picks the last weight", () => {
+    const zero = { vtype: "stat" as const, value: { value: 0, unit: "kg" as const }, timestamp: at("2026-10-24") };
+    const withZero: IStats = { ...stats, weight: { weight: [...stats.weight.weight!, zero] } };
+    expect(DailyChecklist_build(input({ stats: withZero })).items[2].subtitle).to.equal(
+      "Weekly, every Sunday · Last: 74.8 kg"
+    );
+  });
+
   it("asks for a weigh-in with no history yet", () => {
     const empty: IStats = { weight: {}, length: {}, percentage: {} };
     expect(DailyChecklist_build(input({ stats: empty })).items[2].subtitle).to.equal("Weekly, every Sunday");

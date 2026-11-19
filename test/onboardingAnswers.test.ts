@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   OnboardingAnswers_body,
+  OnboardingAnswers_ageNote,
   OnboardingAnswers_empty,
   OnboardingAnswers_foodTargets,
   OnboardingAnswers_gymEquipment,
@@ -9,6 +10,7 @@ import {
   OnboardingAnswers_mergeProfile,
   OnboardingAnswers_planInput,
   OnboardingAnswers_programGoal,
+  OnboardingAnswers_toggle,
   OnboardingAnswers_togglePlace,
 } from "../src/models/onboardingAnswers";
 import { Settings_build } from "../src/models/settings";
@@ -208,5 +210,30 @@ describe("OnboardingAnswers", () => {
     const full = OnboardingAnswers_gymEquipment({ ...result, barbell: undefined }, ["barbell", "dumbbell"]);
     expect(full.barbell).to.include({ isDeleted: false });
     expect(full.barbell?.plates.length).to.be.greaterThan(0);
+  });
+  it("clears an answer when its chip is tapped again and sets it otherwise", () => {
+    const a = {
+      ...OnboardingAnswers_empty("en-US"),
+      activity: "light" as const,
+      days: 4 as const,
+      sex: "male" as const,
+    };
+    expect(OnboardingAnswers_toggle(a, "activity", "light")).to.deep.equal({ activity: undefined });
+    expect(OnboardingAnswers_toggle(a, "activity", "active")).to.deep.equal({ activity: "active" });
+    expect(OnboardingAnswers_toggle(a, "days", 4)).to.deep.equal({ days: undefined });
+    expect(OnboardingAnswers_toggle(a, "days", 5)).to.deep.equal({ days: 5 });
+    expect(OnboardingAnswers_toggle(a, "sex", "male")).to.deep.equal({ sex: undefined });
+    expect(OnboardingAnswers_toggle(a, "sex", "female")).to.deep.equal({ sex: "female" });
+    expect(OnboardingAnswers_toggle(a, "foodGoal", "gain")).to.deep.equal({ foodGoal: "gain" });
+  });
+  it("shows the calculator's age message for age 13 only", () => {
+    const base = OnboardingAnswers_empty("en-US");
+    expect(OnboardingAnswers_ageNote({ ...base, age: "13" })).to.equal(
+      "Food targets start at age 14. The formula is not made for younger ages."
+    );
+    expect(OnboardingAnswers_ageNote({ ...base, age: "13", weight: "abc", heightUnit: "cm" })).to.be.a("string");
+    for (const age of ["", "12", "14", "30", "x"]) {
+      expect(OnboardingAnswers_ageNote({ ...base, age })).to.equal(undefined);
+    }
   });
 });

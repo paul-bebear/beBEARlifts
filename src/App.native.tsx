@@ -11,6 +11,7 @@ import { RN_COMMIT_HASH, RN_FULL_COMMIT_HASH } from "./rnBuildInfo";
 import { localdomain, localapidomain, localport, localapiport } from "./localdomain";
 import { ForkServices_hosts, ForkServices_plan } from "./utils/forkServices";
 import { ProgramsHost_fork } from "./utils/programsHost";
+import { ForkLinks_isImportLink } from "./models/forkLinks";
 import { OfflineOnly_isEnabled } from "./utils/offlineOnly";
 import { Thunk_cloudCatchUp } from "./ducks/cloudBackupThunks";
 import { StoreRecoveryWiring_start } from "./utils/storeRecoveryWiring";
@@ -491,18 +492,7 @@ export function AppRoot(props: { initialState: IState; env: IEnv }): React.JSX.E
       if (!url) {
         return;
       }
-      let parsed: URL;
-      try {
-        parsed = new URL(url);
-      } catch {
-        return;
-      }
-      if (parsed.origin !== ProgramsHost_fork) {
-        return;
-      }
-      const isImportPath =
-        (parsed.pathname === "/program" && parsed.searchParams.has("data")) || parsed.pathname.startsWith("/p/");
-      if (!isImportPath) {
+      if (!ForkLinks_isImportLink(url)) {
         return;
       }
       ImportExporter_handleUniversalLink(dispatch, url, fetch).catch(() => undefined);

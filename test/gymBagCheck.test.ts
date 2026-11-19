@@ -1,12 +1,16 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  GymBagCheck_forProgram,
   GymBagCheck_items,
   GymBagCheck_needsStraps,
   GymBagCheck_plan,
   IGymBagCheckDay,
 } from "../src/models/gymBagCheck";
 import { Settings_build } from "../src/models/settings";
+import { Program_create, Program_createEmptyProgram } from "../src/models/program";
+import { PlannerProgram_evaluateText } from "../src/pages/planner/models/plannerProgram";
+import { Stats_getEmpty } from "../src/models/stats";
 import { Weight_build } from "../src/models/weight";
 import { IScheduleProgram, WeekSchedule_empty, WeekSchedule_save } from "../src/models/weekSchedule";
 import { IHistoryEntry, IHistoryRecord, ISet } from "../src/types";
@@ -161,5 +165,68 @@ describe("GymBagCheck_plan", () => {
       day: 2,
       name: "Pull",
     });
+  });
+});
+
+describe("GymBagCheck_forProgram", () => {
+  const stats = Stats_getEmpty();
+  const opts = { now: monday, hasProgress: false };
+  const text = `# Week 1
+## Push
+Bench Press / 3x5 50lb
+
+## Pull
+Bent Over Row / 3x5 50lb
+`;
+  const program = {
+    ...Program_create("P"),
+    id: "p",
+    nextDay: 2,
+    planner: { vtype: "planner" as const, name: "P", weeks: PlannerProgram_evaluateText(text) },
+  };
+
+  it("offers a plain Workout with water and no record when there is no program", () => {
+    const { plan, check } = GymBagCheck_forProgram(undefined, [], settings, stats, WeekSchedule_empty(), opts);
+    expect(plan).to.deep.equal({ kind: "next", day: 1, name: "" });
+    expect(check.title).to.equal("Workout");
+    expect(ids(check)).to.deep.equal(["water"]);
+  });
+
+  it("treats the built-in empty program like no program", () => {
+    const { plan, check } = GymBagCheck_forProgram(
+      Program_createEmptyProgram(),
+      [],
+      settings,
+      stats,
+      WeekSchedule_empty(),
+      opts
+    );
+    expect(plan).to.deep.equal({ kind: "next", day: 1, name: "" });
+    expect(check.title).to.equal("Workout");
+  });
+
+  it("builds the next day's record and packs straps for its row", () => {
+    const { plan, check } = GymBagCheck_forProgram(program, [], settings, stats, WeekSchedule_empty(), {
+      now: monday,
+      hasProgress: true,
+    });
+    expect(plan).to.deep.equal({ kind: "next", day: 2, name: "Pull" });
+    expect(check.title).to.contain("Pull · 1 exercise");
+    expect(ids(check)).to.deep.equal(["water", "straps"]);
+  });
+
+  it("follows the week's planned day for today", () => {
+    const log = WeekSchedule_save(WeekSchedule_empty(), "p", [0, null, 1, null, null, null, null]);
+    const { plan, check } = GymBagCheck_forProgram(program, [], settings, stats, log, opts);
+    expect(plan).to.deep.equal({ kind: "today", day: 1, name: "Push" });
+    expect(ids(check)).to.deep.equal(["water"]);
+  });
+
+  it("words a rest day and keeps the next day's record", () => {
+    const log = WeekSchedule_save(WeekSchedule_empty(), "p", [null, 0, null, 1, null, null, null]);
+    const { plan, check } = GymBagCheck_forProgram(program, [], settings, stats, log, opts);
+    expect(plan.kind).to.equal("rest");
+    expect(check.title).to.contain("Rest day · next: Pull on Thursday");
+    expect(check.button).to.equal("Train anyway");
   });
 });

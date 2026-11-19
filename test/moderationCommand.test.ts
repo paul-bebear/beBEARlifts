@@ -82,6 +82,15 @@ describe("ModerationCommand", () => {
       expect(alert.firstCall.args).to.deep.equal(["No connection"]);
     });
 
+    it("says in plain words that the user is already blocked", async () => {
+      sinon.stub(friendsClient, "FriendsClient_block").resolves({
+        ok: false,
+        error: 'duplicate key value violates unique constraint "user_blocks_pkey"',
+      });
+      await ModerationCommand_block(user);
+      expect(alert.firstCall.args).to.deep.equal(["You already blocked this user"]);
+    });
+
     it("alerts a retry message when the call throws", async () => {
       sinon.stub(friendsClient, "FriendsClient_block").rejects(new Error("boom"));
       await ModerationCommand_block(user);

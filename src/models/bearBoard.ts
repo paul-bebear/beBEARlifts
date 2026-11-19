@@ -1,4 +1,4 @@
-import { IHistoryRecord, IStats, IStatsWeightValue, IUnit } from "../types";
+import { IHistoryRecord, IStats, IUnit } from "../types";
 import { IBearCountedWorkout } from "./bearGrowth";
 import { BearText_kg } from "./bearText";
 import { IBearTierProgress } from "./bearTier";
@@ -15,7 +15,7 @@ import { MonthCalendar_workoutDays } from "./monthCalendar";
 import { NumberText_round1 } from "./numberText";
 import { IProgramGoal, ProgramGoal_formatWeight, ProgramGoal_kindLabel } from "./programGoal";
 import { TodayPill_text } from "./todayPill";
-import { Weight_convertTo } from "./weight";
+import { StatsLatest_bodyWeightIn, StatsLatest_entries, StatsLatest_entry } from "./statsLatest";
 import { DayNames_monthDayYearIfOtherYear } from "./dayNames";
 
 export type IBearBoardTarget = "plus" | "goal" | "bear" | "streak";
@@ -68,16 +68,9 @@ function foodText(input: IBearBoardInput, today: string): string {
   return target > 0 ? `${eaten} of ${formatCount(target)} cal` : `${eaten} cal`;
 }
 
-function weightEntries(stats: IStats, now: number): IStatsWeightValue[] {
-  return (stats.weight.weight ?? [])
-    .filter((e) => e.timestamp <= now && Number.isFinite(e.value.value) && e.value.value > 0)
-    .sort((a, b) => a.timestamp - b.timestamp);
-}
-
 export function BearBoard_latestWeight(stats: IStats, units: IUnit, now: number): string | undefined {
-  const entries = weightEntries(stats, now);
-  const latest = entries[entries.length - 1];
-  return latest == null ? undefined : oneDecimal(Weight_convertTo(latest.value, units).value);
+  const latest = StatsLatest_entry(stats.weight.weight, now);
+  return latest == null ? undefined : oneDecimal(StatsLatest_bodyWeightIn(latest.value, units));
 }
 
 function streakLine(input: IBearBoardInput, today: string): IBearBoardLine {
@@ -89,12 +82,12 @@ function streakLine(input: IBearBoardInput, today: string): IBearBoardLine {
 }
 
 function weightLine(input: IBearBoardInput): IBearBoardLine {
-  const entries = weightEntries(input.stats, input.now);
+  const entries = StatsLatest_entries(input.stats.weight.weight, input.now);
   const latest = entries[entries.length - 1];
   if (latest == null) {
     return { id: "weight", text: "Weight · not logged yet", isDone: false, target: "bear" };
   }
-  const inUnits = (e: (typeof entries)[number]): number => Weight_convertTo(e.value, input.units).value;
+  const inUnits = (e: (typeof entries)[number]): number => StatsLatest_bodyWeightIn(e.value, input.units);
   const windowStart = input.now - trendDays * dayMs;
   const oldBase = [...entries].reverse().find((e) => e.timestamp <= windowStart) ?? entries[0];
   const oldSpan = Math.round((latest.timestamp - oldBase.timestamp) / dayMs);

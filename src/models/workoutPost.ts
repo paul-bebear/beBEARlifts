@@ -12,6 +12,8 @@ import {
   IPersonalRecords,
 } from "./history";
 import { UnknownValue_finite, UnknownValue_text } from "./unknownValue";
+import { DurationText_fromMs } from "./durationText";
+import { StringUtils_pluralize } from "../utils/string";
 
 export interface IPostSet {
   name: string;
@@ -119,20 +121,17 @@ export function WorkoutPost_build(
   };
 }
 
-function durationText(durationMs: number): string {
-  const minutes = Math.round(durationMs / 60000);
-  return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
-}
-
 function setsText(sets: number): string {
-  return `${sets} ${sets === 1 ? "set" : "sets"}`;
+  return `${sets} ${StringUtils_pluralize("set", sets)}`;
 }
 
 export function WorkoutPost_statsLine(summary: IWorkoutPostSummary): string {
   const volume = `${Math.round(summary.volume.value).toLocaleString("en-US")} ${summary.volume.unit}`;
-  return [durationText(summary.durationMs), ...(summary.volume.value > 0 ? [volume] : []), setsText(summary.sets)].join(
-    " · "
-  );
+  return [
+    DurationText_fromMs(summary.durationMs),
+    ...(summary.volume.value > 0 ? [volume] : []),
+    setsText(summary.sets),
+  ].join(" · ");
 }
 
 export function WorkoutPost_levelText(bear: Pick<IPostBear, "level">): string {
@@ -152,7 +151,7 @@ export function WorkoutPost_feedLine(summary: IWorkoutPostSummary): string {
   const songCount = summary.songs.length > 0 ? summary.songs.length : (summary.keptSongs ?? 0);
   return [
     summary.dayName,
-    durationText(summary.durationMs),
+    DurationText_fromMs(summary.durationMs),
     setsText(summary.sets),
     ...(kg != null ? [kg] : []),
     ...(songCount > 0 ? [`\u{1F3B5} ${songCount} ${songCount === 1 ? "song" : "songs"}`] : []),

@@ -8,6 +8,7 @@ import {
   ShareCardExport_isBusy,
   ShareCardExport_needsSurface,
   ShareCardExport_next,
+  ShareCardExport_shareEvent,
 } from "../../models/shareCardExport";
 import { ShareCardImage_capture, ShareCardImage_cleanup, ShareCardImage_share } from "../../utils/shareCardImage";
 import { Dialog_alert } from "../../utils/dialog";
@@ -81,16 +82,7 @@ export function useShareCardExport<T>(baseName: string): IShareCardExport<T> {
     needsSurface: ShareCardExport_needsSurface(job),
     title: (idleTitle) => ShareCardExport_buttonTitle(job, idleTitle),
     prepare: (pages, frozen, images) => dispatch({ type: "start", pages, frozen, images }),
-    share: (pages, frozen, images) => {
-      const phase = jobRef.current.phase;
-      if (phase === "prepared") {
-        dispatch({ type: "share", pages });
-      } else if (phase === "ready" || phase === "failed") {
-        dispatch({ type: "retry" });
-      } else {
-        dispatch({ type: "start", pages, frozen, images, share: pages });
-      }
-    },
+    share: (pages, frozen, images) => dispatch(ShareCardExport_shareEvent(jobRef.current, pages, frozen, images)),
     setRef: (page, view) => {
       views.current.set(page, view);
     },

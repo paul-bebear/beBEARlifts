@@ -1,4 +1,4 @@
-export type IShareExportPhase = "idle" | "preparing" | "capturing" | "prepared" | "sharing" | "ready" | "failed";
+export type IShareExportPhase = "idle" | "preparing" | "capturing" | "prepared" | "sharing" | "needsTap" | "failed";
 
 export interface IShareExportJob<T> {
   id: number;
@@ -163,10 +163,10 @@ export function ShareCardExport_next<T>(job: IShareExportJob<T>, event: IShareEx
     }
     case "refused":
       return event.jobId === job.id && job.phase === "sharing"
-        ? { job: { ...job, phase: "ready" }, effects: [] }
+        ? { job: { ...job, phase: "needsTap" }, effects: [] }
         : { job, effects: [] };
     case "retry": {
-      if (job.phase === "ready") {
+      if (job.phase === "needsTap") {
         return {
           job: { ...job, phase: "sharing" },
           effects: [{ kind: "share", files: selectedFiles(job), jobId: job.id }],
@@ -188,6 +188,21 @@ export function ShareCardExport_next<T>(job: IShareExportJob<T>, event: IShareEx
   }
 }
 
+export function ShareCardExport_shareEvent<T>(
+  job: IShareExportJob<T>,
+  pages: string[],
+  frozen: T,
+  images?: string[]
+): IShareExportEvent<T> {
+  if (job.phase === "prepared") {
+    return { type: "share", pages };
+  }
+  if (job.phase === "needsTap" || job.phase === "failed") {
+    return { type: "retry" };
+  }
+  return { type: "start", pages, frozen, images, share: pages };
+}
+
 export function ShareCardExport_isBusy<T>(job: IShareExportJob<T>): boolean {
   return job.phase === "preparing" || job.phase === "capturing" || job.phase === "sharing";
 }
@@ -200,7 +215,7 @@ export function ShareCardExport_buttonTitle<T>(job: IShareExportJob<T>, idleTitl
   if (job.phase === "failed") {
     return "Retry image";
   }
-  if (job.phase === "ready") {
+  if (job.phase === "needsTap") {
     return job.selection.length === 1 ? "Share image" : `Share ${job.selection.length} images`;
   }
   return ShareCardExport_isBusy(job) ? "Making images…" : idleTitle;

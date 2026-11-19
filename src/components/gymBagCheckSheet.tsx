@@ -10,10 +10,9 @@ import { SheetScreenContainer } from "../navigation/SheetScreenContainer";
 import { FormSheet } from "../navigation/FormSheet";
 import { navigateToModal } from "../navigation/navigationService";
 import { useTrackedDispatch, useTrackedState } from "../navigation/TrackedStateContext";
-import { GymBagCheck_items, GymBagCheck_plan, IGymBagPlan } from "../models/gymBagCheck";
-import { Program_evaluate, Program_getProgram, Program_isEmpty, Program_nextHistoryRecord } from "../models/program";
+import { GymBagCheck_forProgram } from "../models/gymBagCheck";
+import { Program_getProgram } from "../models/program";
 import { Progress_getCurrentProgress } from "../models/progress";
-import { WeekSchedule_workedOutToday } from "../models/weekSchedule";
 import { WeekScheduleStore } from "../utils/weekScheduleStore";
 import { WorkoutStart_go } from "../utils/workoutStart";
 import { ISettings } from "../types";
@@ -27,22 +26,10 @@ export function GymBagCheckModal(): JSX.Element {
   const { history, settings, stats } = state.storage;
   const program = Program_getProgram(state, state.storage.currentProgramId);
   const hasProgress = Progress_getCurrentProgress(state) != null;
-  const plan = useMemo<IGymBagPlan>(() => {
-    if (program == null || Program_isEmpty(program)) {
-      return { kind: "next", day: 1, name: "" };
-    }
-    const now = Date.now();
-    const workedOutToday = WeekSchedule_workedOutToday(history, now);
-    return GymBagCheck_plan(Program_evaluate(program, settings), schedule, { now, workedOutToday, hasProgress });
-  }, [program, settings, schedule, history, hasProgress]);
-  const check = useMemo(() => {
-    const record =
-      program == null || Program_isEmpty(program)
-        ? undefined
-        : Program_nextHistoryRecord(program, settings, stats, plan.day);
-    const day = { name: plan.name, record, isRest: plan.kind === "rest", nextWeekday: plan.nextWeekday };
-    return GymBagCheck_items(day, history, settings);
-  }, [program, settings, stats, plan, history]);
+  const { plan, check } = useMemo(
+    () => GymBagCheck_forProgram(program, history, settings, stats, schedule, { now: Date.now(), hasProgress }),
+    [program, settings, stats, schedule, history, hasProgress]
+  );
 
   const close = (): void => navigation.goBack();
   const go = (): void => {

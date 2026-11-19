@@ -1,5 +1,6 @@
 import "mocha";
 import { expect } from "chai";
+import sinon from "sinon";
 import { AiCaps_defaults } from "../src/models/aiCaps";
 import {
   AccountPlan_accept,
@@ -14,6 +15,15 @@ import {
   AccountPlan_settingsRow,
   IAccountPlanState,
 } from "../src/models/accountPlan";
+import * as indexeddb from "../src/utils/indexeddb";
+import * as planFetch from "../src/utils/planSyncFetch";
+import * as supabase from "../src/utils/supabaseClient";
+import {
+  AccountPlanClient_clear,
+  AccountPlanClient_markActivating,
+  AccountPlanClient_sync,
+  AccountPlanStore,
+} from "../src/utils/accountPlanClient";
 
 const free: IAccountPlanState = { status: "known", userId: "a", plan: "free" };
 const plusA: IAccountPlanState = { status: "known", userId: "a", plan: "plus", grant: "subscription", canManage: true };
@@ -151,5 +161,77 @@ describe("AccountPlan", () => {
     expect(AccountPlan_codeRedeemed(free, "a")).to.deep.equal(code);
     expect(AccountPlan_codeRedeemed(AccountPlan_empty(), "a")).to.deep.equal(code);
     expect(AccountPlan_codeRedeemed(plusA, "b")).to.deep.equal({ ...code, userId: "b" });
+  });
+});
+
+describe("AccountPlanClient_sync order", () => {
+  let answers: Array<(response: Response) => void>;
+
+  const plusAnswer = (): Response =>
+    new Response(JSON.stringify({ plan: "plus", grant: "subscription", canManageSubscription: true }));
+  const freeAnswer = (): Response => new Response(JSON.stringify({ plan: "free", grant: null }));
+
+  beforeEach(async () => {
+    answers = [];
+    sinon.stub(indexeddb, "IndexedDBUtils_get").resolves(undefined);
+    sinon.stub(indexeddb, "IndexedDBUtils_setMany").resolves();
+    sinon.stub(supabase.CloudStore, "load").resolves({ session: { userId: "a" } } as never);
+    sinon.stub(supabase, "SupabaseClient_signedIn").resolves({ ok: true, value: { userId: "a", accessToken: "jwt" } });
+    sinon.stub(planFetch, "PlanSyncFetch_post").callsFake(() => new Promise((resolve) => answers.push(resolve)));
+    await AccountPlanStore.replace(AccountPlan_empty());
+  });
+  afterEach(() => sinon.restore());
+
+  const answered = async (index: number): Promise<void> => {
+    while (answers.length <= index) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+  };
+
+  it("saves the answer of a request nothing outdated", async () => {
+    const pending = AccountPlanClient_sync();
+    await answered(0);
+    answers[0](plusAnswer());
+    expect(await pending).to.equal("plus");
+    expect(AccountPlanStore.get()).to.deep.equal(plusA);
+  });
+
+  it("lets a slow answer from app start not undo a purchase made after it", async () => {
+    const slow = AccountPlanClient_sync();
+    await answered(0);
+    await AccountPlanClient_markActivating("a");
+    answers[0](freeAnswer());
+    expect(await slow).to.equal("stale");
+    expect(AccountPlanStore.get()).to.deep.equal({ status: "activating", userId: "a" });
+  });
+
+  it("saves only the newest of two requests, whatever order they answer in", async () => {
+    const older = AccountPlanClient_sync();
+    await answered(0);
+    const newer = AccountPlanClient_sync();
+    await answered(1);
+    answers[1](plusAnswer());
+    expect(await newer).to.equal("plus");
+    answers[0](freeAnswer());
+    expect(await older).to.equal("stale");
+    expect(AccountPlanStore.get()).to.deep.equal(plusA);
+  });
+
+  it("drops the answer of a request that was in flight when the plan was cleared", async () => {
+    const pending = AccountPlanClient_sync();
+    await answered(0);
+    await AccountPlanClient_clear();
+    answers[0](plusAnswer());
+    expect(await pending).to.equal("stale");
+    expect(AccountPlanStore.get()).to.deep.equal(AccountPlan_empty());
+  });
+
+  it("answers error and keeps the plan when the server answer is not ok", async () => {
+    await AccountPlanStore.replace(plusA);
+    const pending = AccountPlanClient_sync();
+    await answered(0);
+    answers[0](new Response("{}", { status: 500 }));
+    expect(await pending).to.equal("error");
+    expect(AccountPlanStore.get()).to.deep.equal(plusA);
   });
 });

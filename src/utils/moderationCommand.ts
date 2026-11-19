@@ -1,4 +1,9 @@
-import { FeedModeration_reportOutcome, IBlockedUser, IReportReason } from "../models/feedModeration";
+import {
+  FeedModeration_alreadyBlockedText,
+  FeedModeration_reportOutcome,
+  IBlockedUser,
+  IReportReason,
+} from "../models/feedModeration";
 import { IFeedReportTarget } from "../models/feed";
 import { FeedClient_report } from "./feedClient";
 import { FriendsClient_block, FriendsClient_unblock } from "./friendsClient";
@@ -27,7 +32,7 @@ export async function ModerationCommand_block(user: IBlockedUser): Promise<void>
   try {
     const result = await FriendsClient_block(user);
     if (!result.ok) {
-      Dialog_alert(result.error);
+      Dialog_alert(FeedModeration_alreadyBlockedText(result.error));
     }
   } catch {
     Dialog_alert("Could not block this user. Try again.");

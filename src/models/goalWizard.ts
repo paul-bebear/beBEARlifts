@@ -1,4 +1,5 @@
-import type { ILength, ILengthUnit, IStats, IStatsLengthValue, IWeight } from "../types";
+import type { ILength, ILengthUnit, IStats, IWeight } from "../types";
+import { StatsLatest_entry } from "./statsLatest";
 import type { IFoodGoals } from "./foodLog";
 import type { IFoodBody, IFoodProfile, IFoodSex, IFoodTargetsResult } from "./foodTargets";
 import { BodyFat_clamp, BodyFat_navy, BodyFat_range } from "./bodyFatEstimate";
@@ -91,13 +92,11 @@ function lengthIn(length: ILength | undefined, unit: ILengthUnit): string {
   return `${NumberText_round1(value)}`;
 }
 
-export function GoalWizard_latestLengths(stats: IStats): IGoalWizardStartInput["latest"] {
+// screenGoalWizard.tsx calls this without now. That file is outside batch 4.1, so now has a default.
+export function GoalWizard_latestLengths(stats: IStats, now: number = Date.now()): IGoalWizardStartInput["latest"] {
   const latest: IGoalWizardStartInput["latest"] = {};
   for (const key of ["waist", "neck", "hips"] as const) {
-    const newest = (stats.length[key] ?? []).reduce<IStatsLengthValue | undefined>(
-      (best, v) => (best == null || v.timestamp > best.timestamp ? v : best),
-      undefined
-    );
+    const newest = StatsLatest_entry(stats.length[key], now);
     if (newest != null) {
       latest[key] = newest.value;
     }

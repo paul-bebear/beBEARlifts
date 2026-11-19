@@ -82,3 +82,28 @@ describe("SavedFoods_parse", () => {
     expect(FoodLog_parse(JSON.parse(JSON.stringify(log))).savedFoods).to.deep.equal([buldak]);
   });
 });
+
+describe("SavedFoods_parse nutrient table", () => {
+  const read = (per100g: unknown): unknown => SavedFoods_parse([{ name: "X", per100g }])[0]?.per100g;
+  const base = { calories: 100, protein: 5, carbs: 10, fat: 4 };
+  const cases: [string, unknown, unknown][] = [
+    ["a full set", base, base],
+    ["a negative protein, read as 0", { ...base, protein: -1 }, { ...base, protein: 0 }],
+    ["a negative calorie count, dropped", { ...base, calories: -1 }, undefined],
+    ["a numeric string protein, read as 0", { ...base, protein: "5" }, { ...base, protein: 0 }],
+    ["a numeric string calorie count, dropped", { ...base, calories: "100" }, undefined],
+    ["a missing protein, read as 0", { calories: 100, carbs: 10, fat: 4 }, { ...base, protein: 0 }],
+    ["a missing calorie count, dropped", { protein: 5, carbs: 10, fat: 4 }, undefined],
+    ["a NaN fat, read as 0", { ...base, fat: NaN }, { ...base, fat: 0 }],
+    ["an Infinity calorie count, dropped", { ...base, calories: Infinity }, undefined],
+    ["a very large calorie count, kept", { ...base, calories: 1e9 }, { ...base, calories: 1e9 }],
+    ["micros from the micros field", { ...base, micros: { fiber: 2 } }, { ...base, micros: { fiber: 2 } }],
+    ["micros in core fields, ignored", { ...base, fiber: 2 }, base],
+    ["null", null, undefined],
+  ];
+  for (const [name, input, expected] of cases) {
+    it(name, () => {
+      expect(read(input)).to.deep.equal(expected);
+    });
+  }
+});

@@ -81,6 +81,11 @@ export function FeedModeration_alreadyReportedText(error: string): string {
   return /post_reports_reporter|duplicate key/i.test(error) ? "You already reported this post" : error;
 }
 
+// The primary key on user_blocks makes a second block of the same person a duplicate key error.
+export function FeedModeration_alreadyBlockedText(error: string): string {
+  return /user_blocks_pkey|duplicate key/i.test(error) ? "You already blocked this user" : error;
+}
+
 export function FeedModeration_reportOutcome(result: { ok: true } | { ok: false; error: string }): {
   message: string;
   keepOpen: boolean;

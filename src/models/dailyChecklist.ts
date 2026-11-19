@@ -5,6 +5,7 @@ import { MonthCalendar_dayTitle } from "./monthCalendar";
 import { ProgramGoal_formatWeight } from "./programGoal";
 import { LocalDay_weekday } from "./localDay";
 import { DayNames_weekdaysLong } from "./dayNames";
+import { StatsLatest_newest } from "./statsLatest";
 
 export type IChecklistItemKey = "train" | "food" | "weight";
 
@@ -109,11 +110,7 @@ function weightItem(input: IChecklistDayInput): IChecklistItem {
   const weekday = DailyChecklist_weighInWeekday(input.goalStartedAt, input.startWeekFromMonday);
   const weekStart = FoodLog_shiftDay(day, -((LocalDay_weekday(day) - weekday + 7) % 7));
   const upToDay = (stats.weight.weight ?? []).filter((w) => dayOf(w.timestamp) <= day);
-  const latestOf = (list: typeof upToDay): IWeight | undefined =>
-    list.reduce<{ value: IWeight; timestamp: number } | undefined>(
-      (best, w) => (best == null || w.timestamp > best.timestamp ? w : best),
-      undefined
-    )?.value;
+  const latestOf = (list: typeof upToDay): IWeight | undefined => StatsLatest_newest(list)?.value;
   // Onboarding stamps the start weight with the goal's startedAt. The start weight is never a weigh-in.
   // The web date picker stores local midnight, so a same-day weigh-in can sort before startedAt.
   const inWeek = upToDay.filter((w) => dayOf(w.timestamp) >= weekStart && w.timestamp !== input.goalStartedAt);

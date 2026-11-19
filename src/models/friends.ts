@@ -56,6 +56,24 @@ export function Friends_errorText(error: string): string {
   return /profiles_handle_key|duplicate key/i.test(error) ? "Someone already has that handle." : error;
 }
 
+export type IAddSheetKind = "signedOut" | "loading" | "needsHandle" | "ready";
+
+export function Friends_addSheetState(
+  userId: string | undefined,
+  hasLoaded: boolean,
+  me: IProfile | undefined
+): { kind: IAddSheetKind; buttonLabel: string } {
+  if (userId == null) {
+    return { kind: "signedOut", buttonLabel: "Sign in" };
+  }
+  if (!hasLoaded) {
+    return { kind: "loading", buttonLabel: "See friends and requests" };
+  }
+  return me == null
+    ? { kind: "needsHandle", buttonLabel: "Pick a handle" }
+    : { kind: "ready", buttonLabel: "See friends and requests" };
+}
+
 function parseProfile(raw: unknown): IProfile | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const userId = UnknownValue_text(r.user_id ?? r.userId);

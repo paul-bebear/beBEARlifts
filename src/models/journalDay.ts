@@ -22,6 +22,8 @@ import {
 import { WorkoutPost_build, WorkoutPost_statsLine } from "./workoutPost";
 import { FeatureLayer_isFront, IFeature } from "./featureLayer";
 import { HomeToday_historyLabel } from "./homeToday";
+import { DurationText_fromMs } from "./durationText";
+import { StringUtils_pluralize } from "../utils/string";
 
 export interface IJournalDayInput {
   day: string;
@@ -211,11 +213,6 @@ function dayOf(timestamp: number): string {
   return FoodLog_dayKey(new Date(timestamp));
 }
 
-function minutesText(ms: number): string {
-  const minutes = Math.max(0, Math.round(ms / 60000));
-  return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
-}
-
 function workoutOf(record: IHistoryRecord, input: IJournalDayInput): IJournalWorkout {
   const summary = WorkoutPost_build(record, input.settings, input.prs, undefined);
   const dayName = summary.dayName.trim() === "" ? "Workout" : summary.dayName.trim();
@@ -224,7 +221,7 @@ function workoutOf(record: IHistoryRecord, input: IJournalDayInput): IJournalWor
     dayName,
     statsLine: WorkoutPost_statsLine(summary),
     prs: summary.prs.map((p) => `${p.name} ${p.weight.value} ${p.weight.unit} × ${p.reps}`),
-    chip: `${dayName} · ${minutesText(summary.durationMs)}`,
+    chip: `${dayName} · ${DurationText_fromMs(summary.durationMs, { clampAtZero: true })}`,
   };
 }
 
@@ -263,7 +260,7 @@ export function JournalDay_header(input: IJournalHeaderInput): IJournalHeader {
 }
 
 function mealsChip(count: number): string | undefined {
-  return count === 0 ? undefined : `${count} ${count === 1 ? "food" : "foods"} logged`;
+  return count === 0 ? undefined : `${count} ${StringUtils_pluralize("food", count)} logged`;
 }
 
 export function JournalDay_build(input: IJournalDayInput): IJournalDay {

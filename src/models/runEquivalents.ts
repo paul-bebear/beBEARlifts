@@ -1,4 +1,4 @@
-import { ILiftEquivalent, LiftEquivalents_formatCount } from "./liftEquivalents";
+import { ILiftEquivalent, ILiftPhrase, LiftEquivalents_build, LiftEquivalents_wrap } from "./liftEquivalents";
 
 interface IRunThing {
   one: string;
@@ -21,7 +21,7 @@ const things: IRunThing[] = [
   { one: "standing Kodiak bear", many: "standing Kodiak bears", metres: 3, emoji: "🐻" },
 ];
 
-const phrases: { lead: string; tail: string }[] = [
+const phrases: ILiftPhrase[] = [
   { lead: "That's", tail: "nose to tail" },
   { lead: "You ran", tail: "" },
   { lead: "Same as", tail: "lined up nose to tail" },
@@ -33,10 +33,6 @@ const phrases: { lead: string; tail: string }[] = [
 const minCount = 2;
 const maxCount = 9999;
 
-function wrap(value: number, length: number): number {
-  return ((Math.floor(value) % length) + length) % length;
-}
-
 export function RunEquivalents_pick(distanceM: number, seed: number): ILiftEquivalent | undefined {
   const candidates = things.filter(
     (t) => distanceM / t.metres >= minCount && (t.swarm === true || distanceM / t.metres <= maxCount)
@@ -44,10 +40,6 @@ export function RunEquivalents_pick(distanceM: number, seed: number): ILiftEquiv
   if (candidates.length === 0) {
     return undefined;
   }
-  const thing = candidates[wrap(seed, candidates.length)];
-  const phrase = phrases[wrap(seed, phrases.length)];
-  const count = distanceM / thing.metres;
-  const number = LiftEquivalents_formatCount(count);
-  const text = [phrase.lead, `${number} ${thing.many}`, phrase.tail].filter((s) => s !== "").join(" ");
-  return { count, number, noun: thing.many, lead: phrase.lead, tail: phrase.tail, emoji: thing.emoji, text };
+  const thing = candidates[LiftEquivalents_wrap(seed, candidates.length)];
+  return LiftEquivalents_build(thing, phrases[LiftEquivalents_wrap(seed, phrases.length)], distanceM / thing.metres);
 }
