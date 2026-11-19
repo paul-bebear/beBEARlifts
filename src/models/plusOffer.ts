@@ -4,7 +4,7 @@ import { LocalDay_key } from "./localDay";
 
 export type IPaywallOutcome = "purchased" | "restored" | "cancelled" | "notPresented" | "error" | "unavailable";
 export type IRestoreOutcome = "restored" | "none" | "error";
-export type IPlusOfferTrigger = "settings" | "restore" | "firstProgram" | "aiLimit";
+type IPlusOfferTrigger = "settings" | "restore" | "firstProgram" | "aiLimit";
 
 export interface IPlusOfferFlow {
   step:
@@ -61,7 +61,7 @@ export interface IPlusOfferStep {
   effects: IPlusOfferEffect[];
 }
 
-export const PlusOffer_afterNavigationMs = 800;
+const PlusOffer_afterNavigationMs = 800;
 
 const outcomeByPaywallResult: Record<string, IPaywallOutcome> = {
   PURCHASED: "purchased",
@@ -84,7 +84,7 @@ export const PlusOffer_signInTitle = "beBEAR+ is linked to your account, so your
 export const PlusOffer_signInOptions = ["Sign in with Apple", "Sign in with Google", "Not now"];
 export const PlusOffer_capSheetOptions = ["See beBEAR+", "Not now"];
 export const PlusOffer_startFailed = "beBEAR+ could not start. Check your connection and try again.";
-export const PlusOffer_activating = "Purchase done. beBEAR+ turns on in a moment. Reopen the app if it does not.";
+const PlusOffer_activating = "Purchase done. beBEAR+ turns on in a moment. Reopen the app if it does not.";
 export const PlusOffer_restoredMessage = "beBEAR+ is back on.";
 export const PlusOffer_nothingToRestore = "No beBEAR+ purchase was found for this Apple ID.";
 export const PlusOffer_restoreFailed = "Restore did not finish. Check your connection and try again.";

@@ -37,7 +37,7 @@ export interface IJournalDayInput {
   notes: INotesLog;
 }
 
-export interface IJournalWorkout {
+interface IJournalWorkout {
   id: number;
   dayName: string;
   statsLine: string;
@@ -45,7 +45,7 @@ export interface IJournalWorkout {
   chip: string;
 }
 
-export interface IJournalSong {
+interface IJournalSong {
   id: string;
   name: string;
   artists: string;
@@ -78,12 +78,12 @@ const sectionFeatures: Record<IJournalSection, IFeature> = {
   notes: "notes",
 };
 
-export interface IJournalSectionParts {
+interface IJournalSectionParts {
   title: string;
   detail: string;
 }
 
-export function JournalDay_sectionParts(day: IJournalDay, section: IJournalSection): IJournalSectionParts | undefined {
+function JournalDay_sectionParts(day: IJournalDay, section: IJournalSection): IJournalSectionParts | undefined {
   switch (section) {
     case "checkIn": {
       const checkIn = day.checkIn;
@@ -130,7 +130,7 @@ function isSectionDone(day: IJournalDay, section: IJournalSection): boolean {
   return picked === 0 || picked === Notes_checkInScales.length;
 }
 
-export interface IJournalEmptyRow {
+interface IJournalEmptyRow {
   title: string;
   hint: string;
 }
@@ -247,7 +247,7 @@ function weightOf(weights: IStatsWeightValue[], day: string): IWeight | undefine
   return latest?.value;
 }
 
-export interface IJournalHeaderInput {
+interface IJournalHeaderInput {
   history: { startTime: number }[];
 }
 

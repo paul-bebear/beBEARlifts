@@ -7,7 +7,7 @@ function tierForLevel(level: number): IBearLevel {
   return BearTier_byLevel(level) ?? BearTier_all("male")[0];
 }
 
-export const BearArt_folder = "brown";
+const BearArt_folder = "brown";
 
 // The app draws one bear. Friends' bears, backups and old clients still send a line and a fur, so both stay here.
 export function BearArt_sprite(_line: IBearLine, _fur: IBearFur, level: number, mood: IBearMood): string {

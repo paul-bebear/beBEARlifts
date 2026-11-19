@@ -3,7 +3,7 @@ import { NumberText_parse, NumberText_round1 } from "./numberText";
 
 export type IBodyScanUnit = "kg" | "lb";
 
-export type IBodyScanKey =
+type IBodyScanKey =
   | "weight"
   | "bodyFatPct"
   | "muscleMass"
@@ -101,7 +101,7 @@ export function BodyScans_parse(raw: unknown): IBodyScanLog {
 
 export type IBodyScanForm = Partial<Record<IBodyScanKey, string>>;
 
-export type IBodyScanFormResult =
+type IBodyScanFormResult =
   | { kind: "ok"; values: IBodyScanValues }
   | { kind: "empty" }
   | { kind: "invalid"; labels: string[] };
@@ -142,7 +142,7 @@ export function BodyScans_fromForm(
   return { kind: "ok", scan: { id: now, timestamp: now, unit, ...result.values } };
 }
 
-export interface IBodyScanStats {
+interface IBodyScanStats {
   weight?: IWeight;
   percentage: Partial<Record<IStatsPercentageKey, IPercentage>>;
 }
@@ -205,9 +205,9 @@ export function BodyScans_massIn(value: number, from: IBodyScanUnit, to: IBodySc
   return from === "kg" ? value * lbPerKg : value / lbPerKg;
 }
 
-export type IBodyScanTrend = "better" | "worse" | "neutral";
+type IBodyScanTrend = "better" | "worse" | "neutral";
 
-export interface IBodyScanChange {
+interface IBodyScanChange {
   delta: number;
   trend: IBodyScanTrend;
 }

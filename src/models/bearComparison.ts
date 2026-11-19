@@ -1,4 +1,4 @@
-export interface IBearComparison {
+interface IBearComparison {
   name: string;
   kg: number;
 }

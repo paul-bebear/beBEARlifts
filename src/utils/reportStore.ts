@@ -9,7 +9,7 @@ import { AiRequest_post, AiRequest_text } from "./aiRequest";
 
 export const ReportStore = JsonStore_create("bebear_reports", WorkoutReport_parseLog, WorkoutReport_empty);
 
-export type IReportSummaryResult = { ok: true; text: string } | { ok: false; error: string };
+type IReportSummaryResult = { ok: true; text: string } | { ok: false; error: string };
 
 export async function ReportApi_summary(report: IWorkoutReport): Promise<IReportSummaryResult> {
   const result = await AiRequest_post("/api/ai/report", {

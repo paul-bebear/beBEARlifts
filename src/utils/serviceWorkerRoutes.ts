@@ -1,6 +1,6 @@
-export type IServiceWorkerRoute = "skip" | "network-first" | "cache-first";
+type IServiceWorkerRoute = "skip" | "network-first" | "cache-first";
 
-export type IServiceWorkerCachePattern = string | RegExp;
+type IServiceWorkerCachePattern = string | RegExp;
 
 export function ServiceWorkerRoutes_decide(url: URL, method: string, mode: string): IServiceWorkerRoute {
   if (url.pathname.startsWith("/api/food/") || url.hostname.endsWith(".spotify.com")) {

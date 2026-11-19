@@ -10,7 +10,7 @@ export type IPhoneSheetTarget =
     }
   | { kind: "addFriend" };
 
-export type IPhoneSheetAppId = "feed" | "music" | "photos" | "stats" | "badges" | "settings";
+type IPhoneSheetAppId = "feed" | "music" | "photos" | "stats" | "badges" | "settings";
 
 export interface IPhoneSheetApp {
   id: IPhoneSheetAppId;
@@ -24,7 +24,7 @@ export const PhoneSheet_colors = { frame: "#282A2D", screen: "#FCE8BB", label: "
 
 export const PhoneSheet_tileSize = 64;
 
-export function PhoneSheet_image(id: IPhoneSheetAppId): string {
+function PhoneSheet_image(id: IPhoneSheetAppId): string {
   return `/images/bear/phone/app-${id}.webp`;
 }
 

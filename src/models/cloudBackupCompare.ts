@@ -9,7 +9,7 @@ export interface ICloudBackupHoldings {
   photos?: IProgressPhotoIndexEntry[];
 }
 
-export type ICloudBackupDecision = { kind: "upload" } | { kind: "ask"; offer: ICloudRestoreOffer };
+type ICloudBackupDecision = { kind: "upload" } | { kind: "ask"; offer: ICloudRestoreOffer };
 
 export function CloudBackupCompare_holdings(
   history: Array<{ id: unknown }>,

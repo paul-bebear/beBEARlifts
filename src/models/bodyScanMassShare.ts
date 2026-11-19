@@ -34,11 +34,11 @@ function readNumber(text: string | undefined): number | undefined {
   return NumberText_parsePositive(text ?? "");
 }
 
-export function BodyScanMassShare_toMass(percent: number, bodyWeight: number): number {
+function BodyScanMassShare_toMass(percent: number, bodyWeight: number): number {
   return (percent * bodyWeight) / 100;
 }
 
-export function BodyScanMassShare_toPercent(mass: number, bodyWeight: number): number {
+function BodyScanMassShare_toPercent(mass: number, bodyWeight: number): number {
   return (mass / bodyWeight) * 100;
 }
 

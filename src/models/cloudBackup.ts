@@ -51,11 +51,11 @@ export interface ICloudStoresInput {
   photos: Array<{ timestamp: number }>;
 }
 
-export type ICloudOwnerCheck = { kind: "upload" } | { kind: "skip" } | { kind: "ask"; question: string };
+type ICloudOwnerCheck = { kind: "upload" } | { kind: "skip" } | { kind: "ask"; question: string };
 
 export type ICloudCopy = "latest" | "replaced" | `day-${number}`;
 
-export interface ICloudCopyChoice {
+interface ICloudCopyChoice {
   copy: ICloudCopy;
   label: string;
 }
@@ -248,7 +248,7 @@ export function CloudBackup_ownerCheck(state: ICloudState, manual: boolean): ICl
   return { kind: "ask", question: CloudBackup_ownerQuestion(session.email) };
 }
 
-export function CloudBackup_ownerQuestion(email: string): string {
+function CloudBackup_ownerQuestion(email: string): string {
   return (
     `Upload this phone's data to ${email}?\n\n` +
     "This phone holds data from another account that signed in here before. " +

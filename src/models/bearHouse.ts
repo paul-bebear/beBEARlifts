@@ -18,7 +18,7 @@ export type IBearHouseTarget =
   | { kind: "screen"; screen: IBearHouseScreen; tab: ITab }
   | { kind: "phone" };
 
-export interface IBearHouseOverlay {
+interface IBearHouseOverlay {
   kind: "number" | "badge";
   rect: IBearRect;
   text?: string;
@@ -46,7 +46,7 @@ export interface IBearHouseSources {
   hasWorkout: boolean;
 }
 
-export interface IBearHouseSourcesInput {
+interface IBearHouseSourcesInput {
   foodLog: IFoodLog;
   stats: IStats;
   units: IUnit;
@@ -88,7 +88,7 @@ const phoneBadge: IBearRect = [0.7, -0.04, 1.02, 0.2];
 const backLayer: ReadonlySet<IBearHouseObjectId> = new Set(["door", "calendar", "mirror"]);
 export const BearHouse_doorLabel = { gym: "Gym", workout: "Back to workout" } as const;
 
-export function BearHouse_image(name: string): string {
+function BearHouse_image(name: string): string {
   return `${imageDir}/${name}.webp`;
 }
 

@@ -8,6 +8,7 @@ import { tourConfigs } from "../../src/components/tour/tourConfigs";
 import { Tour_stepHelpFlag } from "../../src/components/tour/tourTypes";
 import { IHistoryRecord, IProgram } from "../../src/types";
 import { EditProgram_initPlannerState } from "../../src/models/editProgram";
+import { FirstUseTips_next, IFirstUseEvent } from "../../src/models/firstUseTips";
 
 // A fixed clock, so a history fixture built at 23:59 does not straddle a day boundary and shift
 // which week the calendar renders.
@@ -24,6 +25,12 @@ function seenEveryTour(): string[] {
   return Object.values(tourConfigs).flatMap((config) =>
     config.steps.map((step) => Tour_stepHelpFlag(config.id, step.id))
   );
+}
+
+const firstUseEvents: IFirstUseEvent[] = ["setTap", "crossedWeight", "finishTap", "programEditorOpen"];
+
+function seenEveryFirstUseTip(): string[] {
+  return firstUseEvents.map((event) => FirstUseTips_next(event, []).tip!.id);
 }
 
 export function Fixture_history(count: number, now: number = FIXED_NOW): IHistoryRecord[] {
@@ -49,7 +56,7 @@ export function Fixture_build(args: IFixture = {}): IState {
     programs: [program],
     currentProgramId: program.id,
     progress,
-    helps: seenEveryTour(),
+    helps: [...seenEveryTour(), ...seenEveryFirstUseTip()],
     hearAboutUs: { done: true, requests: [] },
     subscription:
       args.subscribed === false

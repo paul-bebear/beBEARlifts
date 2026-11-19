@@ -10,17 +10,17 @@ const padShare = 0.04;
 const inkShare = 0.085;
 const minSize = 8;
 
-export interface IBearBoardColumn {
+interface IBearBoardColumn {
   x: number;
   width: number;
 }
 
-export interface IBearBoardColumns {
+interface IBearBoardColumns {
   left: IBearBoardLine[];
   right: IBearBoardLine[];
 }
 
-export interface IBearBoardSize {
+interface IBearBoardSize {
   pad: number;
   width: number;
   height: number;

@@ -133,7 +133,7 @@ function readMicros(
   return Object.keys(micros).length > 0 ? micros : undefined;
 }
 
-export function OpenFoodFacts_parseProduct(raw: unknown): IFoodProduct | undefined {
+function OpenFoodFacts_parseProduct(raw: unknown): IFoodProduct | undefined {
   if (!UnknownValue_isRecord(raw)) {
     return undefined;
   }

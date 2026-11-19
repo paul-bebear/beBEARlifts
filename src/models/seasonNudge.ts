@@ -25,7 +25,7 @@ export type ISeasonNudge =
   | { kind: "change"; text: string; season: ISeason; goals?: IFoodGoals }
   | { kind: "hungry"; text: string; foods: ISeasonFood[] };
 
-export interface ISeasonNudgeInput {
+interface ISeasonNudgeInput {
   foodLog: IFoodLog;
   latestWeight?: IWeight;
   now: Date;
@@ -62,7 +62,7 @@ function withThousands(n: number): string {
   return `${Math.round(n)}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-export function SeasonNudge_kcalTarget(goals: IFoodGoals): number {
+function SeasonNudge_kcalTarget(goals: IFoodGoals): number {
   return goals.calories.min;
 }
 

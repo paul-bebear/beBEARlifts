@@ -1,16 +1,13 @@
 export const SaveDebounce_quietMs = 400;
 
-export interface ISaveDebounce<T> {
+interface ISaveDebounce<T> {
   pending?: { value: T };
   isHeld: boolean;
 }
 
-export type ISaveDebounceEffect<T> =
-  | { kind: "startTimer"; ms: number }
-  | { kind: "clearTimer" }
-  | { kind: "save"; value: T };
+type ISaveDebounceEffect<T> = { kind: "startTimer"; ms: number } | { kind: "clearTimer" } | { kind: "save"; value: T };
 
-export interface ISaveDebounceStep<T> {
+interface ISaveDebounceStep<T> {
   state: ISaveDebounce<T>;
   effects: ISaveDebounceEffect<T>[];
 }
@@ -44,7 +41,7 @@ export function SaveDebounce_failed<T>(state: ISaveDebounce<T>, value: T): ISave
   return { state: { pending: state.pending ?? { value }, isHeld: true }, effects: [] };
 }
 
-export function SaveDebounce_discard<T>(state: ISaveDebounce<T>): ISaveDebounceStep<T> {
+function SaveDebounce_discard<T>(state: ISaveDebounce<T>): ISaveDebounceStep<T> {
   return { state: { ...state, pending: undefined }, effects: [{ kind: "clearTimer" }] };
 }
 
@@ -53,7 +50,7 @@ export interface ISaveDebounceTimers {
   clear: (handle: unknown) => void;
 }
 
-export interface ISaveDebounceController<T> {
+interface ISaveDebounceController<T> {
   type: (value: T) => void;
   flush: () => void;
   discard: () => void;

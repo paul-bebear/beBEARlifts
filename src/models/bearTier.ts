@@ -1,4 +1,4 @@
-export type IBearTierId = string;
+type IBearTierId = string;
 export type IBearTierSet = "male" | "female";
 
 export interface IBearLevel {
@@ -9,7 +9,7 @@ export interface IBearLevel {
   gym: string;
 }
 
-export interface IBearTier extends IBearLevel {
+interface IBearTier extends IBearLevel {
   minKg: number;
 }
 

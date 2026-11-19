@@ -6,7 +6,7 @@ export interface IBearLevelUp {
   to: number;
 }
 
-export interface IBearCelebrationStep {
+interface IBearCelebrationStep {
   store: IBearStoreData;
   levelUp?: IBearLevelUp;
 }

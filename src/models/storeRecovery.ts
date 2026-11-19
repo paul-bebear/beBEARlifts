@@ -1,4 +1,4 @@
-export type IStoreRecoveryChoice = "restore" | "reset" | "later";
+type IStoreRecoveryChoice = "restore" | "reset" | "later";
 
 export interface IStoreRecoveryPrompt {
   title: string;

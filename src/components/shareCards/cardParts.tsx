@@ -94,7 +94,7 @@ export function ShareCardBrand(props: {
   );
 }
 
-export function ShareCardScrim(props: { edge: "top" | "bottom"; height: number; opacity: number }): JSX.Element {
+function ShareCardScrim(props: { edge: "top" | "bottom"; height: number; opacity: number }): JSX.Element {
   const id = `scrim-${props.edge}`;
   return (
     <View style={{ position: "absolute", left: 0, right: 0, height: props.height, [props.edge]: 0 }}>

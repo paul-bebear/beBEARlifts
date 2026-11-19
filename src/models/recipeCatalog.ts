@@ -12,7 +12,7 @@ import { Recipes_perServing } from "./savedMeals";
 import { NumberText_parsePositive } from "./numberText";
 import { RecipeCatalogData_recipes } from "./recipeCatalogData";
 
-export type IRecipeTag = "yes" | "no" | "unknown";
+type IRecipeTag = "yes" | "no" | "unknown";
 
 export type IRecipeAllergen =
   | "milk"
@@ -30,7 +30,7 @@ export type IRecipeDiet = "vegetarian" | "vegan" | "glutenFree" | "dairyFree";
 
 export type IRecipeEquipment = "instantPot" | "steamRack" | "siliconeEggMold" | "blender" | "ovenSafePan";
 
-export interface ICatalogIngredient {
+interface ICatalogIngredient {
   text: string;
   // Raw weight used for the estimate. Absent when the item adds under 5 Cal to the whole batch.
   grams?: number;
@@ -60,14 +60,14 @@ export interface ICatalogRecipe {
   source: { pdfPages: number[] };
 }
 
-export const RecipeCatalog_book = {
+const RecipeCatalog_book = {
   title: "The Healthy Instant Pot Cookbook",
   author: "Karen Lee Young",
   publisher: "Rockridge Press",
   year: 2021,
 };
 
-export const RecipeCatalog_allergenNames: Record<IRecipeAllergen, string> = {
+const RecipeCatalog_allergenNames: Record<IRecipeAllergen, string> = {
   milk: "Milk",
   egg: "Egg",
   fish: "Fish",
@@ -80,7 +80,7 @@ export const RecipeCatalog_allergenNames: Record<IRecipeAllergen, string> = {
   celery: "Celery",
 };
 
-export const RecipeCatalog_dietNames: Record<IRecipeDiet, string> = {
+const RecipeCatalog_dietNames: Record<IRecipeDiet, string> = {
   vegetarian: "Vegetarian",
   vegan: "Vegan",
   glutenFree: "Gluten-free",
@@ -103,7 +103,7 @@ export function RecipeCatalog_find(id: string): ICatalogRecipe | undefined {
   return RecipeCatalogData_recipes.find((r) => r.id === id);
 }
 
-export function RecipeCatalog_userRecipeId(recipe: ICatalogRecipe): string {
+function RecipeCatalog_userRecipeId(recipe: ICatalogRecipe): string {
   return `catalog-${recipe.id}`;
 }
 

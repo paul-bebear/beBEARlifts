@@ -5,12 +5,12 @@ export interface IHouseFrameBox {
   height: number;
 }
 
-export interface IHouseFrameInsets {
+interface IHouseFrameInsets {
   top: number;
   bottom: number;
 }
 
-export interface IHouseFrameFit {
+interface IHouseFrameFit {
   scale: number;
   left: number;
   top: number;

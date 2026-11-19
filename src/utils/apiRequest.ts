@@ -1,12 +1,12 @@
 import { ApiUrl_for } from "./apiUrl";
 
-export interface IApiRequest {
+interface IApiRequest {
   method?: "GET" | "POST";
   token?: string;
   json?: unknown;
 }
 
-export type IApiSendResult =
+type IApiSendResult =
   | { kind: "reply"; status: number; ok: boolean; body: unknown; bodyTimedOut: boolean }
   | { kind: "offline" }
   | { kind: "timeout" };

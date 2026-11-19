@@ -9,7 +9,7 @@ export interface IBearBox {
   height: number;
 }
 
-export interface IBearSceneLayout {
+interface IBearSceneLayout {
   width: number;
   height: number;
   sprite: IBearBox;

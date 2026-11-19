@@ -38,7 +38,10 @@ async function toEditMode(app: IRenderApp, mode: "grid" | "ui" | "perday" | "ful
 const OPERATIONS: IOperation[] = [
   {
     name: "preview: switch to week 2",
-    setup: open,
+    setup: async (app) => {
+      await open(app);
+      await toTab(app, "tab-preview");
+    },
     act: (app) => app.press("tab-week-2"),
   },
   {

@@ -1,16 +1,16 @@
-export interface IExerciseDemoCacheFile {
+interface IExerciseDemoCacheFile {
   name: string;
   bytes: number;
   usedAt: number;
 }
 
-export interface IExerciseDemoCacheLimits {
+interface IExerciseDemoCacheLimits {
   maxFiles: number;
   maxBytes: number;
 }
 
 // The 26 demos of the 5-day plan take 1.9 MB, so a full week of training stays cached with room to spare.
-export const ExerciseDemoCache_limits: IExerciseDemoCacheLimits = { maxFiles: 40, maxBytes: 4_000_000 };
+const ExerciseDemoCache_limits: IExerciseDemoCacheLimits = { maxFiles: 40, maxBytes: 4_000_000 };
 
 // Least recently used files go first. The demo on screen is never deleted, even when it alone breaks a limit.
 export function ExerciseDemoCache_evictions(

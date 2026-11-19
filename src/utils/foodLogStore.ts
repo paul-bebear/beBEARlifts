@@ -2,7 +2,7 @@ import { FoodLog_empty, FoodLog_parse, IFoodLog } from "../models/foodLog";
 import { JsonStore_create } from "./jsonStore";
 import { LocalId_new } from "./localId";
 
-export const FoodLogStore_key = "bebear_foodlog";
+const FoodLogStore_key = "bebear_foodlog";
 
 const store = JsonStore_create(FoodLogStore_key, FoodLog_parse, FoodLog_empty);
 
