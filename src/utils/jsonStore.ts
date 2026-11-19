@@ -32,9 +32,14 @@ class UnreadableError extends Error {
   }
 }
 
+// Rethrows a failed write without an alert, for stores whose screen shows its own error.
+export function JsonStore_persistSilently(key: string, value?: string): Promise<void> {
+  return IndexedDBUtils_setMany([[key, value]]);
+}
+
 async function persistValue(key: string, value?: string): Promise<void> {
   try {
-    await IndexedDBUtils_setMany([[key, value]]);
+    await JsonStore_persistSilently(key, value);
   } catch (error) {
     Dialog_alert("Could not save data. The phone may be out of space. Try again.");
     throw error;
