@@ -4,6 +4,7 @@ import { Settings_build } from "../src/models/settings";
 import { History_getPersonalRecords } from "../src/models/history";
 import { FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
 import { MusicLog_empty } from "../src/models/musicLog";
+import { IMusicPlay } from "../src/models/musicSession";
 import { Notes_empty, Notes_new, Notes_save, Notes_updateCheckIn } from "../src/models/notes";
 import {
   IJournalExportSources,
@@ -165,6 +166,33 @@ describe("JournalExport", () => {
     expect(parsed.data[4]).to.include({ title: 'A, "note"', text: "Line 1\nLine 2" });
     expect(parsed.data[5].energy).to.equal("4");
     expect(parsed.data[6]).to.include({ title: "Song", artists: "Artist", duration_seconds: "180" });
+  });
+
+  it("takes the song length from the first play in the log when a track repeats", () => {
+    const start = at(today, 18);
+    const play = (durationMs: number, startedAt: number): IMusicPlay => ({
+      track: { id: "s", uri: "spotify:track:s", name: "Song", artists: "Artist", durationMs },
+      startedAt,
+      heardMs: 1000,
+      source: "live",
+      isKept: true,
+    });
+    const data = sources({
+      history: [legs(start)],
+      music: {
+        ...MusicLog_empty(),
+        sessions: [
+          { id: start, startedAt: start, plays: [play(180000, start)] },
+          { id: start + 1, startedAt: start + 1, plays: [play(240000, start + 1)] },
+        ],
+      },
+    });
+    const parsed = parse<Record<string, string>>(JournalExport_csv(data, "today"), {
+      header: true,
+      skipEmptyLines: true,
+    });
+    expect(parsed.data.filter((r) => r.kind === "song")).to.have.length(1);
+    expect(parsed.data.find((r) => r.kind === "song")).to.include({ duration_seconds: "180" });
   });
 
   it("escapes spreadsheet formulas in text while preserving numeric values", () => {
