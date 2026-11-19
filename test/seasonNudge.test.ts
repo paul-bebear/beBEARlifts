@@ -95,14 +95,14 @@ describe("SeasonNudge season change", () => {
     const body: IFoodBody = { weightKg: 80, heightCm: 180, sex: "male", age: 18 };
     const maintenance = FoodTargets_compute(body, "moderate", "maintain");
 
-    const lean = change(SeasonNudge_for({ foodLog: logWith({ birthYear: 2009 }), latestWeight: weight, now: april }));
+    const lean = change(SeasonNudge_for({ foodLog: logWith(enteredAt17), latestWeight: weight, now: april }));
     expect(lean.text).to.contain("Under 18 or with a BMI under 20, it stays at maintenance.");
     expect(lean.goals).to.deep.equal(maintenance.goals);
 
     const october = new Date(2027, 9, 1, 9);
     const bulk = change(
       SeasonNudge_for({
-        foodLog: logWith({ birthYear: 2009, lastSeason: "summer" }),
+        foodLog: logWith({ ...enteredAt17, lastSeason: "summer" }),
         latestWeight: weight,
         now: october,
       })

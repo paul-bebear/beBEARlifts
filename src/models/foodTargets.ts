@@ -36,6 +36,7 @@ export interface IFoodTargetsForm {
   goal: IFoodGoalKind;
   seasons?: boolean;
   south?: boolean;
+  savedAge?: { age: string; birthYear: number; ageSetAt: number };
 }
 
 export interface IFoodTargetsFlow {
@@ -185,6 +186,7 @@ export function FoodTargets_start(
   units: IUnit,
   year: number
 ): IFoodTargetsFlow {
+  const { birthYear, ageSetAt } = profile;
   return {
     step: "body",
     form: {
@@ -193,11 +195,14 @@ export function FoodTargets_start(
       heightUnit: profile.heightUnit ?? (units === "lb" ? "ftin" : "cm"),
       ...heightFields(profile.heightCm),
       sex: profile.sex,
-      age: profile.birthYear == null ? "" : `${year - profile.birthYear}`,
+      age: birthYear == null ? "" : `${year - birthYear}`,
       activity: profile.activity,
       goal: profile.goal,
       seasons: !!profile.seasons,
       south: !!profile.south,
+      ...(birthYear != null && ageSetAt != null
+        ? { savedAge: { age: `${year - birthYear}`, birthYear, ageSetAt } }
+        : {}),
     },
   };
 }
@@ -318,19 +323,19 @@ function fullYearsBetween(from: Date, to: Date): number {
   return Math.max(0, to.getFullYear() - from.getFullYear() - (to < anniversary ? 1 : 0));
 }
 
-// A birth year alone leaves the real age one lower for part of the year. The under-18 rules use the
-// youngest age the user can be: the age they typed plus the full years since, or year minus birth year minus 1.
+// Year minus birth year can be one more than the real age. With ageSetAt, the under-18 rules use the age
+// typed plus the full years since. A profile saved before ageSetAt keeps year minus birth year everywhere.
 export function FoodTargets_profileAges(
   profile: Pick<IFoodProfile, "birthYear" | "ageSetAt">,
   year: number,
   now: number
-): { age: number; minAge: number } | undefined {
+): { age: number; minAge?: number } | undefined {
   if (profile.birthYear == null) {
     return undefined;
   }
   const age = year - profile.birthYear;
   if (profile.ageSetAt == null) {
-    return { age, minAge: age - 1 };
+    return { age };
   }
   const setOn = new Date(profile.ageSetAt);
   const typedAge = setOn.getFullYear() - profile.birthYear;
@@ -412,21 +417,22 @@ export function FoodTargets_resultNotes(form: IFoodTargetsForm, result: IFoodTar
   return notes;
 }
 
+function ageFields(form: IFoodTargetsForm, age: number, today: Date): Pick<IFoodProfile, "birthYear" | "ageSetAt"> {
+  const saved = form.savedAge;
+  if (saved != null && form.age.trim() === saved.age) {
+    return { birthYear: saved.birthYear, ageSetAt: saved.ageSetAt };
+  }
+  return { birthYear: today.getFullYear() - Math.round(age), ageSetAt: today.getTime() };
+}
+
 export function FoodTargets_toProfile(form: IFoodTargetsForm, today: Date): IFoodProfile {
   const body = FoodTargets_parseBody(form);
-  const year = today.getFullYear();
   return {
     activity: form.activity,
     goal: form.goal,
     heightUnit: form.heightUnit,
     ...(form.sex == null ? {} : { sex: form.sex }),
-    ...(body == null
-      ? {}
-      : {
-          heightCm: NumberText_round1(body.heightCm),
-          birthYear: year - Math.round(body.age),
-          ageSetAt: today.getTime(),
-        }),
+    ...(body == null ? {} : { heightCm: NumberText_round1(body.heightCm), ...ageFields(form, body.age, today) }),
     ...(form.seasons ? { seasons: true, lastSeason: Season_for(today, !!form.south) } : {}),
     ...(form.south ? { south: true } : {}),
   };

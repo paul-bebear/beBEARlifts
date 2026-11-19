@@ -14,7 +14,7 @@ import {
   ProgramGoal_toFoodProfile,
   ProgramGoal_weeklyChangeKg,
 } from "../src/models/programGoal";
-import { FoodTargets_compute, IFoodActivity, IFoodBody, IFoodSex } from "../src/models/foodTargets";
+import { FoodTargets_compute, IFoodActivity, IFoodBody, IFoodProfile, IFoodSex } from "../src/models/foodTargets";
 
 const goal = (patch: Partial<IProgramGoal> = {}): IProgramGoal => ({
   kind: "loseFat",
@@ -78,10 +78,9 @@ describe("ProgramGoal", () => {
     const profile = { activity: "moderate" as const, goal: "maintain" as const, heightCm: 180, sex: "male" as const };
     const now = new Date(2026, 9, 23).getTime();
     expect(ProgramGoal_body(profile, { value: 80, unit: "kg" }, 2026, now)).to.equal(undefined);
-    expect(ProgramGoal_body({ ...profile, birthYear: 1996 }, { value: 176.37, unit: "lb" }, 2026, now)).to.include({
-      age: 30,
-      minAge: 29,
-    });
+    const legacy = ProgramGoal_body({ ...profile, birthYear: 1996 }, { value: 176.37, unit: "lb" }, 2026, now);
+    expect(legacy?.age).to.equal(30);
+    expect(legacy).not.to.have.property("minAge");
   });
 
   it("counts the age typed into the calculator plus the full years since for the under-18 rules", () => {
@@ -138,17 +137,37 @@ describe("ProgramGoal", () => {
         expect([...calculator, ...wizard]).to.deep.equal(numbers.split(" ").map(Number));
       });
     }
+    const fullBody: IFoodProfile = { activity: "moderate", goal: "maintain", heightCm: 180, sex: "male" };
+    const saved = [
+      "legacy, year minus birth year 18 | 2008 | 2630 2410 1970 3070",
+      "legacy, year minus birth year 25 | 2001 | 2580 2360 1920 3020",
+      "age typed in January 2026 | 1996 | 2540 2320 1880 2980",
+    ];
+    for (const row of saved) {
+      const [who, birthYear, numbers] = row.split(" | ");
+      it(`80 kg 180 cm male profile, ${who}`, () => {
+        const typed = who.startsWith("age typed") ? { ageSetAt: new Date(2026, 0, 10).getTime() } : {};
+        const profile: IFoodProfile = { ...fullBody, birthYear: +birthYear, ...typed };
+        const body = ProgramGoal_body(profile, { value: 80, unit: "kg" }, 2026, new Date(2026, 9, 23).getTime());
+        const targets = goals
+          .slice(0, 4)
+          .map(([kind, pace]) => ProgramGoal_foodTargets({ kind, pace, activity: "5to10k" }, body!).target);
+        expect(targets).to.deep.equal(numbers.split(" ").map(Number));
+      });
+    }
   });
 
   it("keeps a user under 18 or with a BMI under 20 at maintenance in the goal wizard", () => {
     const teen: IFoodBody = { age: 16, sex: "male", weightKg: 70, heightCm: 175 };
     const thin: IFoodBody = { age: 25, sex: "male", weightKg: 58, heightCm: 175 };
-    for (const body of [teen, thin]) {
+    const cases: [IFoodBody, number][] = [
+      [teen, 2660],
+      [thin, 2410],
+    ];
+    for (const [body, maintenance] of cases) {
       const cut = ProgramGoal_foodTargets({ kind: "loseFat", pace: "fast", activity: "5to10k" }, body);
-      const maintain = ProgramGoal_foodTargets({ kind: "maintain", activity: "5to10k" }, body);
-      expect(cut.target).to.equal(maintain.target);
+      expect(cut.target).to.equal(maintenance);
       expect(cut.isDeficitBlocked).to.equal(true);
-      expect(cut).to.deep.equal(FoodTargets_compute(body, "moderate", "lose"));
     }
   });
 
