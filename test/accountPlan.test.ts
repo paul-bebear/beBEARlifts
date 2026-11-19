@@ -108,9 +108,7 @@ describe("AccountPlan", () => {
     expect(synced).to.deep.equal({ ...free, aiCaps });
     expect(AccountPlan_parse(synced)).to.deep.equal(synced);
     expect(AccountPlan_aiCaps(synced)).to.deep.equal(aiCaps);
-    expect(AccountPlan_settingsRow(synced, "a").subtitle).to.equal(
-      "40 AI uses a day. Tracking stays free."
-    );
+    expect(AccountPlan_settingsRow(synced, "a").subtitle).to.equal("40 AI uses a day. Tracking stays free.");
     expect(AccountPlan_codeRedeemed(synced, "a")).to.deep.include({ aiCaps });
   });
 
