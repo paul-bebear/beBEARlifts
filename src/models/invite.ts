@@ -1,14 +1,16 @@
 import {
   Friends_displayNameError,
   Friends_handleError,
+  Friends_handlePattern,
   Friends_normalizeHandle,
   IFriendStatus,
   IFriendsState,
 } from "./friends";
 import { IFoundProfile } from "./friendsForm";
+import { Supabase_offline } from "../utils/supabaseClient";
 
 export function Invite_parseHandle(value: unknown): string | undefined {
-  return typeof value === "string" && /^[a-z0-9_]{3,20}$/.test(value) ? value : undefined;
+  return typeof value === "string" && Friends_handlePattern.test(value) ? value : undefined;
 }
 
 export function Invite_fromUrl(url: string): string | undefined {
@@ -154,8 +156,6 @@ export type IInviteEvent =
   | { type: "forgotten" }
   | { type: "failed"; error: string };
 
-const Invite_offlineError = "No connection";
-
 export function Invite_empty(): IInviteFlow {
   return { step: "idle", signedIn: false, hidden: false, myHandle: "", myName: "" };
 }
@@ -181,10 +181,10 @@ function failed(state: IInviteFlow, error: string): IInviteFlow {
   if (command?.type === "forget") {
     return { ...state, command: undefined };
   }
-  if (command?.type === "saveProfile" || (error === Invite_offlineError && command?.type !== "check")) {
+  if (command?.type === "saveProfile" || (error === Supabase_offline && command?.type !== "check")) {
     return { ...state, command: undefined, error };
   }
-  if (error === Invite_offlineError) {
+  if (error === Supabase_offline) {
     return { ...state, step: "failed", command: undefined, canRetry: true, error };
   }
   return forget(state, { step: "failed", canRetry: false, error });

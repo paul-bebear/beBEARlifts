@@ -1,3 +1,5 @@
+import { Supabase_offline } from "../utils/supabaseClient";
+
 export type IOAuthProvider = "apple" | "google";
 
 export interface IOAuthPending {
@@ -108,5 +110,5 @@ export function OAuthFlow_tokenBody(code: string, verifier: string): { auth_code
 }
 
 export function OAuthFlow_exchangeErrorText(error: string): string {
-  return error === "No connection" ? error : "Sign-in did not finish. Try again.";
+  return error === Supabase_offline ? error : "Sign-in did not finish. Try again.";
 }

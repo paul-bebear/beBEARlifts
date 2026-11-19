@@ -26,7 +26,7 @@ export interface IFriendsLists {
   outgoing: IFriendLink[];
 }
 
-const handlePattern = /^[a-z0-9_]{3,20}$/;
+export const Friends_handlePattern = /^[a-z0-9_]{3,20}$/;
 const maxDisplayName = 40;
 
 export function Friends_empty(): IFriendsState {
@@ -46,7 +46,7 @@ export function Friends_handleError(text: string): string | undefined {
   if (handle.length < 3 || handle.length > 20) {
     return "A handle has 3 to 20 characters.";
   }
-  return handlePattern.test(handle) ? undefined : "Use only letters, numbers and _ in a handle.";
+  return Friends_handlePattern.test(handle) ? undefined : "Use only letters, numbers and _ in a handle.";
 }
 
 export function Friends_displayNameError(text: string): string | undefined {

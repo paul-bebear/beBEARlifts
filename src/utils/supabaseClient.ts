@@ -15,6 +15,7 @@ import { OAuthFlow_tokenBody } from "../models/oauthFlow";
 // The publishable key is meant to ship in client code. Row-level policies on each table and bucket limit what it can read.
 export const Supabase_origin = "https://qvqwvuuwfueccrmzwyct.supabase.co";
 const publishableKey = "sb_publishable_rEbD1nY_vtRMiQrpHSgnCg_xquG6idR";
+export const Supabase_offline = "No connection";
 
 export const CloudStore = JsonStore_create("bebear_cloud", CloudBackup_parse, CloudBackup_empty);
 
@@ -36,7 +37,7 @@ async function callWithStatus(
   try {
     response = await fetch(`${Supabase_origin}${path}`, { ...init, headers });
   } catch {
-    return { result: { ok: false, error: "No connection" } };
+    return { result: { ok: false, error: Supabase_offline } };
   }
   if (!response.ok) {
     const body = await response.json().catch(() => undefined);
