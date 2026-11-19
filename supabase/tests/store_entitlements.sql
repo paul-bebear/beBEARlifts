@@ -26,7 +26,8 @@ $$;
 insert into auth.users(id) values
   ('00000000-0000-0000-0000-0000000000a1'),
   ('00000000-0000-0000-0000-0000000000a2'),
-  ('00000000-0000-0000-0000-0000000000a3');
+  ('00000000-0000-0000-0000-0000000000a3'),
+  ('00000000-0000-0000-0000-0000000000a4');
 
 select pg_temp.assert_text($q$select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a1', true, 'bebear_plus_monthly', now() + interval '30 days', false, '2026-10-24 12:00:02+00')::text$q$, 'true');
 select pg_temp.assert_text($q$select public.account_plan_effective('00000000-0000-0000-0000-0000000000a1')->>'grant'$q$, 'subscription');
@@ -53,6 +54,19 @@ select pg_temp.assert_text($q$select public.account_plan_effective('00000000-000
 
 select pg_temp.assert_text($q$select public.store_entitlement_put('00000000-0000-0000-0000-0000000000ff', true, 'bebear_plus_lifetime', null, false, now())::text$q$, 'false');
 
+-- A sandbox lifetime purchase ends 7 days after its snapshot and still answers lifetime, with no subscription to manage.
+select pg_temp.assert_text($q$select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a4', true, 'bebear_plus_lifetime', now() + interval '7 days', true, '2026-10-24 12:00:00+00', true)::text$q$, 'true');
+select pg_temp.assert_text($q$select public.account_plan_effective('00000000-0000-0000-0000-0000000000a4')->>'grant'$q$, 'lifetime');
+select pg_temp.assert_text($q$select public.account_plan_effective('00000000-0000-0000-0000-0000000000a4')->>'canManageSubscription'$q$, 'false');
+select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a4', true, 'bebear_plus_lifetime', now() - interval '1 minute', true, '2026-10-24 12:00:01+00', true);
+select pg_temp.assert_text($q$select public.account_plan_effective('00000000-0000-0000-0000-0000000000a4')->>'plan'$q$, 'free');
+-- The six-argument writer stores lifetime as null, and the plan falls back to reading an end date as a subscription.
+select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a4', true, 'bebear_plus_lifetime', now() + interval '7 days', true, '2026-10-24 12:00:02+00');
+select pg_temp.assert_text($q$select (lifetime is null)::text from public.store_entitlements where user_id = '00000000-0000-0000-0000-0000000000a4'$q$, 'true');
+select pg_temp.assert_text($q$select public.account_plan_effective('00000000-0000-0000-0000-0000000000a4')->>'grant'$q$, 'subscription');
+select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a4', true, 'bebear_plus_monthly', now() + interval '30 days', false, '2026-10-24 12:00:03+00', false);
+select pg_temp.assert_text($q$select public.account_plan_effective('00000000-0000-0000-0000-0000000000a4')->>'canManageSubscription'$q$, 'true');
+
 select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a3', true, 'bebear_plus_monthly', now() + interval '30 days', false, now());
 set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a3';
@@ -60,6 +74,7 @@ select pg_temp.assert_text($q$select public.ai_usage_take('capped', null, '{"day
 select pg_temp.assert_text($q$select count(*)::text from public.ai_usage_kinds where user_id = '00000000-0000-0000-0000-0000000000a3'$q$, '1');
 select pg_temp.assert_text('select count(*)::text from public.store_entitlements', '1');
 select pg_temp.assert_rejected($q$select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a3', true, null, null, false, now())$q$);
+select pg_temp.assert_rejected($q$select public.store_entitlement_put('00000000-0000-0000-0000-0000000000a3', true, null, null, false, now(), true)$q$);
 select pg_temp.assert_rejected($q$select public.account_plan_effective('00000000-0000-0000-0000-0000000000a3')$q$);
 select pg_temp.assert_rejected($q$update public.store_entitlements set active = true$q$);
 

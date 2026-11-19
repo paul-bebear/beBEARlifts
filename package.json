@@ -84,6 +84,7 @@
     "cdk-deploy": "npm run build:lambda && rm -rf ./dist-lambda/node_modules && cdk deploy --all",
     "pretest": "npm run ensure:localdomain && npm run build:markdown && npm run build:programs && npm run build:exercises",
     "test": "node scripts/run-tests.mjs",
+    "test:sql": "node scripts/run-sql-tests.mjs",
     "playwright": "playwright test --retries 3",
     "onetest": "TS_NODE_TRANSPILE_ONLY=1 mocha -r ts-node/register --timeout 0",
     "test:render": "jest -c jest.render.config.js --testTimeout=5000",

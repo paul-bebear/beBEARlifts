@@ -82,6 +82,7 @@ describe("api/_billing", () => {
         productId: "bebear_plus_monthly",
         expiresAt: "2026-11-24T12:00:00.000Z",
         sandbox: false,
+        lifetime: false,
         snapshotAt: "2026-10-24T12:00:00.000Z",
       },
     });
@@ -92,7 +93,7 @@ describe("api/_billing", () => {
       { product_identifier: "bebear_plus_lifetime", expires_date: null },
       { non_subscriptions: { bebear_plus_lifetime: [{ is_sandbox: false }] } }
     );
-    expect(rowOf(body)).to.deep.include({ active: true, expiresAt: null });
+    expect(rowOf(body)).to.deep.include({ active: true, expiresAt: null, lifetime: true });
   });
 
   it("keeps a subscription active through its billing grace period", () => {
@@ -134,6 +135,7 @@ describe("api/_billing", () => {
     expect(rowOf(body, { allowSandbox: true })).to.deep.include({
       active: true,
       sandbox: true,
+      lifetime: true,
       expiresAt: "2026-10-31T12:00:00.000Z",
     });
     expect(rowOf(body, live)).to.deep.include({ active: false, expiresAt: "2026-10-31T12:00:00.000Z" });
@@ -147,6 +149,7 @@ describe("api/_billing", () => {
     expect(rowOf(body, { allowSandbox: true })).to.deep.include({
       active: true,
       sandbox: true,
+      lifetime: false,
       expiresAt: "2026-10-31T12:00:00.000Z",
     });
   });
@@ -274,7 +277,18 @@ describe("api/billing routes", () => {
     expect(response.status).to.equal(200);
     expect(await response.json()).to.deep.equal({ plan: "plus", grant: "subscription", canManageSubscription: true });
     const put = fetchStub.getCalls().find((c) => String(c.args[0]).endsWith("store_entitlement_put"));
-    expect(JSON.parse(put?.args[1].body)).to.deep.include({ p_user: userA, p_active: true });
+    expect(JSON.parse(put?.args[1].body)).to.deep.include({ p_user: userA, p_active: true, p_lifetime: false });
+  });
+
+  it("sync saves with six arguments when the database has no lifetime column yet", async () => {
+    fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).resolves(reply({ id: userA }));
+    stubRefresh(userA, { plan: "plus", grant: "subscription", canManageSubscription: true });
+    const answers = [reply({ code: "PGRST202" }, 404), reply(true)];
+    fetchStub.withArgs(sinon.match(/rpc\/store_entitlement_put$/)).callsFake(() => Promise.resolve(answers.shift()));
+    const response = await syncPost(syncRequest());
+    expect(response.status).to.equal(200);
+    const puts = fetchStub.getCalls().filter((c) => String(c.args[0]).endsWith("store_entitlement_put"));
+    expect(puts.map((c) => "p_lifetime" in JSON.parse(c.args[1].body))).to.deep.equal([true, false]);
   });
 
   function stubCaps(answer: Response): void {
