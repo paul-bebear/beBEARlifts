@@ -10,7 +10,7 @@ import {
   OAuthFlow_readReturn,
   OAuthFlow_redirectTo,
 } from "../models/oauthFlow";
-import { SpotifyAuth_base64Url, SpotifyAuth_randomString } from "../models/spotifyAuth";
+import { Pkce_pair } from "../models/pkce";
 import {
   CloudStore,
   ICloudResult,
@@ -29,8 +29,7 @@ export async function SupabaseOAuth_start(provider: IOAuthProvider): Promise<ICl
   if (!OAuthFlow_providerEnabled(await SupabaseClient_readJson(settings.value), provider)) {
     return { ok: false, error: OAuthFlow_notSetUpText(provider) };
   }
-  const verifier = SpotifyAuth_randomString(crypto.getRandomValues(new Uint8Array(64)));
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+  const { verifier, challenge } = Pkce_pair();
   await CloudStore.update((state) => ({
     ...state,
     pending: { provider, verifier, startedAt: Date.now() },
@@ -41,7 +40,7 @@ export async function SupabaseOAuth_start(provider: IOAuthProvider): Promise<ICl
       supabaseOrigin: Supabase_origin,
       provider,
       redirectTo: OAuthFlow_redirectTo(window.location.origin),
-      codeChallenge: SpotifyAuth_base64Url(new Uint8Array(digest)),
+      codeChallenge: challenge,
     })
   );
   return { ok: true, value: undefined };

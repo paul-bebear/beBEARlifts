@@ -110,9 +110,12 @@ function rollbarClientAttribution(): Record<string, unknown> {
   return {};
 }
 
-const rollbarClient = forkServices.rollbar
+// Upstream's token sent fork crash reports to Anton's Rollbar project. The fork has no project of its own yet.
+const forkRollbarToken: string | undefined = undefined;
+const rollbarToken = forkServices.rollbar ? forkRollbarToken : undefined;
+const rollbarClient = rollbarToken
   ? new RollbarClient({
-      accessToken: "f29180c0746c4922996ff41dfc2527d2",
+      accessToken: rollbarToken,
       captureUncaught: true,
       captureUnhandledRejections: true,
       payload: {

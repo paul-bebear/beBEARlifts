@@ -1,12 +1,6 @@
 import InAppBrowser from "react-native-inappbrowser-reborn";
-import {
-  ISpotifyRedirect,
-  SpotifyAuth_codeChallenge,
-  SpotifyAuth_nativeRedirectUri,
-  SpotifyAuth_randomString,
-  SpotifyAuth_readAuthSession,
-} from "../models/spotifyAuth";
-import { RandomBytes_get } from "./randomBytes";
+import { Pkce_pair, Pkce_randomString } from "../models/pkce";
+import { ISpotifyRedirect, SpotifyAuth_nativeRedirectUri, SpotifyAuth_readAuthSession } from "../models/spotifyAuth";
 
 export interface ISpotifyPkce {
   verifier: string;
@@ -17,9 +11,8 @@ export interface ISpotifyPkce {
 let lastError: string | undefined;
 
 export async function SpotifyLoginPlatform_pkce(): Promise<ISpotifyPkce> {
-  const verifier = SpotifyAuth_randomString(RandomBytes_get(64));
-  const state = SpotifyAuth_randomString(RandomBytes_get(24));
-  return { verifier, state, codeChallenge: SpotifyAuth_codeChallenge(verifier) };
+  const { verifier, challenge } = Pkce_pair();
+  return { verifier, state: Pkce_randomString(24), codeChallenge: challenge };
 }
 
 export function SpotifyLoginPlatform_redirectUri(): string {
