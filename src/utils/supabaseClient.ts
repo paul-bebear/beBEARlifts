@@ -43,6 +43,8 @@ export async function SupabaseClient_call(
   return { ok: true, value: response };
 }
 
+export const SupabaseClient_storageFullText = "Cloud storage is full or the photo is too large.";
+
 // Supabase Auth answers a wrong or expired code with 403. It answers 429 both for a second code to one
 // address within 60 s ("For security purposes…") and for the project's hourly email limit.
 export function SupabaseClient_errorText(path: string, status: number, body: unknown): string {
@@ -55,6 +57,15 @@ export function SupabaseClient_errorText(path: string, status: number, body: unk
     return typeof message === "string" && /security purposes/i.test(message)
       ? "Wait a minute before asking for another code."
       : "Too many sign-in emails went out this hour. Try again later.";
+  }
+  // Storage hides the trigger text in supabase/migrations/20261118100000_storage_limits.sql and sends only the code.
+  if (
+    path.startsWith("/storage/v1/object/") &&
+    status === 500 &&
+    typeof message === "string" &&
+    /code: P0001\b/.test(message)
+  ) {
+    return SupabaseClient_storageFullText;
   }
   return typeof message === "string" ? message.replace(/Supabase/g, "The server") : `The server returned ${status}.`;
 }

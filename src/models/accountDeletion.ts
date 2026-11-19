@@ -28,7 +28,7 @@ export function AccountDeletion_subscriptionNote(
   plan: IAccountPlanState,
   userId: string | undefined
 ): string | undefined {
-  return plan.status === "known" && plan.userId === userId && plan.plan === "plus" && plan.grant === "subscription"
+  return plan.status === "known" && plan.userId === userId && plan.plan === "plus" && plan.canManage
     ? AccountDeletion_subscriptionLine
     : undefined;
 }

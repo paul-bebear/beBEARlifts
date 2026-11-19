@@ -6,6 +6,7 @@ import {
   SupabaseClient_accessToken,
   SupabaseClient_call,
   SupabaseClient_errorText,
+  SupabaseClient_storageFullText,
   Supabase_notSignedIn,
   Supabase_origin,
 } from "../src/utils/supabaseClient";
@@ -42,6 +43,21 @@ describe("Supabase error text", () => {
     expect(SupabaseClient_errorText("/rest/v1/posts", 400, { message: { code: 1 } })).to.equal(
       "The server returned 400."
     );
+  });
+
+  it("explains an upload the storage limits refused", () => {
+    const refused = { statusCode: "500", error: "DatabaseError", message: "database error, code: P0001" };
+    expect(SupabaseClient_errorText("/storage/v1/object/backups/u1/photos/1.jpg", 500, refused)).to.equal(
+      SupabaseClient_storageFullText
+    );
+    expect(SupabaseClient_errorText("/storage/v1/object/meal-photos/u1/a.jpg", 500, refused)).to.equal(
+      SupabaseClient_storageFullText
+    );
+    expect(
+      SupabaseClient_errorText("/storage/v1/object/backups/u1/latest.json", 500, {
+        message: "database error, code: 23505",
+      })
+    ).to.equal("database error, code: 23505");
   });
 });
 

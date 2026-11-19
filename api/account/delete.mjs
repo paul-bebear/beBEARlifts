@@ -20,10 +20,46 @@ export function AccountDelete_userId(status, body) {
   return status === 200 && typeof body?.id === "string" && body.id !== "" ? body.id : undefined;
 }
 
-export function AccountDelete_objectPaths(userId, listing) {
-  return Array.isArray(listing)
-    ? listing.filter((o) => o?.id != null && typeof o.name === "string").map((o) => `${userId}/${o.name}`)
-    : undefined;
+// Supabase lists one folder level and shows each subfolder as an entry with id null.
+export function AccountDelete_listingEntries(prefix, listing) {
+  if (!Array.isArray(listing)) {
+    return undefined;
+  }
+  const named = listing.filter((o) => typeof o?.name === "string");
+  return {
+    files: named.filter((o) => o.id != null).map((o) => `${prefix}/${o.name}`),
+    folders: named.filter((o) => o.id == null).map((o) => `${prefix}/${o.name}`),
+    count: listing.length,
+  };
+}
+
+async function listAllObjects(bucket, userId, serviceKey) {
+  const files = [];
+  const prefixes = [userId];
+  while (prefixes.length > 0) {
+    const prefix = prefixes.shift();
+    for (let offset = 0; ; offset += listLimit) {
+      const listing = await fetchJson(
+        `${Supabase_origin}/storage/v1/object/list/${bucket}`,
+        {
+          method: "POST",
+          headers: adminHeaders(serviceKey),
+          body: JSON.stringify({ prefix, limit: listLimit, offset }),
+        },
+        timeoutMs
+      );
+      const entries = AccountDelete_listingEntries(prefix, listing.body);
+      if (listing.status !== 200 || entries == null) {
+        return { status: listing.status };
+      }
+      files.push(...entries.files);
+      prefixes.push(...entries.folders);
+      if (entries.count < listLimit) {
+        break;
+      }
+    }
+  }
+  return { files };
 }
 
 // Every table that holds user rows references auth.users with on delete cascade, so removing the auth user removes the rest.
@@ -52,23 +88,15 @@ export async function POST(request) {
     }
 
     for (const { bucket, label } of buckets) {
-      const listing = await fetchJson(
-        `${Supabase_origin}/storage/v1/object/list/${bucket}`,
-        {
-          method: "POST",
-          headers: adminHeaders(serviceKey),
-          body: JSON.stringify({ prefix: userId, limit: listLimit, offset: 0 }),
-        },
-        timeoutMs
-      );
-      const paths = AccountDelete_objectPaths(userId, listing.body);
-      if (listing.status !== 200 || paths == null) {
-        return json({ error: `Could not list the ${label} (Supabase returned ${listing.status})` }, 502);
+      const listed = await listAllObjects(bucket, userId, serviceKey);
+      if (listed.files == null) {
+        return json({ error: `Could not list the ${label} (Supabase returned ${listed.status})` }, 502);
       }
-      if (paths.length > 0) {
+      for (let start = 0; start < listed.files.length; start += listLimit) {
+        const batch = listed.files.slice(start, start + listLimit);
         const removed = await fetchJson(
           `${Supabase_origin}/storage/v1/object/${bucket}`,
-          { method: "DELETE", headers: adminHeaders(serviceKey), body: JSON.stringify({ prefixes: paths }) },
+          { method: "DELETE", headers: adminHeaders(serviceKey), body: JSON.stringify({ prefixes: batch }) },
           timeoutMs
         );
         if (removed.status !== 200) {

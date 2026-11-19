@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   AccountPlan_accept,
+  AccountPlan_codeRedeemed,
   AccountPlan_empty,
   AccountPlan_isPlus,
   AccountPlan_parse,
@@ -75,5 +76,13 @@ describe("AccountPlan", () => {
     expect(AccountPlan_settingsRow({ status: "activating", userId: "a" }, "a").subtitle).to.equal(
       "Purchase done. Activating…"
     );
+  });
+
+  it("keeps a running subscription when the same user redeems a code", () => {
+    expect(AccountPlan_codeRedeemed(plusA, "a")).to.deep.equal({ ...plusA, grant: "code", canManage: true });
+    const code: IAccountPlanState = { status: "known", userId: "a", plan: "plus", grant: "code", canManage: false };
+    expect(AccountPlan_codeRedeemed(free, "a")).to.deep.equal(code);
+    expect(AccountPlan_codeRedeemed(AccountPlan_empty(), "a")).to.deep.equal(code);
+    expect(AccountPlan_codeRedeemed(plusA, "b")).to.deep.equal({ ...code, userId: "b" });
   });
 });
