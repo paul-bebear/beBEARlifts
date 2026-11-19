@@ -1,13 +1,19 @@
 import RNFS from "react-native-fs";
 import {
   IProgressPhoto,
+  IProgressPhotoLog,
+  IProgressPhotoPutOutcome,
   ProgressPhotos_base64,
-  ProgressPhotos_dataUrl,
+  ProgressPhotos_empty,
   ProgressPhotos_fileName,
   ProgressPhotos_insert,
+  ProgressPhotos_isFileBase64,
+  ProgressPhotos_isTempFileName,
   ProgressPhotos_markFiles,
   ProgressPhotos_migration,
+  ProgressPhotos_putUnlink,
   ProgressPhotos_remove,
+  ProgressPhotos_tempFileName,
 } from "../models/progressPhotos";
 import { ProgressPhotoStore } from "./progressPhotoStore";
 
@@ -18,30 +24,60 @@ function pathOf(id: number): string {
   return `${dir}/${ProgressPhotos_fileName(id)}`;
 }
 
+function tempPathOf(id: number): string {
+  return `${dir}/${ProgressPhotos_tempFileName(id)}`;
+}
+
 async function writeFile(id: number, base64: string): Promise<void> {
   await RNFS.mkdir(dir);
   await RNFS.writeFile(pathOf(id), base64, "base64");
 }
 
+async function discard(id: number, outcome: IProgressPhotoPutOutcome, log: IProgressPhotoLog): Promise<void> {
+  for (const name of ProgressPhotos_putUnlink(id, outcome, log)) {
+    await RNFS.unlink(`${dir}/${name}`).catch(() => undefined);
+  }
+}
+
 export async function ProgressPhotoFiles_put(id: number, timestamp: number, base64: string): Promise<boolean> {
-  if (ProgressPhotos_dataUrl(base64) == null) {
+  if (!ProgressPhotos_isFileBase64(base64)) {
     return false;
   }
-  await writeFile(id, base64);
+  const photo = { id, timestamp, file: true as const };
+  await RNFS.mkdir(dir);
+  await RNFS.writeFile(tempPathOf(id), base64, "base64");
+  const before = await ProgressPhotoStore.loadStrict().catch(async (error) => {
+    await discard(id, "precheck-refused", ProgressPhotos_empty());
+    throw error;
+  });
+  if (ProgressPhotos_insert(before, photo) === before) {
+    await discard(id, "precheck-refused", before);
+    return false;
+  }
+  try {
+    await RNFS.unlink(pathOf(id)).catch(() => undefined);
+    await RNFS.moveFile(tempPathOf(id), pathOf(id));
+  } catch (error) {
+    await discard(id, "move-failed", before);
+    throw error;
+  }
+  let after = before;
   let added = false;
   try {
     await ProgressPhotoStore.update((log) => {
-      const next = ProgressPhotos_insert(log, { id, timestamp, file: true });
+      const next = ProgressPhotos_insert(log, photo);
       added = next !== log;
+      after = next;
       return next;
     });
   } catch (error) {
-    await RNFS.unlink(pathOf(id)).catch(() => undefined);
+    const latest = await ProgressPhotoStore.loadStrict().catch(() => undefined);
+    if (latest != null) {
+      await discard(id, "failed", latest);
+    }
     throw error;
   }
-  if (!added) {
-    await RNFS.unlink(pathOf(id)).catch(() => undefined);
-  }
+  await discard(id, added ? "added" : "refused", after);
   return added;
 }
 
@@ -58,7 +94,17 @@ export async function ProgressPhotoFiles_delete(id: number): Promise<void> {
 }
 
 // Files go first and the index second, so an app killed halfway keeps the data URLs and tries again next launch.
+async function removeStaleTempFiles(): Promise<void> {
+  const entries = await RNFS.readDir(dir).catch(() => []);
+  for (const entry of entries) {
+    if (ProgressPhotos_isTempFileName(entry.name)) {
+      await RNFS.unlink(entry.path).catch(() => undefined);
+    }
+  }
+}
+
 export async function ProgressPhotoFiles_migrate(): Promise<void> {
+  await removeStaleTempFiles();
   const { files } = ProgressPhotos_migration(await ProgressPhotoStore.loadStrict());
   if (files.length === 0) {
     return;
