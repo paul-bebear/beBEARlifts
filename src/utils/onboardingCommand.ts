@@ -12,6 +12,7 @@ import {
   OnboardingAnswers_body,
   OnboardingAnswers_foodTargets,
   OnboardingAnswers_gymEquipment,
+  OnboardingAnswers_mergeProfile,
   OnboardingAnswers_planInput,
   OnboardingAnswers_programGoal,
 } from "../models/onboardingAnswers";
@@ -103,20 +104,6 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
         } else {
           return;
         }
-        const now = Date.now();
-        const body = OnboardingAnswers_body(form.answers, days, new Date(now).getFullYear());
-        const targets = OnboardingAnswers_foodTargets(form.answers, new Date(now));
-        await FoodLogStore_update((log) =>
-          FoodLog_setProfile(targets == null ? log : FoodLog_setGoals(log, targets.goals), {
-            ...log.profile,
-            ...(targets?.profile ?? body.profile),
-          })
-        );
-        await ProgramGoalStore.update((log) =>
-          log.current != null
-            ? log
-            : ProgramGoal_set(log, OnboardingAnswers_programGoal(form.answers, now, body.weight))
-        );
         const imported = form.result?.history;
         if (card == null && form.importHistory && imported != null) {
           const fresh = OnboardingHistory_build(imported.records, imported.customExercises, getState().storage.history);
@@ -124,6 +111,20 @@ export function OnboardingCommand_run(form: IOnboardingState, emit: (event: IOnb
             await Thunk_applyImport(fresh.records, fresh.customExercises, "liftosaurCsv")(dispatch, getState, env);
           }
         }
+        const now = Date.now();
+        const body = OnboardingAnswers_body(form.answers, days, new Date(now));
+        const targets = OnboardingAnswers_foodTargets(form.answers, new Date(now));
+        await FoodLogStore_update((log) =>
+          FoodLog_setProfile(
+            targets == null ? log : FoodLog_setGoals(log, targets.goals),
+            OnboardingAnswers_mergeProfile(log.profile, targets?.profile ?? body.profile)
+          )
+        );
+        await ProgramGoalStore.update((log) =>
+          log.current != null
+            ? log
+            : ProgramGoal_set(log, OnboardingAnswers_programGoal(form.answers, now, body.weight))
+        );
         const gymId = Equipment_getCurrentGym(getState().storage.settings).id;
         const equipmentKeys = BearPlace_equipmentKeys(
           BearPlace_resolve(OnboardingAnswers_planInput(form.answers).picks)

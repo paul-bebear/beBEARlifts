@@ -270,7 +270,7 @@ function profileFor(w: IGoalWizard, profile: IFoodProfile): IFoodProfile {
 }
 
 function bodyFor(w: IGoalWizard, ctx: IGoalWizardContext): IFoodBody | undefined {
-  return ProgramGoal_body(profileFor(w, ctx.profile), ctx.latestWeight, ctx.year);
+  return ProgramGoal_body(profileFor(w, ctx.profile), ctx.latestWeight, ctx.year, ctx.now);
 }
 
 function activityFor(w: IGoalWizard, ctx: IGoalWizardContext): IStepsBand {

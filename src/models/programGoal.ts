@@ -2,6 +2,8 @@ import type { IUnit, IWeight } from "../types";
 import {
   FoodTargets_fromCalories,
   FoodTargets_maintenance,
+  FoodTargets_mayDiet,
+  FoodTargets_profileAges,
   IFoodActivity,
   IFoodBody,
   IFoodGoalKind,
@@ -221,17 +223,14 @@ function ProgramGoal_weightKg(weight: IWeight): number {
 export function ProgramGoal_body(
   profile: IFoodProfile,
   weight: IWeight | undefined,
-  year: number
+  year: number,
+  now: number
 ): IFoodBody | undefined {
-  if (weight == null || profile.heightCm == null || profile.sex == null || profile.birthYear == null) {
+  const ages = FoodTargets_profileAges(profile, year, now);
+  if (weight == null || profile.heightCm == null || profile.sex == null || ages == null) {
     return undefined;
   }
-  return {
-    weightKg: ProgramGoal_weightKg(weight),
-    heightCm: profile.heightCm,
-    sex: profile.sex,
-    age: year - profile.birthYear,
-  };
+  return { weightKg: ProgramGoal_weightKg(weight), heightCm: profile.heightCm, sex: profile.sex, ...ages };
 }
 
 export function ProgramGoal_foodTargets(
@@ -240,7 +239,9 @@ export function ProgramGoal_foodTargets(
 ): IFoodTargetsResult {
   const maintenance = FoodTargets_maintenance(body, ProgramGoal_foodActivity(goal.activity));
   const offset = ProgramGoal_dailyCalorieOffset(goal.kind, goal.pace, body.weightKg);
-  return FoodTargets_fromCalories(body, maintenance, maintenance + offset);
+  const isDeficitBlocked = offset < 0 && !FoodTargets_mayDiet(body);
+  const result = FoodTargets_fromCalories(body, maintenance, maintenance + (isDeficitBlocked ? 0 : offset));
+  return { ...result, isDeficitBlocked };
 }
 
 export function ProgramGoal_toFoodProfile(

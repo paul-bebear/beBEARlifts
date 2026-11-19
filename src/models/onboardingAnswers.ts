@@ -1,6 +1,10 @@
 import {
+  FoodTargets_heightCm,
+  FoodTargets_limits,
+  FoodTargets_minPlanAge,
   FoodTargets_result,
   FoodTargets_toProfile,
+  FoodTargets_weightKg,
   IFoodActivity,
   IFoodGoalKind,
   IFoodHeightUnit,
@@ -36,7 +40,6 @@ export interface IOnboardingAnswers {
   plan: string;
 }
 
-const cmPerInch = 2.54;
 const youthAge = 18;
 
 // Only these regions still weigh people in pounds and measure them in feet and inches.
@@ -66,14 +69,9 @@ export function OnboardingAnswers_togglePlace(places: IBearPlacePick[], pick: IB
   return places.includes(pick) ? places.filter((p) => p !== pick) : [...places, pick];
 }
 
-function inRange(text: string, min: number, max: number): number | undefined {
-  const n = NumberText_parse(text);
-  return n != null && n >= min && n <= max ? n : undefined;
-}
-
 function OnboardingAnswers_age(answers: IOnboardingAnswers): number | undefined {
-  const age = inRange(answers.age, 13, 100);
-  return age == null ? undefined : Math.round(age);
+  const age = NumberText_parse(answers.age);
+  return age == null || age < FoodTargets_minPlanAge || age > FoodTargets_limits.age[1] ? undefined : Math.round(age);
 }
 
 export function OnboardingAnswers_isYouth(answers: IOnboardingAnswers): boolean {
@@ -96,27 +94,35 @@ function OnboardingAnswers_goalKind(goal: IBearGoal): IProgramGoalKind {
   return goal === "strength" ? "maintain" : "buildMuscle";
 }
 
+function bodyForm(answers: IOnboardingAnswers): Omit<IFoodTargetsForm, "activity" | "goal"> {
+  return {
+    weight: answers.weight,
+    weightUnit: answers.unit,
+    heightUnit: answers.heightUnit,
+    heightCm: answers.height,
+    heightFt: answers.heightFt,
+    heightIn: answers.heightIn,
+    sex: answers.sex,
+    age: answers.age,
+  };
+}
+
 function heightCm(answers: IOnboardingAnswers): number | undefined {
-  if (answers.heightUnit === "cm") {
-    return inRange(answers.height, 120, 230);
-  }
-  const feet = inRange(answers.heightFt, 3, 8);
-  const inches = answers.heightIn.trim() === "" ? 0 : inRange(answers.heightIn, 0, 11.99);
-  const cm = feet == null || inches == null ? undefined : (feet * 12 + inches) * cmPerInch;
-  return cm != null && cm >= 120 && cm <= 230 ? Math.round(cm) : undefined;
+  const cm = FoodTargets_heightCm(bodyForm(answers));
+  return cm == null || answers.heightUnit === "cm" ? cm : Math.round(cm);
 }
 
 export function OnboardingAnswers_body(
   answers: IOnboardingAnswers,
   days: number,
-  year: number
+  today: Date
 ): {
   profile: IFoodProfile;
   weight?: IWeight;
 } {
   const cm = heightCm(answers);
   const age = OnboardingAnswers_age(answers);
-  const weight = inRange(answers.weight, answers.unit === "kg" ? 30 : 66, answers.unit === "kg" ? 300 : 660);
+  const weight = FoodTargets_weightKg(bodyForm(answers)) == null ? undefined : NumberText_parse(answers.weight);
   return {
     profile: {
       activity: answers.activity ?? (days <= 3 ? "light" : days <= 5 ? "moderate" : "active"),
@@ -124,7 +130,7 @@ export function OnboardingAnswers_body(
       heightUnit: answers.heightUnit,
       heightCm: cm,
       sex: answers.sex,
-      birthYear: age == null ? undefined : year - age,
+      ...(age == null ? {} : { birthYear: today.getFullYear() - age, ageSetAt: today.getTime() }),
     },
     weight: weight == null ? undefined : { value: weight, unit: answers.unit },
   };
@@ -137,20 +143,16 @@ export function OnboardingAnswers_foodTargets(
   if (answers.activity == null || answers.foodGoal == null) {
     return undefined;
   }
-  const form: IFoodTargetsForm = {
-    weight: answers.weight,
-    weightUnit: answers.unit,
-    heightUnit: answers.heightUnit,
-    heightCm: answers.height,
-    heightFt: answers.heightFt,
-    heightIn: answers.heightIn,
-    sex: answers.sex,
-    age: answers.age,
-    activity: answers.activity,
-    goal: answers.foodGoal,
-  };
+  const form: IFoodTargetsForm = { ...bodyForm(answers), activity: answers.activity, goal: answers.foodGoal };
   const result = FoodTargets_result(form, today);
   return result == null ? undefined : { goals: result.goals, profile: FoodTargets_toProfile(form, today) };
+}
+
+export function OnboardingAnswers_mergeProfile(saved: IFoodProfile, next: IFoodProfile): IFoodProfile {
+  const defined: Partial<IFoodProfile> = Object.fromEntries(
+    Object.entries(next).filter(([, value]) => value !== undefined)
+  );
+  return { ...saved, ...defined };
 }
 
 export function OnboardingAnswers_programGoal(

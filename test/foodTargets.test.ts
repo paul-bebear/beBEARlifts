@@ -146,6 +146,32 @@ describe("FoodTargets form", () => {
     expect(FoodTargets_bodyError({ ...form, sex: "male" })).to.equal(undefined);
   });
 
+  it("keeps the typed age when a later save leaves the prefilled age as it is", () => {
+    const november = new Date(2026, 10, 10, 12);
+    const typed = FoodTargets_setForm(FoodTargets_start(FoodTargets_defaultProfile, undefined, "kg", 2026), {
+      weight: "70",
+      heightCm: "175",
+      sex: "male",
+      age: "17",
+    }).form;
+    const first = FoodTargets_toProfile(typed, november);
+    const prefilled = FoodTargets_start(first, undefined, "kg", 2027).form;
+    expect(prefilled.age).to.equal("18");
+    const again = FoodTargets_toProfile({ ...prefilled, weight: "70" }, new Date(2027, 0, 10, 12));
+    expect(again).to.include({ birthYear: 2009, ageSetAt: november.getTime() });
+    const changed = FoodTargets_toProfile({ ...prefilled, weight: "70", age: "19" }, new Date(2027, 0, 10, 12));
+    expect(changed.birthYear).to.equal(2008);
+  });
+
+  it("tells a 13 year old that food targets start at 14", () => {
+    const form = { ...FoodTargets_start(FoodTargets_defaultProfile, undefined, "kg", 2026).form, sex: "male" as const };
+    const body = { ...form, weight: "50", heightCm: "160" };
+    expect(FoodTargets_bodyError({ ...body, age: "13" })).to.equal(
+      "Food targets start at age 14. The formula is not made for younger ages."
+    );
+    expect(FoodTargets_bodyError({ ...body, age: "10" })).to.equal("Enter an age from 14 to 100.");
+  });
+
   it("gives the weight range in pounds and the height range in feet for a pound user", () => {
     const flow = FoodTargets_start(FoodTargets_defaultProfile, undefined, "lb", 2026);
     const form = FoodTargets_setForm(flow, {
@@ -194,6 +220,7 @@ describe("FoodTargets steps", () => {
       sex: "female",
       heightCm: 180,
       birthYear: 1996,
+      ageSetAt: winter.getTime(),
     });
     const next = FoodTargets_start(FoodLog_parse({ profile }).profile, undefined, "kg", 2027).form;
     expect([next.heightCm, next.sex, next.age, next.activity, next.goal]).to.deep.equal([
