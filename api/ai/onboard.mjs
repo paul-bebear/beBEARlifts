@@ -1,47 +1,62 @@
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { json } from "../_food.mjs";
 import { aiChat, aiProvider, aiUnavailableMessage } from "../_ai.mjs";
 import { AiAuth_check, AiAuth_refund } from "../_auth.mjs";
 
+// The app imports the same file, so a screenshot the phone accepts is never refused here.
+const limits = createRequire(import.meta.url)("./_onboardingLimits.json");
+export const Onboard_limits = limits;
+const imagePattern = new RegExp(`^data:image\\/(${limits.imageTypes.join("|")});base64,[A-Za-z0-9+/=]+$`);
+
 export const maxDuration = 120;
-export const Onboard_maxBodyBytes = 4_200_000;
+export const Onboard_maxBodyBytes = limits.maxBodyBytes;
 
 export function Onboard_validate(body) {
   if (body == null || typeof body !== "object" || Array.isArray(body)) {
-    return "Send your answers and up to 6 screenshots.";
+    return `Send your answers and up to ${limits.maxImages} screenshots.`;
   }
   if (body.answers == null || typeof body.answers !== "object" || Array.isArray(body.answers)) {
     return "Send your answers.";
   }
-  if (JSON.stringify(body.answers).length > 12_000) {
+  if (JSON.stringify(body.answers).length > limits.maxAnswersChars) {
     return "The answers are too long.";
   }
   if (
     !Array.isArray(body.images) ||
-    body.images.length > 6 ||
-    body.images.some(
-      (image) => typeof image !== "string" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image)
-    ) ||
-    body.images.reduce((n, image) => n + image.length, 0) > 3_500_000
+    body.images.length > limits.maxImages ||
+    body.images.some((image) => typeof image !== "string" || !imagePattern.test(image)) ||
+    body.images.reduce((n, image) => n + image.length, 0) > limits.maxImageChars
   ) {
-    return "Use up to 6 screenshots, under 3.5 MB total.";
+    return `Use up to ${limits.maxImages} screenshots, under ${limits.maxImageChars / 1_000_000} MB total.`;
   }
   if (
     body.previousAnswer != null &&
-    (typeof body.previousAnswer !== "string" || body.previousAnswer.length > 600_000)
+    (typeof body.previousAnswer !== "string" || body.previousAnswer.length > limits.maxPreviousAnswerChars)
   ) {
     return "The previous answer is too large.";
   }
   if (
     body.validationError != null &&
-    (typeof body.validationError !== "string" || body.validationError.length > 8000)
+    (typeof body.validationError !== "string" || body.validationError.length > limits.maxValidationErrorChars)
   ) {
     return "The validation error is too large.";
   }
   return undefined;
 }
 
-async function systemPrompt() {
+let cachedPrompt;
+
+// The four files only change with a deploy. A failed read is not cached, so the next request tries again.
+function systemPrompt() {
+  cachedPrompt ??= buildSystemPrompt().catch((failure) => {
+    cachedPrompt = undefined;
+    throw failure;
+  });
+  return cachedPrompt;
+}
+
+async function buildSystemPrompt() {
   const [builder, guide, language, exercises] = await Promise.all([
     readFile(new URL("../../llms/program_builder_prompt.md", import.meta.url), "utf8"),
     readFile(new URL("../../llms/programs_guide.md", import.meta.url), "utf8"),

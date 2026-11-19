@@ -1,7 +1,12 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { POST, Onboard_validate } from "../api/ai/onboard.mjs";
+import {
+  POST,
+  Onboard_limits as OnboardingLimits,
+  Onboard_maxBodyBytes,
+  Onboard_validate,
+} from "../api/ai/onboard.mjs";
 
 describe("Onboarding API", () => {
   const payload = { answers: { goal: "muscle", days: 3 }, images: [] };
@@ -51,6 +56,33 @@ describe("Onboarding API", () => {
     expect(Onboard_validate({ ...payload, images: ["data:image/jpeg;base64," + "x".repeat(3_500_001)] })).to.be.a(
       "string"
     );
+  });
+  it("reads its screenshot and answer limits from the file the app imports", () => {
+    expect(OnboardingLimits).to.deep.equal({
+      maxBodyBytes: 4_200_000,
+      maxAnswersChars: 12_000,
+      maxImages: 6,
+      maxImageChars: 3_500_000,
+      imageTypes: ["jpeg", "png", "webp"],
+      maxPreviousAnswerChars: 600_000,
+      maxValidationErrorChars: 8000,
+    });
+    expect(Onboard_maxBodyBytes).to.equal(OnboardingLimits.maxBodyBytes);
+    const tooMany = new Array(OnboardingLimits.maxImages + 1).fill(image);
+    expect(Onboard_validate({ ...payload, images: tooMany })).to.equal("Use up to 6 screenshots, under 3.5 MB total.");
+    expect(Onboard_validate(null)).to.equal("Send your answers and up to 6 screenshots.");
+    const longAnswer = "x".repeat(OnboardingLimits.maxPreviousAnswerChars + 1);
+    expect(Onboard_validate({ ...payload, previousAnswer: longAnswer })).to.equal("The previous answer is too large.");
+    expect(Onboard_validate({ ...payload, validationError: "x".repeat(8001) })).to.equal(
+      "The validation error is too large."
+    );
+    expect(Onboard_validate({ ...payload, answers: { note: "x".repeat(12_000) } })).to.equal(
+      "The answers are too long."
+    );
+    for (const type of OnboardingLimits.imageTypes) {
+      expect(Onboard_validate({ ...payload, images: [`data:image/${type};base64,YQ==`] })).to.equal(undefined);
+    }
+    expect(Onboard_validate({ ...payload, images: ["data:image/gif;base64,YQ=="] })).to.be.a("string");
   });
   it("sends image parts, references and one correction to the authenticated provider", async () => {
     const fetchStub = sinon.stub(globalThis, "fetch");

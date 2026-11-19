@@ -34,6 +34,7 @@ import {
   OnboardingCatalog_ids,
   OnboardingCatalog_programs,
 } from "./onboardingCatalog";
+import OnboardingLimits from "../../api/ai/_onboardingLimits.json";
 
 // api/ai/onboard.mjs gives the model 90 s, so the phone waits a little longer before it gives up.
 const onboardTimeoutMs = 100_000;
@@ -52,8 +53,8 @@ export async function OnboardingCommand_images(
   if (files == null || files.length === 0) {
     return;
   }
-  if (files.length > 6) {
-    emit({ type: "failed", error: "Choose up to 6 screenshots." });
+  if (files.length > OnboardingLimits.maxImages) {
+    emit({ type: "failed", error: `Choose up to ${OnboardingLimits.maxImages} screenshots.` });
     return;
   }
   emit({ type: "resizing" });

@@ -1,4 +1,5 @@
 import { JsonInText_extract } from "./jsonInText";
+import OnboardingLimits from "../../api/ai/_onboardingLimits.json";
 
 export interface IOnboardingAnswer {
   builtin?: string;
@@ -10,7 +11,7 @@ export interface IOnboardingAnswer {
 
 export function OnboardingAnswer_parse(raw: unknown, builtinIds: string[]): IOnboardingAnswer {
   if (typeof raw === "string") {
-    if (raw.length > 600_000) {
+    if (raw.length > OnboardingLimits.maxPreviousAnswerChars) {
       throw new Error("The AI answer is too large.");
     }
     raw = JsonInText_extract(raw);

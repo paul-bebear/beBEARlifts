@@ -4,6 +4,7 @@ import { IOnboardingHistory } from "./onboardingHistory";
 import { Friends_normalizeHandle } from "./friends";
 import { IProgram } from "../types";
 import { BearPlan_recommend, IBearPlanCard } from "./bearPlanRecommend";
+import OnboardingLimits from "../../api/ai/_onboardingLimits.json";
 
 export interface IOnboardingResult {
   answer: IOnboardingAnswer;
@@ -44,8 +45,6 @@ export type IOnboardingEvent =
   | { type: "removeImage"; index: number }
   | { type: "ready"; result: IOnboardingResult; run?: number }
   | { type: "failed"; error: string; run?: number };
-
-const Onboarding_maxImageChars = 3_500_000;
 
 const backSteps: Partial<Record<IOnboardingStep, IOnboardingStep>> = {
   place: "welcome",
@@ -164,8 +163,13 @@ export function Onboarding_reduce(state: IOnboardingState, event: IOnboardingEve
   }
   if (event.type === "images") {
     const images = [...state.images, ...event.images];
-    return images.length > 6 || images.reduce((n, s) => n + s.length, 0) > Onboarding_maxImageChars
-      ? { ...state, resizing: false, error: "Use up to 6 smaller screenshots (3.5 MB total)." }
+    const { maxImages, maxImageChars } = OnboardingLimits;
+    return images.length > maxImages || images.reduce((n, s) => n + s.length, 0) > maxImageChars
+      ? {
+          ...state,
+          resizing: false,
+          error: `Use up to ${maxImages} smaller screenshots (${maxImageChars / 1_000_000} MB total).`,
+        }
       : { ...state, images, resizing: false, error: undefined };
   }
   if (event.type === "resizing") {
