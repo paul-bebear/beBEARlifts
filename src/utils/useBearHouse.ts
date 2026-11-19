@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { untrack, useTrackedState } from "../navigation/TrackedStateContext";
 import { BearHouse_objects, BearHouse_sources } from "../models/bearHouse";
 import { BearHouseView_pick, IBearHouseView } from "../models/bearHouseView";
@@ -6,16 +6,23 @@ import { Friends_forUser, Friends_lists } from "../models/friends";
 import { useFoodLog } from "./foodLogStore";
 import { FriendsStore } from "./friendsClient";
 import { CloudStore } from "./supabaseClient";
-import { useDayKey } from "./useDayKey";
+import { useDayClock } from "./useDayClock";
 
 export function useBearHouse(hasWorkout: boolean, level: number): IBearHouseView {
   const tracked = useTrackedState();
   const stats = untrack(tracked.storage.stats);
   const units = untrack(tracked.storage.settings).units;
-  const { dayKey } = useDayKey();
+  const { dayKey } = useDayClock();
   const foodLog = useFoodLog();
-  const userId = CloudStore.use().session?.userId;
-  const pendingRequests = Friends_lists(Friends_forUser(FriendsStore.use(), userId)).incoming.length;
+  const userId = useSyncExternalStore(CloudStore.subscribe, () => CloudStore.get().session?.userId);
+  const pendingRequests = useSyncExternalStore(
+    FriendsStore.subscribe,
+    () => Friends_lists(Friends_forUser(FriendsStore.get(), userId)).incoming.length
+  );
+  useEffect(() => {
+    CloudStore.load().catch(() => undefined);
+    FriendsStore.load().catch(() => undefined);
+  }, []);
   return useMemo(() => {
     const sources = BearHouse_sources({
       foodLog,
