@@ -3,6 +3,7 @@ import { expect } from "chai";
 import {
   IWarmupExercise,
   WarmupPlan_build,
+  WarmupPlan_choose,
   WarmupPlan_doneCount,
   WarmupPlan_empty,
   WarmupPlan_exercises,
@@ -115,5 +116,23 @@ describe("WarmupPlan", () => {
     expect(parsed.plans).to.deep.equal([{ ...legacy, workoutId: 1234 }, existing]);
     expect(WarmupPlan_find(parsed, 0)).to.equal(undefined);
     expect(WarmupPlan_parseLog(JSON.parse(JSON.stringify(parsed)))).to.deep.equal(parsed);
+  });
+});
+
+describe("WarmupPlan_choose", () => {
+  const exercises = legDay;
+  const aiItems = [{ name: "AI move", detail: "x" }];
+
+  it("uses the AI items when the AI answered", () => {
+    const plan = WarmupPlan_choose(5, exercises, aiItems, 100);
+    expect(plan.source).to.equal("ai");
+    expect(plan.items).to.deep.equal(aiItems);
+  });
+
+  it("builds the rules plan when AI is declined or failed", () => {
+    const plan = WarmupPlan_choose(5, exercises, undefined, 100);
+    expect(plan.source).to.equal("rules");
+    expect(plan.items).to.deep.equal(WarmupPlan_rules(exercises));
+    expect(plan.done.length).to.equal(plan.items.length);
   });
 });

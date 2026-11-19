@@ -75,4 +75,11 @@ describe("Reps_addSet", () => {
     const added = Reps_addSet([current], false, undefined, false, "kg");
     expect(added[1].weight).to.deep.equal(Weight_build(45, "lb"));
   });
+
+  it("does not copy the last set's effort rating into a new set", () => {
+    const rated = set({ completedReps: 5, completedEffort: "hard" });
+    expect(Reps_addSet([rated], false)[1].completedEffort).to.equal(undefined);
+    expect(Reps_addSet([rated], false, undefined, false, "kg", true)[1].completedEffort).to.equal(undefined);
+    expect(Reps_addSet([rated], false, undefined, true)[1].completedEffort).to.equal(undefined);
+  });
 });

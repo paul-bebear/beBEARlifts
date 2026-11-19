@@ -268,7 +268,18 @@ export interface IPlannerFullText {
   currentLine?: number;
 }
 
-export interface IPlannerState extends IUndoRedoState<{ program: IProgram }> {
+export interface IPlannerDayMove {
+  from: number;
+  to: number;
+  dayCounts: number[];
+}
+
+export interface IPlannerCurrent {
+  program: IProgram;
+  dayMoves?: IPlannerDayMove[];
+}
+
+export interface IPlannerState extends IUndoRedoState<IPlannerCurrent> {
   id: string;
   ui: IPlannerUi;
   fulltext?: IPlannerFullText;

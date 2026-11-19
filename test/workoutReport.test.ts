@@ -4,6 +4,8 @@ import { IEffort, IHistoryRecord, ISet } from "../src/types";
 import { Settings_build } from "../src/models/settings";
 import {
   WorkoutReport_answer,
+  WorkoutReport_withAnswer,
+  WorkoutReport_withSummary,
   WorkoutReport_build,
   WorkoutReport_empty,
   WorkoutReport_facts,
@@ -161,5 +163,27 @@ describe("WorkoutReport", () => {
   it("writes one line per week with only the counts that happened", () => {
     const week = { weekStart: 0, workouts: 3, heavier: 2, lighter: 0, tooHard: 1, tooEasy: 0, hurt: 1 };
     expect(WorkoutReport_weekLine(week)).to.equal("3 workouts · 2 heavier · 1 too hard · 1 hurt or worse");
+  });
+});
+
+describe("WorkoutReport_withSummary and WorkoutReport_withAnswer", () => {
+  const base = { workoutId: 7, timestamp: 1, dayName: "Day", items: [], answers: {} };
+  const log = { version: 1 as const, reports: [base] };
+
+  it("keeps an answer saved after the caller read the report", () => {
+    const afterAnswer = WorkoutReport_withAnswer(log, 7, "k", "hurt");
+    const result = WorkoutReport_withSummary(afterAnswer, 7, "Good work");
+    expect(result.reports[0].answers).to.deep.equal({ k: "hurt" });
+    expect(result.reports[0].summary).to.equal("Good work");
+  });
+
+  it("keeps the summary when an answer arrives later", () => {
+    const withNote = WorkoutReport_withSummary(log, 7, "Good work");
+    expect(WorkoutReport_withAnswer(withNote, 7, "k", "better").reports[0].summary).to.equal("Good work");
+  });
+
+  it("returns the log unchanged for an unknown workout", () => {
+    expect(WorkoutReport_withSummary(log, 99, "x")).to.equal(log);
+    expect(WorkoutReport_withAnswer(log, 99, "k", "hurt")).to.equal(log);
   });
 });

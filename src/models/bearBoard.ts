@@ -42,6 +42,7 @@ export interface IBearBoardInput {
 const dayMs = 86400000;
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const trendDays = 30;
+const maxChangeSpanDays = 60;
 
 function oneDecimal(value: number): string {
   return (Math.round(value * 10) / 10).toFixed(1);
@@ -94,16 +95,19 @@ function weightLine(input: IBearBoardInput): IBearBoardLine {
   }
   const inUnits = (e: (typeof entries)[number]): number => Weight_convertTo(e.value, input.units).value;
   const windowStart = input.now - trendDays * dayMs;
-  const base = [...entries].reverse().find((e) => e.timestamp <= windowStart) ?? entries[0];
+  const oldBase = [...entries].reverse().find((e) => e.timestamp <= windowStart) ?? entries[0];
+  const oldSpan = Math.round((latest.timestamp - oldBase.timestamp) / dayMs);
+  const base = oldSpan > maxChangeSpanDays ? (entries.find((e) => e.timestamp > windowStart) ?? latest) : oldBase;
   const value = `${oneDecimal(inUnits(latest))} ${input.units}`;
   if (base === latest) {
     return { id: "weight", text: value, isDone: false, target: "bear" };
   }
+  const spanDays = Math.max(1, Math.round((latest.timestamp - base.timestamp) / dayMs));
   const change = inUnits(latest) - inUnits(base);
   const sign = change > 0 ? "+" : change < 0 ? "−" : "±";
   return {
     id: "weight",
-    text: `${value} · ${sign}${oneDecimal(Math.abs(change))} in ${trendDays} d`,
+    text: `${value} · ${sign}${oneDecimal(Math.abs(change))} in ${spanDays} d`,
     isDone: false,
     target: "bear",
   };

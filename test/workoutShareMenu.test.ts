@@ -9,11 +9,15 @@ function record(id: number): IHistoryRecord {
 
 describe("WorkoutShareMenu_rows", () => {
   it("opens with the bear share cards and has no Instagram, TikTok or image rows", () => {
-    expect(WorkoutShareMenu_rows({ isMobile: true, healthEligible: false })).to.eql(["shareCards", "link", "text"]);
+    expect(WorkoutShareMenu_rows({ isMobile: true, healthEligible: false, hasAccount: true })).to.eql([
+      "shareCards",
+      "link",
+      "text",
+    ]);
   });
 
   it("shows the health sync row on a phone that can sync", () => {
-    expect(WorkoutShareMenu_rows({ isMobile: true, healthEligible: true })).to.eql([
+    expect(WorkoutShareMenu_rows({ isMobile: true, healthEligible: true, hasAccount: true })).to.eql([
       "shareCards",
       "health",
       "link",
@@ -21,8 +25,20 @@ describe("WorkoutShareMenu_rows", () => {
     ]);
   });
 
+  it("drops the link row when nobody is signed in and keeps every other row", () => {
+    expect(WorkoutShareMenu_rows({ isMobile: true, healthEligible: true, hasAccount: false })).to.eql([
+      "shareCards",
+      "health",
+      "text",
+    ]);
+  });
+
   it("keeps the share cards on web and hides health sync there", () => {
-    expect(WorkoutShareMenu_rows({ isMobile: false, healthEligible: true })).to.eql(["shareCards", "link", "text"]);
+    expect(WorkoutShareMenu_rows({ isMobile: false, healthEligible: true, hasAccount: true })).to.eql([
+      "shareCards",
+      "link",
+      "text",
+    ]);
   });
 });
 

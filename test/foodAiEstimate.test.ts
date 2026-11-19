@@ -4,6 +4,7 @@ import {
   FoodAiEstimate_canSend,
   FoodAiEstimate_hasChoices,
   FoodAiEstimate_initial,
+  FoodAiEstimate_nextRequestId,
   FoodAiEstimate_reduce,
   FoodAiEstimate_request,
   IFoodAiEvent,
@@ -20,7 +21,7 @@ function run(events: IFoodAiEvent[], from = FoodAiEstimate_initial()): IFoodAiSt
 describe("FoodAiEstimate sending", () => {
   it("starts empty and cannot send", () => {
     const state = FoodAiEstimate_initial();
-    expect(state).to.deep.equal({ text: "", isSending: false });
+    expect(state).to.deep.equal({ text: "", isSending: false, requestId: 0 });
     expect(FoodAiEstimate_canSend(state)).to.equal(false);
     expect(FoodAiEstimate_request(state)).to.equal(undefined);
   });
@@ -47,9 +48,21 @@ describe("FoodAiEstimate sending", () => {
 
   it("cannot send blank text, or while a request is in flight", () => {
     expect(FoodAiEstimate_canSend(run([{ type: "typed", text: "   " }]))).to.equal(false);
-    expect(FoodAiEstimate_canSend(run([{ type: "typed", text: "eggs" }, { type: "sent" }]))).to.equal(false);
     expect(
-      FoodAiEstimate_canSend(run([{ type: "picked", result: { kind: "photo", dataUrl: photo } }, { type: "sent" }]))
+      FoodAiEstimate_canSend(
+        run([
+          { type: "typed", text: "eggs" },
+          { type: "sent", requestId: 1 },
+        ])
+      )
+    ).to.equal(false);
+    expect(
+      FoodAiEstimate_canSend(
+        run([
+          { type: "picked", result: { kind: "photo", dataUrl: photo } },
+          { type: "sent", requestId: 1 },
+        ])
+      )
     ).to.equal(false);
   });
 
@@ -86,7 +99,7 @@ describe("FoodAiEstimate photo", () => {
   it("drops an old estimate when the photo changes, because it described another plate", () => {
     const estimated = run([
       { type: "typed", text: "eggs" },
-      { type: "estimated", estimate: { items: [eggs], note: "Old" } },
+      { type: "estimated", estimate: { items: [eggs], note: "Old" }, requestId: 0 },
     ]);
     const replaced = FoodAiEstimate_reduce(estimated, { type: "picked", result: { kind: "photo", dataUrl: photo } });
     expect(replaced.choices).to.equal(undefined);
@@ -99,15 +112,22 @@ describe("FoodAiEstimate photo", () => {
 
 describe("FoodAiEstimate answers", () => {
   it("clears the old error and auth error when a send starts", () => {
-    const failed = run([{ type: "typed", text: "eggs" }, { type: "sent" }, { type: "failed", error: "Offline" }]);
-    const again = FoodAiEstimate_reduce(failed, { type: "sent" });
+    const failed = run([
+      { type: "typed", text: "eggs" },
+      { type: "sent", requestId: 1 },
+      { type: "failed", error: "Offline", requestId: 1 },
+    ]);
+    const again = FoodAiEstimate_reduce(failed, { type: "sent", requestId: 1 });
     expect(again.isSending).to.equal(true);
     expect(again.error).to.equal(undefined);
     expect(again.authError).to.equal(undefined);
   });
 
   it("stops sending and shows the auth error when signed out", () => {
-    const state = run([{ type: "sent" }, { type: "signedOut", error: "Sign in first" }]);
+    const state = run([
+      { type: "sent", requestId: 1 },
+      { type: "signedOut", error: "Sign in first", requestId: 1 },
+    ]);
     expect(state.isSending).to.equal(false);
     expect(state.authError).to.equal("Sign in first");
   });
@@ -116,8 +136,8 @@ describe("FoodAiEstimate answers", () => {
     const state = run([
       { type: "typed", text: "eggs" },
       { type: "picked", result: { kind: "photo", dataUrl: photo } },
-      { type: "sent" },
-      { type: "estimated", estimate: { items: [eggs], note: "Guessed sizes" } },
+      { type: "sent", requestId: 1 },
+      { type: "estimated", estimate: { items: [eggs], note: "Guessed sizes" }, requestId: 1 },
     ]);
     expect(state.isSending).to.equal(false);
     expect(state.note).to.equal("Guessed sizes");
@@ -128,7 +148,7 @@ describe("FoodAiEstimate answers", () => {
   });
 
   it("reports no choices for an estimate with no items", () => {
-    const state = run([{ type: "estimated", estimate: { items: [], note: "Nothing found" } }]);
+    const state = run([{ type: "estimated", estimate: { items: [], note: "Nothing found" }, requestId: 0 }]);
     expect(state.choices).to.deep.equal([]);
     expect(FoodAiEstimate_hasChoices(state)).to.equal(false);
   });
@@ -136,9 +156,9 @@ describe("FoodAiEstimate answers", () => {
   it("drops old choices and note when the next send fails, and keeps the photo for a retry", () => {
     const state = run([
       { type: "picked", result: { kind: "photo", dataUrl: photo } },
-      { type: "estimated", estimate: { items: [eggs], note: "Old" } },
-      { type: "sent" },
-      { type: "failed", error: "Try another photo." },
+      { type: "estimated", estimate: { items: [eggs], note: "Old" }, requestId: 0 },
+      { type: "sent", requestId: 1 },
+      { type: "failed", error: "Try another photo.", requestId: 1 },
     ]);
     expect(state.error).to.equal("Try another photo.");
     expect(state.choices).to.equal(undefined);
@@ -147,7 +167,7 @@ describe("FoodAiEstimate answers", () => {
   });
 
   it("keeps the choices the user edits", () => {
-    const estimated = run([{ type: "estimated", estimate: { items: [eggs] } }]);
+    const estimated = run([{ type: "estimated", estimate: { items: [eggs] }, requestId: 0 }]);
     const unticked = [{ ...eggs, isSelected: false }];
     expect(FoodAiEstimate_reduce(estimated, { type: "choicesChanged", choices: unticked }).choices).to.equal(unticked);
   });
@@ -156,10 +176,10 @@ describe("FoodAiEstimate answers", () => {
     const state = run([
       { type: "typed", text: "two eggs" },
       { type: "picked", result: { kind: "photo", dataUrl: photo } },
-      { type: "estimated", estimate: { items: [eggs] } },
+      { type: "estimated", estimate: { items: [eggs] }, requestId: 1 },
       { type: "added" },
     ]);
-    expect(state).to.deep.equal(FoodAiEstimate_initial());
+    expect(state).to.deep.equal({ ...FoodAiEstimate_initial(), requestId: 2 });
   });
 });
 
@@ -168,11 +188,60 @@ describe("FoodAiEstimate resume", () => {
 
   it("starts from the kept text, photo and estimate after Back from Serving size", () => {
     const state = FoodAiEstimate_initial({ choices, text: "two eggs", photo });
-    expect(state).to.deep.equal({ text: "two eggs", isSending: false, choices, photo });
+    expect(state).to.deep.equal({ text: "two eggs", isSending: false, requestId: 0, choices, photo });
     expect(FoodAiEstimate_hasChoices(state)).to.equal(true);
   });
 
   it("starts with empty text and no photo when the kept scan had none", () => {
-    expect(FoodAiEstimate_initial({ choices })).to.deep.equal({ text: "", isSending: false, choices });
+    expect(FoodAiEstimate_initial({ choices })).to.deep.equal({ text: "", isSending: false, requestId: 0, choices });
+  });
+});
+
+describe("FoodAiEstimate late answers", () => {
+  const sending = (): IFoodAiState =>
+    run([
+      { type: "picked", result: { kind: "photo", dataUrl: photo } },
+      {
+        type: "sent",
+        requestId: FoodAiEstimate_nextRequestId(run([{ type: "picked", result: { kind: "photo", dataUrl: photo } }])),
+      },
+    ]);
+
+  it("ignores an answer that arrives after the photo was removed", () => {
+    const state = sending();
+    const removed = FoodAiEstimate_reduce(state, { type: "photoRemoved" });
+    expect(removed.isSending).to.equal(false);
+    const late = FoodAiEstimate_reduce(removed, {
+      type: "estimated",
+      estimate: { items: [eggs] },
+      requestId: state.requestId,
+    });
+    expect(late).to.equal(removed);
+  });
+
+  it("ignores an answer that arrives after another photo was picked", () => {
+    const state = sending();
+    const other = "data:image/jpeg;base64,eHl6";
+    const picked = FoodAiEstimate_reduce(state, { type: "picked", result: { kind: "photo", dataUrl: other } });
+    expect(picked.isSending).to.equal(false);
+    const late = FoodAiEstimate_reduce(picked, {
+      type: "estimated",
+      estimate: { items: [eggs] },
+      requestId: state.requestId,
+    });
+    expect(late.choices).to.equal(undefined);
+    expect(late.photo).to.equal(other);
+    const lateFail = FoodAiEstimate_reduce(picked, { type: "failed", error: "Old", requestId: state.requestId });
+    expect(lateFail.error).to.equal(undefined);
+  });
+
+  it("accepts the answer of the current send", () => {
+    const state = sending();
+    const done = FoodAiEstimate_reduce(state, {
+      type: "estimated",
+      estimate: { items: [eggs] },
+      requestId: state.requestId,
+    });
+    expect(done.choices).to.deep.equal([{ ...eggs, isSelected: true }]);
   });
 });

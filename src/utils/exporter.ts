@@ -2,8 +2,8 @@ import { strToU8, zipSync } from "fflate";
 
 type IFileContents = string | Uint8Array;
 
-export function Exporter_toFile(filename: string, contents: string): void {
-  exportContents(filename, contents);
+export function Exporter_toFile(filename: string, contents: string): Promise<boolean> {
+  return exportContents(filename, contents);
 }
 
 export function Exporter_toZip(filename: string, files: Record<string, string>): void {
@@ -14,12 +14,13 @@ export function Exporter_toZip(filename: string, files: Record<string, string>):
   exportContents(filename, zipSync(entries));
 }
 
-function exportContents(filename: string, contents: IFileContents): void {
+// A browser download gives no signal when the user cancels it, so a download counts as saved.
+async function exportContents(filename: string, contents: IFileContents): Promise<boolean> {
   if (isStandaloneApp() && canShareFile(filename)) {
-    shareFile(filename, contents);
-    return;
+    return shareFile(filename, contents);
   }
   downloadViaLink(filename, contents);
+  return true;
 }
 
 function mimeTypeFromFilename(filename: string): string {
@@ -53,13 +54,18 @@ function canShareFile(filename: string): boolean {
   return navigator.canShare({ files: [new File([""], filename, { type: mimeTypeFromFilename(filename) })] });
 }
 
-function shareFile(filename: string, contents: IFileContents): void {
+async function shareFile(filename: string, contents: IFileContents): Promise<boolean> {
   const file = new File([contents], filename, { type: mimeTypeFromFilename(filename) });
-  navigator.share({ files: [file], title: filename }).catch((e: DOMException) => {
-    if (e.name !== "AbortError") {
-      downloadViaLink(filename, contents);
+  try {
+    await navigator.share({ files: [file], title: filename });
+    return true;
+  } catch (e) {
+    if ((e as DOMException).name === "AbortError") {
+      return false;
     }
-  });
+    downloadViaLink(filename, contents);
+    return true;
+  }
 }
 
 function downloadViaLink(filename: string, contents: IFileContents): void {

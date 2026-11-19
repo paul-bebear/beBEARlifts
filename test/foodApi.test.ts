@@ -32,20 +32,6 @@ describe("FoodApi request time limit", () => {
     expect(result).to.deep.equal({ ok: false, error: "No connection. Food lookup needs a signal." });
   });
 
-  it("shows the USDA error when Open Food Facts has no match and USDA fails", async () => {
-    const fetchStub = sinon.stub(globalThis, "fetch");
-    fetchStub
-      .withArgs(sinon.match(/\/api\/food\/barcode/))
-      .callsFake(async () => new Response(JSON.stringify({ status: 0 }), { status: 200 }));
-    fetchStub
-      .withArgs(sinon.match(/\/api\/food\/usda/))
-      .callsFake(
-        async () => new Response(JSON.stringify({ error: "USDA is busy. Try again in a minute." }), { status: 502 })
-      );
-    const result = await FoodApi_lookupBarcode("111", []);
-    expect(result).to.deep.equal({ ok: false, error: "USDA is busy. Try again in a minute." });
-  });
-
   it("returns no product when both sources answer and neither has it", async () => {
     sinon
       .stub(globalThis, "fetch")
@@ -60,5 +46,16 @@ describe("FoodApi request time limit", () => {
     sinon.stub(globalThis, "fetch").callsFake(async () => new Response(JSON.stringify({ status: 0 }), { status: 200 }));
     const result = await FoodApi_lookupBarcode("111", []);
     expect(result.ok).to.equal(true);
+  });
+
+  it("returns the USDA error when Open Food Facts has no product and USDA fails", async () => {
+    sinon
+      .stub(globalThis, "fetch")
+      .callsFake(async (url) =>
+        String(url).includes("/api/food/usda")
+          ? new Response(JSON.stringify({ error: "USDA is busy." }), { status: 429 })
+          : new Response(JSON.stringify({ status: 0 }), { status: 200 })
+      );
+    expect(await FoodApi_lookupBarcode("111", [])).to.deep.equal({ ok: false, error: "USDA is busy." });
   });
 });

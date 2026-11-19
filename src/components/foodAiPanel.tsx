@@ -8,6 +8,7 @@ import { FoodAiSignIn } from "./foodAiSignIn";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
 import {
   FoodAiEstimate_canSend,
+  FoodAiEstimate_nextRequestId,
   FoodAiEstimate_hasChoices,
   FoodAiEstimate_initial,
   FoodAiEstimate_reduce,
@@ -39,18 +40,23 @@ export function FoodAiPanel(props: IProps): JSX.Element {
     if (request == null) {
       return;
     }
-    dispatch({ type: "sent" });
+    const requestId = FoodAiEstimate_nextRequestId(state);
+    dispatch({ type: "sent", requestId });
     if (!(await AiConsent_ensure())) {
-      dispatch({ type: "failed", error: AiConsent_disabledMessage });
+      dispatch({ type: "failed", error: AiConsent_disabledMessage, requestId });
       return;
     }
     const auth = await SupabaseClient_accessToken();
     if (!auth.ok) {
-      dispatch({ type: "signedOut", error: auth.error });
+      dispatch({ type: "signedOut", error: auth.error, requestId });
       return;
     }
     const result = await FoodApi_estimate(request);
-    dispatch(result.ok ? { type: "estimated", estimate: result.value } : { type: "failed", error: result.error });
+    dispatch(
+      result.ok
+        ? { type: "estimated", estimate: result.value, requestId }
+        : { type: "failed", error: result.error, requestId }
+    );
   };
 
   if (session == null) {

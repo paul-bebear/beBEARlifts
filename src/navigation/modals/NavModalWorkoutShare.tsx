@@ -55,6 +55,7 @@ export function NavModalWorkoutShare(): JSX.Element {
   const rows = WorkoutShareMenu_rows({
     isMobile: Platform.OS === "ios" || Platform.OS === "android",
     healthEligible: HealthSync_eligibleForAppleHealth() || HealthSync_eligibleForGoogleHealth(),
+    hasAccount: state.user != null,
   });
 
   const renderRow = (row: IWorkoutShareRow, isFirst: boolean): JSX.Element => {

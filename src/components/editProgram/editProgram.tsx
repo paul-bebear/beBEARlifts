@@ -22,6 +22,7 @@ import { PlannerMode_isStructureError } from "../../pages/planner/models/planner
 import { PlannerProgram_evaluate } from "../../pages/planner/models/plannerProgram";
 import { ScrollableTabs } from "../scrollableTabs";
 import { IEvaluatedProgram, Program_cleanPlannerProgram } from "../../models/program";
+import { ProgramDayOrder_nextDayOnSave } from "../../models/programDayOrder";
 import { EditProgram_mode } from "../../models/editProgram";
 import { Thunk_pushScreen, Thunk_log } from "../../ducks/thunks";
 import { updateState, IState } from "../../models/state";
@@ -319,7 +320,11 @@ export const EditProgramNavbar = memo(function EditProgramNavbar(props: IEditPro
             data-testid="save-program"
             testID="save-program"
             onClick={() => {
-              const newProgram: IProgram = Program_cleanPlannerProgram({ ...props.originalProgram, planner });
+              const newProgram: IProgram = Program_cleanPlannerProgram({
+                ...props.originalProgram,
+                planner,
+                nextDay: ProgramDayOrder_nextDayOnSave(props.originalProgram.nextDay, props.state.current.dayMoves),
+              });
               updateState(
                 props.dispatch,
                 [
