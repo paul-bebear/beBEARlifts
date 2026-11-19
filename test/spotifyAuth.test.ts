@@ -2,11 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import { createHash } from "crypto";
 import { Sha256_digest } from "../src/models/sha256";
-import {
-  SpotifyAuth_codeChallenge,
-  SpotifyAuth_nativeRedirectUri,
-  SpotifyAuth_readAuthSession,
-} from "../src/models/spotifyAuth";
+import { SpotifyAuth_nativeRedirectUri, SpotifyAuth_readAuthSession } from "../src/models/spotifyAuth";
 
 function hex(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString("hex");
@@ -33,12 +29,6 @@ describe("Sha256_digest", () => {
 });
 
 describe("SpotifyAuth native login", () => {
-  it("makes the RFC 7636 S256 challenge without crypto.subtle", () => {
-    expect(SpotifyAuth_codeChallenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk")).to.equal(
-      "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-    );
-  });
-
   it("reads the code from the custom-scheme callback", () => {
     const url = `${SpotifyAuth_nativeRedirectUri}?code=abc123&state=s1`;
     expect(SpotifyAuth_readAuthSession({ type: "success", url }, "s1")).to.deep.equal({ kind: "code", code: "abc123" });

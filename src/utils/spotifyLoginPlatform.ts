@@ -1,4 +1,5 @@
-import { ISpotifyRedirect, SpotifyAuth_base64Url, SpotifyAuth_randomString } from "../models/spotifyAuth";
+import { Pkce_pair, Pkce_randomString } from "../models/pkce";
+import { ISpotifyRedirect } from "../models/spotifyAuth";
 
 export interface ISpotifyPkce {
   verifier: string;
@@ -10,10 +11,8 @@ const pkceKey = "bebear_spotify_pkce";
 const errorKey = "bebear_spotify_error";
 
 export async function SpotifyLoginPlatform_pkce(): Promise<ISpotifyPkce> {
-  const verifier = SpotifyAuth_randomString(crypto.getRandomValues(new Uint8Array(64)));
-  const state = SpotifyAuth_randomString(crypto.getRandomValues(new Uint8Array(24)));
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
-  return { verifier, state, codeChallenge: SpotifyAuth_base64Url(new Uint8Array(digest)) };
+  const { verifier, challenge } = Pkce_pair();
+  return { verifier, state: Pkce_randomString(24), codeChallenge: challenge };
 }
 
 export function SpotifyLoginPlatform_redirectUri(): string {

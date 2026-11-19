@@ -1,4 +1,5 @@
-import { Sha256_digest } from "./sha256";
+import { RandomBytes_get } from "../utils/randomBytes";
+import { Pkce_base64Url, Pkce_randomString } from "./pkce";
 
 export interface ISpotifyTokens {
   accessToken: string;
@@ -25,15 +26,17 @@ const SpotifyAuth_scopes = [
 ];
 
 const refreshMarginMs = 60 * 1000;
-const verifierAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+// test/musicTracking.test.ts still imports these two names. Delete them once it imports pkce.ts.
+export const SpotifyAuth_base64Url = Pkce_base64Url;
 
 export function SpotifyAuth_randomString(bytes: Uint8Array): string {
-  return Array.from(bytes, (b) => verifierAlphabet[b % verifierAlphabet.length]).join("");
-}
-
-export function SpotifyAuth_base64Url(bytes: Uint8Array): string {
-  const binary = Array.from(bytes, (b) => String.fromCharCode(b)).join("");
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  let first: Uint8Array | undefined = bytes;
+  return Pkce_randomString(bytes.length, (count) => {
+    const next = first ?? RandomBytes_get(count);
+    first = undefined;
+    return next;
+  });
 }
 
 export function SpotifyAuth_authorizeUrl(args: {
@@ -86,10 +89,6 @@ export function SpotifyAuth_readAuthSession(
   return redirect.kind === "none"
     ? { kind: "error", message: "Spotify login came back without a code. Try again." }
     : redirect;
-}
-
-export function SpotifyAuth_codeChallenge(verifier: string): string {
-  return SpotifyAuth_base64Url(Sha256_digest(new TextEncoder().encode(verifier)));
 }
 
 export function SpotifyAuth_cleanUrl(href: string): string {
