@@ -1,4 +1,4 @@
-import { JSX, useContext, useSyncExternalStore } from "react";
+import { JSX, useCallback, useContext, useSyncExternalStore } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { IconHeart } from "./icons/iconHeart";
@@ -12,10 +12,10 @@ export function WorkoutHeartRate(): JSX.Element | null {
 }
 
 function WorkoutHeartRateValue(props: { store: IHeartRateStore }): JSX.Element | null {
-  const bpm = useSyncExternalStore(
-    (onChange) => props.store.subscribe(onChange),
-    () => props.store.getBpm()
-  );
+  const { store } = props;
+  const subscribe = useCallback((onChange: () => void) => store.subscribe(onChange), [store]);
+  const getBpm = useCallback(() => store.getBpm(), [store]);
+  const bpm = useSyncExternalStore(subscribe, getBpm);
   if (bpm == null) {
     return null;
   }
