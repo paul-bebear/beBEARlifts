@@ -469,4 +469,26 @@ describe("WorkoutStoryCard share data", () => {
     expect(data.tier.next).to.equal(undefined);
     expect(data.toNext).to.equal("7,000,000 kg lifetime");
   });
+
+  it("says the distance to the next tier in lb the same way for every total", () => {
+    const lbSettings = { ...settings, units: "lb" as const };
+    const totals = [0, 5000, 11420, 20000, 34000, 70000, 150000, 400000];
+    const next = [
+      "4,410 lb to Level 2 · Teen",
+      "15,433 lb to Level 3 · Amateur",
+      "1,279 lb to Level 3 · Amateur",
+      "35,274 lb to Level 4 · Rookie",
+      "4,410 lb to Level 4 · Rookie",
+      "22,047 lb to Level 5 · Regular",
+      "55,116 lb to Level 6 · Strong",
+      "132,278 lb to Level 7 · Athlete",
+    ];
+    totals.forEach((kg, i) => {
+      expect(WorkoutStoryCard_toNext(BearTier_progress(0, kg, "male"), lbSettings, kg)).to.equal(next[i]);
+    });
+    const lifetime = ["19,841,604 lb lifetime", "34,024 lb to Level 9 · Titan", "4,409,246 lb to Level 12 · Mars"];
+    [9e6, 1234567, 5e6].forEach((kg, i) => {
+      expect(WorkoutStoryCard_toNext(BearTier_progress(0, kg, "male"), lbSettings, kg)).to.equal(lifetime[i]);
+    });
+  });
 });

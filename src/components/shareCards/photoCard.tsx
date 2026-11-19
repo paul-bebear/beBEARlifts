@@ -1,7 +1,11 @@
 import { JSX } from "react";
 import { Image, View } from "react-native";
 import { IScreenMuscle } from "../../types";
-import { IWorkoutShareData, WorkoutStoryCard_headline, WorkoutStoryCard_isLoaded } from "../../models/workoutStoryCard";
+import {
+  IWorkoutShareData,
+  WorkoutStoryCard_headline,
+  WorkoutStoryCard_hasWeight,
+} from "../../models/workoutStoryCard";
 import { FrontMusclesSvg } from "../muscles/images/frontMusclesSvg";
 import { BackMusclesSvg, IMuscleStyle } from "../muscles/images/backMusclesSvg";
 import { ShareCardBrand, ShareCardFrame, ShareCardScrim, ShareCardText } from "./cardParts";
@@ -80,7 +84,7 @@ export function PhotoCard(props: IProps): JSX.Element {
               </View>
             </View>
           )}
-          {WorkoutStoryCard_isLoaded(stats) && <Stat label="SETS" value={`${stats.sets}`} />}
+          {WorkoutStoryCard_hasWeight(stats) && <Stat label="SETS" value={`${stats.sets}`} />}
         </View>
       </View>
       {photo == null && (

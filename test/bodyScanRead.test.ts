@@ -232,4 +232,19 @@ describe("Body scan photo client", () => {
     expect((await FoodApi_readBodyScan(image)).ok).to.equal(false);
     sinon.assert.notCalled(fetchStub);
   });
+
+  it("converts merged and water weights the same way for every weight", () => {
+    const weights = [45, 60.3, 70, 79.8, 82.4, 100, 176, 250.5];
+    const inLb = ["99.2", "132.9", "154.3", "175.9", "181.7", "220.5", "388", "552.3"];
+    const inKg = ["20.4", "27.4", "31.8", "36.2", "37.4", "45.4", "79.8", "113.6"];
+    weights.forEach((w, i) => {
+      expect(BodyScanRead_merge({}, { weight: w, unit: "kg" }, "lb").weight).to.equal(inLb[i]);
+      expect(BodyScanRead_merge({}, { weight: w, unit: "lb" }, "kg").weight).to.equal(inKg[i]);
+    });
+    const water = [58.8, 54.9, 50.1, 46.4, 42, 38.3];
+    [150, 160.5, 176, 190.2, 210, 230.4].forEach((w, i) => {
+      const read = BodyScanRead_parse(JSON.stringify({ unit: "lb", weight: w, waterKg: 40 }));
+      expect(read?.waterPct).to.equal(water[i]);
+    });
+  });
 });
