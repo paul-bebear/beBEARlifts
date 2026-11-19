@@ -1,9 +1,6 @@
-import { JSX, useEffect, useState } from "react";
+import { JSX, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
-import { IDispatch } from "../ducks/types";
-import { IHistoryRecord, ISettings } from "../types";
-import { Thunk_pushScreen } from "../ducks/thunks";
 import { ReportApi_summary, ReportStore } from "../utils/reportStore";
 import { AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore } from "../utils/aiConsentClient";
@@ -12,11 +9,7 @@ import { WorkoutPost_hasEarlierExercise } from "../models/workoutPost";
 import {
   IWorkoutReport,
   WorkoutReport_answerLabels,
-  WorkoutReport_build,
-  WorkoutReport_find,
   WorkoutReport_options,
-  WorkoutReport_previous,
-  WorkoutReport_put,
   WorkoutReport_withAnswer,
   WorkoutReport_withSummary,
 } from "../models/workoutReport";
@@ -86,41 +79,6 @@ export function WorkoutReportView(props: { report: IWorkoutReport }): JSX.Elemen
         </Pressable>
       )}
       {error != null && <Text className="mt-1 text-xs text-text-error">{error}</Text>}
-    </View>
-  );
-}
-
-export function WorkoutReportCard(props: {
-  record: IHistoryRecord;
-  history: IHistoryRecord[];
-  settings: ISettings;
-  dispatch: IDispatch;
-}): JSX.Element | null {
-  const log = ReportStore.use();
-  const report = WorkoutReport_find(log, props.record.id);
-
-  useEffect(() => {
-    ReportStore.update((current) => {
-      if (WorkoutReport_find(current, props.record.id) != null) {
-        return current;
-      }
-      const previous = WorkoutReport_previous(current, props.record.startTime);
-      return WorkoutReport_put(current, WorkoutReport_build(props.record, props.history, previous, props.settings));
-    });
-  }, [props.record.id]);
-
-  if (report == null) {
-    return null;
-  }
-  return (
-    <View className="p-4 mx-4 mb-4 rounded-2xl bg-background-subtle" testID="workout-report">
-      <View className="flex-row items-center mb-2">
-        <Text className="flex-1 text-base font-semibold">Workout report</Text>
-        <Pressable onPress={() => props.dispatch(Thunk_pushScreen("reports"))} testID="report-all">
-          <Text className="text-sm text-text-link">All reports</Text>
-        </Pressable>
-      </View>
-      <WorkoutReportView report={report} />
     </View>
   );
 }
