@@ -1,4 +1,5 @@
 import {
+  FoodTargets_bodyError,
   FoodTargets_heightCm,
   FoodTargets_limits,
   FoodTargets_minPlanAge,
@@ -72,6 +73,35 @@ export function OnboardingAnswers_togglePlace(places: IBearPlacePick[], pick: IB
 function OnboardingAnswers_age(answers: IOnboardingAnswers): number | undefined {
   const age = NumberText_parse(answers.age);
   return age == null || age < FoodTargets_minPlanAge || age > FoodTargets_limits.age[1] ? undefined : Math.round(age);
+}
+
+type IToggleKey = "activity" | "foodGoal" | "days" | "sex";
+
+export function OnboardingAnswers_toggle<K extends IToggleKey>(
+  answers: IOnboardingAnswers,
+  key: K,
+  value: NonNullable<IOnboardingAnswers[K]>
+): Partial<IOnboardingAnswers> {
+  return { [key]: answers[key] === value ? undefined : value } as Partial<IOnboardingAnswers>;
+}
+
+export function OnboardingAnswers_ageNote(answers: IOnboardingAnswers): string | undefined {
+  const age = NumberText_parse(answers.age);
+  if (age == null || age < FoodTargets_minPlanAge || age >= FoodTargets_limits.age[0]) {
+    return undefined;
+  }
+  // The calculator names the age problem only once the other fields pass, so these stand-ins let its text through.
+  const stand: IFoodTargetsForm = {
+    ...bodyForm(answers),
+    weight: "70",
+    weightUnit: "kg",
+    heightUnit: "cm",
+    heightCm: "175",
+    sex: "male",
+    activity: "light",
+    goal: "gain",
+  };
+  return FoodTargets_bodyError(stand);
 }
 
 export function OnboardingAnswers_isYouth(answers: IOnboardingAnswers): boolean {

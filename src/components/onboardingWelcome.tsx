@@ -1,7 +1,11 @@
 import { Dispatch, JSX } from "react";
 import { IDispatch } from "../ducks/types";
-import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
-import { Invite_parseHandle } from "../models/invite";
+import {
+  IOnboardingEvent,
+  IOnboardingState,
+  Onboarding_inviteError,
+  Onboarding_welcomeEnabled,
+} from "../models/onboarding";
 import { OnboardingChoices_welcomeLabel } from "../models/onboardingChoices";
 import { CloudBackupCard } from "./cloudBackupCard";
 
@@ -18,7 +22,7 @@ export function OnboardingWelcome(props: {
   onContinue: () => void;
 }): JSX.Element {
   const { form, emit } = props;
-  const badInvite = form.invite !== "" && Invite_parseHandle(form.invite) == null;
+  const inviteError = Onboarding_inviteError(form.invite);
   return (
     <>
       <div className="flex flex-col items-center gap-3 pt-6 text-center">
@@ -42,11 +46,11 @@ export function OnboardingWelcome(props: {
           />
         </label>
       )}
-      {badInvite && <p role="alert">Use 3–20 lowercase letters, numbers, or underscores.</p>}
+      {inviteError != null && <p role="alert">{inviteError}</p>}
       <div className="flex-1" />
       <button
         className="w-full p-4 text-lg font-bold text-black rounded-2xl bg-yellow-400 disabled:opacity-40"
-        disabled={badInvite || props.busy}
+        disabled={!Onboarding_welcomeEnabled(form.invite, props.busy)}
         onClick={props.onContinue}
       >
         {OnboardingChoices_welcomeLabel(props.signedIn)}

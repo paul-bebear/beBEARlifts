@@ -1,8 +1,12 @@
 import { Dispatch, JSX } from "react";
 import { View } from "react-native";
 import { IDispatch } from "../ducks/types";
-import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
-import { Invite_parseHandle } from "../models/invite";
+import {
+  IOnboardingEvent,
+  IOnboardingState,
+  Onboarding_inviteError,
+  Onboarding_welcomeEnabled,
+} from "../models/onboarding";
 import { OnboardingChoices_welcomeLabel } from "../models/onboardingChoices";
 import { CloudBackupCard } from "./cloudBackupCard";
 import { Text } from "./primitives/text";
@@ -18,7 +22,7 @@ export function OnboardingWelcome(props: {
   onContinue: () => void;
 }): JSX.Element {
   const { form, emit } = props;
-  const badInvite = form.invite !== "" && Invite_parseHandle(form.invite) == null;
+  const inviteError = Onboarding_inviteError(form.invite);
   return (
     <>
       <View className="items-center pt-6" style={{ gap: 12 }}>
@@ -45,12 +49,12 @@ export function OnboardingWelcome(props: {
           </View>
         </View>
       )}
-      {badInvite && <Text accessibilityRole="alert">Use 3–20 lowercase letters, numbers, or underscores.</Text>}
+      {inviteError != null && <Text accessibilityRole="alert">{inviteError}</Text>}
       <View className="flex-1" />
       <OnboardingMainButton
         testID="onboarding-welcome-start"
         label={OnboardingChoices_welcomeLabel(props.signedIn)}
-        enabled={!badInvite && !props.busy}
+        enabled={Onboarding_welcomeEnabled(form.invite, props.busy)}
         onPress={props.onContinue}
       />
     </>

@@ -1,7 +1,7 @@
 import { Dispatch, JSX } from "react";
 import { View } from "react-native";
 import { IOnboardingEvent } from "../models/onboarding";
-import { IOnboardingAnswers } from "../models/onboardingAnswers";
+import { IOnboardingAnswers, OnboardingAnswers_toggle } from "../models/onboardingAnswers";
 import { FoodTargets_activities, FoodTargets_goals } from "../models/foodTargets";
 import {
   OnboardingChoices_dayLabel,
@@ -39,9 +39,7 @@ export function OnboardingFoodQuestions(props: {
           <OnboardingChip
             key={activity.key}
             on={a.activity === activity.key}
-            onPress={() =>
-              emit({ type: "answers", patch: { activity: a.activity === activity.key ? undefined : activity.key } })
-            }
+            onPress={() => emit({ type: "answers", patch: OnboardingAnswers_toggle(a, "activity", activity.key) })}
           >
             <ChipText label={activity.label} detail={activity.detail} />
           </OnboardingChip>
@@ -55,9 +53,7 @@ export function OnboardingFoodQuestions(props: {
               key={goal.key}
               on={a.foodGoal === goal.key}
               label={goal.label}
-              onPress={() =>
-                emit({ type: "answers", patch: { foodGoal: a.foodGoal === goal.key ? undefined : goal.key } })
-              }
+              onPress={() => emit({ type: "answers", patch: OnboardingAnswers_toggle(a, "foodGoal", goal.key) })}
             />
           ))}
         </View>
@@ -99,7 +95,7 @@ export function OnboardingWantQuestions(props: {
               key={days}
               on={a.days === days}
               label={OnboardingChoices_dayLabel(days)}
-              onPress={() => emit({ type: "answers", patch: { days: a.days === days ? undefined : days } })}
+              onPress={() => emit({ type: "answers", patch: OnboardingAnswers_toggle(a, "days", days) })}
             />
           ))}
         </View>

@@ -4,7 +4,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IDispatch } from "../ducks/types";
 import {
   IOnboardingAnswers,
+  OnboardingAnswers_ageNote,
   OnboardingAnswers_empty,
+  OnboardingAnswers_toggle,
   OnboardingAnswers_togglePlace,
 } from "../models/onboardingAnswers";
 import {
@@ -13,6 +15,7 @@ import {
   Onboarding_empty,
   Onboarding_mainAction,
   Onboarding_reduce,
+  Onboarding_welcomeContinue,
 } from "../models/onboarding";
 import { IBearPlacePick } from "../models/bearPlace";
 import { OnboardingChoices_experiences, OnboardingChoices_places } from "../models/onboardingChoices";
@@ -117,6 +120,7 @@ function Row(props: { children: ReactNode }): JSX.Element {
 
 function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element {
   const { a } = props;
+  const ageNote = OnboardingAnswers_ageNote(a);
   const patch = (value: Partial<IOnboardingAnswers>): void => props.emit({ type: "answers", patch: value });
   return (
     <>
@@ -137,6 +141,7 @@ function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
         <View className="flex-row">
           <OnboardingField label="Age" keyboard="number-pad" value={a.age} onChange={(age) => patch({ age })} />
         </View>
+        {ageNote != null && <Text className="text-text-secondary">{ageNote}</Text>}
       </Group>
       <Group label="Height">
         <Row>
@@ -199,7 +204,7 @@ function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
               key={sex}
               on={a.sex === sex}
               label={sex === "male" ? "Male" : "Female"}
-              onPress={() => patch({ sex: a.sex === sex ? undefined : sex })}
+              onPress={() => patch(OnboardingAnswers_toggle(a, "sex", sex))}
             />
           ))}
         </Row>
@@ -253,11 +258,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
           signedIn={cloud.session != null}
           showInvite={pending.handle != null}
           busy={busy}
-          onContinue={() =>
-            InviteClient_save(form.invite)
-              .then(() => emit({ type: "auth", signedIn: false }))
-              .catch(() => emit({ type: "failed", error: "Could not save the invite. Try again." }))
-          }
+          onContinue={() => Onboarding_welcomeContinue(() => InviteClient_save(form.invite), false).then(emit)}
         />
       ) : form.step === "place" ? (
         <PlaceScreen a={a} emit={emit} />
