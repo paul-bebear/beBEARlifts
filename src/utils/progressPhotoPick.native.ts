@@ -25,6 +25,9 @@ export async function ProgressPhotoPick_pick(source: "camera" | "photo-library")
     jpegQuality,
     0
   );
-  const base64 = await RNFS.readFile(decodeURIComponent(resizedUri.replace(/^file:\/\//, "")), "base64");
+  const resizedPath = decodeURIComponent(resizedUri.replace(/^file:\/\//, ""));
+  const base64 = await RNFS.readFile(resizedPath, "base64").finally(() =>
+    RNFS.unlink(resizedPath).catch(() => undefined)
+  );
   return `data:image/jpeg;base64,${base64}`;
 }

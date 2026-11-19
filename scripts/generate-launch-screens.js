@@ -67,8 +67,13 @@ function linkTag(w, h, r, scheme) {
   const html = fs.readFileSync(indexPath, "utf8");
   const start = "<!-- LAUNCH_SCREENS_START -->";
   const end = "<!-- LAUNCH_SCREENS_END -->";
-  const before = html.slice(0, html.indexOf(start) + start.length);
-  const after = html.slice(html.indexOf(end));
+  const startAt = html.indexOf(start);
+  const endAt = html.indexOf(end);
+  if (startAt === -1 || endAt === -1 || endAt < startAt) {
+    throw new Error(`Missing ${start} or ${end} in ${indexPath}`);
+  }
+  const before = html.slice(0, startAt + start.length);
+  const after = html.slice(endAt);
   fs.writeFileSync(indexPath, `${before}\n${tags.join("\n")}\n    ${after}`);
   console.log(`Wrote ${tags.length} launch screens to ${path.relative(root, outDir)}`);
 })();

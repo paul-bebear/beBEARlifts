@@ -110,6 +110,30 @@ export function ProgressPhotos_fileName(id: number): string {
   return `${id}.jpg`;
 }
 
+export function ProgressPhotos_tempFileName(id: number): string {
+  return `${id}.jpg.part`;
+}
+
+// The phone stores a file, so only the JPEG base64 shape is checked. The 1 MB cap belongs to the web data URL.
+export function ProgressPhotos_isFileBase64(base64: string): boolean {
+  return base64.length > 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(base64);
+}
+
+export type IProgressPhotoPutOutcome = "added" | "refused" | "failed";
+
+export interface IProgressPhotoPutPlan {
+  promote: boolean;
+  unlink: string[];
+}
+
+// A new photo is written to a temp name first. Only the temp file is ever deleted here,
+// because the final name may belong to a photo already in the log.
+export function ProgressPhotos_putPlan(id: number, outcome: IProgressPhotoPutOutcome): IProgressPhotoPutPlan {
+  return outcome === "added"
+    ? { promote: true, unlink: [] }
+    : { promote: false, unlink: [ProgressPhotos_tempFileName(id)] };
+}
+
 export function ProgressPhotos_uri(photo: IProgressPhoto, dir: string | undefined): string | undefined {
   if ("dataUrl" in photo) {
     return photo.dataUrl;

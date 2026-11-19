@@ -32,10 +32,10 @@ export async function DemoFileCache_store(fileName: string, remoteUrl: string): 
     return existing;
   }
   const path = `${CACHE_DIR}/${fileName}`;
+  const tmp = `${path}.part`;
   const task = (async () => {
     try {
       await RNFS.mkdir(CACHE_DIR);
-      const tmp = `${path}.part`;
       const result = await RNFS.downloadFile({ fromUrl: remoteUrl, toFile: tmp }).promise;
       if (result.statusCode === 200) {
         await RNFS.moveFile(tmp, path);
@@ -45,6 +45,7 @@ export async function DemoFileCache_store(fileName: string, remoteUrl: string): 
         await RNFS.unlink(tmp).catch(() => undefined);
       }
     } catch {
+      await RNFS.unlink(tmp).catch(() => undefined);
       // Offline or full disk: the demo keeps loading from the network next time.
     } finally {
       inFlight.delete(fileName);

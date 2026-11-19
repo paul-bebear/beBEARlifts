@@ -1,13 +1,16 @@
 import RNFS from "react-native-fs";
 import {
   IProgressPhoto,
+  IProgressPhotoPutOutcome,
   ProgressPhotos_base64,
-  ProgressPhotos_dataUrl,
   ProgressPhotos_fileName,
   ProgressPhotos_insert,
+  ProgressPhotos_isFileBase64,
   ProgressPhotos_markFiles,
   ProgressPhotos_migration,
+  ProgressPhotos_putPlan,
   ProgressPhotos_remove,
+  ProgressPhotos_tempFileName,
 } from "../models/progressPhotos";
 import { ProgressPhotoStore } from "./progressPhotoStore";
 
@@ -18,16 +21,33 @@ function pathOf(id: number): string {
   return `${dir}/${ProgressPhotos_fileName(id)}`;
 }
 
+function tempPathOf(id: number): string {
+  return `${dir}/${ProgressPhotos_tempFileName(id)}`;
+}
+
 async function writeFile(id: number, base64: string): Promise<void> {
   await RNFS.mkdir(dir);
   await RNFS.writeFile(pathOf(id), base64, "base64");
 }
 
+async function discard(id: number, outcome: IProgressPhotoPutOutcome): Promise<void> {
+  for (const name of ProgressPhotos_putPlan(id, outcome).unlink) {
+    await RNFS.unlink(`${dir}/${name}`).catch(() => undefined);
+  }
+}
+
+async function promote(id: number): Promise<void> {
+  const final = pathOf(id);
+  await RNFS.unlink(final).catch(() => undefined);
+  await RNFS.moveFile(tempPathOf(id), final);
+}
+
 export async function ProgressPhotoFiles_put(id: number, timestamp: number, base64: string): Promise<boolean> {
-  if (ProgressPhotos_dataUrl(base64) == null) {
+  if (!ProgressPhotos_isFileBase64(base64)) {
     return false;
   }
-  await writeFile(id, base64);
+  await RNFS.mkdir(dir);
+  await RNFS.writeFile(tempPathOf(id), base64, "base64");
   let added = false;
   try {
     await ProgressPhotoStore.update((log) => {
@@ -36,13 +56,21 @@ export async function ProgressPhotoFiles_put(id: number, timestamp: number, base
       return next;
     });
   } catch (error) {
-    await RNFS.unlink(pathOf(id)).catch(() => undefined);
+    await discard(id, "failed");
     throw error;
   }
-  if (!added) {
-    await RNFS.unlink(pathOf(id)).catch(() => undefined);
+  if (!ProgressPhotos_putPlan(id, added ? "added" : "refused").promote) {
+    await discard(id, "refused");
+    return false;
   }
-  return added;
+  try {
+    await promote(id);
+  } catch (error) {
+    await ProgressPhotoStore.update((log) => ProgressPhotos_remove(log, id)).catch(() => undefined);
+    await discard(id, "failed");
+    throw error;
+  }
+  return true;
 }
 
 export async function ProgressPhotoFiles_readBase64(photo: IProgressPhoto): Promise<string | undefined> {
