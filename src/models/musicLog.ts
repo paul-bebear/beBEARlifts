@@ -1,5 +1,5 @@
 import { ISpotifyTokens, SpotifyAuth_parseTokensRecord } from "./spotifyAuth";
-import { IMusicPlay, IMusicSession, MusicSession_dropCopies } from "./musicSession";
+import { IMusicPlay, IMusicSession, MusicSession_dropCopies, MusicSession_setKept } from "./musicSession";
 import { SpotifyTracks_parseTrack, ISpotifyTrack } from "./spotifyTracks";
 import { IHistoryRecord } from "../types";
 
@@ -14,6 +14,8 @@ export interface IMusicLog {
 
 // One year at 4 workouts a week.
 export const MusicLog_maxSessions = 210;
+
+export const MusicLog_keepNote = `beBEAR keeps the newest ${MusicLog_maxSessions} workouts of music. Older ones are removed.`;
 
 export function MusicLog_empty(): IMusicLog {
   return { version: 1, sessions: [] };
@@ -117,6 +119,50 @@ export function MusicLog_putSession(log: IMusicLog, session: IMusicSession): IMu
     ...log,
     sessions: [session, ...others].sort((a, b) => b.startedAt - a.startedAt).slice(0, MusicLog_maxSessions),
   };
+}
+
+// A play is found by track and start time, because a history merge can insert an earlier play and move every index.
+export function MusicLog_setKept(
+  log: IMusicLog,
+  sessionId: number,
+  play: { trackId: string; startedAt: number },
+  isKept: boolean
+): IMusicLog {
+  const session = MusicLog_session(log, sessionId);
+  const index = session?.plays.findIndex((p) => p.track.id === play.trackId && p.startedAt === play.startedAt) ?? -1;
+  if (session == null || index === -1) {
+    return log;
+  }
+  return MusicLog_putSession(log, MusicSession_setKept(session, index, isKept));
+}
+
+export function MusicLog_workoutLookup<T extends IWorkoutTimes>(
+  history: T[]
+): (session: IMusicSession) => T | undefined {
+  const byId = new Map<number, T>();
+  history.forEach((h) => {
+    if (!byId.has(h.id)) {
+      byId.set(h.id, h);
+    }
+  });
+  return (session) => byId.get(session.id) ?? history.find((h) => startedDuring(session, h));
+}
+
+export function MusicLog_sessionTitle(session: IMusicSession, dayName: string | undefined): string {
+  const date = new Date(session.startedAt).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  return dayName != null ? `${date} · ${dayName}` : date;
+}
+
+export function MusicLog_saveStatus(count: number): string {
+  return `Saved ${count} song${count === 1 ? "" : "s"} to Spotify.`;
+}
+
+export function MusicLog_playStatus(result: { ok: true } | { ok: false; message: string }): string {
+  return result.ok ? "Playing on Spotify." : result.message;
 }
 
 export function MusicLog_reviewable(log: IMusicLog): IMusicSession[] {

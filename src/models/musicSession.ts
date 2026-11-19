@@ -25,6 +25,7 @@ export interface IMusicSession {
 const keptShare = 0.5;
 const nearEndMs = 20 * 1000;
 const restartMs = 15 * 1000;
+const progressNoiseMs = 2 * 1000;
 const historySlackMs = 5 * 60 * 1000;
 
 export function MusicSession_isKept(heardMs: number, durationMs: number): boolean {
@@ -75,7 +76,10 @@ export function MusicSession_observe(
   }
   const current = session.current;
   if (current != null && isSameSong(current.track, snapshot.track) && !isRestart(current, snapshot)) {
-    return { ...session, current: { ...current, maxProgressMs: Math.max(current.maxProgressMs, snapshot.progressMs) } };
+    if (snapshot.progressMs < current.maxProgressMs + progressNoiseMs) {
+      return session;
+    }
+    return { ...session, current: { ...current, maxProgressMs: snapshot.progressMs } };
   }
   const closed = finalize(session);
   return {

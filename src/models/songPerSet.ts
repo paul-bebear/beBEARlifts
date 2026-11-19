@@ -68,8 +68,15 @@ export function SongPerSet_hasAny(songs: ISongForSet[]): boolean {
   return songs.some((s) => s.track != null);
 }
 
+const noSongs: ISongForSet[] = [];
+
 export function SongPerSet_forEntry(songs: ISongForSet[], entryIndex: number): ISongForSet[] {
-  return songs.filter((s) => s.entryIndex === entryIndex && s.track != null);
+  const found = songs.filter((s) => s.entryIndex === entryIndex && s.track != null);
+  return found.length === 0 ? noSongs : found;
+}
+
+export function SongPerSet_byEntry(songs: ISongForSet[], entryCount: number): ISongForSet[][] {
+  return Array.from({ length: entryCount }, (_, i) => SongPerSet_forEntry(songs, i));
 }
 
 function trackLabel(song: ISongForSet): string {

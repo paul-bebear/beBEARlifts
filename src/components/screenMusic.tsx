@@ -1,4 +1,4 @@
-import { JSX, useState } from "react";
+import { JSX, useMemo, useState } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { useNavOptions } from "../navigation/useNavOptions";
@@ -20,15 +20,18 @@ import {
   MusicLog_disconnect,
   MusicLog_exportJson,
   MusicLog_formatDuration,
-  MusicLog_putSession,
+  MusicLog_keepNote,
+  MusicLog_playStatus,
   MusicLog_reviewable,
-  MusicLog_workoutForSession,
+  MusicLog_saveStatus,
+  MusicLog_sessionTitle,
+  MusicLog_setKept,
+  MusicLog_workoutLookup,
 } from "../models/musicLog";
 import {
   IMusicSession,
   MusicSession_counts,
   MusicSession_keptTracks,
-  MusicSession_setKept,
 } from "../models/musicSession";
 import { SpotifyPlaylist_name } from "../models/spotifyPlaylist";
 import { IHistoryRecord, ISettings } from "../types";
@@ -53,10 +56,13 @@ function SessionCard(props: {
   const counts = MusicSession_counts(session);
   const uris = MusicSession_keptTracks(session).map((t) => t.uri);
   const isBusy = status?.kind === "busy";
-  const songs = record != null ? SongPerSet_match(record, session) : [];
+  const songs = useMemo(
+    () => (record != null && props.isExpanded ? SongPerSet_match(record, session) : []),
+    [record, session, props.isExpanded]
+  );
 
-  const setKept = (index: number, isKept: boolean): void => {
-    MusicStore_update((log) => MusicLog_putSession(log, MusicSession_setKept(session, index, isKept)));
+  const setKept = (trackId: string, startedAt: number, isKept: boolean): void => {
+    MusicStore_update((log) => MusicLog_setKept(log, session.id, { trackId, startedAt }, isKept));
   };
 
   const save = async (): Promise<void> => {
@@ -64,11 +70,7 @@ function SessionCard(props: {
     const result = await SpotifyClient_savePlaylist(SpotifyPlaylist_name(session.startedAt), uris);
     setStatus(
       result.ok
-        ? {
-            kind: "message",
-            text: `Saved ${uris.length} song${uris.length === 1 ? "" : "s"} to Spotify.`,
-            url: result.value.url,
-          }
+        ? { kind: "message", text: MusicLog_saveStatus(uris.length), url: result.value.url }
         : { kind: "message", text: result.message }
     );
   };
@@ -76,7 +78,7 @@ function SessionCard(props: {
   const play = async (): Promise<void> => {
     setStatus({ kind: "busy" });
     const result = await SpotifyClient_play(uris);
-    setStatus({ kind: "message", text: result.ok ? "Playing on Spotify." : result.message });
+    setStatus({ kind: "message", text: MusicLog_playStatus(result) });
   };
 
   return (
@@ -92,13 +94,13 @@ function SessionCard(props: {
       </Pressable>
       {props.isExpanded && (
         <View className="px-4 pb-4">
-          {session.plays.map((p, index) => (
+          {session.plays.map((p) => (
             <Pressable
               key={`${p.track.id}-${p.startedAt}`}
               className="flex-row items-center py-2"
               testID={`music-play-${p.track.id}`}
               data-testid={`music-play-${p.track.id}`}
-              onPress={() => setKept(index, !p.isKept)}
+              onPress={() => setKept(p.track.id, p.startedAt, !p.isKept)}
             >
               <IconCheckCircle isChecked={p.isKept} color={semantic.icon.blue} size={22} />
               <View className="flex-1 ml-3">
@@ -161,15 +163,6 @@ function SessionCard(props: {
   );
 }
 
-function sessionTitle(session: IMusicSession, record: IHistoryRecord | undefined): string {
-  const date = new Date(session.startedAt).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-  return record != null ? `${date} · ${record.dayName}` : date;
-}
-
 export function ScreenMusic(): JSX.Element {
   const state = useTrackedState();
   const history = untrack(state.storage.history);
@@ -178,6 +171,7 @@ export function ScreenMusic(): JSX.Element {
   const log = useMusicLog();
   const [error, setError] = useState(() => SpotifyClient_takeError());
   const sessions = MusicLog_reviewable(log);
+  const workoutFor = useMemo(() => MusicLog_workoutLookup(history), [history]);
   const [expandedId, setExpandedId] = useState<number | undefined>(sessions[0]?.id);
 
   useNavOptions({ navTitle: "Workout music" });
@@ -228,14 +222,14 @@ export function ScreenMusic(): JSX.Element {
         </Text>
       ) : (
         sessions.map((s) => {
-          const record = MusicLog_workoutForSession(history, s);
+          const record = workoutFor(s);
           return (
             <SessionCard
               key={s.id}
               session={s}
               record={record}
               settings={settings}
-              title={sessionTitle(s, record)}
+              title={MusicLog_sessionTitle(s, record?.dayName)}
               isExpanded={expandedId === s.id}
               onToggle={() => setExpandedId(expandedId === s.id ? undefined : s.id)}
             />
@@ -244,6 +238,9 @@ export function ScreenMusic(): JSX.Element {
       )}
       <View className="px-4 pt-6">
         <Text className="mb-3 text-sm text-text-secondary">Export everything in Settings includes this log.</Text>
+        <Text className="mb-3 text-sm text-text-secondary" testID="music-keep-note" data-testid="music-keep-note">
+          {MusicLog_keepNote}
+        </Text>
         <View className="flex-row">
           <Button
             name="music-export"
