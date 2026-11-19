@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import {
   IMusicLog,
+  IMusicSecureRead,
   MusicLog_dropMovedTokens,
   MusicLog_empty,
   MusicLog_forPlainStore,
+  MusicLog_markLinked,
   MusicLog_parse,
   MusicLog_signedOut,
   MusicLog_tokenMove,
+  MusicLog_tokenStart,
   MusicLog_withTokens,
 } from "../models/musicLog";
 import { ISpotifyTokens, SpotifyAuth_parseTokensRecord } from "../models/spotifyAuth";
@@ -19,38 +22,83 @@ const MusicStore_secureName = "spotify";
 const store = JsonStore_create(MusicStore_key, MusicLog_parse, MusicLog_empty);
 
 let secureTokens: ISpotifyTokens | undefined;
+let isKnown = !SecureStore_isAvailable;
 let ready: Promise<void> | undefined;
+let keychainChain: Promise<void> = Promise.resolve();
 
-async function readSecure(): Promise<ISpotifyTokens | undefined> {
-  const text = await SecureStore_get(MusicStore_secureName);
-  return text == null ? undefined : SpotifyAuth_parseTokensRecord(JSON.parse(text));
+function inKeychainOrder(step: () => Promise<void>): Promise<void> {
+  keychainChain = keychainChain.then(step, step);
+  return keychainChain;
 }
 
-// A failed copy leaves the token in the plain store, and the next start or token write tries again.
-async function moveTokens(): Promise<void> {
-  const move = MusicLog_tokenMove((await store.load()).tokens, secureTokens, SecureStore_isAvailable);
-  const copied = move.copyToSecure;
-  if (copied == null) {
-    return;
+async function readSecure(): Promise<IMusicSecureRead> {
+  if (!SecureStore_isAvailable) {
+    return { ok: true };
+  }
+  let text: string | undefined;
+  try {
+    text = await SecureStore_get(MusicStore_secureName);
+  } catch {
+    return { ok: false };
   }
   try {
-    await SecureStore_set(MusicStore_secureName, JSON.stringify(copied));
-    const readBack = await readSecure();
-    secureTokens = readBack;
-    await store.update((log) => MusicLog_dropMovedTokens(log, copied, readBack));
+    return { ok: true, tokens: text == null ? undefined : SpotifyAuth_parseTokensRecord(JSON.parse(text)) };
   } catch {
+    return { ok: true };
+  }
+}
+
+// Each run reads the plain store again, so only the newest token reaches the Keychain.
+// A failed copy leaves the token in the plain store, and the next start or token write tries again.
+function moveTokens(): Promise<void> {
+  return inKeychainOrder(async () => {
+    const move = MusicLog_tokenMove((await store.load()).tokens, secureTokens, SecureStore_isAvailable);
+    const copied = move.copyToSecure;
+    if (copied == null) {
+      return;
+    }
+    try {
+      await store.update((log) => MusicLog_markLinked(log, copied));
+      await SecureStore_set(MusicStore_secureName, JSON.stringify(copied));
+      const readBack = await readSecure();
+      if (!readBack.ok) {
+        return;
+      }
+      secureTokens = readBack.tokens;
+      await store.update((log) => MusicLog_dropMovedTokens(log, copied, readBack.tokens));
+    } catch {
+      return;
+    }
+  });
+}
+
+function removeSecure(): Promise<void> {
+  return inKeychainOrder(() => SecureStore_remove(MusicStore_secureName).catch(() => undefined));
+}
+
+// A plain store that cannot be read counts as a failed read, so its missing marker never deletes the Keychain token.
+async function start(): Promise<void> {
+  const read = await readSecure();
+  const log = read.ok ? await store.loadStrict().catch(() => undefined) : undefined;
+  const step = MusicLog_tokenStart(log ?? MusicLog_empty(), log != null ? read : { ok: false });
+  isKnown = step.isKnown;
+  secureTokens = step.secure;
+  if (!step.isKnown) {
+    ready = undefined;
     return;
   }
+  if (step.clearMarker) {
+    await store.update((saved) => MusicLog_forPlainStore(saved, undefined, true)).catch(() => undefined);
+  }
+  if (step.deleteSecure) {
+    await removeSecure();
+  }
+  await moveTokens();
 }
 
 function ensureReady(): Promise<void> {
   if (ready == null) {
-    ready = (async () => {
-      if (SecureStore_isAvailable) {
-        secureTokens = await readSecure().catch(() => undefined);
-      }
-      await moveTokens();
-    })();
+    ready = start();
   }
   return ready;
 }
@@ -78,10 +126,10 @@ export async function MusicStore_update(fn: (log: IMusicLog) => IMusicLog): Prom
     if (signedOut) {
       secureTokens = undefined;
     }
-    return MusicLog_forPlainStore(next, secureTokens);
+    return MusicLog_forPlainStore(next, secureTokens, isKnown);
   });
   if (signedOut) {
-    await SecureStore_remove(MusicStore_secureName).catch(() => undefined);
+    await removeSecure();
     return;
   }
   await moveTokens();

@@ -9,6 +9,8 @@ type IWorkoutTimes = Pick<IHistoryRecord, "id" | "startTime" | "endTime">;
 export interface IMusicLog {
   version: 1;
   tokens?: ISpotifyTokens;
+  // The Keychain survives an app delete, so its token counts only while the plain store says Spotify is linked.
+  spotifyLinked?: true;
   displayName?: string;
   sessions: IMusicSession[];
 }
@@ -83,6 +85,9 @@ export function MusicLog_parse(raw: unknown): IMusicLog {
   const tokens = SpotifyAuth_parseTokensRecord(r.tokens);
   if (tokens != null) {
     log.tokens = tokens;
+  }
+  if (r.spotifyLinked === true) {
+    log.spotifyLinked = true;
   }
   if (typeof r.displayName === "string") {
     log.displayName = r.displayName;
@@ -172,7 +177,7 @@ export function MusicLog_formatDuration(ms: number): string {
 }
 
 export function MusicLog_disconnect(log: IMusicLog): IMusicLog {
-  return { ...log, tokens: undefined, displayName: undefined };
+  return { ...log, tokens: undefined, spotifyLinked: undefined, displayName: undefined };
 }
 
 export function MusicLog_sameTokens(a: ISpotifyTokens | undefined, b: ISpotifyTokens | undefined): boolean {
@@ -180,6 +185,30 @@ export function MusicLog_sameTokens(a: ISpotifyTokens | undefined, b: ISpotifyTo
     return a === b;
   }
   return a.accessToken === b.accessToken && a.refreshToken === b.refreshToken && a.expiresAt === b.expiresAt;
+}
+
+export type IMusicSecureRead = { ok: true; tokens?: ISpotifyTokens } | { ok: false };
+
+export interface IMusicTokenStart {
+  secure?: ISpotifyTokens;
+  isKnown: boolean;
+  deleteSecure: boolean;
+  clearMarker: boolean;
+}
+
+// A failed read (the phone not unlocked since a reboot) decides nothing, so the next call reads again.
+export function MusicLog_tokenStart(log: IMusicLog, read: IMusicSecureRead): IMusicTokenStart {
+  const none = { isKnown: true, deleteSecure: false, clearMarker: false };
+  if (!read.ok) {
+    return { ...none, isKnown: false };
+  }
+  if (log.tokens != null) {
+    return { ...none, secure: log.spotifyLinked ? read.tokens : undefined };
+  }
+  if (log.spotifyLinked) {
+    return read.tokens != null ? { ...none, secure: read.tokens } : { ...none, clearMarker: true };
+  }
+  return { ...none, deleteSecure: read.tokens != null };
 }
 
 export interface IMusicTokenMove {
@@ -199,31 +228,51 @@ export function MusicLog_tokenMove(
   return hasSecureStore ? { tokens: plain, copyToSecure: plain } : { tokens: plain };
 }
 
+// A store from the old app has a token and no marker. The marker goes in before the copy starts.
+export function MusicLog_markLinked(log: IMusicLog, copied: ISpotifyTokens): IMusicLog {
+  return log.spotifyLinked || !MusicLog_sameTokens(log.tokens, copied) ? log : { ...log, spotifyLinked: true };
+}
+
 // The Keychain copy must read back the same before the plain one goes, so a failed write never signs the user out.
 export function MusicLog_dropMovedTokens(
   log: IMusicLog,
   copied: ISpotifyTokens,
   readBack: ISpotifyTokens | undefined
 ): IMusicLog {
-  if (!MusicLog_sameTokens(copied, readBack) || !MusicLog_sameTokens(log.tokens, copied)) {
+  if (!log.spotifyLinked || !MusicLog_sameTokens(copied, readBack) || !MusicLog_sameTokens(log.tokens, copied)) {
     return log;
   }
   return { ...log, tokens: undefined };
 }
 
 export function MusicLog_withTokens(log: IMusicLog, secure: ISpotifyTokens | undefined): IMusicLog {
-  return log.tokens != null || secure == null ? log : { ...log, tokens: secure };
+  return log.tokens != null || secure == null || !log.spotifyLinked ? log : { ...log, tokens: secure };
 }
 
 export function MusicLog_signedOut(before: IMusicLog, after: IMusicLog): boolean {
   return before.tokens != null && after.tokens == null;
 }
 
-export function MusicLog_forPlainStore(next: IMusicLog, secure: ISpotifyTokens | undefined): IMusicLog {
-  return secure != null && MusicLog_sameTokens(next.tokens, secure) ? { ...next, tokens: undefined } : next;
+// While the Keychain is unread, a log without a token keeps its marker, so a music edit never signs the user out.
+export function MusicLog_forPlainStore(
+  next: IMusicLog,
+  secure: ISpotifyTokens | undefined,
+  isKnown: boolean
+): IMusicLog {
+  const isLinked = next.tokens != null || (!isKnown && next.spotifyLinked === true);
+  const out: IMusicLog = { ...next };
+  delete out.tokens;
+  delete out.spotifyLinked;
+  if (next.tokens != null && !MusicLog_sameTokens(next.tokens, secure)) {
+    out.tokens = next.tokens;
+  }
+  if (isLinked) {
+    out.spotifyLinked = true;
+  }
+  return out;
 }
 
 // The export goes to a file the user may share, so the Spotify refresh token stays on the phone.
 export function MusicLog_exportJson(log: IMusicLog): string {
-  return JSON.stringify({ ...log, tokens: undefined });
+  return JSON.stringify({ ...log, tokens: undefined, spotifyLinked: undefined });
 }
