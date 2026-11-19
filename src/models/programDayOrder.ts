@@ -5,7 +5,7 @@ import { ObjectUtils_isEqual } from "../utils/object";
 import { parser as LiftoscriptParser } from "../liftoscript";
 import { NodeName } from "../liftoscriptEvaluator";
 import { IPlannerEvalResult } from "../pages/planner/plannerExerciseEvaluator";
-import { IPlannerProgramExercise } from "../pages/planner/models/types";
+import { IPlannerDayMove, IPlannerProgramExercise } from "../pages/planner/models/types";
 import { PlannerProgram_evaluate } from "../pages/planner/models/plannerProgram";
 import {
   PlannerProgramExercise_getProgressScript,
@@ -22,11 +22,19 @@ export function ProgramDayOrder_rowCount(planner: IPlannerProgram): number {
 
 // The day row each new position holds, per week. A week that lacks a row keeps the days it has,
 // compacted, which is how PlannerStructure_moveDayRows lays it out.
-function oldIndexesPerWeek(planner: IPlannerProgram, fromIndex: number, toIndex: number): number[][] {
-  const rows = ProgramDayOrder_rowCount(planner);
+function oldIndexesFromCounts(dayCounts: number[], fromIndex: number, toIndex: number): number[][] {
+  const rows = dayCounts.reduce((max, count) => Math.max(max, count), 0);
   const remaining = Array.from({ length: rows }, (_, i) => i).filter((i) => i !== fromIndex);
   const order = [...remaining.slice(0, toIndex), fromIndex, ...remaining.slice(toIndex)];
-  return planner.weeks.map((week) => order.filter((oldIndex) => week.days[oldIndex] != null));
+  return dayCounts.map((count) => order.filter((oldIndex) => oldIndex < count));
+}
+
+function oldIndexesPerWeek(planner: IPlannerProgram, fromIndex: number, toIndex: number): number[][] {
+  return oldIndexesFromCounts(dayCountsOf(planner), fromIndex, toIndex);
+}
+
+function dayCountsOf(planner: IPlannerProgram): number[] {
+  return planner.weeks.map((week) => week.days.length);
 }
 
 interface IDayNumberUse {
@@ -180,11 +188,38 @@ export function ProgramDayOrder_move(
   return { success: true, data: moved.data };
 }
 
+function remapNextDay(dayCounts: number[], fromIndex: number, toIndex: number, nextDay: number): number {
+  const perWeek = oldIndexesFromCounts(dayCounts, fromIndex, toIndex);
+  let offset = 0;
+  for (let weekIndex = 0; weekIndex < dayCounts.length; weekIndex += 1) {
+    if (nextDay <= offset + dayCounts[weekIndex]) {
+      const newIndex = perWeek[weekIndex].indexOf(nextDay - offset - 1);
+      return newIndex === -1 ? nextDay : offset + newIndex + 1;
+    }
+    offset += dayCounts[weekIndex];
+  }
+  return nextDay;
+}
+
+// Moves made while the editor holds unsaved edits are not written to storage, so Save replays them
+// on the stored next day, which a workout finished meanwhile may have changed.
+export function ProgramDayOrder_nextDayOnSave(storedNextDay: number, moves: IPlannerDayMove[] | undefined): number {
+  return (moves ?? []).reduce((nextDay, m) => remapNextDay(m.dayCounts, m.from, m.to, nextDay), storedNextDay);
+}
+
+export function ProgramDayOrder_pendingAfter(
+  pending: IPlannerDayMove[] | undefined,
+  result: IProgramDayOrderSave
+): IPlannerDayMove[] {
+  return result.saved != null || result.move == null ? [] : [...(pending ?? []), result.move];
+}
+
 export interface IProgramDayOrderSave {
   draft: IProgram;
   // Present when the editor held no unsaved edits, so writing the move to storage saves only the
   // move. With unsaved edits the move joins them in the draft and waits for the Save button.
   saved?: IProgram;
+  move?: IPlannerDayMove;
 }
 
 export function ProgramDayOrder_hasUnsavedEdits(saved: IProgram, draft: IProgram): boolean {
@@ -209,11 +244,19 @@ export function ProgramDayOrder_apply(
     return moved;
   }
   const isClean = saved.planner != null && !ProgramDayOrder_hasUnsavedEdits(saved, draft);
+  const nextDay = remapNextDay(dayCountsOf(draft.planner), fromIndex, toIndex, draft.nextDay);
   return {
     success: true,
     data: {
-      draft: { ...draft, planner: moved.data },
-      saved: isClean ? Program_cleanPlannerProgram({ ...saved, planner: moved.data }) : undefined,
+      draft: { ...draft, planner: moved.data, nextDay },
+      move: { from: fromIndex, to: toIndex, dayCounts: dayCountsOf(draft.planner) },
+      saved: isClean
+        ? Program_cleanPlannerProgram({
+            ...saved,
+            planner: moved.data,
+            nextDay: remapNextDay(dayCountsOf(draft.planner), fromIndex, toIndex, saved.nextDay),
+          })
+        : undefined,
     },
   };
 }

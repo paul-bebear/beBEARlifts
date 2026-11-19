@@ -1,7 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { IMusicPollEffects, MusicPoll_catchUp, MusicPoll_nowPlaying } from "../src/models/musicPoll";
+import { IMusicPollEffects, MusicPoll_catchUp, MusicPoll_finish, MusicPoll_nowPlaying } from "../src/models/musicPoll";
 import { IMusicLog, MusicLog_empty, MusicLog_session } from "../src/models/musicLog";
 import { ISpotifyTrack } from "../src/models/spotifyTracks";
 
@@ -93,5 +93,36 @@ describe("MusicPoll_catchUp", () => {
     await MusicPoll_catchUp(workout, effects);
     sinon.assert.notCalled(effects.history as sinon.SinonStub);
     sinon.assert.notCalled(effects.nowPlaying as sinon.SinonStub);
+  });
+});
+
+describe("MusicPoll_finish", () => {
+  it("saves songs heard while the phone was locked, even after the tracker stopped", async () => {
+    const effects = fakes({ isStopped: () => true });
+    await MusicPoll_finish(workout, effects, 300000);
+    const plays = MusicLog_session(effects.log(), workout.id)?.plays ?? [];
+    expect(plays.map((p) => p.track.id)).to.eql(["t1"]);
+  });
+
+  it("merges the history against the workout end time", async () => {
+    const late = [{ track, startedAt: 290000, endedAt: 300000 }];
+    const effects = fakes({ history: sinon.stub().resolves(late) });
+    await MusicPoll_finish(workout, effects, 300000);
+    expect((MusicLog_session(effects.log(), workout.id)?.plays ?? []).length).to.equal(1);
+    const early = fakes({ history: sinon.stub().resolves(late) });
+    await MusicPoll_finish(workout, early, 200000);
+    expect(MusicLog_session(early.log(), workout.id)?.plays ?? []).to.eql([]);
+  });
+
+  it("does not read Spotify without tokens", async () => {
+    const effects = fakes({ hasTokens: sinon.stub().resolves(false) });
+    await MusicPoll_finish(workout, effects, 300000);
+    sinon.assert.notCalled(effects.history as sinon.SinonStub);
+  });
+
+  it("warns instead of throwing when Spotify fails", async () => {
+    const effects = fakes({ history: sinon.stub().rejects(new Error("429")) });
+    await MusicPoll_finish(workout, effects, 300000);
+    sinon.assert.calledOnce(effects.warn as sinon.SinonSpy);
   });
 });
