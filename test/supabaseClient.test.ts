@@ -9,9 +9,11 @@ import {
   SupabaseClient_onForcedSignOut,
   SupabaseClient_storageFullText,
   Supabase_notSignedIn,
+  Supabase_offline,
   Supabase_origin,
 } from "../src/utils/supabaseClient";
 import { ICloudSession, ICloudState } from "../src/models/cloudBackup";
+import { Friends_handlePattern } from "../src/models/friends";
 
 describe("Supabase error text", () => {
   it("explains a wrong or expired code and the resend limit in plain words", () => {
@@ -209,5 +211,14 @@ describe("SupabaseClient_accessToken", () => {
       error: "The server sent an answer the app could not read.",
     });
     expect(state.session).to.deep.equal(session);
+  });
+});
+
+describe("Supabase shared constants", () => {
+  it("keeps the offline text, project origin and handle pattern the clients compare against", () => {
+    expect(Supabase_offline).to.equal("No connection");
+    expect(Supabase_origin).to.equal("https://qvqwvuuwfueccrmzwyct.supabase.co");
+    expect(Friends_handlePattern.test("bear_01")).to.equal(true);
+    expect(Friends_handlePattern.test("Bear")).to.equal(false);
   });
 });

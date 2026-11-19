@@ -11,7 +11,7 @@ import { FeedClient_flush, FeedClient_setShared, FeedStore } from "../utils/feed
 import { FriendsStore } from "../utils/friendsClient";
 import { MusicStore_load } from "../utils/musicStore";
 import { useBear } from "../utils/useBear";
-import { CloudStore, ICloudResult } from "../utils/supabaseClient";
+import { CloudStore, ICloudResult, Supabase_offline } from "../utils/supabaseClient";
 import { Switch } from "./primitives/switch";
 import { Text } from "./primitives/text";
 
@@ -75,7 +75,7 @@ export function FeedShareToggle(props: IProps): JSX.Element | null {
         />
       </View>
       <Text className="mt-1 text-sm text-text-secondary">{statusText[status]}</Text>
-      {error != null && error !== "No connection" && (
+      {error != null && error !== Supabase_offline && (
         <Text className="mt-1 text-sm text-text-error" accessibilityRole="alert">
           {error}
         </Text>

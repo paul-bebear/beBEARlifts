@@ -26,6 +26,7 @@ import {
   CloudStore,
   ICloudResult,
   Supabase_notSignedIn,
+  Supabase_offline,
   Supabase_origin,
   SupabaseClient_authed,
   SupabaseClient_json,
@@ -35,7 +36,6 @@ import {
 export const FeedStore = JsonStore_create("bebear_feed", Feed_parse, Feed_empty);
 
 const ok: ICloudResult<undefined> = { ok: true, value: undefined };
-const offline = "No connection";
 
 // The photo goes up first, so a friend never sees a row whose photo is still missing.
 // x-upsert and ignore-duplicates make a retry after a dropped answer land on the same object and row.
@@ -108,7 +108,7 @@ async function flushOnce(): Promise<ICloudResult<undefined>> {
   let failed: ICloudResult<undefined> = ok;
   for (const op of Feed_pendingOps(await FeedStore.load(), userId)) {
     const result = await send(op);
-    if (!result.ok && result.error === offline) {
+    if (!result.ok && result.error === Supabase_offline) {
       return result;
     }
     // A meal op the server refuses, for example before the meal_posts migration, stays queued
@@ -136,7 +136,7 @@ export function FeedClient_flush(): Promise<ICloudResult<undefined>> {
 
 export async function FeedClient_refresh(): Promise<ICloudResult<undefined>> {
   const flushed = await FeedClient_flush();
-  if (!flushed.ok && flushed.error === offline) {
+  if (!flushed.ok && flushed.error === Supabase_offline) {
     return flushed;
   }
   const result = await SupabaseClient_authed(

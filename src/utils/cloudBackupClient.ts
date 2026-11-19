@@ -25,6 +25,7 @@ import {
   SupabaseClient_onForcedSignOut,
   SupabaseClient_saveSession,
   Supabase_notSignedIn,
+  Supabase_offline,
 } from "./supabaseClient";
 
 const bucket = "backups";
@@ -187,7 +188,7 @@ export async function CloudBackupClient_deleteAccount(): Promise<ICloudResult<un
   }
   const sent = await ApiRequest_send("/api/account/delete", { method: "POST", token: auth.value });
   if (sent.kind !== "reply") {
-    return { ok: false, error: "No connection" };
+    return { ok: false, error: Supabase_offline };
   }
   const result = AccountDeletion_result(sent.status, sent.body);
   if (!result.ok) {
