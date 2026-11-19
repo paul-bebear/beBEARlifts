@@ -7,21 +7,17 @@ import { IDispatch } from "../ducks/types";
 import { ISettings } from "../types";
 import { lb } from "lens-shmens";
 import { Dialog_alert } from "../utils/dialog";
-import {
-  IListenKind,
-  ListenLinks_kinds,
-  ListenLinks_normalize,
-  ListenLinks_set,
-  ListenLinks_spotifyUri,
-} from "../models/listenLinks";
+import { SpotifyClient_listenTarget } from "../utils/spotifyClient";
+import { IListenKind, ListenLinks_kinds, ListenLinks_normalize, ListenLinks_set } from "../models/listenLinks";
 
-function ListenLinks_open(url: string): void {
-  Linking.openURL(ListenLinks_spotifyUri(url) ?? url).catch(() => Linking.openURL(url).catch(() => undefined));
+function ListenLinks_open(url: string, appUri: string | undefined): void {
+  Linking.openURL(appUri ?? url).catch(() => Linking.openURL(url).catch(() => undefined));
 }
 
 export function ListenLink(props: { url: string; title: string; testID?: string }): JSX.Element {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const uri = ListenLinks_spotifyUri(props.url);
+  const target = SpotifyClient_listenTarget(props.url);
+  const uri = target?.appUri;
   useEffect(() => {
     const clear = (): void => clearTimeout(timer.current);
     const onVisibility = (): void => {
@@ -38,9 +34,12 @@ export function ListenLink(props: { url: string; title: string; testID?: string 
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
+  if (target == null) {
+    return <View />;
+  }
   return Platform.OS === "web" ? (
     <a
-      href={uri ?? props.url}
+      href={uri ?? target.url}
       data-testid={props.testID}
       className="text-text-link"
       onClick={() => {
@@ -48,7 +47,7 @@ export function ListenLink(props: { url: string; title: string; testID?: string 
         if (uri != null) {
           timer.current = setTimeout(() => {
             if (document.visibilityState === "visible") {
-              window.location.assign(props.url);
+              window.location.assign(target.url);
             }
           }, 1000);
         }
@@ -57,7 +56,7 @@ export function ListenLink(props: { url: string; title: string; testID?: string 
       {props.title}
     </a>
   ) : (
-    <Pressable accessibilityRole="link" testID={props.testID} onPress={() => ListenLinks_open(props.url)}>
+    <Pressable accessibilityRole="link" testID={props.testID} onPress={() => ListenLinks_open(target.url, uri)}>
       <Text className="text-text-link">{props.title}</Text>
     </Pressable>
   );
