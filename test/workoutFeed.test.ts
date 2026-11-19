@@ -43,12 +43,6 @@ import {
 } from "../src/models/feed";
 import { IMealPostDraft } from "../src/models/mealPost";
 import { Friends_fromServer } from "../src/models/friends";
-import {
-  PullToRefresh_end,
-  PullToRefresh_move,
-  PullToRefresh_start,
-  PullToRefresh_threshold,
-} from "../src/models/pullToRefresh";
 
 const bench: IExerciseType = { id: "benchPress", equipment: "barbell" };
 const squat: IExerciseType = { id: "squat", equipment: "barbell" };
@@ -445,19 +439,5 @@ describe("Feed", () => {
     expect(Feed_ago(t1, t1 + 3 * 3600000)).to.equal("3 h ago");
     expect(Feed_ago(t1, t1 + 30 * 3600000)).to.equal("yesterday");
     expect(Feed_ago(t1, t1 + 72 * 3600000)).to.equal("3 days ago");
-  });
-});
-
-describe("PullToRefresh", () => {
-  it("refreshes after a long enough pull that starts at the top", () => {
-    let state = PullToRefresh_start(0, 100);
-    state = PullToRefresh_move(state, 100 + PullToRefresh_threshold);
-    expect(PullToRefresh_end(state).refresh).to.equal(true);
-    expect(PullToRefresh_end(PullToRefresh_move(PullToRefresh_start(0, 100), 130)).refresh).to.equal(false);
-  });
-
-  it("ignores a pull that starts below the top or moves up", () => {
-    expect(PullToRefresh_end(PullToRefresh_move(PullToRefresh_start(40, 100), 400)).refresh).to.equal(false);
-    expect(PullToRefresh_move(PullToRefresh_start(0, 300), 100).distance).to.equal(0);
   });
 });

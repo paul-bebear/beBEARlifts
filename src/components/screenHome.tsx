@@ -14,10 +14,10 @@ import { ProgramGoalStore } from "../utils/programGoalStore";
 import { WeekScheduleStore } from "../utils/weekScheduleStore";
 import { useFollowWeekSchedule } from "../utils/useFollowWeekSchedule";
 import { WorkoutStart_open } from "../utils/workoutStart";
-import { BearBoard_lines, IBearBoardTarget } from "../models/bearBoard";
-import { IBearHouseTarget } from "../models/bearHouse";
+import { BearBoard_lines } from "../models/bearBoard";
+import { HomeTargets_forBoard, HomeTargets_forHouse, IHomeCommand } from "../models/homeTargets";
 import { Program_evaluate, Program_getProgramDay } from "../models/program";
-import { QuickActions_isBagCheckOn, QuickActions_workout } from "../models/quickActions";
+import { QuickActions_isBagCheckOn } from "../models/quickActions";
 import { TodayPill_dayName } from "../models/todayPill";
 import { WeekSchedule_todayFor } from "../models/weekSchedule";
 import { IHistoryRecord, IProgram } from "../types";
@@ -27,39 +27,19 @@ interface IProps {
   progress?: IHistoryRecord;
 }
 
-function openBoardTarget(target: IBearBoardTarget, dispatch: IDispatch, hasGoal: boolean): void {
-  if (target === "goal") {
-    dispatch(Thunk_pushScreen("goalWizard", { mode: hasGoal ? "pace" : "goal" }, { tab: "graphs" }));
-    return;
-  }
-  if (target === "streak") {
-    dispatch(Thunk_pushScreen("streak", undefined, { tab: "graphs" }));
-    return;
-  }
-  navigateToModal(target === "plus" ? "plusSheetModal" : "bearPanelModal");
-}
-
-function openHouseTarget(
-  target: IBearHouseTarget,
-  dispatch: IDispatch,
-  isBagCheckOn: boolean,
-  isOngoingProgress: boolean
-): void {
-  switch (target.kind) {
-    case "plus":
-      navigateToModal("plusSheetModal");
+function runHomeCommand(command: IHomeCommand, dispatch: IDispatch): void {
+  switch (command.kind) {
+    case "modal":
+      navigateToModal(command.name);
       return;
-    case "door":
-      WorkoutStart_open(QuickActions_workout({ isOngoingProgress, isBagCheckOn }).action, dispatch);
-      return;
-    case "bearPanel":
-      navigateToModal("bearPanelModal");
+    case "goalWizard":
+      dispatch(Thunk_pushScreen("goalWizard", { mode: command.mode }, { tab: command.tab }));
       return;
     case "screen":
-      dispatch(Thunk_pushScreen(target.screen, undefined, { tab: target.tab }));
+      dispatch(Thunk_pushScreen(command.screen, undefined, { tab: command.tab }));
       return;
-    case "phone":
-      navigateToModal("phoneSheetModal");
+    case "workout":
+      WorkoutStart_open(command.action, dispatch);
       return;
   }
 }
@@ -111,8 +91,8 @@ export function ScreenHome(props: IProps): JSX.Element {
         wall={house.wall}
         lines={lines}
         objects={house.objects}
-        onBoardTarget={(target) => openBoardTarget(target, dispatch, goalLog.current != null)}
-        onTarget={(target) => openHouseTarget(target, dispatch, isBagCheckOn, isOngoingProgress)}
+        onBoardTarget={(target) => runHomeCommand(HomeTargets_forBoard(target, goalLog.current != null), dispatch)}
+        onTarget={(target) => runHomeCommand(HomeTargets_forHouse(target, isBagCheckOn, isOngoingProgress), dispatch)}
       />
     </View>
   );

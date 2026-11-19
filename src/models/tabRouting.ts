@@ -1,5 +1,6 @@
 import { Screen_tab } from "./screen";
 import type { IScreen, ITab } from "./screen";
+import { homeRootScreen } from "./tabBarLayout";
 
 export interface ITabRoute {
   name: IScreen;
@@ -40,7 +41,7 @@ export function TabRouting_showsBack(args: {
   routeName: string;
   hasLeftButtons: boolean;
 }): boolean {
-  return args.hasStackBack || (args.isTabRoot && args.routeName !== "main" && !args.hasLeftButtons);
+  return args.hasStackBack || (args.isTabRoot && args.routeName !== homeRootScreen && !args.hasLeftButtons);
 }
 
 export function TabRouting_resetRoutes(
