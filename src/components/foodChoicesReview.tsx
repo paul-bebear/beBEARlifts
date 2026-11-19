@@ -5,6 +5,7 @@ import { FoodLog_sum } from "../models/foodLog";
 import { FoodAddFlow_parseGrams, FoodAddFlow_setPhotoGrams, IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodNutrientsRow, FoodTextInput, useGramsFieldWidth } from "./foodUi";
 import { Button } from "./button";
+import { FoodScanSteps_addLabel } from "../models/foodScanSteps";
 
 function ChoiceRow(props: {
   choice: IFoodPhotoChoice;
@@ -67,6 +68,7 @@ export function FoodChoicesReview(props: {
 }): JSX.Element {
   const { choices } = props;
   const selected = choices.filter((c) => c.isSelected);
+  const add = FoodScanSteps_addLabel(choices);
   return (
     <View>
       {choices.map((choice, i) => (
@@ -85,9 +87,11 @@ export function FoodChoicesReview(props: {
           name="food-ai-add"
           kind="pill"
           className="flex-1"
-          disabled={selected.length === 0}
-          onPress={() => props.onAdd(selected)}
-        >{`Add ${selected.length} item${selected.length === 1 ? "" : "s"}`}</Button>
+          disabled={add.count === 0}
+          onPress={() => props.onAdd(choices)}
+        >
+          {add.text}
+        </Button>
       </View>
     </View>
   );

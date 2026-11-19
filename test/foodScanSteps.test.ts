@@ -1,6 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  FoodScanSteps_addLabel,
   FoodScanSteps_canAdd,
   FoodScanSteps_canLeave,
   FoodScanSteps_description,
@@ -8,6 +9,7 @@ import {
   FoodScanSteps_initial,
   FoodScanSteps_modes,
   FoodScanSteps_reduce,
+  FoodScanSteps_shareFailed,
   FoodScanSteps_title,
   FoodScanSteps_totals,
   IScanEvent,
@@ -157,6 +159,19 @@ describe("FoodScanSteps camera to serving", () => {
     const choices = plate.map((c, i) => ({ ...c, isSelected: i === 1 }));
     const serving = servingOf(run([{ type: "aiReviewed", choices, nonce: 1 }]));
     expect(serving.items.map((i) => i.pick.name)).to.deep.equal(["Chicken"]);
+  });
+
+  it("keeps an unticked item unticked after Back, and counts only the ticked ones", () => {
+    const choices = plate.map((c, i) => ({ ...c, isSelected: i === 0 }));
+    const back = run([{ type: "aiReviewed", choices, nonce: 1, text: "rice and chicken" }, { type: "back" }]);
+    expect(back).to.deep.equal({ kind: "camera", mode: "ai", resume: { choices, text: "rice and chicken" } });
+    expect(FoodScanSteps_addLabel(choices)).to.deep.equal({ count: 1, text: "Add 1 item" });
+    expect(FoodScanSteps_addLabel(plate).text).to.equal("Add 2 items");
+    expect(FoodScanSteps_addLabel(choices.map((c) => ({ ...c, isSelected: false }))).count).to.equal(0);
+  });
+
+  it("words a failed share so the user knows the meal itself was added", () => {
+    expect(FoodScanSteps_shareFailed).to.equal("The meal was added, but sharing it with friends failed.");
   });
 
   it("turns a text-only estimate into manual serving items and goes back to the AI tab with the text", () => {

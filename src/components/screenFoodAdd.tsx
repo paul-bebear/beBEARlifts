@@ -31,17 +31,20 @@ import {
   FoodScanSteps_entries,
   FoodScanSteps_initial,
   FoodScanSteps_reduce,
+  FoodScanSteps_shareFailed,
   FoodScanSteps_title,
   IScanAccess,
   IScanServing,
 } from "../models/foodScanSteps";
+import { FoodLabel_saveFailed } from "../models/foodCapture";
+import type { IFoodProduct } from "../models/openFoodFacts";
 import { FoodSaveGuard_run } from "../models/foodSaveGuard";
 import { TabBarLayout_hiddenBarFooterGap } from "../models/tabBarLayout";
 import { FoodSuggestions_forMeal } from "../models/foodSuggestions";
 import { Recipes_fromBasket, Recipes_servingPick, SavedMeals_fromBasket, SavedMeals_items } from "../models/savedMeals";
 import { FoodApi_lookupBarcode } from "../utils/foodApi";
 import { FoodLogStore_newId, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
-import { Dialog_confirm } from "../utils/dialog";
+import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 import { useNavOptions } from "../navigation/useNavOptions";
 import { NavScreenContent } from "../navigation/NavScreenContent";
 import type { IFoodAddScreenParams } from "../navigation/types";
@@ -120,6 +123,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   const navigation = useNavigation();
   const isLoggingRef = useRef(false);
   const isSavingGroupRef = useRef(false);
+  const isSavingLabelRef = useRef(false);
   const log = useFoodLog();
   const access: IScanAccess = { isAiDeclined: !AiConsent_showFeatures(AiConsentStore.use()) };
   const [step, send] = useReducer(FoodScanSteps_reduce, undefined, () =>
@@ -203,7 +207,17 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
     navigation.goBack();
     const post = MealPost_fromServing(serving, share, () => MealPost_newId(RandomBytes_get(16)));
     if (post != null) {
-      await FeedClient_shareMeal(post, serving.photo);
+      await FeedClient_shareMeal(post, serving.photo).catch(() => Dialog_alert(FoodScanSteps_shareFailed));
+    }
+  };
+
+  const saveLabel = async (product: IFoodProduct, code?: string): Promise<void> => {
+    const save = (): Promise<void> => FoodLogStore_update((l) => FoodLog_saveFood(l, product));
+    const isSaved = await FoodSaveGuard_run(isSavingLabelRef, save, false);
+    if (isSaved) {
+      send({ type: "amountOpened", pick: FoodAddFlow_pickFromProduct(product, code != null ? "barcode" : "search") });
+    } else if (!isSavingLabelRef.current) {
+      Dialog_alert(FoodLabel_saveFailed);
     }
   };
 
@@ -337,17 +351,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
           />
         )}
         {step.kind === "label" && (
-          <FoodLabelPanel
-            barcode={step.code}
-            onBack={browse}
-            onSave={async (product) => {
-              await FoodLogStore_update((l) => FoodLog_saveFood(l, product));
-              send({
-                type: "amountOpened",
-                pick: FoodAddFlow_pickFromProduct(product, step.code != null ? "barcode" : "search"),
-              });
-            }}
-          />
+          <FoodLabelPanel barcode={step.code} onBack={browse} onSave={(product) => saveLabel(product, step.code)} />
         )}
         {step.kind === "quick" && (
           <FoodQuickAddPanel
