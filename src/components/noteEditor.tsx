@@ -1,5 +1,5 @@
-import { JSX, useState } from "react";
-import { Pressable, View } from "react-native";
+import { JSX, useEffect, useRef, useState } from "react";
+import { AppState, Pressable, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text } from "./primitives/text";
 import { FoodTextInput } from "./foodUi";
@@ -9,6 +9,7 @@ import { FormSheet } from "../navigation/FormSheet";
 import { INote, Notes_get, Notes_links, Notes_new, Notes_remove, Notes_save } from "../models/notes";
 import { JournalExport_dateTitle } from "../models/journalExport";
 import { NotesStore, NotesStore_newId } from "../utils/notesStore";
+import { SaveDebounce_controller } from "../models/saveDebounce";
 import { Dialog_confirm } from "../utils/dialog";
 import { useJournalDay } from "../utils/useJournalSources";
 import type { IRootStackParamList } from "../navigation/types";
@@ -43,14 +44,29 @@ export function NoteEditorModal(): JSX.Element {
   const journal = useJournalDay(day);
   const links = Notes_links(note.body);
 
+  const saver = useRef(
+    SaveDebounce_controller<INote>((value) => NotesStore.update((log) => Notes_save(log, value, Date.now())))
+  ).current;
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => next !== "active" && saver.flush());
+    return () => {
+      sub.remove();
+      saver.flush();
+    };
+  }, [saver]);
+
   const change = (patch: Partial<Pick<INote, "title" | "body">>): void => {
     const next = { ...note, ...patch };
     setNote(next);
-    NotesStore.update((log) => Notes_save(log, next, Date.now()));
+    saver.type(next);
   };
-  const close = (): void => navigation.goBack();
+  const close = (): void => {
+    saver.flush();
+    navigation.goBack();
+  };
   const remove = async (): Promise<void> => {
     if (await Dialog_confirm("Delete this note?")) {
+      saver.discard();
       await NotesStore.update((log) => Notes_remove(log, note.id));
       close();
     }

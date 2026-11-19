@@ -13,6 +13,7 @@ import {
   JournalDay_emptyRow,
   JournalDay_header,
   JournalDay_hints,
+  JournalDay_openOnEdit,
   JournalDay_sectionFold,
   JournalDay_sectionSummary,
   JournalDay_showsSeasonNudge,
@@ -183,6 +184,19 @@ describe("JournalDay", () => {
     expect(JournalDay_sectionSummary(JournalDay_build(input({ day: "2026-10-21", notes })), "checkIn")).to.equal(
       undefined
     );
+  });
+
+  it("keeps the check-in open for the reflection after the third face is picked", () => {
+    let notes = Notes_updateCheckIn(Notes_empty(), { day: today, newId: "c", now: 1, field: "energy", value: 4 });
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 2, field: "soreness", value: 4 });
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 3, field: "mood", value: 4 });
+    const pinned = JournalDay_openOnEdit(undefined);
+    expect(JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", pinned).isCollapsed).to.equal(false);
+    notes = Notes_updateCheckIn(notes, { day: today, newId: "c", now: 4, reflection: "Felt strong" });
+    const typed = JournalDay_sectionFold(JournalDay_build(input({ notes })), "checkIn", JournalDay_openOnEdit(pinned));
+    expect(typed.isCollapsed).to.equal(false);
+    expect(typed.canHide).to.equal(true);
+    expect(JournalDay_openOnEdit(false)).to.equal(false);
   });
 
   it("summarizes reflection-only check-ins and ignores blank ones", () => {

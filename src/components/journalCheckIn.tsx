@@ -1,5 +1,5 @@
-import { JSX, useState } from "react";
-import { Pressable, View } from "react-native";
+import { JSX, useEffect, useRef, useState } from "react";
+import { AppState, Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodTextInput } from "./foodUi";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
@@ -11,7 +11,8 @@ import {
   Notes_faces,
   Notes_updateCheckIn,
 } from "../models/notes";
-import { NotesStore, NotesStore_newId } from "../utils/notesStore";
+import { SaveDebounce_controller } from "../models/saveDebounce";
+import { NotesStore,NotesStore_newId } from "../utils/notesStore";
 
 function FaceRow(props: {
   field: ICheckInField;
@@ -54,25 +55,44 @@ function FaceRow(props: {
   );
 }
 
-export function JournalCheckIn(props: { day: string; checkIn?: INote; isEditable: boolean }): JSX.Element | null {
-  const { day, checkIn, isEditable } = props;
+export function JournalCheckIn(props: {
+  day: string;
+  checkIn?: INote;
+  isEditable: boolean;
+  onEdit?: () => void;
+}): JSX.Element | null {
+  const { day, checkIn, isEditable, onEdit } = props;
   const stored = checkIn?.body ?? "";
   // The store writes lag behind typing, so after the first key the field shows the draft, never the store.
   const [draft, setDraft] = useState<string>();
+  const saver = useRef(
+    SaveDebounce_controller<string>((text) =>
+      NotesStore.update((log) =>
+        Notes_updateCheckIn(log, { day, newId: NotesStore_newId(), now: Date.now(), reflection: text })
+      )
+    )
+  ).current;
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => next !== "active" && saver.flush());
+    return () => {
+      sub.remove();
+      saver.flush();
+    };
+  }, [saver]);
 
   if (!isEditable && checkIn == null) {
     return null;
   }
   const pick = (field: ICheckInField, value: ICheckInScore): void => {
+    onEdit?.();
     NotesStore.update((log) =>
       Notes_updateCheckIn(log, { day, newId: NotesStore_newId(), now: Date.now(), field, value })
-    );
+    ).catch(() => undefined);
   };
   const reflect = (text: string): void => {
+    onEdit?.();
     setDraft(text);
-    NotesStore.update((log) =>
-      Notes_updateCheckIn(log, { day, newId: NotesStore_newId(), now: Date.now(), reflection: text })
-    );
+    saver.type(text);
   };
 
   return (
