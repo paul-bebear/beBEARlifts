@@ -10,7 +10,7 @@ import {
 } from "../api/_reportEmail.mjs";
 import { POST as reportPost, GET as reportGet } from "../api/moderation/report.mjs";
 
-function parse(body: unknown) {
+function parse(body: unknown): Record<string, unknown> | null {
   const result = ReportEmail_classify(body);
   return result.kind === "report" ? result.report : null;
 }

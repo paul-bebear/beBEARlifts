@@ -17,12 +17,7 @@ import { buildNavCommon } from "../navigation/utils";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { LateNightMeal_targets } from "../models/lateNightMeal";
 import { LateNightMealChoice_pick } from "../utils/lateNightMealChoice";
-import {
-  IQuickAction,
-  IQuickActionId,
-  QuickActions_isBagCheckOn,
-  QuickActions_list,
-} from "../models/quickActions";
+import { IQuickAction, IQuickActionId, QuickActions_isBagCheckOn, QuickActions_list } from "../models/quickActions";
 import { WorkoutStart_open } from "../utils/workoutStart";
 
 function SquareIcon(props: { id: IQuickActionId; color: string }): JSX.Element {
