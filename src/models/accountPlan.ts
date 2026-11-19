@@ -4,7 +4,10 @@ export type IAccountPlanState =
   | { status: "unknown" }
   | { status: "known"; userId: string; plan: "free" }
   | { status: "known"; userId: string; plan: "plus"; grant: IAccountGrant; canManage: boolean }
-  | { status: "activating"; userId: string };
+  | { status: "activating"; userId: string; tries?: number };
+
+// RevenueCat can answer free for a few seconds after the store reports a purchase. Each return to the app asks again.
+export const AccountPlan_activatingTries = 5;
 
 export type IAccountPlanSync = "plus" | "free" | "stale" | "error";
 
@@ -42,9 +45,18 @@ export function AccountPlan_parse(raw: unknown): IAccountPlanState {
     return AccountPlan_empty();
   }
   if (r.status === "activating") {
-    return { status: "activating", userId: r.userId };
+    return typeof r.tries === "number"
+      ? { status: "activating", userId: r.userId, tries: r.tries }
+      : { status: "activating", userId: r.userId };
   }
   return (r.status === "known" ? known(r.userId, r, r.canManage) : undefined) ?? AccountPlan_empty();
+}
+
+// The server ranks a code ahead of a subscription, and the subscription still renews, so canManage stays.
+export function AccountPlan_codeRedeemed(current: IAccountPlanState, userId: string): IAccountPlanState {
+  const subscribed =
+    current.status === "known" && current.userId === userId && current.plan === "plus" && current.canManage;
+  return { status: "known", userId, plan: "plus", grant: "code", canManage: subscribed };
 }
 
 export function AccountPlan_parseSync(userId: string, body: unknown): IAccountPlanState | undefined {
@@ -62,6 +74,12 @@ export function AccountPlan_accept(
   }
   if (next.status === "unknown" || next.userId !== sessionUserId) {
     return current.status !== "unknown" && current.userId !== sessionUserId ? AccountPlan_empty() : current;
+  }
+  if (current.status === "activating" && current.userId === next.userId && next.status === "known") {
+    const tries = (current.tries ?? 0) + 1;
+    if (next.plan === "free" && tries < AccountPlan_activatingTries) {
+      return { status: "activating", userId: next.userId, tries };
+    }
   }
   return next;
 }

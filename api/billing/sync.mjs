@@ -1,12 +1,6 @@
 import { fetchJson, json } from "../_food.mjs";
 import { AiAuth_bearerToken, Supabase_origin, Supabase_publishableKey } from "../_auth.mjs";
-import {
-  Billing_env,
-  Billing_readPlan,
-  Billing_refresh,
-  Billing_signInMessage,
-  Billing_userFromAuth,
-} from "../_billing.mjs";
+import { Billing_env, Billing_signInMessage, Billing_sync, Billing_userFromAuth } from "../_billing.mjs";
 
 export async function POST(request) {
   const config = Billing_env(process.env);
@@ -29,13 +23,15 @@ export async function POST(request) {
         ? json({ error: Billing_signInMessage }, 401)
         : json({ error: `Supabase Auth returned ${user.status}` }, 502);
     }
-    const result =
-      config.revenueCatKey == null
-        ? await Billing_readPlan(userId, config.serviceKey)
-        : await Billing_refresh(userId, config);
-    return result.ok
-      ? json({ plan: result.plan, grant: result.grant, canManageSubscription: result.canManageSubscription })
-      : json({ error: result.error }, result.status);
+    const result = await Billing_sync(userId, config);
+    if (result.ok) {
+      return json({ plan: result.plan, grant: result.grant, canManageSubscription: result.canManageSubscription });
+    }
+    const response = json({ error: result.error }, result.status);
+    if (result.retryAfterSeconds != null) {
+      response.headers.set("Retry-After", String(result.retryAfterSeconds));
+    }
+    return response;
   } catch {
     return json({ error: "The billing check did not answer. Try again." }, 504);
   }

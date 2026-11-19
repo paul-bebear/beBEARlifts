@@ -9,7 +9,7 @@ import {
 import { AccountDeletion_result, AccountDeletion_signInMessage } from "../models/accountDeletion";
 import { Friends_empty } from "../models/friends";
 import { FeedModeration_empty } from "../models/feedModeration";
-import { Feed_empty } from "../models/feed";
+import { Feed_afterForcedSignOut, Feed_empty, IFeedState } from "../models/feed";
 import { ApiUrl_for } from "./apiUrl";
 import { FriendsStore } from "./friendsClient";
 import { BlocksStore } from "./moderationStore";
@@ -22,6 +22,7 @@ import {
   SupabaseClient_authed,
   SupabaseClient_call,
   SupabaseClient_json,
+  SupabaseClient_onForcedSignOut,
   SupabaseClient_saveSession,
   Supabase_notSignedIn,
 } from "./supabaseClient";
@@ -67,6 +68,8 @@ export async function CloudBackupClient_upload(
   if (!latest.ok) {
     return latest;
   }
+  // The cloud now holds this file, so a failed weekday put must not make the next check see another device.
+  await CloudStore.update((state) => ({ ...state, syncedExportedAt: marks.exportedAt }));
   const daily = await put(paths.daily, text);
   if (!daily.ok) {
     return daily;
@@ -74,7 +77,6 @@ export async function CloudBackupClient_upload(
   await CloudStore.update((state) => ({
     ...state,
     lastBackupAt: now,
-    syncedExportedAt: marks.exportedAt,
     backedUpWorkouts: marks.workouts,
     backedUpStores: marks.stores,
     ownerUserId: session.userId,
@@ -145,13 +147,24 @@ export async function CloudBackupClient_download(
   return { ok: true, value: await result.value.response.text() };
 }
 
+async function clearOtherAccountCaches(feed: (state: IFeedState) => IFeedState): Promise<void> {
+  await Promise.all([
+    FriendsStore.update(() => Friends_empty()),
+    BlocksStore.update(() => FeedModeration_empty()),
+    FeedStore.update(feed),
+    InviteStore.update(() => ({})),
+  ]);
+}
+
+// Metro loads this module only on first use, so the launch registers the clear before any refresh can fail.
+export function CloudBackupClient_start(): () => void {
+  return SupabaseClient_onForcedSignOut(() => clearOtherAccountCaches(Feed_afterForcedSignOut));
+}
+
 async function clearAccountCaches(): Promise<void> {
   await Promise.all([
     CloudStore.update((state) => CloudBackup_afterSignOut(state)),
-    FriendsStore.update(() => Friends_empty()),
-    BlocksStore.update(() => FeedModeration_empty()),
-    FeedStore.update(() => Feed_empty()),
-    InviteStore.update(() => ({})),
+    clearOtherAccountCaches(() => Feed_empty()),
   ]);
 }
 

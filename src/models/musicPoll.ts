@@ -45,3 +45,19 @@ export async function MusicPoll_catchUp(workout: IMusicWorkout, effects: IMusicP
   }
   await MusicPoll_nowPlaying(workout, effects);
 }
+
+export async function MusicPoll_finish(
+  workout: IMusicWorkout,
+  effects: IMusicPollEffects,
+  endTime: number
+): Promise<void> {
+  if (!(await canPoll(effects))) {
+    return;
+  }
+  try {
+    const history = await effects.history();
+    await effects.update((log) => MusicTracking_mergeHistory(log, workout, history, endTime));
+  } catch (e) {
+    effects.warn("Spotify history failed", e);
+  }
+}

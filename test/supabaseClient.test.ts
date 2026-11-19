@@ -6,6 +6,8 @@ import {
   SupabaseClient_accessToken,
   SupabaseClient_call,
   SupabaseClient_errorText,
+  SupabaseClient_onForcedSignOut,
+  SupabaseClient_storageFullText,
   Supabase_notSignedIn,
   Supabase_origin,
 } from "../src/utils/supabaseClient";
@@ -43,6 +45,21 @@ describe("Supabase error text", () => {
       "The server returned 400."
     );
   });
+
+  it("explains an upload the storage limits refused", () => {
+    const refused = { statusCode: "500", error: "DatabaseError", message: "database error, code: P0001" };
+    expect(SupabaseClient_errorText("/storage/v1/object/backups/u1/photos/1.jpg", 500, refused)).to.equal(
+      SupabaseClient_storageFullText
+    );
+    expect(SupabaseClient_errorText("/storage/v1/object/meal-photos/u1/a.jpg", 500, refused)).to.equal(
+      SupabaseClient_storageFullText
+    );
+    expect(
+      SupabaseClient_errorText("/storage/v1/object/backups/u1/latest.json", 500, {
+        message: "database error, code: 23505",
+      })
+    ).to.equal("database error, code: 23505");
+  });
 });
 
 describe("SupabaseClient_call", () => {
@@ -73,6 +90,7 @@ describe("SupabaseClient_accessToken", () => {
   };
   let state: ICloudState;
   let fetchStub: sinon.SinonStub;
+  let stopClear = (): void => undefined;
 
   beforeEach(() => {
     state = { version: 1, session };
@@ -83,7 +101,11 @@ describe("SupabaseClient_accessToken", () => {
     });
     fetchStub = sinon.stub(globalThis, "fetch");
   });
-  afterEach(() => sinon.restore());
+  afterEach(() => {
+    stopClear();
+    stopClear = () => undefined;
+    sinon.restore();
+  });
 
   it("reports not signed in without calling the server", async () => {
     state = { version: 1 };
@@ -120,13 +142,63 @@ describe("SupabaseClient_accessToken", () => {
     });
   });
 
-  it("keeps the old session and reports the server's reason when the refresh is refused", async () => {
-    fetchStub.resolves(
-      new Response(JSON.stringify({ error: "invalid_grant", error_description: "Refresh Token Not Found" }), {
+  it("signs out this phone and clears the account caches when the server refuses the refresh token", async () => {
+    const bodies = [
+      { error: "invalid_grant", error_description: "Refresh Token Not Found" },
+      { code: 400, error_code: "refresh_token_not_found", msg: "Invalid Refresh Token: Refresh Token Not Found" },
+    ];
+    for (const body of bodies) {
+      const cleared = sinon.stub().resolves();
+      stopClear = SupabaseClient_onForcedSignOut(cleared);
+      state = { version: 1, session, ownerUserId: "u1", lastBackupAt: now - 1000 };
+      fetchStub.resolves(new Response(JSON.stringify(body), { status: 400 }));
+      expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: Supabase_notSignedIn });
+      expect(state.session).to.equal(undefined);
+      expect(state.lastBackupAt).to.equal(undefined);
+      expect(state.ownerUserId).to.equal("u1");
+      sinon.assert.calledOnce(cleared);
+    }
+  });
+
+  it("keeps the session on a 401, which the gateway can send for any user", async () => {
+    fetchStub.resolves(new Response(JSON.stringify({ message: "Invalid API key" }), { status: 401 }));
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "Invalid API key" });
+    expect(state.session).to.deep.equal(session);
+  });
+
+  it("keeps a session that signed in while the refused refresh was on its way", async () => {
+    const cleared = sinon.stub().resolves();
+    stopClear = SupabaseClient_onForcedSignOut(cleared);
+    const next = { ...session, userId: "u2", refreshToken: "new-refresh" };
+    fetchStub.callsFake(async () => {
+      state = { version: 1, session: next };
+      return new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 });
+    });
+    const result = await SupabaseClient_accessToken();
+    expect(result.ok).to.equal(false);
+    expect(state.session).to.deep.equal(next);
+    sinon.assert.notCalled(cleared);
+  });
+
+  it("reports not signed in when the user signed out while the refused refresh was on its way", async () => {
+    const cleared = sinon.stub().resolves();
+    stopClear = SupabaseClient_onForcedSignOut(cleared);
+    fetchStub.callsFake(async () => {
+      state = { version: 1 };
+      return new Response(JSON.stringify({ error: "invalid_grant", error_description: "Refresh Token Not Found" }), {
         status: 400,
-      })
-    );
-    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "Refresh Token Not Found" });
+      });
+    });
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: Supabase_notSignedIn });
+    sinon.assert.notCalled(cleared);
+  });
+
+  it("keeps the session when the refresh fails for a server or network reason", async () => {
+    fetchStub.resolves(new Response(JSON.stringify({ message: "Service unavailable" }), { status: 503 }));
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "Service unavailable" });
+    expect(state.session).to.deep.equal(session);
+    fetchStub.rejects(new TypeError("Load failed"));
+    expect(await SupabaseClient_accessToken()).to.deep.equal({ ok: false, error: "No connection" });
     expect(state.session).to.deep.equal(session);
   });
 

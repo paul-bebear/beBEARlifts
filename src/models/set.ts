@@ -121,6 +121,7 @@ function adhocSetFrom(lastSet: ISet, isUnilateral: boolean): ISet {
     completedRepsLeft: isUnilateral ? (lastSet.completedRepsLeft ?? completedReps) : undefined,
     completedWeight: lastSet.completedWeight ?? lastSet.weight,
     completedRpe: undefined,
+    completedEffort: undefined,
     completedSetTimer: undefined,
     completedSetTimerLeft: undefined,
   };
@@ -147,6 +148,7 @@ export function Reps_addSet(
         ...ObjectUtils_clone(lastSet),
         reps: lastSet.completedReps ?? lastSet.reps,
         weight: lastSet.completedWeight ?? lastSet.weight,
+        completedEffort: undefined,
       };
     } else {
       lastSet = {
@@ -158,6 +160,7 @@ export function Reps_addSet(
         completedRepsLeft: undefined,
         completedWeight: undefined,
         completedRpe: undefined,
+        completedEffort: undefined,
         completedSetTimer: undefined,
         completedSetTimerLeft: undefined,
       };

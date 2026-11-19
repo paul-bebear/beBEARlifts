@@ -28,7 +28,36 @@ export function Invite_shareText(displayName: string): string {
   return `Train with ${displayName} on beBEAR. Open this link in Safari on your iPhone and add it to your Home Screen.`;
 }
 
-export function Invite_shareMessage(result: "shared" | "copied" | "cancelled" | "failed"): string | undefined {
+export type IInviteShareResult = "shared" | "copied" | "cancelled" | "failed";
+
+export interface IInviteSharePlatform {
+  share?: (text: string, url: string) => Promise<"shared" | "cancelled">;
+  copy: (text: string) => Promise<void>;
+}
+
+export async function Invite_share(
+  platform: IInviteSharePlatform,
+  text: string,
+  url: string
+): Promise<IInviteShareResult> {
+  if (platform.share != null) {
+    try {
+      return await platform.share(text, url);
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return "cancelled";
+      }
+    }
+  }
+  try {
+    await platform.copy(`${text} ${url}`);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
+
+export function Invite_shareMessage(result: IInviteShareResult): string | undefined {
   switch (result) {
     case "copied":
       return "Invite link copied. Paste it in a message to your friend.";

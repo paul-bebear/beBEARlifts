@@ -14,11 +14,16 @@ export function SavedFoods_find(saved: IFoodProduct[], barcode: string): IFoodPr
   return saved.find((p) => p.barcode != null && barcodeKey(p.barcode) === key);
 }
 
+function sameNameAndBrand(a: IFoodProduct, b: IFoodProduct): boolean {
+  const key = (p: IFoodProduct): string => `${p.name.toLowerCase()}\u0000${(p.brand ?? "").toLowerCase()}`;
+  return key(a) === key(b);
+}
+
 export function SavedFoods_save(saved: IFoodProduct[], product: IFoodProduct): IFoodProduct[] {
   const sameFood = (p: IFoodProduct): boolean =>
     product.barcode != null
       ? p.barcode != null && barcodeKey(p.barcode) === barcodeKey(product.barcode)
-      : p.barcode == null && p.name.toLowerCase() === product.name.toLowerCase();
+      : p.barcode == null && sameNameAndBrand(p, product);
   return [product, ...saved.filter((p) => !sameFood(p))].slice(0, maxSavedFoods);
 }
 

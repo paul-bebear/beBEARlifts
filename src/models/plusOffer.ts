@@ -80,6 +80,8 @@ export const PlusOffer_activating = "Purchase done. beBEAR+ turns on in a moment
 export const PlusOffer_restoredMessage = "beBEAR+ is back on.";
 export const PlusOffer_nothingToRestore = "No beBEAR+ purchase was found for this Apple ID.";
 export const PlusOffer_restoreFailed = "Restore did not finish. Check your connection and try again.";
+export const PlusOffer_restorePending =
+  "Your beBEAR+ purchase was found. It can take a minute to show here. Close and reopen the app if it does not.";
 
 export function PlusOffer_parseMemory(raw: unknown): IPlusOfferMemory {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -157,7 +159,11 @@ function fail(flow: IPlusOfferFlow, message: string): IPlusOfferStep {
   return flow.trigger === "firstProgram" ? to(idle) : to(idle, { type: "alert", message });
 }
 
+// An activating plan survives free answers for a new purchase. A restore that finds nothing must end on free.
 function activate(flow: IPlusOfferFlow): IPlusOfferStep {
+  if (flow.trigger === "restore") {
+    return to({ ...flow, step: "activating" }, { type: "sync" });
+  }
   const userId = flow.userId ?? "";
   return to({ ...flow, step: "activating" }, { type: "markActivating", userId }, { type: "sync" });
 }
@@ -199,6 +205,7 @@ function afterPaywall(flow: IPlusOfferFlow, outcome: IPaywallOutcome): IPlusOffe
   return fail(flow, PlusOffer_startFailed);
 }
 
+// A restore reaches this step only after the store returned the purchase, so a free or failed sync means the server lags.
 function afterSync(flow: IPlusOfferFlow, result: IAccountPlanSync): IPlusOfferStep {
   const restoring = flow.trigger === "restore";
   if (result === "plus") {
@@ -207,10 +214,7 @@ function afterSync(flow: IPlusOfferFlow, result: IAccountPlanSync): IPlusOfferSt
   if (result === "stale") {
     return to(idle);
   }
-  return to(idle, {
-    type: "alert",
-    message: result === "free" && restoring ? PlusOffer_nothingToRestore : PlusOffer_activating,
-  });
+  return to(idle, { type: "alert", message: restoring ? PlusOffer_restorePending : PlusOffer_activating });
 }
 
 export function PlusOffer_reduce(flow: IPlusOfferFlow, event: IPlusOfferEvent): IPlusOfferStep {

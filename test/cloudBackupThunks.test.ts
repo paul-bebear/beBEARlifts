@@ -20,11 +20,13 @@ import { WarmupPlan_empty } from "../src/models/warmupPlan";
 import { WorkoutReport_empty } from "../src/models/workoutReport";
 import { FullBackup_build, IFullBackupParts } from "../src/models/fullBackup";
 import {
+  CloudBackup_blockedText,
   CloudBackup_storesMark,
   CloudBackup_workoutsMark,
   ICloudState,
   ICloudStoresInput,
 } from "../src/models/cloudBackup";
+import { StoreRecovery_readError } from "../src/models/storeRecovery";
 import * as cloud from "../src/utils/cloudBackupClient";
 import * as supabase from "../src/utils/supabaseClient";
 import * as food from "../src/utils/foodLogStore";
@@ -281,6 +283,28 @@ describe("Cloud backup thunks", () => {
     expect(upload.called).to.equal(false);
   });
 
+  it("does not write the cloud store after a skipped or offline backup", async () => {
+    const update = supabase.CloudStore.update as sinon.SinonStub;
+    await run(Thunk_cloudBackup("auto"));
+    expect(update.called).to.equal(false);
+    state.storage.history = workouts([now - 2000]);
+    download.resolves({ ok: false, error: "No connection" });
+    await run(Thunk_cloudBackup("auto"));
+    expect(update.called).to.equal(false);
+  });
+
+  it("records why automatic backups stopped when a store cannot be read, and clears it after an upload", async () => {
+    state.storage.history = workouts([now - 2000]);
+    (NotesStore.loadStrict as sinon.SinonStub).rejects(new Error("Could not read saved data"));
+    await run(Thunk_cloudBackup("auto"));
+    expect(upload.called).to.equal(false);
+    expect(cloudState.backupBlocked).to.be.a("string").and.equal(CloudBackup_blockedText);
+    (NotesStore.loadStrict as sinon.SinonStub).callsFake(async () => notes);
+    await run(Thunk_cloudBackup("auto"));
+    expect(upload.callCount).to.equal(1);
+    expect(cloudState.backupBlocked).to.equal(undefined);
+  });
+
   it("asks before replacing a cloud file another device wrote, even with nothing new in it", async () => {
     state.storage.history = workouts([3, 2, 1]);
     cloudState = { version: 1, session, syncedExportedAt: "2026-10-01T00:00:00.000Z" };
@@ -449,6 +473,7 @@ describe("Cloud backup thunks", () => {
     cloudState = {
       ...cloudState,
       restoreOffer: { cloud: { workouts: 0, foodDays: 0 }, phone: { workouts: 0, foodDays: 0 } },
+      backupBlocked: CloudBackup_blockedText,
     };
     const replaceFood = sinon.stub(food, "FoodLogStore_replace").resolves();
     const replaceMusic = sinon.stub(music, "MusicStore_update").resolves();
@@ -483,6 +508,7 @@ describe("Cloud backup thunks", () => {
     expect(schedule).to.deep.equal(parts.schedule);
     expect(cloudState.syncedExportedAt).to.equal(file.exportedAt);
     expect(cloudState.restoreOffer).to.equal(undefined);
+    expect(cloudState.backupBlocked).to.equal(undefined);
     expect(cloudState.session).to.deep.equal(session);
     expect(cloudState.ownerUserId).to.equal("u1");
     expect(photoRestore.firstCall.args[0]).to.deep.equal([]);
@@ -624,11 +650,29 @@ describe("Cloud backup thunks", () => {
     for (const store of [ReportStore, SetClipStore, RunStore, ProgramGoalStore, StepsStore, ChecklistStore]) {
       sinon.stub(store, "replace").resolves();
     }
+    cloudState = { ...cloudState, backupBlocked: CloudBackup_blockedText };
     const result = sinon.spy();
     await run(Thunk_cloudRestore("day-1", result));
     expect(result.firstCall.args[0]).to.deep.equal({ ok: true, value: true });
     expect(saveReplaced.firstCall.args[0]).to.equal(latest);
     expect(upload.callCount).to.equal(1);
+    expect(cloudState.backupBlocked).to.equal(undefined);
+  });
+
+  it("keeps the paused line after a restore when a store the import does not rewrite still cannot be read", async () => {
+    download.resolves({ ok: true, value: cloudFile([1]) });
+    sinon.stub(food, "FoodLogStore_replace").resolves();
+    stubRestoreWrites();
+    for (const store of [ReportStore, SetClipStore, RunStore, ProgramGoalStore, StepsStore, ChecklistStore]) {
+      sinon.stub(store, "replace").resolves();
+    }
+    (ProgressPhotoStore.loadStrict as sinon.SinonStub).rejects(new Error(StoreRecovery_readError));
+    cloudState = { ...cloudState, backupBlocked: CloudBackup_blockedText };
+    const result = sinon.spy();
+    await run(Thunk_cloudRestore("latest", result));
+    expect(result.firstCall.args[0]).to.deep.equal({ ok: true, value: true });
+    expect(cloudState.backupBlocked).to.equal(CloudBackup_blockedText);
+    expect(cloudState.restoreOffer).to.equal(undefined);
   });
 
   it("checks the cloud after sign-in, so an empty phone gets the restore offer", async () => {

@@ -1,5 +1,12 @@
 import { IFriendsState, IProfile } from "./friends";
-import { IMealPost, IMealPostDraft, MealPost_parse, MealPost_parseDraft, MealPost_photoPath } from "./mealPost";
+import {
+  IMealPost,
+  IMealPostDraft,
+  MealPost_isId,
+  MealPost_parse,
+  MealPost_parseDraft,
+  MealPost_photoPath,
+} from "./mealPost";
 import { IPostBear, IWorkoutPostSummary, WorkoutPost_parse } from "./workoutPost";
 
 export interface IFeedPost {
@@ -13,7 +20,14 @@ export interface IFeedPost {
 export type IFeedOp =
   | { type: "post"; userId: string; workoutId: number; queuedAt: number; summary: IWorkoutPostSummary }
   | { type: "remove"; userId: string; workoutId: number; queuedAt: number }
-  | { type: "meal"; userId: string; queuedAt: number; meal: IMealPostDraft; photo?: string };
+  | { type: "meal"; userId: string; queuedAt: number; meal: IMealPostDraft; photo?: string }
+  | { type: "mealRemove"; userId: string; queuedAt: number; mealId: string };
+
+type IWorkoutOp = Extract<IFeedOp, { workoutId: number }>;
+
+function isWorkoutOp(op: IFeedOp): op is IWorkoutOp {
+  return op.type === "post" || op.type === "remove";
+}
 
 export interface IFeedState {
   version: 1;
@@ -84,6 +98,9 @@ function parseOp(raw: unknown): IFeedOp | undefined {
     const photo = typeof r.photo === "string" && jpegDataUrl.test(r.photo) ? r.photo : undefined;
     return meal != null ? { type: "meal", userId, queuedAt, meal, ...(photo != null ? { photo } : {}) } : undefined;
   }
+  if (r.type === "mealRemove") {
+    return MealPost_isId(r.mealId) ? { type: "mealRemove", userId, queuedAt, mealId: r.mealId } : undefined;
+  }
   const workoutId = num(r.workoutId);
   if (workoutId == null) {
     return undefined;
@@ -119,13 +136,25 @@ export function Feed_withServerMeals(state: IFeedState, userId: string, meals: I
 }
 
 function opKey(op: IFeedOp): string {
-  return op.type === "meal" ? `meal:${op.meal.id}` : `workout:${op.workoutId}`;
+  switch (op.type) {
+    case "meal":
+      return `meal:${op.meal.id}`;
+    case "mealRemove":
+      return `meal:${op.mealId}`;
+    default:
+      return `workout:${op.workoutId}`;
+  }
 }
 
 // One pending change per workout. A later toggle replaces an earlier one that has not been sent yet.
 export function Feed_queue(state: IFeedState, op: IFeedOp): IFeedState {
   const others = state.outbox.filter((o) => !(o.userId === op.userId && opKey(o) === opKey(op)));
   return { ...state, outbox: [...others, op] };
+}
+
+// The flush sends only the signed-in account's ops, so an unsent post waits for its owner to sign in again.
+export function Feed_afterForcedSignOut(state: IFeedState): IFeedState {
+  return { ...Feed_empty(), outbox: state.outbox };
 }
 
 // An op waits for the account that queued it, so a sign-in switch never posts under the other account.
@@ -152,6 +181,9 @@ export function Feed_sent(state: IFeedState, op: IFeedOp, now: number): IFeedSta
     const meals = newestFirst([mine, ...state.meals.filter((m) => m.id !== op.meal.id)]);
     return { ...state, userId, outbox, meals };
   }
+  if (op.type === "mealRemove") {
+    return { ...state, userId, outbox, meals: state.meals.filter((m) => m.id !== op.mealId) };
+  }
   const { workoutId } = op;
   const others = state.posts.filter((p) => !(p.userId === userId && p.workoutId === workoutId));
   const posts =
@@ -160,7 +192,7 @@ export function Feed_sent(state: IFeedState, op: IFeedOp, now: number): IFeedSta
 }
 
 export function Feed_shareStatus(state: IFeedState, userId: string, workoutId: number): IFeedShareStatus {
-  const pending = state.outbox.find((o) => o.userId === userId && o.type !== "meal" && o.workoutId === workoutId);
+  const pending = state.outbox.find((o) => o.userId === userId && isWorkoutOp(o) && o.workoutId === workoutId);
   if (pending != null) {
     return pending.type === "post" ? "sending" : "notShared";
   }
@@ -198,9 +230,12 @@ export function Feed_items(state: IFeedState, friends: IFriendsState): IFeedItem
       result.push({ kind: "workout", post, author, isMine, bear });
     }
   }
+  const removing = new Set(
+    state.outbox.flatMap((o) => (o.type === "mealRemove" && o.userId === state.userId ? [o.mealId] : []))
+  );
   for (const post of state.meals) {
     const author = authorOf(post.userId);
-    if (author != null) {
+    if (author != null && !removing.has(post.id)) {
       const isMine = post.userId === state.userId;
       result.push({ kind: "meal", post, author, isMine, bear: bears.get(post.userId) });
     }

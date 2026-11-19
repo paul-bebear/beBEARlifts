@@ -1,13 +1,14 @@
 import {
   AccountPlan_accept,
+  AccountPlan_codeRedeemed,
   AccountPlan_empty,
   AccountPlan_parse,
   AccountPlan_parseSync,
   IAccountPlanState,
   IAccountPlanSync,
 } from "../models/accountPlan";
-import { ApiUrl_for } from "./apiUrl";
 import { JsonStore_create } from "./jsonStore";
+import { PlanSyncFetch_post } from "./planSyncFetch";
 import { CloudStore, SupabaseClient_signedIn } from "./supabaseClient";
 
 export const AccountPlanStore = JsonStore_create("bebear_account_plan", AccountPlan_parse, AccountPlan_empty);
@@ -24,8 +25,11 @@ export function AccountPlanClient_markActivating(userId: string): Promise<void> 
   return save({ status: "activating", userId });
 }
 
-export function AccountPlanClient_markCodeRedeemed(userId: string): Promise<void> {
-  return save({ status: "known", userId, plan: "plus", grant: "code", canManage: false });
+export async function AccountPlanClient_markCodeRedeemed(userId: string): Promise<void> {
+  const sessionUserId = (await CloudStore.load()).session?.userId;
+  await AccountPlanStore.update((current) =>
+    AccountPlan_accept(current, sessionUserId, AccountPlan_codeRedeemed(current, userId))
+  );
 }
 
 // Only the newest request may save, so a slow answer from app start cannot undo a purchase made after it.
@@ -38,10 +42,11 @@ export async function AccountPlanClient_sync(): Promise<IAccountPlanSync> {
     return "error";
   }
   try {
-    const response = await fetch(ApiUrl_for("/api/billing/sync"), {
-      method: "POST",
-      headers: { Authorization: `Bearer ${auth.value.accessToken}` },
-    });
+    const response = await PlanSyncFetch_post(
+      auth.value.accessToken,
+      () => request === latestSync,
+      () => AccountPlanStore.get().status === "activating"
+    );
     const next = AccountPlan_parseSync(auth.value.userId, await response.json().catch(() => undefined));
     if (!response.ok || next == null || next.status !== "known") {
       return "error";
@@ -51,7 +56,10 @@ export async function AccountPlanClient_sync(): Promise<IAccountPlanSync> {
     }
     await save(next);
     const saved = AccountPlanStore.get();
-    return saved.status === "known" && saved.userId === auth.value.userId ? saved.plan : "stale";
+    if (saved.status === "unknown" || saved.userId !== auth.value.userId) {
+      return "stale";
+    }
+    return saved.status === "known" ? saved.plan : next.plan;
   } catch {
     return "error";
   }

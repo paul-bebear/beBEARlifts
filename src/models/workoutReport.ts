@@ -217,6 +217,24 @@ export function WorkoutReport_answer(report: IWorkoutReport, key: string, answer
   return { ...report, answers: { ...report.answers, [key]: answer } };
 }
 
+function mapReport(log: IReportLog, workoutId: number, edit: (r: IWorkoutReport) => IWorkoutReport): IReportLog {
+  const found = WorkoutReport_find(log, workoutId);
+  return found == null ? log : WorkoutReport_put(log, edit(found));
+}
+
+export function WorkoutReport_withSummary(log: IReportLog, workoutId: number, summary: string): IReportLog {
+  return mapReport(log, workoutId, (r) => ({ ...r, summary }));
+}
+
+export function WorkoutReport_withAnswer(
+  log: IReportLog,
+  workoutId: number,
+  key: string,
+  answer: IReportAnswer
+): IReportLog {
+  return mapReport(log, workoutId, (r) => WorkoutReport_answer(r, key, answer));
+}
+
 // The lines the AI turns into a summary. Answers are the user's own words for what happened.
 export function WorkoutReport_facts(report: IWorkoutReport): string[] {
   return report.items.map((it) => {

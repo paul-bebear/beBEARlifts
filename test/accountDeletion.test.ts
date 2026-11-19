@@ -50,6 +50,17 @@ describe("AccountDeletion", () => {
       expect(AccountDeletion_subscriptionNote(plus("lifetime"), "u1")).to.equal(undefined);
     });
 
+    it("warns a user whose code ranks first but who also has a live subscription", () => {
+      const codeAndSubscription: IAccountPlanState = {
+        status: "known",
+        userId: "u1",
+        plan: "plus",
+        grant: "code",
+        canManage: true,
+      };
+      expect(AccountDeletion_subscriptionNote(codeAndSubscription, "u1")).to.equal(AccountDeletion_subscriptionLine);
+    });
+
     it("stays silent for free, unknown, activating and another user's plan", () => {
       expect(AccountDeletion_subscriptionNote({ status: "known", userId: "u1", plan: "free" }, "u1")).to.equal(
         undefined

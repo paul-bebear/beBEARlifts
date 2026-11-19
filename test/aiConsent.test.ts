@@ -20,14 +20,27 @@ describe("AI consent", () => {
       null,
       "allowed",
       [],
-      { version: 2, choice: "allowed", decidedAt: 123 },
-      { version: 1, choice: "allowed" },
-      { version: 1, choice: true, decidedAt: 123 },
-      { version: 1, choice: "allowed", decidedAt: NaN },
-      { version: 1, choice: "allowed", decidedAt: -1 },
+      { version: 3, choice: "allowed", decidedAt: 123 },
+      { version: 2, choice: "allowed" },
+      { version: 2, choice: true, decidedAt: 123 },
+      { version: 2, choice: "allowed", decidedAt: NaN },
+      { version: 2, choice: "allowed", decidedAt: -1 },
     ]) {
       expect(AiConsent_maySend(AiConsent_parse(raw))).to.equal(false);
     }
+  });
+
+  it("asks again after a version 1 allowance, which agreed to the old 'not kept' text", () => {
+    const consent = AiConsent_parse({ version: 1, choice: "allowed", decidedAt: 123 });
+    expect(consent).to.deep.equal(AiConsent_empty());
+    expect(AiConsent_maySend(consent)).to.equal(false);
+    expect(AiConsent_shouldAsk(consent, "auto")).to.equal(true);
+  });
+
+  it("keeps a version 1 Not now as declined", () => {
+    const consent = AiConsent_parse({ version: 1, choice: "declined", decidedAt: 123 });
+    expect(consent).to.deep.equal(AiConsent_decide(false, 123));
+    expect(AiConsent_shouldAsk(consent, "auto")).to.equal(false);
   });
 
   it("round trips decisions and hides AI controls after Not now", () => {
@@ -56,9 +69,12 @@ describe("AI consent", () => {
 });
 
 describe("AI consent disclosure", () => {
-  it("names the provider, the gateway and that nothing is kept", () => {
+  it("names the provider, the gateway and that Anthropic may keep requests", () => {
     expect(AiConsent_disclosure).to.contain("Anthropic");
     expect(AiConsent_disclosure).to.contain("Vercel's AI Gateway");
-    expect(AiConsent_disclosure).to.contain("are not kept");
+    expect(AiConsent_disclosure).to.contain("may keep them for a limited time");
+    expect(AiConsent_disclosure).not.to.contain("not kept");
+    expect(AiConsent_disclosure).to.contain("body-scan printout");
+    expect(AiConsent_disclosure).to.contain("Google may use them to improve its products");
   });
 });

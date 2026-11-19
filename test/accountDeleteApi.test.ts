@@ -2,7 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import {
-  AccountDelete_objectPaths,
+  AccountDelete_listingEntries,
   AccountDelete_signInMessage,
   AccountDelete_userId,
   POST,
@@ -48,14 +48,66 @@ describe("api/account/delete", () => {
     expect(AccountDelete_userId(200, undefined)).to.equal(undefined);
   });
 
-  it("turns a storage listing into full paths and skips folders", () => {
+  it("splits a storage listing into full file paths and folder prefixes", () => {
     const listing = [
       { id: "a", name: "latest.json" },
-      { id: null, name: "nested" },
+      { id: null, name: "photos" },
       { id: "b", name: "day-3.json" },
     ];
-    expect(AccountDelete_objectPaths("u1", listing)).to.deep.equal(["u1/latest.json", "u1/day-3.json"]);
-    expect(AccountDelete_objectPaths("u1", { error: "x" })).to.equal(undefined);
+    expect(AccountDelete_listingEntries("u1", listing)).to.deep.equal({
+      files: ["u1/latest.json", "u1/day-3.json"],
+      folders: ["u1/photos"],
+      count: 3,
+    });
+    expect(AccountDelete_listingEntries("u1", { error: "x" })).to.equal(undefined);
+  });
+
+  it("deletes the progress photos inside the photos folder", async () => {
+    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(1).resolves(
+      reply([
+        { id: "a", name: "latest.json" },
+        { id: null, name: "photos" },
+      ])
+    );
+    fetchStub.onCall(2).resolves(reply([{ id: "p", name: "1700000000000.jpg" }]));
+    fetchStub.onCall(3).resolves(reply([]));
+    fetchStub.onCall(4).resolves(reply([]));
+    fetchStub.onCall(5).resolves(reply({}));
+    expect((await POST(post())).status).to.equal(200);
+    expect(JSON.parse(fetchStub.getCall(2).args[1].body).prefix).to.equal("u1/photos");
+    expect(JSON.parse(fetchStub.getCall(3).args[1].body)).to.deep.equal({
+      prefixes: ["u1/latest.json", "u1/photos/1700000000000.jpg"],
+    });
+    expect(fetchStub.lastCall.args[0]).to.equal(`${Supabase_origin}/auth/v1/admin/users/u1`);
+  });
+
+  it("pages past 1000 objects and deletes them in batches of 1000", async () => {
+    const files = (from: number, n: number): Array<{ id: string; name: string }> =>
+      Array.from({ length: n }, (_, i) => ({ id: `m${from + i}`, name: `${from + i}.jpg` }));
+    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(1).resolves(reply([]));
+    fetchStub.onCall(2).resolves(reply(files(0, 1000)));
+    fetchStub.onCall(3).resolves(reply(files(1000, 5)));
+    fetchStub.onCall(4).resolves(reply([]));
+    fetchStub.onCall(5).resolves(reply([]));
+    fetchStub.onCall(6).resolves(reply({}));
+    expect((await POST(post())).status).to.equal(200);
+    expect(JSON.parse(fetchStub.getCall(3).args[1].body)).to.include({ prefix: "u1", offset: 1000 });
+    expect(JSON.parse(fetchStub.getCall(4).args[1].body).prefixes).to.have.length(1000);
+    const second = JSON.parse(fetchStub.getCall(5).args[1].body).prefixes;
+    expect(second).to.deep.equal(["u1/1000.jpg", "u1/1001.jpg", "u1/1002.jpg", "u1/1003.jpg", "u1/1004.jpg"]);
+    expect(fetchStub.callCount).to.equal(7);
+  });
+
+  it("keeps the account when a folder inside the backups cannot be listed", async () => {
+    fetchStub.onCall(0).resolves(reply({ id: "u1" }));
+    fetchStub.onCall(1).resolves(reply([{ id: null, name: "photos" }]));
+    fetchStub.onCall(2).resolves(reply({ message: "boom" }, 500));
+    const response = await POST(post());
+    expect(response.status).to.equal(502);
+    expect((await response.json()).error).to.include("cloud backups");
+    expect(fetchStub.callCount).to.equal(3);
   });
 
   it("refuses without the service key or a bearer token", async () => {

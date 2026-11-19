@@ -1,4 +1,5 @@
 import { IOAuthPending, OAuthFlow_parsePending } from "./oauthFlow";
+import { StoreRecovery_readError } from "./storeRecovery";
 
 export interface ICloudSession {
   email: string;
@@ -36,6 +37,7 @@ export interface ICloudState {
   restoreOffer?: ICloudRestoreOffer;
   pending?: IOAuthPending;
   signInError?: string;
+  backupBlocked?: string;
 }
 
 export interface ICloudStoresInput {
@@ -132,7 +134,32 @@ export function CloudBackup_parse(raw: unknown): ICloudState {
   if (str(r.signInError) != null) {
     state.signInError = r.signInError as string;
   }
+  if (str(r.backupBlocked) != null) {
+    state.backupBlocked = r.backupBlocked as string;
+  }
   return state;
+}
+
+export const CloudBackup_blockedText =
+  "Automatic backups are paused. Some saved data on this phone could not be read. " +
+  "Close and reopen the app, then answer the question about that data.";
+
+// update() reads the cloud store first, and a damaged cloud store would show the recovery question on every return to the app.
+export function CloudBackup_attemptWrites(
+  result: { ok: true; value: number | undefined } | { ok: false; error: string }
+): boolean {
+  return result.ok ? result.value != null : result.error === StoreRecovery_readError;
+}
+
+// A damaged store fails every later backup the same way. A network error can pass on the next try, so it changes nothing.
+export function CloudBackup_afterAttempt(
+  state: ICloudState,
+  result: { ok: true; value: number | undefined } | { ok: false; error: string }
+): ICloudState {
+  if (!result.ok) {
+    return result.error === StoreRecovery_readError ? { ...state, backupBlocked: CloudBackup_blockedText } : state;
+  }
+  return result.value != null && state.backupBlocked != null ? { ...state, backupBlocked: undefined } : state;
 }
 
 function summary(raw: unknown): ICloudBackupSummary | undefined {
@@ -141,6 +168,20 @@ function summary(raw: unknown): ICloudBackupSummary | undefined {
     return undefined;
   }
   return { exportedAt: str(r.exportedAt), workouts: r.workouts, foodDays: r.foodDays };
+}
+
+// Older Supabase Auth answers a dead refresh token with invalid_grant, newer with an error_code. A 401 can come from the
+// API gateway for every user, so it never signs anyone out.
+const deadRefreshCodes = [
+  "refresh_token_not_found",
+  "refresh_token_already_used",
+  "session_not_found",
+  "session_expired",
+];
+
+export function CloudBackup_isDeadRefresh(status: number | undefined, body: unknown): boolean {
+  const r = (body ?? {}) as Record<string, unknown>;
+  return status === 400 && (r.error === "invalid_grant" || deadRefreshCodes.some((code) => code === r.error_code));
 }
 
 export function CloudBackup_needsRefresh(session: ICloudSession, now: number): boolean {

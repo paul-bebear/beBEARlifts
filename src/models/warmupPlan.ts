@@ -145,6 +145,17 @@ export function WarmupPlan_build(
   return { workoutId, source, items, done: items.map(() => false), createdAt: now };
 }
 
+export function WarmupPlan_choose(
+  workoutId: number,
+  exercises: IWarmupExercise[],
+  aiItems: IWarmupItem[] | undefined,
+  now: number
+): IWarmupPlan {
+  return aiItems != null
+    ? WarmupPlan_build(workoutId, "ai", aiItems, now)
+    : WarmupPlan_build(workoutId, "rules", WarmupPlan_rules(exercises), now);
+}
+
 export function WarmupPlan_toggle(plan: IWarmupPlan, index: number): IWarmupPlan {
   return { ...plan, done: plan.done.map((d, i) => (i === index ? !d : d)) };
 }
