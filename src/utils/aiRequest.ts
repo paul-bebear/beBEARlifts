@@ -25,7 +25,7 @@ export function AiRequest_gate(auth: ICloudResult<string> | "declined"): IAiRequ
   }
   if (!auth.ok) {
     return auth.error === Supabase_notSignedIn
-      ? { ok: false, reason: "signedOut", error: auth.error }
+      ? { ok: false, reason: "signedOut", error: AiRequest_signInMessage }
       : { ok: false, reason: "noToken", error: auth.error };
   }
   return { ok: true, token: auth.value };
@@ -44,7 +44,7 @@ export async function AiRequest_post(
 ): Promise<IAiRequestResult> {
   const gate = await AiRequest_check();
   if (!gate.ok) {
-    return { ok: false, error: gate.reason === "signedOut" ? AiRequest_signInMessage : gate.error };
+    return { ok: false, error: gate.error };
   }
   if (!AiConsent_maySend(await AiConsentStore.load())) {
     return { ok: false, error: AiConsent_disabledMessage };

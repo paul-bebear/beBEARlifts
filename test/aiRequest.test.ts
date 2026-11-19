@@ -48,8 +48,12 @@ describe("AiRequest_gate", () => {
     expect(AiRequest_gate(signedInAuth)).to.deep.equal({ ok: true, token: "token" });
   });
 
-  it("says not signed in when consent is given and nobody is signed in", () => {
-    expect(AiRequest_gate(signedOutAuth)).to.deep.equal({ ok: false, reason: "signedOut", error: "Not signed in" });
+  it("gives the web label panel the sign-in steps instead of the raw Not signed in", () => {
+    expect(AiRequest_gate(signedOutAuth)).to.deep.equal({
+      ok: false,
+      reason: "signedOut",
+      error: AiRequest_signInMessage,
+    });
   });
 
   it("keeps the connection error when a signed-in user is offline and the token needs a refresh", () => {
