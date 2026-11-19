@@ -6,7 +6,6 @@ import {
   OnboardingAnswers_empty,
   OnboardingAnswers_foodTargets,
   OnboardingAnswers_gymEquipment,
-  OnboardingAnswers_isYouth,
   OnboardingAnswers_mergeProfile,
   OnboardingAnswers_planInput,
   OnboardingAnswers_programGoal,
@@ -61,11 +60,8 @@ describe("OnboardingAnswers", () => {
     expect(OnboardingAnswers_empty("de-DE")).to.include({ heightUnit: "cm", unit: "kg" });
     expect(OnboardingAnswers_empty("en-GB")).to.include({ unit: "kg" });
   });
-  it("counts a lifter under 18 as youth", () => {
+  it("rounds a typed age in the plan input", () => {
     const answers = OnboardingAnswers_empty();
-    expect(OnboardingAnswers_isYouth({ ...answers, age: "16" })).to.equal(true);
-    expect(OnboardingAnswers_isYouth({ ...answers, age: "18" })).to.equal(false);
-    expect(OnboardingAnswers_isYouth({ ...answers, age: "" })).to.equal(false);
     expect(OnboardingAnswers_planInput({ ...answers, age: "16.4" }).age).to.equal(16);
   });
   it("passes available days to the plan input and leaves unanswered days absent", () => {

@@ -41,8 +41,6 @@ export interface IOnboardingAnswers {
   plan: string;
 }
 
-const youthAge = 18;
-
 // Only these regions still weigh people in pounds and measure them in feet and inches.
 const imperialRegions = ["US", "LR", "MM"];
 
@@ -102,11 +100,6 @@ export function OnboardingAnswers_ageNote(answers: IOnboardingAnswers): string |
     goal: "gain",
   };
   return FoodTargets_bodyError(stand);
-}
-
-export function OnboardingAnswers_isYouth(answers: IOnboardingAnswers): boolean {
-  const age = OnboardingAnswers_age(answers);
-  return age != null && age < youthAge;
 }
 
 export function OnboardingAnswers_planInput(answers: IOnboardingAnswers): IBearPlanInput {

@@ -4,7 +4,7 @@ import { FoodLog_dayKey } from "./foodLog";
 import { BearComparison_for } from "./bearComparison";
 import { BearTier_all, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { IHistoryRecord } from "../types";
-import { LocalDay_ms, LocalDay_start } from "./localDay";
+import { LocalDay_shift, LocalDay_start } from "./localDay";
 import { DayNames_dayMonth, DayNames_weekdaysLong } from "./dayNames";
 
 export function BearText_kg(kg: number): string {
@@ -28,10 +28,10 @@ export function BearText_levelLine(progress: IBearTierProgress): string {
 function since(time: number, now: number): string {
   const date = new Date(time);
   const startOfToday = LocalDay_start(now);
-  if (time >= startOfToday - LocalDay_ms) {
+  if (time >= LocalDay_shift(startOfToday, -1)) {
     return time >= startOfToday ? "today" : "yesterday";
   }
-  if (time >= startOfToday - 6 * LocalDay_ms) {
+  if (time >= LocalDay_shift(startOfToday, -6)) {
     return DayNames_weekdaysLong[date.getDay()];
   }
   return DayNames_dayMonth(date);
