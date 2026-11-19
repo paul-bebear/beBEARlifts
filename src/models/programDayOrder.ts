@@ -2,6 +2,7 @@ import { SyntaxNode } from "@lezer/common";
 import { IPlannerProgram, IProgram, ISettings } from "../types";
 import { IEither } from "../utils/types";
 import { ObjectUtils_isEqual } from "../utils/object";
+import { CollectionUtils_setBy } from "../utils/collection";
 import { parser as LiftoscriptParser } from "../liftoscript";
 import { NodeName } from "../liftoscriptEvaluator";
 import { IPlannerEvalResult } from "../pages/planner/plannerExerciseEvaluator";
@@ -259,4 +260,15 @@ export function ProgramDayOrder_apply(
         : undefined,
     },
   };
+}
+
+export function ProgramDayOrder_afterMove(
+  pending: IPlannerDayMove[] | undefined,
+  result: IProgramDayOrderSave
+): { program: IProgram; dayMoves: IPlannerDayMove[] } {
+  return { program: result.draft, dayMoves: ProgramDayOrder_pendingAfter(pending, result) };
+}
+
+export function ProgramDayOrder_savedPrograms(programs: IProgram[], saved: IProgram): IProgram[] {
+  return CollectionUtils_setBy(programs, "id", saved.id, saved);
 }
