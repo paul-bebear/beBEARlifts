@@ -1,4 +1,4 @@
-import { BodyScans_fields, IBodyScanForm, IBodyScanUnit, IBodyScanValues } from "./bodyScans";
+import { BodyScans_fields, BodyScans_massIn, IBodyScanForm, IBodyScanUnit, IBodyScanValues } from "./bodyScans";
 import { IFoodCapturePhoto } from "./foodCapture";
 
 export interface IBodyScanRead extends IBodyScanValues {
@@ -7,8 +7,6 @@ export interface IBodyScanRead extends IBodyScanValues {
 
 export const BodyScanRead_unreadable = "Couldn't read that. Try a sharper photo, or type the numbers.";
 export const BodyScanRead_signIn = "Sign in to use AI scans";
-
-const lbPerKg = 2.20462;
 
 function positive(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
@@ -37,7 +35,7 @@ export function BodyScanRead_parse(text: string): IBodyScanRead | undefined {
   if (r.waterKg !== undefined) {
     delete scan.waterPct;
     if (positive(r.waterKg) && scan.weight != null && unit != null) {
-      const weightKg = unit === "kg" ? scan.weight : scan.weight / lbPerKg;
+      const weightKg = BodyScans_massIn(scan.weight, unit, "kg");
       const percent = (r.waterKg / weightKg) * 100;
       if (percent <= 100) {
         scan.waterPct = Math.round(percent * 10) / 10;
@@ -58,7 +56,7 @@ export function BodyScanRead_merge(form: IBodyScanForm, scan: IBodyScanRead, uni
       continue;
     }
     if (field.kind === "mass" && scan.unit !== unit) {
-      const converted = unit === "lb" ? value * lbPerKg : value / lbPerKg;
+      const converted = BodyScans_massIn(value, scan.unit!, unit);
       next[field.key] = `${Math.round(converted * 10) / 10}`;
     } else {
       next[field.key] = `${value}`;

@@ -8,7 +8,7 @@ import {
   IPersonalRecords,
 } from "./history";
 import { Exercise_get, Exercise_synergistMusclesGroups, Exercise_targetMusclesGroups } from "./exercise";
-import { Weight_convertTo } from "./weight";
+import { Weight_convertTo, Weight_kgPerLb } from "./weight";
 import { BearTier_floorKg, BearTier_progress, IBearLevel, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { BearArt_cardSprite } from "./bearArt";
 import { IBearFur, IBearLine } from "./bearStoreData";
@@ -77,7 +77,6 @@ export interface IWorkoutShareInput {
 
 const receiptMaxLines = 6;
 const maxIcons = 24;
-const kgPerLb = 0.45359237;
 
 export interface IWorkoutStoryStats {
   weight: IWeight;
@@ -109,12 +108,12 @@ function setsWord(sets: number): string {
   return sets === 1 ? "set" : "sets";
 }
 
-export function WorkoutStoryCard_isLoaded(stats: IWorkoutStoryStats): boolean {
+export function WorkoutStoryCard_hasWeight(stats: IWorkoutStoryStats): boolean {
   return stats.weightKg > 0;
 }
 
 export function WorkoutStoryCard_headline(stats: IWorkoutStoryStats): IWorkoutHeadline {
-  return WorkoutStoryCard_isLoaded(stats)
+  return WorkoutStoryCard_hasWeight(stats)
     ? { label: "LIFTED TODAY", value: WorkoutStoryCard_weightNumber(stats.weight), unit: stats.weight.unit }
     : { label: "TRAINED TODAY", value: `${stats.sets}`, unit: setsWord(stats.sets) };
 }
@@ -124,7 +123,7 @@ export function WorkoutStoryCard_setsText(sets: number): string {
 }
 
 export function WorkoutStoryCard_summary(stats: IWorkoutStoryStats, tail: string): string {
-  const weight = WorkoutStoryCard_isLoaded(stats)
+  const weight = WorkoutStoryCard_hasWeight(stats)
     ? [`${WorkoutStoryCard_weightNumber(stats.weight)} ${stats.weight.unit}`]
     : [];
   return [...weight, stats.duration, tail].join(" · ");
@@ -205,7 +204,7 @@ export function WorkoutStoryCard_receipt(
     date: new Date(record.startTime).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
     lines,
     moreCount: Math.max(0, entries.length - lines.length),
-    total: WorkoutStoryCard_isLoaded(stats)
+    total: WorkoutStoryCard_hasWeight(stats)
       ? `${WorkoutStoryCard_weightNumber(stats.weight)} ${stats.weight.unit}`
       : WorkoutStoryCard_setsText(stats.sets),
     prCount: WorkoutStoryCard_prCount(record, prs),
@@ -218,10 +217,10 @@ export function WorkoutStoryCard_toNext(
   lifetimeKg: number = tier.tier.minKg
 ): string {
   if (tier.next == null) {
-    const total = settings.units === "lb" ? lifetimeKg / kgPerLb : lifetimeKg;
+    const total = settings.units === "lb" ? lifetimeKg / Weight_kgPerLb : lifetimeKg;
     return `${Math.round(total).toLocaleString("en-US")} ${settings.units} lifetime`;
   }
-  const amount = settings.units === "lb" ? tier.kgToNext / kgPerLb : tier.kgToNext;
+  const amount = settings.units === "lb" ? tier.kgToNext / Weight_kgPerLb : tier.kgToNext;
   return `${Math.ceil(amount).toLocaleString("en-US")} ${settings.units} to Level ${tier.next.level} · ${tier.next.name}`;
 }
 

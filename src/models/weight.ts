@@ -573,6 +573,8 @@ export function Weight_convertTo(
   }
 }
 
+export const Weight_kgPerLb = 0.45359237;
+
 export function Weight_compare(a: IWeight, b: IWeight): number {
   return a.value - Weight_convertTo(b, a.unit).value;
 }

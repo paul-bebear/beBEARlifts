@@ -6,6 +6,7 @@ import {
   Weight_calculatePlates,
   Weight_decrement,
   Weight_increment,
+  Weight_kgPerLb,
   Weight_platesWeight,
   Weight_round,
   Weight_formatOneSide,
@@ -229,5 +230,10 @@ describe("Weight", () => {
         expect(Weight_strictParse(s), `expected ${JSON.stringify(s)} to be rejected`).to.equal(undefined);
       }
     });
+  });
+
+  it("exports the exact pounds-to-kilograms factor", () => {
+    expect(Weight_kgPerLb).to.equal(0.45359237);
+    expect(100 * Weight_kgPerLb).to.be.closeTo(45.359237, 1e-9);
   });
 });

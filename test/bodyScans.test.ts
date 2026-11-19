@@ -6,6 +6,7 @@ import {
   BodyScans_fields,
   BodyScans_formatDelta,
   BodyScans_fromForm,
+  BodyScans_massIn,
   BodyScans_parse,
   BodyScans_put,
   BodyScans_readForm,
@@ -103,5 +104,17 @@ describe("BodyScans", () => {
     const older: IBodyScan = { id: 1, timestamp: day, unit: "kg", weight: 80 };
     const newer: IBodyScan = { id: 2, timestamp: 2 * day, unit: "kg", weight: 82 };
     expect(BodyScans_change(field("weight"), newer, older)?.trend).to.equal("neutral");
+  });
+
+  it("converts mass between kg and lb the same way for every weight", () => {
+    const kgToLb = [99.2079, 132.938586, 154.3234, 175.928676, 181.660688, 220.462, 388.01312, 552.25731];
+    const lbToKg = [
+      20.41168092, 27.35165244, 31.75150366, 36.19671417, 37.37605574, 45.35929094, 79.83235206, 113.62502381,
+    ];
+    [45, 60.3, 70, 79.8, 82.4, 100, 176, 250.5].forEach((w, i) => {
+      expect(BodyScans_massIn(w, "kg", "lb")).to.be.closeTo(kgToLb[i], 1e-6);
+      expect(BodyScans_massIn(w, "lb", "kg")).to.be.closeTo(lbToKg[i], 1e-6);
+      expect(BodyScans_massIn(w, "kg", "kg")).to.equal(w);
+    });
   });
 });
