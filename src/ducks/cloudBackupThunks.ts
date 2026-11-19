@@ -143,7 +143,7 @@ async function backUp(mode: ICloudBackupMode, getState: () => IState): Promise<I
       return { ok: false, error: CloudBackup_offerPendingError };
     }
   }
-  const { text, now, stores } = await FullBackupFile_build(() => getState().storage);
+  const { text, now, stores } = await FullBackupFile_build(() => getState().storage, true);
   const result = await CloudBackupClient_upload(text, {
     exportedAt: new Date(now).toISOString(),
     workouts: CloudBackup_workoutsMark(getState().storage.history),
@@ -170,7 +170,7 @@ export function Thunk_cloudBackup(
     if (CloudBackup_attemptWrites(attempt)) {
       await CloudStore.update((state) => CloudBackup_afterAttempt(state, attempt)).catch(() => undefined);
     }
-    if (result.ok) {
+    if (result.ok && result.value != null) {
       await ProgressPhotoCloud_sync().catch(() => undefined);
     }
     if (onResult != null) {

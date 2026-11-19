@@ -1559,16 +1559,23 @@ export function Thunk_maybeShowOnloadModal(): IThunk {
 // Offline-only builds keep data on the phone. A recent cloud upload counts as a backup, as an Export everything file does.
 export function Thunk_maybeRemindBackup(): IThunk {
   return async (dispatch, getState) => {
-    const now = Date.now();
-    const local = BackupReminderMarks_read();
-    const cloudAt = (await CloudStore.load()).lastBackupAt;
-    const marks = { ...local, lastBackupAt: Math.max(local.lastBackupAt ?? 0, cloudAt ?? 0) || undefined };
-    if (!OfflineOnly_isEnabled() || !BackupReminder_isDue(marks, getState().storage.history.length, now)) {
+    if (!OfflineOnly_isEnabled()) {
       return;
     }
-    BackupReminderMarks_recordReminder(now);
-    if (await Dialog_confirm(BackupReminder_message(marks.lastBackupAt, now))) {
-      dispatch(Thunk_pushScreen("settings", undefined, { tab: "me" }));
+    try {
+      const now = Date.now();
+      const local = BackupReminderMarks_read();
+      const cloudAt = (await CloudStore.load()).lastBackupAt;
+      const marks = { ...local, lastBackupAt: Math.max(local.lastBackupAt ?? 0, cloudAt ?? 0) || undefined };
+      if (!BackupReminder_isDue(marks, getState().storage.history.length, now)) {
+        return;
+      }
+      BackupReminderMarks_recordReminder(now);
+      if (await Dialog_confirm(BackupReminder_message(marks.lastBackupAt, now))) {
+        dispatch(Thunk_pushScreen("settings", undefined, { tab: "me" }));
+      }
+    } catch (error) {
+      Rollbar.error(error as Error);
     }
   };
 }

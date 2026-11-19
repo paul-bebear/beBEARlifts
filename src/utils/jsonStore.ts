@@ -133,16 +133,17 @@ export function JsonStore_create<T>(
 
   function load(): Promise<T> {
     if (loadPromise == null) {
-      loadPromise = writeChain
+      const reading = writeChain
         .catch(() => undefined)
         .then(async () => {
           current = await read();
           notify();
-        })
-        .catch((error) => {
-          loadPromise = undefined;
-          offerRecoveryOnce(error);
         });
+      writeChain = reading.catch(() => undefined);
+      loadPromise = reading.catch((error) => {
+        loadPromise = undefined;
+        offerRecoveryOnce(error);
+      });
     }
     return loadPromise.then(() => current);
   }
