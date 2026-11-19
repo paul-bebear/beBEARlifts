@@ -32,6 +32,16 @@ describe("FoodApi request time limit", () => {
     expect(result).to.deep.equal({ ok: false, error: "No connection. Food lookup needs a signal." });
   });
 
+  it("returns no product when both sources answer and neither has it", async () => {
+    sinon
+      .stub(globalThis, "fetch")
+      .callsFake(
+        async (url) =>
+          new Response(JSON.stringify(String(url).includes("usda") ? { foods: [] } : { status: 0 }), { status: 200 })
+      );
+    expect(await FoodApi_lookupBarcode("111", [])).to.deep.equal({ ok: true, value: undefined });
+  });
+
   it("returns the product when the server answers in time", async () => {
     sinon.stub(globalThis, "fetch").callsFake(async () => new Response(JSON.stringify({ status: 0 }), { status: 200 }));
     const result = await FoodApi_lookupBarcode("111", []);
