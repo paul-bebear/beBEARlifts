@@ -56,13 +56,8 @@ export function FeedModeration_filter<T extends Pick<IFeedPost, "userId">>(posts
 }
 
 export function FeedModeration_items(items: IFeedItem[], blocked: IBlockedUser[]): IFeedItem[] {
-  const ids = new Set(
-    FeedModeration_filter(
-      items.map((i) => i.post),
-      blocked
-    )
-  );
-  return items.filter((i) => ids.has(i.post));
+  const blockedIds = new Set(blocked.map((u) => u.userId));
+  return items.filter((i) => !blockedIds.has(i.post.userId));
 }
 
 // An own workout post goes away through the share switch on the workout, so only an own meal gets Remove.
@@ -81,9 +76,17 @@ export function FeedModeration_reportError(reason: string, note: string): string
       : undefined;
 }
 
+// Postgres names the unique index in its error text. The user needs to know only that the report exists.
+export function FeedModeration_alreadyReportedText(error: string): string {
+  return /post_reports_reporter|duplicate key/i.test(error) ? "You already reported this post" : error;
+}
+
 export function FeedModeration_reportOutcome(result: { ok: true } | { ok: false; error: string }): {
   message: string;
   keepOpen: boolean;
 } {
-  return { message: result.ok ? "Thanks, we'll review it" : result.error, keepOpen: !result.ok };
+  return {
+    message: result.ok ? "Thanks, we'll review it" : FeedModeration_alreadyReportedText(result.error),
+    keepOpen: !result.ok,
+  };
 }
