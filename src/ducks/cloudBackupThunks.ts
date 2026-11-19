@@ -170,7 +170,7 @@ export function Thunk_cloudBackup(
     if (CloudBackup_attemptWrites(attempt)) {
       await CloudStore.update((state) => CloudBackup_afterAttempt(state, attempt)).catch(() => undefined);
     }
-    if (result.ok && result.value != null) {
+    if (result.ok) {
       await ProgressPhotoCloud_sync().catch(() => undefined);
     }
     if (onResult != null) {

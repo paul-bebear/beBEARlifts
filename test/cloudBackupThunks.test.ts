@@ -708,13 +708,20 @@ describe("Cloud backup thunks", () => {
     expect(confirm.called).to.equal(false);
   });
 
-  it("syncs photos only after an upload", async () => {
-    await run(Thunk_cloudBackup("auto"));
-    expect(photoSync.called).to.equal(false);
+  it("keeps syncing photos on a run with no backup due, so a half-done batch continues", async () => {
     state.storage.history = workouts([5]);
     await run(Thunk_cloudBackup("auto"));
     expect(upload.callCount).to.equal(1);
     expect(photoSync.callCount).to.equal(1);
+    cloudState = {
+      ...cloudState,
+      lastBackupAt: now,
+      backedUpWorkouts: CloudBackup_workoutsMark(state.storage.history),
+      backedUpStores: CloudBackup_storesMark(none),
+    };
+    await run(Thunk_cloudBackup("auto"));
+    expect(upload.callCount).to.equal(1);
+    expect(photoSync.callCount).to.equal(2);
   });
 
   it("uploads the cloud copy without indentation", async () => {
