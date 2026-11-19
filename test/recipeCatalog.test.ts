@@ -66,6 +66,17 @@ describe("RecipeCatalog data", () => {
     }
   });
 
+  it("writes the rounded estimate and the printed numbers into every check text", () => {
+    for (const r of RecipeCatalog_all()) {
+      const estimate = RecipeCatalog_perServing(r);
+      const printed = r.printedPerServing;
+      expect(r.nutritionCheck, r.id).to.contain(
+        `Estimate ${Math.round(estimate.calories)} Cal, ${estimate.protein.toFixed(1)} g protein`
+      );
+      expect(r.nutritionCheck, r.id).to.contain(`The book prints ${printed.calories} Cal, ${printed.protein} g.`);
+    }
+  });
+
   it("names the book and the PDF pages", () => {
     const line = RecipeCatalog_sourceLine(RecipeCatalog_find("ginger-beef-broccoli")!);
     expect(line).to.equal(
