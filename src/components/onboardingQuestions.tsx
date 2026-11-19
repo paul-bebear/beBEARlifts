@@ -2,7 +2,8 @@ import { Dispatch, JSX } from "react";
 import { IOnboardingEvent, IOnboardingState } from "../models/onboarding";
 import { OnboardingCommand_images } from "../utils/onboardingCommand";
 import { OnboardingHistory_summary } from "../models/onboardingHistory";
-import { IOnboardingAnswers } from "../models/onboardingAnswers";
+import { IOnboardingAnswers, OnboardingAnswers_toggle } from "../models/onboardingAnswers";
+import { OnboardingWelcome_field } from "./onboardingWelcome";
 import { FoodTargets_activities, FoodTargets_goals } from "../models/foodTargets";
 import {
   OnboardingChoices_dayLabel,
@@ -10,13 +11,12 @@ import {
   OnboardingChoices_goals,
 } from "../models/onboardingChoices";
 
-const field = "w-full p-3 border rounded-xl bg-background-default border-border-prominent text-text-primary";
 const chip = "flex items-center gap-3 w-full p-4 text-left text-lg border-2 rounded-2xl";
-const chipOn = `${chip} border-yellow-500 bg-background-cardyellow`;
-const chipOff = `${chip} border-border-prominent`;
+export const chipOn = `${chip} border-yellow-500 bg-background-cardyellow`;
+export const chipOff = `${chip} border-border-prominent`;
 const pill = "px-4 py-2 border-2 rounded-full";
-const pillOn = `${pill} border-yellow-500 bg-background-cardyellow`;
-const pillOff = `${pill} border-border-prominent`;
+export const pillOn = `${pill} border-yellow-500 bg-background-cardyellow`;
+export const pillOff = `${pill} border-border-prominent`;
 
 export function OnboardingFoodQuestions(props: {
   a: IOnboardingAnswers;
@@ -37,9 +37,7 @@ export function OnboardingFoodQuestions(props: {
               key={activity.key}
               className={a.activity === activity.key ? chipOn : chipOff}
               aria-pressed={a.activity === activity.key}
-              onClick={() =>
-                emit({ type: "answers", patch: { activity: a.activity === activity.key ? undefined : activity.key } })
-              }
+              onClick={() => emit({ type: "answers", patch: OnboardingAnswers_toggle(a, "activity", activity.key) })}
             >
               <span className="flex flex-col">
                 <span className="font-bold">{activity.label}</span>
@@ -57,9 +55,7 @@ export function OnboardingFoodQuestions(props: {
               key={goal.key}
               className={a.foodGoal === goal.key ? pillOn : pillOff}
               aria-pressed={a.foodGoal === goal.key}
-              onClick={() =>
-                emit({ type: "answers", patch: { foodGoal: a.foodGoal === goal.key ? undefined : goal.key } })
-              }
+              onClick={() => emit({ type: "answers", patch: OnboardingAnswers_toggle(a, "foodGoal", goal.key) })}
             >
               {goal.label}
             </button>
@@ -107,7 +103,7 @@ export function OnboardingWantQuestions(props: {
               key={days}
               className={a.days === days ? pillOn : pillOff}
               aria-pressed={a.days === days}
-              onClick={() => props.emit({ type: "answers", patch: { days: a.days === days ? undefined : days } })}
+              onClick={() => props.emit({ type: "answers", patch: OnboardingAnswers_toggle(a, "days", days) })}
             >
               {OnboardingChoices_dayLabel(days)}
             </button>
@@ -143,7 +139,7 @@ export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispa
       <label className="block">
         Screenshots
         <input
-          className={field}
+          className={OnboardingWelcome_field}
           type="file"
           accept="image/*"
           multiple
@@ -168,7 +164,7 @@ export function OnboardingQuestions(props: { form: IOnboardingState; emit: Dispa
       <label className="block">
         Plan, injuries, or other details (optional)
         <textarea
-          className={field}
+          className={OnboardingWelcome_field}
           rows={4}
           maxLength={6000}
           value={form.answers.plan}

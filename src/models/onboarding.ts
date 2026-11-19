@@ -2,6 +2,7 @@ import { IOnboardingAnswers, OnboardingAnswers_empty, OnboardingAnswers_planInpu
 import { IOnboardingAnswer } from "./onboardingAnswer";
 import { IOnboardingHistory } from "./onboardingHistory";
 import { Friends_normalizeHandle } from "./friends";
+import { Invite_parseHandle } from "./invite";
 import { IProgram } from "../types";
 import { BearPlan_recommend, IBearPlanCard } from "./bearPlanRecommend";
 import OnboardingLimits from "../../api/ai/_onboardingLimits.json";
@@ -97,6 +98,32 @@ export function Onboarding_mainAction(
     return { ...action, label: "Pick at least one", enabled: false };
   }
   return { ...action, enabled: state.command == null && !state.resizing };
+}
+
+export function Onboarding_inviteError(invite: string): string | undefined {
+  return invite !== "" && Invite_parseHandle(invite) == null
+    ? "Use 3–20 lowercase letters, numbers, or underscores."
+    : undefined;
+}
+
+export function Onboarding_welcomeEnabled(invite: string, busy: boolean): boolean {
+  return Onboarding_inviteError(invite) == null && !busy;
+}
+
+export async function Onboarding_welcomeContinue(
+  save: () => Promise<unknown>,
+  useAi: boolean
+): Promise<IOnboardingEvent> {
+  try {
+    await save();
+  } catch {
+    return { type: "failed", error: "Could not save the invite. Try again." };
+  }
+  return { type: "auth", signedIn: useAi };
+}
+
+export function Onboarding_importEvent(aiOn: boolean): IOnboardingEvent {
+  return aiOn ? { type: "import" } : { type: "failed", error: "Import needs AI turned on." };
 }
 
 export function Onboarding_canGoBack(state: IOnboardingState): boolean {

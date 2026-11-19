@@ -4,9 +4,13 @@ import {
   IOnboardingState,
   Onboarding_canGoBack,
   Onboarding_empty,
+  Onboarding_importEvent,
+  Onboarding_inviteError,
   Onboarding_mainAction,
   Onboarding_reduce,
   Onboarding_selectedCard,
+  Onboarding_welcomeContinue,
+  Onboarding_welcomeEnabled,
 } from "../src/models/onboarding";
 import { IHistoryRecord } from "../src/types";
 
@@ -135,5 +139,35 @@ describe("Onboarding steps", () => {
   });
   it("stores a typed invite handle without the @ and in lower case", () => {
     expect(Onboarding_reduce(Onboarding_empty(), { type: "invite", value: " @Paul_K" }).invite).to.equal("paul_k");
+  });
+  it("flags a bad invite and blocks Start until it is fixed or empty", () => {
+    expect(Onboarding_inviteError("")).to.equal(undefined);
+    expect(Onboarding_inviteError("paul_k")).to.equal(undefined);
+    for (const bad of ["ab", "Paul", "a".repeat(21), "no spaces"]) {
+      expect(Onboarding_inviteError(bad)).to.equal("Use 3–20 lowercase letters, numbers, or underscores.");
+      expect(Onboarding_welcomeEnabled(bad, false)).to.equal(false);
+    }
+    expect(Onboarding_welcomeEnabled("", false)).to.equal(true);
+    expect(Onboarding_welcomeEnabled("", true)).to.equal(false);
+  });
+  it("saves the invite, then moves on with or without AI, and reports a failed save", async () => {
+    let saved = 0;
+    const save = async (): Promise<void> => {
+      saved += 1;
+    };
+    expect(await Onboarding_welcomeContinue(save, true)).to.deep.equal({ type: "auth", signedIn: true });
+    expect(await Onboarding_welcomeContinue(save, false)).to.deep.equal({ type: "auth", signedIn: false });
+    expect(saved).to.equal(2);
+    const failing = async (): Promise<void> => {
+      throw new Error("offline");
+    };
+    expect(await Onboarding_welcomeContinue(failing, true)).to.deep.equal({
+      type: "failed",
+      error: "Could not save the invite. Try again.",
+    });
+  });
+  it("opens Import my own only when AI is on", () => {
+    expect(Onboarding_importEvent(true)).to.deep.equal({ type: "import" });
+    expect(Onboarding_importEvent(false)).to.deep.equal({ type: "failed", error: "Import needs AI turned on." });
   });
 });

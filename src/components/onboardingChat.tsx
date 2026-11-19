@@ -2,7 +2,9 @@ import { Dispatch, JSX, ReactNode, useEffect, useReducer, useRef, useState } fro
 import { ActivityIndicator, View } from "react-native";
 import {
   IOnboardingAnswers,
+  OnboardingAnswers_ageNote,
   OnboardingAnswers_empty,
+  OnboardingAnswers_toggle,
   OnboardingAnswers_togglePlace,
 } from "../models/onboardingAnswers";
 import { IDispatch } from "../ducks/types";
@@ -10,8 +12,10 @@ import {
   IOnboardingEvent,
   Onboarding_canGoBack,
   Onboarding_empty,
+  Onboarding_importEvent,
   Onboarding_mainAction,
   Onboarding_reduce,
+  Onboarding_welcomeContinue,
 } from "../models/onboarding";
 import { IBearPlacePick } from "../models/bearPlace";
 import { OnboardingChoices_experiences, OnboardingChoices_places } from "../models/onboardingChoices";
@@ -19,10 +23,14 @@ import { OnboardingCommand_run } from "../utils/onboardingCommand";
 import { CloudStore } from "../utils/supabaseClient";
 import { InviteClient_current, InviteClient_save, InviteStore } from "../utils/inviteClient";
 import {
+  chipOff,
+  chipOn,
   OnboardingFoodQuestions,
   OnboardingImportedPlan,
   OnboardingQuestions,
   OnboardingWantQuestions,
+  pillOff,
+  pillOn,
 } from "./onboardingQuestions";
 import { OnboardingWelcome, OnboardingWelcome_field } from "./onboardingWelcome";
 import { OnboardingPlanCards } from "./onboardingPlanCards";
@@ -34,13 +42,6 @@ import { IconHome } from "./icons/iconHome";
 import { useTabBarContentPadding } from "../navigation/useTabBarContentPadding";
 
 type IEmit = Dispatch<IOnboardingEvent>;
-
-const chip = "flex items-center gap-3 w-full p-4 text-left text-lg border-2 rounded-2xl";
-const chipOn = `${chip} border-yellow-500 bg-background-cardyellow`;
-const chipOff = `${chip} border-border-prominent`;
-const pill = "px-4 py-2 border-2 rounded-full";
-const pillOn = `${pill} border-yellow-500 bg-background-cardyellow`;
-const pillOff = `${pill} border-border-prominent`;
 
 function IconBars(): JSX.Element {
   return (
@@ -89,6 +90,7 @@ function PlaceScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
 
 function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element {
   const { a } = props;
+  const ageNote = OnboardingAnswers_ageNote(a);
   const patch = (value: Partial<IOnboardingAnswers>): void => props.emit({ type: "answers", patch: value });
   return (
     <>
@@ -117,6 +119,7 @@ function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
           onChange={(e) => patch({ age: e.currentTarget.value })}
         />
       </label>
+      {ageNote != null && <p className="text-text-secondary">{ageNote}</p>}
       <fieldset className="space-y-2">
         <legend>Height</legend>
         <div className="flex gap-2">
@@ -190,7 +193,7 @@ function AboutScreen(props: { a: IOnboardingAnswers; emit: IEmit }): JSX.Element
               key={sex}
               className={a.sex === sex ? pillOn : pillOff}
               aria-pressed={a.sex === sex}
-              onClick={() => patch({ sex: a.sex === sex ? undefined : sex })}
+              onClick={() => patch(OnboardingAnswers_toggle(a, "sex", sex))}
             >
               {sex === "male" ? "Male" : "Female"}
             </button>
@@ -251,9 +254,9 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
               showInvite={hadInvite || pending.handle != null}
               busy={busy}
               onContinue={() =>
-                InviteClient_save(form.invite)
-                  .then(() => emit({ type: "auth", signedIn: cloud.session != null && showAi }))
-                  .catch(() => emit({ type: "failed", error: "Could not save the invite. Try again." }))
+                Onboarding_welcomeContinue(() => InviteClient_save(form.invite), cloud.session != null && showAi).then(
+                  emit
+                )
               }
             />
           ) : form.step === "place" ? (
@@ -312,11 +315,7 @@ export function OnboardingChat(props: { dispatch: IDispatch; children: ReactNode
               <button
                 className="self-center p-3 text-text-link"
                 disabled={busy}
-                onClick={() =>
-                  AiConsent_ensure().then((ok) =>
-                    emit(ok ? { type: "import" } : { type: "failed", error: "Import needs AI turned on." })
-                  )
-                }
+                onClick={() => AiConsent_ensure().then((ok) => emit(Onboarding_importEvent(ok)))}
               >
                 Import my own
               </button>
