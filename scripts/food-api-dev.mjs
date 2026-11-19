@@ -46,4 +46,4 @@ http
       res.writeHead(500).end();
     });
   })
-  .listen(port, () => console.log(`api on http://localhost:${port}/api/food/* and /api/ai/*`));
+  .listen(port, "localhost", () => console.log(`api on http://localhost:${port}/api/food/* and /api/ai/*`));
