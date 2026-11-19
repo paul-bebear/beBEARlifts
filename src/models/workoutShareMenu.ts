@@ -5,6 +5,7 @@ export type IWorkoutShareRow = "shareCards" | "health" | "link" | "text";
 export interface IWorkoutShareRowsInput {
   isMobile: boolean;
   healthEligible: boolean;
+  hasAccount: boolean;
 }
 
 export function WorkoutShareMenu_rows(input: IWorkoutShareRowsInput): IWorkoutShareRow[] {
@@ -12,7 +13,10 @@ export function WorkoutShareMenu_rows(input: IWorkoutShareRowsInput): IWorkoutSh
   if (input.isMobile && input.healthEligible) {
     rows.push("health");
   }
-  rows.push("link", "text");
+  if (input.hasAccount) {
+    rows.push("link");
+  }
+  rows.push("text");
   return rows;
 }
 

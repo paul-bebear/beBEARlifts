@@ -11,7 +11,9 @@ interface IProps {
   onBack: () => void;
 }
 
-const fields: { key: keyof INutrients; label: string }[] = [
+type IQuickField = "calories" | "protein" | "carbs" | "fat";
+
+const fields: { key: IQuickField; label: string }[] = [
   { key: "calories", label: "Calories" },
   { key: "protein", label: "Protein (g)" },
   { key: "carbs", label: "Carbs (g)" },
@@ -25,7 +27,7 @@ function toNumber(text: string): number {
 
 export function FoodQuickAddPanel(props: IProps): JSX.Element {
   const [name, setName] = useState("");
-  const [values, setValues] = useState<Record<keyof INutrients, string>>({
+  const [values, setValues] = useState<Record<IQuickField, string>>({
     calories: "",
     protein: "",
     carbs: "",

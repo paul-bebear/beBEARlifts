@@ -2,7 +2,7 @@ import { IFeedItem, IFeedPost } from "./feed";
 
 export const FeedModeration_reasons = ["spam", "abuse", "other"] as const;
 export type IReportReason = (typeof FeedModeration_reasons)[number];
-export type IPostMenuItem = "Report post" | "Block user";
+export type IPostMenuItem = "Report post" | "Block user" | "Remove post";
 
 export interface IBlockedUser {
   userId: string;
@@ -65,8 +65,12 @@ export function FeedModeration_items(items: IFeedItem[], blocked: IBlockedUser[]
   return items.filter((i) => ids.has(i.post));
 }
 
-export function FeedModeration_menu(item: Pick<IFeedItem, "isMine">): IPostMenuItem[] {
-  return item.isMine ? [] : ["Report post", "Block user"];
+// An own workout post goes away through the share switch on the workout, so only an own meal gets Remove.
+export function FeedModeration_menu(item: Pick<IFeedItem, "isMine" | "kind">): IPostMenuItem[] {
+  if (item.isMine) {
+    return item.kind === "meal" ? ["Remove post"] : [];
+  }
+  return ["Report post", "Block user"];
 }
 
 export function FeedModeration_reportError(reason: string, note: string): string | undefined {

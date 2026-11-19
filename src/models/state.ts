@@ -91,6 +91,7 @@ export interface IStateErrors {
     backup: boolean;
     confirmed: boolean;
     local: boolean;
+    copyKey?: string;
   };
 }
 

@@ -12,12 +12,11 @@ import { AiConsent_ensure, AiConsentStore } from "../utils/aiConsentClient";
 import { SetClips_workoutId } from "../models/setClips";
 import {
   IWarmupPlan,
-  WarmupPlan_build,
+  WarmupPlan_choose,
   WarmupPlan_doneCount,
   WarmupPlan_exercises,
   WarmupPlan_find,
   WarmupPlan_put,
-  WarmupPlan_rules,
   WarmupPlan_toggle,
 } from "../models/warmupPlan";
 
@@ -43,16 +42,14 @@ export function WorkoutWarmupCard(props: {
   }
 
   const generate = async (): Promise<void> => {
-    if (!(await AiConsent_ensure())) {
-      return;
-    }
     setIsBusy(true);
     try {
       const exercises = WarmupPlan_exercises(props.progress, props.settings);
-      const result = await WarmupApi_generate(exercises);
-      const items = result.ok ? result.items : WarmupPlan_rules(exercises);
-      await save(WarmupPlan_build(workoutId, result.ok ? "ai" : "rules", items, Date.now()));
-      setError(result.ok ? undefined : result.error);
+      const mayUseAi = await AiConsent_ensure();
+      const result = mayUseAi ? await WarmupApi_generate(exercises) : undefined;
+      const aiItems = result?.ok ? result.items : undefined;
+      await save(WarmupPlan_choose(workoutId, exercises, aiItems, Date.now()));
+      setError(result != null && !result.ok ? result.error : undefined);
       setIsOpen(true);
     } finally {
       setIsBusy(false);
@@ -63,11 +60,9 @@ export function WorkoutWarmupCard(props: {
     return (
       <View className="flex-row items-center px-4 py-2 mx-4 mt-2 rounded-xl bg-background-subtle" testID="warmup-card">
         <Text className="flex-1 text-sm">Warm up for today's lifts</Text>
-        {showAi && (
-          <Pressable onPress={generate} disabled={isBusy} testID="warmup-generate" data-testid="warmup-generate">
-            <Text className="text-sm font-semibold text-text-link">{isBusy ? "Making it…" : "Make my warmup"}</Text>
-          </Pressable>
-        )}
+        <Pressable onPress={generate} disabled={isBusy} testID="warmup-generate" data-testid="warmup-generate">
+          <Text className="text-sm font-semibold text-text-link">{isBusy ? "Making it…" : "Make my warmup"}</Text>
+        </Pressable>
       </View>
     );
   }

@@ -19,6 +19,6 @@ export function BackupReminder_message(lastBackupAt: number | undefined, now: nu
   return (
     "Your workouts are stored only on this phone. If iOS clears website data or you lose the phone, they are gone.\n\n" +
     `Last backup: ${lastBackup}.\n\n` +
-    'Open Settings now? Tap "Export data to JSON file", then "Save to Files" or iCloud Drive.'
+    'Open Settings now? Tap "Export everything", then "Save to Files" or iCloud Drive.'
   );
 }

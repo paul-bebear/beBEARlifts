@@ -13,9 +13,11 @@ import {
 } from "../src/models/feedModeration";
 
 describe("Feed moderation", () => {
-  it("offers no moderation menu on your own post", () => {
-    expect(FeedModeration_menu({ isMine: true })).to.deep.equal([]);
-    expect(FeedModeration_menu({ isMine: false })).to.deep.equal(["Report post", "Block user"]);
+  it("offers no moderation on your own post, and Remove only on your own meal", () => {
+    expect(FeedModeration_menu({ isMine: true, kind: "workout" })).to.deep.equal([]);
+    expect(FeedModeration_menu({ isMine: true, kind: "meal" })).to.deep.equal(["Remove post"]);
+    expect(FeedModeration_menu({ isMine: false, kind: "meal" })).to.deep.equal(["Report post", "Block user"]);
+    expect(FeedModeration_menu({ isMine: false, kind: "workout" })).to.deep.equal(["Report post", "Block user"]);
   });
 
   it("filters every cached post from blocked users without changing the cache", () => {

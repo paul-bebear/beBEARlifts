@@ -52,6 +52,13 @@ export function AccountPlan_parse(raw: unknown): IAccountPlanState {
   return (r.status === "known" ? known(r.userId, r, r.canManage) : undefined) ?? AccountPlan_empty();
 }
 
+// The server ranks a code ahead of a subscription, and the subscription still renews, so canManage stays.
+export function AccountPlan_codeRedeemed(current: IAccountPlanState, userId: string): IAccountPlanState {
+  const subscribed =
+    current.status === "known" && current.userId === userId && current.plan === "plus" && current.canManage;
+  return { status: "known", userId, plan: "plus", grant: "code", canManage: subscribed };
+}
+
 export function AccountPlan_parseSync(userId: string, body: unknown): IAccountPlanState | undefined {
   const r = (body ?? {}) as Record<string, unknown>;
   return known(userId, r, r.canManageSubscription);

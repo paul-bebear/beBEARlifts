@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { useIsFocused } from "@react-navigation/native";
 import { untrack, useTrackedState } from "../navigation/TrackedStateContext";
 import { Bear_state, IBearState } from "../models/bear";
 import { BearCelebration_seed } from "../models/bearCelebration";
@@ -9,6 +8,7 @@ import { Program_evaluate, Program_isEmpty } from "../models/program";
 import { ProgressHub_plannedPerWeek } from "../models/progressHub";
 import { BearStore } from "./bearStore";
 import { FoodLogStore_load, useFoodLog } from "./foodLogStore";
+import { useDayKey } from "./useDayKey";
 
 export interface IBearView {
   state: IBearState;
@@ -27,7 +27,7 @@ export function useBear(): IBearView {
   );
   const foodLog = useFoodLog();
   const store = BearStore.use();
-  const isFocused = useIsFocused();
+  const dayClock = useDayKey();
   const plannedPerWeek = useMemo(
     () =>
       ProgressHub_plannedPerWeek(
@@ -49,7 +49,7 @@ export function useBear(): IBearView {
         },
         Date.now()
       ),
-    [history, foodLog, stats, settings, plannedPerWeek, store, isFocused]
+    [history, foodLog, stats, settings, plannedPerWeek, store, dayClock]
   );
   useEffect(() => {
     FoodLogStore_load()

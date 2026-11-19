@@ -544,7 +544,7 @@ function StatWeighInInput(props: IStatInputProps): JSX.Element {
 function StatInput(props: IStatInputProps): JSX.Element {
   const testName = StringUtils_dashcase(props.label.toLowerCase());
   if (props.name === "weight") {
-    return <StatWeighInInput {...props} />;
+    return <StatWeighInInput key={`${props.name}-${props.clearKey}`} {...props} />;
   }
   return (
     <Input

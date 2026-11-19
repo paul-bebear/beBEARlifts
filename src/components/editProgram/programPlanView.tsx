@@ -17,7 +17,11 @@ import { ILensDispatch } from "../../utils/useLensReducer";
 import { CollectionUtils_setBy } from "../../utils/collection";
 import { Dialog_alert } from "../../utils/dialog";
 import { Tailwind_semantic } from "../../utils/tailwindConfig";
-import { ProgramDayOrder_apply, ProgramDayOrder_hasUnsavedEdits } from "../../models/programDayOrder";
+import {
+  ProgramDayOrder_apply,
+  ProgramDayOrder_hasUnsavedEdits,
+  ProgramDayOrder_pendingAfter,
+} from "../../models/programDayOrder";
 import {
   IProgramPlanCard,
   IProgramPlanRow,
@@ -85,7 +89,12 @@ export const ProgramPlanView = memo(function ProgramPlanView(props: IProps): JSX
         return;
       }
       plannerDispatch(
-        lb<IPlannerState>().p("current").p("program").record(result.data.draft),
+        lb<IPlannerState>()
+          .p("current")
+          .recordModify((current) => ({
+            program: result.data.draft,
+            dayMoves: ProgramDayOrder_pendingAfter(current.dayMoves, result.data),
+          })),
         `Move day ${from + 1} to position ${to + 1}`
       );
       const saved = result.data.saved;

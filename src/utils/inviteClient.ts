@@ -1,7 +1,9 @@
 import {
   IInviteCommand,
   IInviteEvent,
+  IInviteShareResult,
   Invite_check,
+  Invite_share,
   Invite_fromUrl,
   Invite_isIos,
   Invite_link,
@@ -18,6 +20,7 @@ import {
 } from "./friendsClient";
 import { Friends_errorText } from "../models/friends";
 import { ProgramsHost_fork } from "./programsHost";
+import { InviteSharePlatform } from "./inviteSharePlatform";
 
 interface IPendingInvite {
   handle?: string;
@@ -127,25 +130,6 @@ export async function InviteClient_run(command: IInviteCommand, emit: (event: II
   }
 }
 
-export type IInviteShareResult = "shared" | "copied" | "cancelled" | "failed";
-
-export async function InviteClient_share(handle: string, displayName: string): Promise<IInviteShareResult> {
-  const url = Invite_link(ProgramsHost_fork, handle);
-  const text = Invite_shareText(displayName);
-  if (typeof navigator.share === "function") {
-    try {
-      await navigator.share({ title: "beBEAR", text, url });
-      return "shared";
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return "cancelled";
-      }
-    }
-  }
-  try {
-    await navigator.clipboard.writeText(`${text} ${url}`);
-    return "copied";
-  } catch {
-    return "failed";
-  }
+export function InviteClient_share(handle: string, displayName: string): Promise<IInviteShareResult> {
+  return Invite_share(InviteSharePlatform, Invite_shareText(displayName), Invite_link(ProgramsHost_fork, handle));
 }

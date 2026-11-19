@@ -18,6 +18,11 @@ import {
   FoodLog_remove,
   FoodLog_removeAll,
   FoodLog_sameDayCopies,
+  FoodLog_parseImport,
+  FoodLog_applyGoals,
+  FoodLog_toRecent,
+  FoodLog_saveMeal,
+  FoodLog_saveFood,
   FoodLog_scale,
   FoodLog_setGrams,
   FoodLog_setGoals,
@@ -290,5 +295,74 @@ describe("FoodLog micros", () => {
     let log = FoodLog_add(FoodLog_empty(), entry({ id: "a", nutrients: nutella }));
     log = FoodLog_add(log, entry({ id: "b", nutrients: plain }));
     expect(FoodLog_dayTotals(log, "2026-10-19").micros).to.deep.equal(nutella.micros);
+  });
+});
+
+describe("FoodLog_parseImport", () => {
+  it("accepts a food log export with entries", () => {
+    const log = FoodLog_add(FoodLog_empty(), entry({}));
+    const parsed = FoodLog_parseImport(JSON.parse(JSON.stringify(log)));
+    expect(parsed?.entries.map((e) => e.id)).to.deep.equal(["a"]);
+  });
+
+  it("accepts a log with only meals or recipes", () => {
+    const meal = { id: "m", name: "Breakfast", items: [FoodLog_toRecent(entry({}))] };
+    const log = FoodLog_saveMeal(FoodLog_empty(), meal);
+    expect(FoodLog_parseImport(JSON.parse(JSON.stringify(log)))?.meals.length).to.equal(1);
+  });
+
+  it("refuses a file that is not a version 1 food log", () => {
+    expect(FoodLog_parseImport({ entries: [entry({})] })).to.equal(undefined);
+    expect(FoodLog_parseImport({ version: 2, entries: [entry({})] })).to.equal(undefined);
+    expect(FoodLog_parseImport({ version: 1, entries: "x" })).to.equal(undefined);
+    expect(FoodLog_parseImport({ version: 1, storage: {}, food: {} })).to.equal(undefined);
+    expect(FoodLog_parseImport("nonsense")).to.equal(undefined);
+    expect(FoodLog_parseImport(null)).to.equal(undefined);
+  });
+
+  it("refuses a food log with no entries, meals or recipes", () => {
+    expect(FoodLog_parseImport(JSON.parse(JSON.stringify(FoodLog_empty())))).to.equal(undefined);
+  });
+});
+
+describe("FoodLog_applyGoals", () => {
+  const goals = {
+    calories: { min: 1800, max: 2000 },
+    protein: { min: 100, max: 130 },
+    carbs: { min: 200, max: 250 },
+    fat: { min: 60, max: 80 },
+  };
+
+  it("writes goals and the calculator profile in one step", () => {
+    const profile = { ...FoodLog_empty().profile, seasons: true, lastSeason: "bulk" as const };
+    const log = FoodLog_applyGoals(FoodLog_empty(), goals, profile);
+    expect(log.goals).to.deep.equal(goals);
+    expect(log.profile).to.deep.equal(profile);
+  });
+
+  it("keeps the saved profile when the calculator was not used", () => {
+    const saved = { ...FoodLog_empty().profile, heightCm: 180 };
+    const start = { ...FoodLog_empty(), profile: saved };
+    const log = FoodLog_applyGoals(start, goals, undefined);
+    expect(log.goals).to.deep.equal(goals);
+    expect(log.profile).to.equal(saved);
+  });
+});
+
+describe("FoodLog_parseImport damaged and partial files", () => {
+  it("refuses a file where some entries, meals or recipes are broken", () => {
+    const raw = JSON.parse(JSON.stringify(FoodLog_add(FoodLog_empty(), entry({}))));
+    expect(FoodLog_parseImport({ ...raw, entries: [...raw.entries, { id: "x", name: "No nutrients" }] })).to.equal(
+      undefined
+    );
+    expect(FoodLog_parseImport({ ...raw, meals: [{ id: "m" }] })).to.equal(undefined);
+    expect(FoodLog_parseImport({ ...raw, recipes: [{ id: "r" }] })).to.equal(undefined);
+  });
+
+  it("accepts a log with only saved foods", () => {
+    const product = { name: "Oats", per100g: { calories: 380, protein: 13, carbs: 60, fat: 7 } };
+    const log = FoodLog_saveFood(FoodLog_empty(), product);
+    expect(log.savedFoods.length).to.equal(1);
+    expect(FoodLog_parseImport(JSON.parse(JSON.stringify(log)))?.savedFoods.length).to.equal(1);
   });
 });

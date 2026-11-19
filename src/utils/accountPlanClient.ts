@@ -1,5 +1,6 @@
 import {
   AccountPlan_accept,
+  AccountPlan_codeRedeemed,
   AccountPlan_empty,
   AccountPlan_parse,
   AccountPlan_parseSync,
@@ -24,8 +25,11 @@ export function AccountPlanClient_markActivating(userId: string): Promise<void> 
   return save({ status: "activating", userId });
 }
 
-export function AccountPlanClient_markCodeRedeemed(userId: string): Promise<void> {
-  return save({ status: "known", userId, plan: "plus", grant: "code", canManage: false });
+export async function AccountPlanClient_markCodeRedeemed(userId: string): Promise<void> {
+  const sessionUserId = (await CloudStore.load()).session?.userId;
+  await AccountPlanStore.update((current) =>
+    AccountPlan_accept(current, sessionUserId, AccountPlan_codeRedeemed(current, userId))
+  );
 }
 
 // Only the newest request may save, so a slow answer from app start cannot undo a purchase made after it.

@@ -2,7 +2,13 @@ import "mocha";
 import { expect } from "chai";
 import * as fs from "fs";
 import * as path from "path";
-import { ProgramDayOrder_apply, ProgramDayOrder_move, ProgramDayOrder_rowCount } from "../src/models/programDayOrder";
+import {
+  ProgramDayOrder_apply,
+  ProgramDayOrder_move,
+  ProgramDayOrder_nextDayOnSave,
+  ProgramDayOrder_pendingAfter,
+  ProgramDayOrder_rowCount,
+} from "../src/models/programDayOrder";
 import {
   PlannerProgram_evaluate,
   PlannerProgram_evaluateFull,
@@ -310,6 +316,154 @@ Bench Press / 3x5 50lb
         expect(result.data.saved).to.equal(undefined);
         expect(result.data.draft.planner?.weeks[0].days[0].exerciseText).to.contain("55lb");
       }
+    });
+  });
+
+  describe("nextDay", () => {
+    const threeDays = `# Week 1
+## Day A
+Squat / 3x5 100lb
+
+## Day B
+Bench Press / 3x5 50lb
+
+## Day C
+Deadlift / 1x5 200lb
+`;
+    function nextDayAfter(nextDay: number, from: number, to: number): number | undefined {
+      const program: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay };
+      const result = ProgramDayOrder_apply(program, program, from, to, settings);
+      return result.success ? result.data.draft.nextDay : undefined;
+    }
+
+    it("follows the next workout when its day moves", () => {
+      expect(nextDayAfter(3, 2, 0)).to.equal(1);
+      expect(nextDayAfter(1, 0, 2)).to.equal(3);
+    });
+
+    it("follows the next workout when another day moves past it", () => {
+      expect(nextDayAfter(2, 2, 0)).to.equal(3);
+      expect(nextDayAfter(2, 0, 2)).to.equal(1);
+    });
+
+    it("remaps the saved copy from its own next day, not the draft's", () => {
+      const saved: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const draft: IProgram = { ...saved, nextDay: 2 };
+      const result = ProgramDayOrder_apply(saved, draft, 2, 0, settings);
+      expect(result.success && result.data.draft.nextDay).to.equal(3);
+      expect(result.success && result.data.saved?.nextDay).to.equal(1);
+    });
+
+    it("also updates the saved copy", () => {
+      const program: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const result = ProgramDayOrder_apply(program, program, 2, 0, settings);
+      expect(result.success && result.data.saved?.nextDay).to.equal(1);
+    });
+
+    const twoWeeks = `# Week 1
+## Day A
+Squat / 3x5 100lb
+
+## Day B
+Bench Press / 3x5 50lb
+
+## Day C
+Deadlift / 1x5 200lb
+
+# Week 2
+## Day A
+Squat / 3x5 105lb
+
+## Day B
+Bench Press / 3x5 55lb
+
+## Day C
+Deadlift / 1x5 205lb
+`;
+    const uneven = `# Week 1
+## Day A
+Squat / 3x5 100lb
+
+## Day B
+Bench Press / 3x5 50lb
+
+## Day C
+Deadlift / 1x5 200lb
+
+# Week 2
+## Day A
+Squat / 3x5 105lb
+
+## Day B
+Bench Press / 3x5 55lb
+`;
+
+    function applied(text: string, nextDay: number, from: number, to: number): IProgram | undefined {
+      const program: IProgram = { ...Program_create("P"), planner: plannerOf(text), nextDay };
+      const result = ProgramDayOrder_apply(program, program, from, to, settings);
+      return result.success ? result.data.draft : undefined;
+    }
+
+    it("remaps a next day in the second week", () => {
+      expect(applied(twoWeeks, 6, 2, 0)?.nextDay).to.equal(4);
+      expect(applied(twoWeeks, 4, 0, 2)?.nextDay).to.equal(6);
+      expect(applied(twoWeeks, 5, 2, 0)?.nextDay).to.equal(6);
+    });
+
+    it("remaps through a week that lacks the moved row", () => {
+      expect(applied(uneven, 5, 2, 0)?.nextDay).to.equal(5);
+      expect(applied(uneven, 4, 0, 2)?.nextDay).to.equal(5);
+      expect(applied(uneven, 5, 0, 2)?.nextDay).to.equal(4);
+      expect(applied(uneven, 3, 2, 0)?.nextDay).to.equal(1);
+    });
+
+    it("leaves a next day outside the program alone", () => {
+      expect(applied(threeDays, 9, 2, 0)?.nextDay).to.equal(9);
+      expect(applied(threeDays, 0, 2, 0)?.nextDay).to.equal(0);
+    });
+
+    it("keeps the saved copy out of it when the stored program has no planner", () => {
+      const draft: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const saved: IProgram = { ...draft, planner: undefined };
+      const result = ProgramDayOrder_apply(saved, draft, 2, 0, settings);
+      expect(result.success && result.data.saved).to.equal(undefined);
+      expect(result.success && result.data.draft.nextDay).to.equal(1);
+    });
+
+    it("replays moves made with unsaved edits on the stored next day when Save runs", () => {
+      const saved: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const draft: IProgram = { ...saved, planner: plannerOf(threeDays.replace("3x5 100lb", "3x5 105lb")) };
+      const result = ProgramDayOrder_apply(saved, draft, 2, 0, settings);
+      expect(result.success && result.data.saved).to.equal(undefined);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      const pending = ProgramDayOrder_pendingAfter(undefined, result.data);
+      expect(pending).to.have.length(1);
+      expect(ProgramDayOrder_nextDayOnSave(3, pending)).to.equal(1);
+      expect(ProgramDayOrder_nextDayOnSave(2, pending)).to.equal(3);
+    });
+
+    it("stacks two pending moves and drops them once a move writes straight to storage", () => {
+      const saved: IProgram = { ...Program_create("P"), planner: plannerOf(threeDays), nextDay: 3 };
+      const dirty: IProgram = { ...saved, planner: plannerOf(threeDays.replace("3x5 100lb", "3x5 105lb")) };
+      const first = ProgramDayOrder_apply(saved, dirty, 2, 0, settings);
+      if (!first.success) {
+        throw new Error(first.error);
+      }
+      const afterFirst = ProgramDayOrder_pendingAfter(undefined, first.data);
+      const second = ProgramDayOrder_apply(saved, first.data.draft, 1, 0, settings);
+      if (!second.success) {
+        throw new Error(second.error);
+      }
+      const afterSecond = ProgramDayOrder_pendingAfter(afterFirst, second.data);
+      expect(afterSecond).to.have.length(2);
+      expect(ProgramDayOrder_nextDayOnSave(3, afterSecond)).to.equal(2);
+      const clean = ProgramDayOrder_apply(saved, saved, 2, 0, settings);
+      if (!clean.success) {
+        throw new Error(clean.error);
+      }
+      expect(ProgramDayOrder_pendingAfter(afterSecond, clean.data)).to.eql([]);
     });
   });
 });

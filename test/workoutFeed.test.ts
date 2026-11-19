@@ -391,6 +391,24 @@ describe("Feed", () => {
     expect(state.meals).to.deep.equal([{ ...meal, userId: "me", postedAt: t1, photoPath: `me/${mealId}.jpg` }]);
   });
 
+  it("hides a meal the user removed at once, replaces its unsent post, and drops it once sent", () => {
+    let state = Feed_withServerMeals(
+      Feed_withServerPosts(Feed_empty(), "me", [], t1),
+      "me",
+      Feed_parseMeals([mealRow("me", mealId, "2026-10-09T10:00:00Z")])
+    );
+    state = Feed_queue(state, { type: "meal", userId: "me", queuedAt: 4, meal });
+    const remove: IFeedOp = { type: "mealRemove", userId: "me", queuedAt: 5, mealId };
+    state = Feed_queue(state, remove);
+    expect(Feed_pendingOps(state, "me")).to.deep.equal([remove]);
+    expect(Feed_items(state, friends).filter((i) => i.kind === "meal")).to.deep.equal([]);
+    expect(Feed_parse(JSON.parse(JSON.stringify(state))).outbox).to.deep.equal([remove]);
+    expect(Feed_parse({ outbox: [{ ...remove, mealId: "../x" }] }).outbox).to.deep.equal([]);
+    state = Feed_sent(state, remove, t1);
+    expect(state.outbox).to.deep.equal([]);
+    expect(state.meals).to.deep.equal([]);
+  });
+
   it("names the right table when reporting each kind of post", () => {
     const state = Feed_withServerMeals(
       Feed_withServerPosts(Feed_empty(), "me", [{ ...row("a", 1, "2026-10-08T10:00:00Z"), id: 12 }], t1),
