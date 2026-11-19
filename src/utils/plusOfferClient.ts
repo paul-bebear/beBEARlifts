@@ -1,4 +1,5 @@
-import { IAiCapsRefusal } from "../models/aiCaps";
+import { AccountPlan_aiCaps } from "../models/accountPlan";
+import { AiCaps_plusOf, IAiCapsRefusal } from "../models/aiCaps";
 import {
   IPlusOfferEffect,
   IPlusOfferEvent,
@@ -152,7 +153,14 @@ export function PlusOfferClient_onRefusal(refusal: IAiCapsRefusal): void {
     const userId = await sessionUserId();
     if (userId != null) {
       const memory = await PlusOfferStore.load();
-      dispatch({ type: "capRefused", refusal, userId, memory, today: PlusOffer_day(new Date()) });
+      dispatch({
+        type: "capRefused",
+        refusal,
+        userId,
+        memory,
+        today: PlusOffer_day(new Date()),
+        plus: AiCaps_plusOf(AccountPlan_aiCaps(AccountPlanStore.get())),
+      });
     }
   });
 }
