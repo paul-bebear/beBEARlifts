@@ -12,6 +12,7 @@ import {
   RulerTape_move,
   RulerTape_offsetForIndex,
   RulerTape_offsetForValue,
+  RulerTape_padRequested,
   RulerTape_panelMode,
   RulerTape_parse,
   RulerTape_snap,
@@ -330,6 +331,22 @@ describe("RulerTape panel mode", () => {
   it("shows the pad for a field with no ruler", () => {
     expect(RulerTape_panelMode(false, false)).to.equal("pad");
     expect(RulerTape_panelMode(false, true)).to.equal("pad");
+  });
+});
+
+describe("RulerTape pad request", () => {
+  it("keeps the pad for the input it was asked on", () => {
+    expect(RulerTape_padRequested("reps", "reps")).to.equal(true);
+  });
+
+  it("shows the ruler when focus moves to another input", () => {
+    expect(RulerTape_padRequested("reps", "weight")).to.equal(false);
+  });
+
+  it("shows the ruler when no pad was asked for or nothing is focused", () => {
+    expect(RulerTape_padRequested(null, "weight")).to.equal(false);
+    expect(RulerTape_padRequested("reps", null)).to.equal(false);
+    expect(RulerTape_padRequested("reps", undefined)).to.equal(false);
   });
 });
 

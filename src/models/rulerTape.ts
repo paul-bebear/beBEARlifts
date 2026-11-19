@@ -372,3 +372,7 @@ export function RulerTape_flickValue(
 export function RulerTape_panelMode(hasRuler: boolean, padRequested: boolean): IRulerPanelMode {
   return hasRuler && !padRequested ? "ruler" : "pad";
 }
+
+export function RulerTape_padRequested(padForId: string | null, activeId: string | null | undefined): boolean {
+  return padForId != null && padForId === activeId;
+}

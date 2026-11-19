@@ -26,7 +26,7 @@ const onboardingImages = [
   "/images/dinounit.png",
   "/images/dinoequipment.png",
   "/images/dinoplates.png",
-  "/images/dinoprogramselect.png",
+  "/images/bear/brown/level-01.webp",
   "/images/dino-scope.png",
 ];
 
