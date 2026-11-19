@@ -45,11 +45,6 @@ export function ReportEmail_classify(body) {
   return report == null ? { kind: "invalid" } : { kind: "report", report };
 }
 
-export function ReportEmail_parse(body) {
-  const result = ReportEmail_classify(body);
-  return result.kind === "report" ? result.report : null;
-}
-
 export function ReportEmail_postLookup(report) {
   return report.mealPostId != null
     ? { table: "meal_posts", id: report.mealPostId, select: "description,photo_path" }

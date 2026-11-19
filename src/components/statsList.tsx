@@ -32,7 +32,7 @@ import { Thunk_pushScreen } from "../ducks/thunks";
 import { updateSettings } from "../models/state";
 import { lb } from "lens-shmens";
 import { usePlusAccess } from "../utils/usePlusAccess";
-import { ImagePreloader_dynoflex, ImagePreloader_uri } from "../utils/imagePreloader";
+import { ImagePreloader_bear, ImagePreloader_uri } from "../utils/imagePreloader";
 import { Dialog_confirm } from "../utils/dialog";
 import { DatePicker } from "./datePicker";
 
@@ -100,7 +100,7 @@ export function StatsList(props: IProps): JSX.Element {
       <View>
         <View className="flex-row items-center justify-center pt-16">
           <Image
-            source={{ uri: ImagePreloader_uri(ImagePreloader_dynoflex) }}
+            source={{ uri: ImagePreloader_uri(ImagePreloader_bear) }}
             style={{ width: 160, height: 240 }}
             resizeMode="contain"
           />

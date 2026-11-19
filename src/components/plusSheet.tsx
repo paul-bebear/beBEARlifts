@@ -17,13 +17,7 @@ import { buildNavCommon } from "../navigation/utils";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { LateNightMeal_targets } from "../models/lateNightMeal";
 import { LateNightMealChoice_pick } from "../utils/lateNightMealChoice";
-import {
-  IQuickAction,
-  IQuickActionId,
-  QuickActions_isBagCheckOn,
-  QuickActions_list,
-  quickActionsSoon,
-} from "../models/quickActions";
+import { IQuickAction, IQuickActionId, QuickActions_isBagCheckOn, QuickActions_list } from "../models/quickActions";
 import { WorkoutStart_open } from "../utils/workoutStart";
 
 function SquareIcon(props: { id: IQuickActionId; color: string }): JSX.Element {
@@ -40,22 +34,19 @@ function SquareIcon(props: { id: IQuickActionId; color: string }): JSX.Element {
 function Square(props: { action: IQuickAction; onPress: () => void }): JSX.Element {
   const { action } = props;
   const semantic = Tailwind_semantic();
-  const color = action.isSoon ? semantic.icon.neutralsubtle : semantic.icon.neutral;
+  const color = semantic.icon.neutral;
   return (
     <Pressable
       testID={`plus-${action.id}`}
       data-testid={`plus-${action.id}`}
       accessibilityRole="button"
-      accessibilityLabel={action.isSoon ? `${action.label}, ${quickActionsSoon}` : action.label}
-      accessibilityState={{ disabled: action.isSoon }}
-      disabled={action.isSoon}
+      accessibilityLabel={action.label}
       onPress={props.onPress}
       className="items-center justify-center flex-1 border rounded-2xl bg-background-default border-border-neutral"
-      style={{ height: 104, opacity: action.isSoon ? 0.5 : 1 }}
+      style={{ height: 104 }}
     >
       <SquareIcon id={action.id} color={color} />
       <Text className="pt-2 text-base font-semibold">{action.label}</Text>
-      {action.isSoon && <Text className="text-xs text-text-secondary">{quickActionsSoon}</Text>}
     </Pressable>
   );
 }

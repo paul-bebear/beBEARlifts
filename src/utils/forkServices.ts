@@ -15,8 +15,6 @@ export function ForkServices_plan(
   universalLinks: boolean;
   ota: boolean;
   upstreamLogin: boolean;
-  appleSignIn: boolean;
-  googleSignIn: boolean;
 } {
   const storeKit = !offline && !premiumUnlocked;
   return {
@@ -31,8 +29,6 @@ export function ForkServices_plan(
     universalLinks: !offline,
     ota: !offline,
     upstreamLogin: !offline,
-    appleSignIn: true,
-    googleSignIn: true,
   };
 }
 

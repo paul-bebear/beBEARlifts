@@ -12,10 +12,8 @@ describe("Fork services", () => {
 
   it("disables every upstream service in the offline fork", () => {
     for (const unlocked of [true, false]) {
-      const { appleSignIn, googleSignIn, revenueCat, ...upstream } = ForkServices_plan(true, unlocked);
+      const { revenueCat, ...upstream } = ForkServices_plan(true, unlocked);
       expect(Object.values(upstream).every((on) => !on)).to.equal(true);
-      expect(appleSignIn).to.equal(true);
-      expect(googleSignIn).to.equal(true);
       expect(revenueCat).to.equal(false);
     }
   });

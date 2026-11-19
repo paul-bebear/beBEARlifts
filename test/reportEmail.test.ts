@@ -3,12 +3,19 @@ import { expect } from "chai";
 import sinon from "sinon";
 import {
   ReportEmail_build,
-  ReportEmail_parse,
+  ReportEmail_classify,
   ReportEmail_postFromRows,
   ReportEmail_postLookup,
   ReportEmail_subject,
 } from "../api/_reportEmail.mjs";
 import { POST as reportPost, GET as reportGet } from "../api/moderation/report.mjs";
+
+type IClassified = ReturnType<typeof ReportEmail_classify>;
+
+function parse(body: unknown): Extract<IClassified, { report: unknown }>["report"] | null | undefined {
+  const result = ReportEmail_classify(body);
+  return result.kind === "report" ? result.report : null;
+}
 
 const reporter = "11111111-1111-4111-8111-111111111111";
 const mealId = "33333333-3333-4333-8333-333333333333";
@@ -34,7 +41,7 @@ function insert(record: object = {}): object {
 
 describe("ReportEmail", () => {
   it("reads a workout post report from an insert", () => {
-    expect(ReportEmail_parse(insert())).to.deep.equal({
+    expect(parse(insert())).to.deep.equal({
       id: 7,
       reporterId: reporter,
       postId: 42,
@@ -46,25 +53,25 @@ describe("ReportEmail", () => {
   });
 
   it("reads a meal post report", () => {
-    const report = ReportEmail_parse(insert({ post_id: null, meal_post_id: mealId, note: null }));
+    const report = parse(insert({ post_id: null, meal_post_id: mealId, note: null }));
     expect(report?.mealPostId).to.equal(mealId);
     expect(report?.postId).to.equal(undefined);
     expect(report?.note).to.equal(undefined);
   });
 
   it("returns null for an update, a wrong table and a malformed record", () => {
-    expect(ReportEmail_parse({ ...insert(), type: "UPDATE" })).to.equal(null);
-    expect(ReportEmail_parse({ ...insert(), table: "user_blocks" })).to.equal(null);
-    expect(ReportEmail_parse({ ...insert(), record: null })).to.equal(null);
-    expect(ReportEmail_parse(insert({ reporter_id: undefined }))).to.equal(null);
-    expect(ReportEmail_parse(insert({ meal_post_id: mealId }))).to.equal(null);
-    expect(ReportEmail_parse("nope")).to.equal(null);
-    expect(ReportEmail_parse(undefined)).to.equal(null);
+    expect(parse({ ...insert(), type: "UPDATE" })).to.equal(null);
+    expect(parse({ ...insert(), table: "user_blocks" })).to.equal(null);
+    expect(parse({ ...insert(), record: null })).to.equal(null);
+    expect(parse(insert({ reporter_id: undefined }))).to.equal(null);
+    expect(parse(insert({ meal_post_id: mealId }))).to.equal(null);
+    expect(parse("nope")).to.equal(null);
+    expect(parse(undefined)).to.equal(null);
   });
 
   it("picks the table to read the post from", () => {
-    const workout = ReportEmail_parse(insert());
-    const meal = ReportEmail_parse(insert({ post_id: null, meal_post_id: mealId }));
+    const workout = parse(insert());
+    const meal = parse(insert({ post_id: null, meal_post_id: mealId }));
     expect(ReportEmail_postLookup(workout)).to.deep.equal({ table: "workout_posts", id: 42, select: "summary" });
     expect(ReportEmail_postLookup(meal)).to.deep.equal({
       table: "meal_posts",
@@ -74,8 +81,8 @@ describe("ReportEmail", () => {
   });
 
   it("reads the post out of the rows", () => {
-    const workout = ReportEmail_parse(insert());
-    const meal = ReportEmail_parse(insert({ post_id: null, meal_post_id: mealId }));
+    const workout = parse(insert());
+    const meal = parse(insert({ post_id: null, meal_post_id: mealId }));
     expect(ReportEmail_postFromRows(workout, [{ summary: { dayName: "Push A", programName: "PPL" } }])).to.deep.equal({
       kind: "workout",
       dayName: "Push A",
@@ -91,7 +98,7 @@ describe("ReportEmail", () => {
   });
 
   it("builds the email text with the report fields and the post line", () => {
-    const report = ReportEmail_parse(insert());
+    const report = parse(insert());
     const built = ReportEmail_build(report!, { kind: "workout", dayName: "Push A", programName: "PPL" });
     expect(built.subject).to.equal(ReportEmail_subject);
     expect(built.subject).to.equal("beBEAR: a post was reported");
@@ -110,7 +117,7 @@ describe("ReportEmail", () => {
   });
 
   it("says a meal post is a photo, and says when the post could not be read", () => {
-    const report = ReportEmail_parse(insert({ post_id: null, meal_post_id: mealId, note: null }))!;
+    const report = parse(insert({ post_id: null, meal_post_id: mealId, note: null }))!;
     const withPhoto = ReportEmail_build(report, { kind: "meal", description: "Chicken rice", hasPhoto: true });
     expect(withPhoto.text).to.contain(`Reported: meal post ${mealId}`);
     expect(withPhoto.text).to.contain("Note: none");

@@ -44,10 +44,6 @@ export function ImagePreloader_clear(): void {
   cache.clear();
 }
 
-export const ImagePreloader_dynocoach: string = "/images/bear/brown/level-01.webp";
-
-export const ImagePreloader_dynoflex: string = "/images/bear/brown/level-01.webp";
-
-export const ImagePreloader_dynohappy: string = "/images/bear/brown/level-01.webp";
+export const ImagePreloader_bear: string = "/images/bear/brown/level-01.webp";
 
 export const ImagePreloader_images: Record<string, unknown> = {};
