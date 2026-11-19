@@ -11,6 +11,7 @@ import { FoodLog_empty, FoodLog_hasGoals } from "../src/models/foodLog";
 import { FoodTargets_compute } from "../src/models/foodTargets";
 import * as food from "../src/utils/foodLogStore";
 import * as ai from "../src/utils/aiRequest";
+import * as thunks from "../src/ducks/thunks";
 import ss1 from "../programdata/programs/builtin/ss1.json";
 import { AiConsent_decide } from "../src/models/aiConsent";
 import { AiConsentStore } from "../src/utils/aiConsentClient";
@@ -142,6 +143,15 @@ describe("Onboarding commands", () => {
     await run(Onboarding_reduce(cardsFor({ places: ["gym"], activity: "light" }), { type: "start" }));
     expect(events).to.deep.equal([]);
     expect(foodLog.goals).to.deep.equal(goals);
+  });
+  it("keeps a saved height, sex and birth year when onboarding runs again without them", async () => {
+    foodLog = {
+      ...foodLog,
+      profile: { activity: "light", goal: "gain", heightCm: 170, heightUnit: "cm", sex: "female", birthYear: 2005 },
+    };
+    await run(Onboarding_reduce(cardsFor({ places: ["gym"] }), { type: "start" }));
+    expect(events).to.deep.equal([]);
+    expect(foodLog.profile).to.include({ heightCm: 170, sex: "female", birthYear: 2005 });
   });
   it("leaves a goal the user already set alone", async () => {
     goalLog = { version: 1, current: { kind: "loseFat", activity: "under5k", startedAt: 1 }, past: [] };
@@ -277,6 +287,21 @@ describe("Onboarding commands", () => {
     state.storage.history = [];
     await run({ ...done, command: "apply", importHistory: false });
     expect(state.storage.history).to.have.length(0);
+  });
+  it("saves no food targets and no goal when the history import fails", async () => {
+    const done = await prepareWithHistory();
+    sinon.stub(thunks, "Thunk_applyImport").returns(async () => {
+      throw new Error("Import failed");
+    });
+    await run({
+      ...done,
+      command: "apply",
+      answers: { ...done.answers, heightUnit: "cm", height: "180", weight: "80", unit: "kg", age: "30", sex: "male" },
+    });
+    expect(events[0].type).to.equal("failed");
+    expect(foodLog).to.deep.equal(FoodLog_empty());
+    expect(goalLog.current).to.equal(undefined);
+    expect(state.storage.programs).to.have.length(0);
   });
   it("does not create a program when food persistence fails", async () => {
     const form = Onboarding_empty();

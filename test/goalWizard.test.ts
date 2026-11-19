@@ -124,6 +124,15 @@ describe("GoalWizard", () => {
     expect(GoalWizard_preview(throughToResult(start()), ctx({ latestWeight: undefined })).targets).to.equal(undefined);
   });
 
+  it("keeps a teen's previewed and saved targets at maintenance on a fat loss goal", () => {
+    const teen = { ...fullProfile, birthYear: 2010 };
+    const w = { ...throughToResult(start(teen)), pace: "fast" as const, updateTargets: true };
+    const preview = GoalWizard_preview(w, ctx({ profile: teen }));
+    expect(preview.targets?.isDeficitBlocked).to.equal(true);
+    expect(preview.targets?.target).to.equal(preview.targets?.maintenance);
+    expect(GoalWizard_finish(w, ctx({ profile: teen }))?.food?.goals).to.deep.equal(preview.targets?.goals);
+  });
+
   it("saves a new goal with the start weight, food targets and body fat", () => {
     const save = GoalWizard_finish(throughToResult(start()), ctx());
     expect(save?.goal).to.deep.equal({

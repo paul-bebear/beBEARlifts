@@ -15,6 +15,7 @@ export interface IFoodProfile {
   heightUnit?: IFoodHeightUnit;
   sex?: IFoodSex;
   birthYear?: number;
+  ageSetAt?: number;
   activity: IFoodActivity;
   goal: IFoodGoalKind;
   seasons?: boolean;
@@ -47,6 +48,7 @@ export interface IFoodBody {
   heightCm: number;
   sex: IFoodSex;
   age: number;
+  minAge?: number;
 }
 
 export interface IFoodTargetsResult {
@@ -94,7 +96,11 @@ const proteinPerKg = { min: 1.6, max: 2.2 };
 const fatPerKg = { min: 0.6, max: 1.0 };
 // Common minimum intakes without medical supervision.
 const calorieFloor: Record<IFoodSex, number> = { male: 1500, female: 1200 };
-const limits = { weightKg: [30, 300], heightCm: [120, 230], age: [14, 100] } as const;
+export const FoodTargets_limits = { weightKg: [30, 300], heightCm: [120, 230], age: [14, 100] } as const;
+const limits = FoodTargets_limits;
+// Onboarding takes 13 year olds for a lifting plan. Their food targets wait until 14.
+export const FoodTargets_minPlanAge = 13;
+export const FoodTargets_deficitBlockedNote = "Under 18 or with a BMI under 20, the target stays at maintenance.";
 
 function roundTo(n: number, step: number): number {
   return Math.round(n / step) * step;
@@ -129,6 +135,7 @@ export function FoodTargets_parseProfile(raw: unknown): IFoodProfile {
   };
   const heightCm = positiveNumber(r.heightCm);
   const birthYear = positiveNumber(r.birthYear);
+  const ageSetAt = positiveNumber(r.ageSetAt);
   if (heightCm != null) {
     profile.heightCm = heightCm;
   }
@@ -140,6 +147,9 @@ export function FoodTargets_parseProfile(raw: unknown): IFoodProfile {
   }
   if (birthYear != null) {
     profile.birthYear = Math.round(birthYear);
+  }
+  if (ageSetAt != null) {
+    profile.ageSetAt = ageSetAt;
   }
   if (r.seasons === true) {
     profile.seasons = true;
@@ -196,7 +206,9 @@ function within(n: number | undefined, range: readonly [number, number]): number
   return n != null && n >= range[0] && n <= range[1] ? n : undefined;
 }
 
-function heightCmFrom(form: IFoodTargetsForm): number | undefined {
+function heightCmFrom(
+  form: Pick<IFoodTargetsForm, "heightUnit" | "heightCm" | "heightFt" | "heightIn">
+): number | undefined {
   if (form.heightUnit === "cm") {
     return NumberText_parse(form.heightCm);
   }
@@ -210,13 +222,20 @@ export function FoodTargets_setHeightUnit(form: IFoodTargetsForm, heightUnit: IF
   return { ...form, heightUnit, ...(heightCm == null ? {} : heightFields(heightCm)) };
 }
 
-export function FoodTargets_parseBody(form: IFoodTargetsForm): IFoodBody | undefined {
+export function FoodTargets_weightKg(form: Pick<IFoodTargetsForm, "weight" | "weightUnit">): number | undefined {
   const weight = NumberText_parse(form.weight);
-  const weightKg = within(
-    weight == null ? undefined : form.weightUnit === "kg" ? weight : weight * kgPerLb,
-    limits.weightKg
-  );
-  const heightCm = within(heightCmFrom(form), limits.heightCm);
+  return within(weight == null ? undefined : form.weightUnit === "kg" ? weight : weight * kgPerLb, limits.weightKg);
+}
+
+export function FoodTargets_heightCm(
+  form: Pick<IFoodTargetsForm, "heightUnit" | "heightCm" | "heightFt" | "heightIn">
+): number | undefined {
+  return within(heightCmFrom(form), limits.heightCm);
+}
+
+export function FoodTargets_parseBody(form: IFoodTargetsForm): IFoodBody | undefined {
+  const weightKg = FoodTargets_weightKg(form);
+  const heightCm = FoodTargets_heightCm(form);
   const age = within(NumberText_parse(form.age), limits.age);
   if (weightKg == null || heightCm == null || age == null || form.sex == null) {
     return undefined;
@@ -225,11 +244,10 @@ export function FoodTargets_parseBody(form: IFoodTargetsForm): IFoodBody | undef
 }
 
 export function FoodTargets_bodyError(form: IFoodTargetsForm): string | undefined {
-  const weight = NumberText_parse(form.weight);
-  if (weight == null || within(form.weightUnit === "kg" ? weight : weight * kgPerLb, limits.weightKg) == null) {
+  if (FoodTargets_weightKg(form) == null) {
     return form.weightUnit === "kg" ? "Enter a weight from 30 to 300 kg." : "Enter a weight from 66 to 660 lb.";
   }
-  if (within(heightCmFrom(form), limits.heightCm) == null) {
+  if (FoodTargets_heightCm(form) == null) {
     return form.heightUnit === "cm"
       ? "Enter a height from 120 to 230 cm."
       : "Enter a height from 3 ft 11 in to 7 ft 6 in.";
@@ -237,7 +255,11 @@ export function FoodTargets_bodyError(form: IFoodTargetsForm): string | undefine
   if (form.sex == null) {
     return "Pick male or female. The formula uses it.";
   }
-  if (within(NumberText_parse(form.age), limits.age) == null) {
+  const age = NumberText_parse(form.age);
+  if (age != null && age >= FoodTargets_minPlanAge && age < limits.age[0]) {
+    return "Food targets start at age 14. The formula is not made for younger ages.";
+  }
+  if (within(age, limits.age) == null) {
     return "Enter an age from 14 to 100.";
   }
   return undefined;
@@ -282,8 +304,37 @@ export function FoodTargets_bmi(body: IFoodBody): number {
   return body.weightKg / (body.heightCm / 100) ** 2;
 }
 
+function isAdult(body: IFoodBody): boolean {
+  return (body.minAge ?? body.age) >= adultAge;
+}
+
 export function FoodTargets_mayDiet(body: IFoodBody): boolean {
-  return body.age >= adultAge && FoodTargets_bmi(body) >= minDietBmi;
+  return isAdult(body) && FoodTargets_bmi(body) >= minDietBmi;
+}
+
+function fullYearsBetween(from: Date, to: Date): number {
+  const anniversary = new Date(from);
+  anniversary.setFullYear(to.getFullYear());
+  return Math.max(0, to.getFullYear() - from.getFullYear() - (to < anniversary ? 1 : 0));
+}
+
+// A birth year alone leaves the real age one lower for part of the year. The under-18 rules use the
+// youngest age the user can be: the age they typed plus the full years since, or year minus birth year minus 1.
+export function FoodTargets_profileAges(
+  profile: Pick<IFoodProfile, "birthYear" | "ageSetAt">,
+  year: number,
+  now: number
+): { age: number; minAge: number } | undefined {
+  if (profile.birthYear == null) {
+    return undefined;
+  }
+  const age = year - profile.birthYear;
+  if (profile.ageSetAt == null) {
+    return { age, minAge: age - 1 };
+  }
+  const setOn = new Date(profile.ageSetAt);
+  const typedAge = setOn.getFullYear() - profile.birthYear;
+  return { age, minAge: Math.min(age, typedAge + fullYearsBetween(setOn, new Date(now))) };
 }
 
 export function FoodTargets_aim(form: IFoodTargetsForm, today: Date): IFoodAim {
@@ -292,7 +343,7 @@ export function FoodTargets_aim(form: IFoodTargetsForm, today: Date): IFoodAim {
 
 export function FoodTargets_factor(body: IFoodBody, aim: IFoodAim): { factor: number; isDeficitBlocked: boolean } {
   if (aim === "bulk") {
-    return { factor: body.age >= adultAge ? bulkFactor.adult : bulkFactor.teen, isDeficitBlocked: false };
+    return { factor: isAdult(body) ? bulkFactor.adult : bulkFactor.teen, isDeficitBlocked: false };
   }
   const factor = FoodTargets_goals.find((g) => g.key === aimGoals[aim])?.factor ?? 1;
   const isDeficitBlocked = factor < 1 && !FoodTargets_mayDiet(body);
@@ -353,7 +404,7 @@ export function FoodTargets_resultNotes(form: IFoodTargetsForm, result: IFoodTar
     notes.push(`${Season_names[season]} season until ${Season_lastDay(season, !!form.south)}.`);
   }
   if (result.isDeficitBlocked) {
-    notes.push("Under 18 or with a BMI under 20, the target stays at maintenance.");
+    notes.push(FoodTargets_deficitBlockedNote);
   }
   if (result.isFloored) {
     notes.push("The target stays at the usual minimum of 1200 cal for women and 1500 for men.");
@@ -369,7 +420,13 @@ export function FoodTargets_toProfile(form: IFoodTargetsForm, today: Date): IFoo
     goal: form.goal,
     heightUnit: form.heightUnit,
     ...(form.sex == null ? {} : { sex: form.sex }),
-    ...(body == null ? {} : { heightCm: NumberText_round1(body.heightCm), birthYear: year - Math.round(body.age) }),
+    ...(body == null
+      ? {}
+      : {
+          heightCm: NumberText_round1(body.heightCm),
+          birthYear: year - Math.round(body.age),
+          ageSetAt: today.getTime(),
+        }),
     ...(form.seasons ? { seasons: true, lastSeason: Season_for(today, !!form.south) } : {}),
     ...(form.south ? { south: true } : {}),
   };

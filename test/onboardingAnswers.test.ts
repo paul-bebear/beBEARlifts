@@ -6,6 +6,7 @@ import {
   OnboardingAnswers_foodTargets,
   OnboardingAnswers_gymEquipment,
   OnboardingAnswers_isYouth,
+  OnboardingAnswers_mergeProfile,
   OnboardingAnswers_planInput,
   OnboardingAnswers_programGoal,
   OnboardingAnswers_togglePlace,
@@ -28,25 +29,33 @@ describe("OnboardingAnswers", () => {
       sex: "female" as const,
       goal: "strength" as const,
     };
-    expect(OnboardingAnswers_body(answers, 3, 2026)).to.deep.equal({
-      profile: { activity: "light", goal: "maintain", heightUnit: "cm", heightCm: 180, sex: "female", birthYear: 1996 },
+    expect(OnboardingAnswers_body(answers, 3, today)).to.deep.equal({
+      profile: {
+        activity: "light",
+        goal: "maintain",
+        heightUnit: "cm",
+        heightCm: 180,
+        sex: "female",
+        birthYear: 1996,
+        ageSetAt: today.getTime(),
+      },
       weight: { value: 80.5, unit: "kg" },
     });
-    expect(OnboardingAnswers_body({ ...answers, goal: "both" }, 5, 2026).profile).to.include({
+    expect(OnboardingAnswers_body({ ...answers, goal: "both" }, 5, today).profile).to.include({
       activity: "moderate",
       goal: "gain",
     });
-    expect(OnboardingAnswers_body(OnboardingAnswers_empty(), 3, 2026).weight).to.equal(undefined);
+    expect(OnboardingAnswers_body(OnboardingAnswers_empty(), 3, today).weight).to.equal(undefined);
     expect(
-      OnboardingAnswers_body({ ...answers, age: "-1", height: "999", weight: "NaN" }, 3, 2026).profile.birthYear
+      OnboardingAnswers_body({ ...answers, age: "-1", height: "999", weight: "NaN" }, 3, today).profile.birthYear
     ).to.equal(undefined);
   });
   it("reads feet and inches and picks units from the phone's region", () => {
     const answers = { ...OnboardingAnswers_empty("en-US"), heightFt: "5", heightIn: "10" };
     expect(answers).to.include({ heightUnit: "ftin", unit: "lb" });
-    expect(OnboardingAnswers_body(answers, 3, 2026).profile).to.include({ heightUnit: "ftin", heightCm: 178 });
-    expect(OnboardingAnswers_body({ ...answers, heightIn: "" }, 3, 2026).profile.heightCm).to.equal(152);
-    expect(OnboardingAnswers_body({ ...answers, heightFt: "12" }, 3, 2026).profile.heightCm).to.equal(undefined);
+    expect(OnboardingAnswers_body(answers, 3, today).profile).to.include({ heightUnit: "ftin", heightCm: 178 });
+    expect(OnboardingAnswers_body({ ...answers, heightIn: "" }, 3, today).profile.heightCm).to.equal(152);
+    expect(OnboardingAnswers_body({ ...answers, heightFt: "12" }, 3, today).profile.heightCm).to.equal(undefined);
     expect(OnboardingAnswers_empty("de-DE")).to.include({ heightUnit: "cm", unit: "kg" });
     expect(OnboardingAnswers_empty("en-GB")).to.include({ unit: "kg" });
   });
@@ -66,7 +75,7 @@ describe("OnboardingAnswers", () => {
   });
   it("uses the chosen food activity and weight goal independently of the training plan", () => {
     const answers = { ...OnboardingAnswers_empty(), activity: "sedentary" as const, foodGoal: "lose" as const };
-    expect(OnboardingAnswers_body(answers, 5, 2026).profile).to.include({ activity: "sedentary", goal: "lose" });
+    expect(OnboardingAnswers_body(answers, 5, today).profile).to.include({ activity: "sedentary", goal: "lose" });
     expect(OnboardingAnswers_programGoal(answers, 1).kind).to.equal("buildMuscle");
   });
   const foodAnswers = {
@@ -93,7 +102,26 @@ describe("OnboardingAnswers", () => {
         heightCm: 180,
         sex: "male",
         birthYear: 1996,
+        ageSetAt: today.getTime(),
       },
+    });
+  });
+  it("uses the calculator's body ranges and keeps age 13 for the plan only", () => {
+    const answers = { ...foodAnswers, age: "13" };
+    expect(OnboardingAnswers_planInput(answers).age).to.equal(13);
+    expect(OnboardingAnswers_body(answers, 3, today).profile.birthYear).to.equal(2013);
+    expect(OnboardingAnswers_foodTargets(answers, today)).to.equal(undefined);
+    const lb = { ...foodAnswers, unit: "lb" as const };
+    expect(OnboardingAnswers_body({ ...lb, weight: "66" }, 3, today).weight).to.equal(undefined);
+    expect(OnboardingAnswers_body({ ...lb, weight: "661" }, 3, today).weight).to.deep.equal({ value: 661, unit: "lb" });
+  });
+  it("keeps saved profile values that a new answer leaves undefined", () => {
+    const saved = { activity: "light" as const, goal: "gain" as const, heightCm: 170, sex: "female" as const };
+    const next = { activity: "moderate" as const, goal: "maintain" as const, heightCm: undefined, sex: undefined };
+    expect(OnboardingAnswers_mergeProfile(saved, next)).to.deep.equal({
+      ...saved,
+      activity: "moderate",
+      goal: "maintain",
     });
   });
   it("uses the calculator's exact imperial conversion and decimal parsing", () => {

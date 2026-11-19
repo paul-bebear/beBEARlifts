@@ -111,6 +111,19 @@ describe("SeasonNudge season change", () => {
     expect(bulk.goals).to.deep.equal(FoodTargets_fromCalories(body, m, m * 1.1).goals);
   });
 
+  it("gives an 18 year old the same adult rule as the calculator in the same year", () => {
+    const january = new Date(2027, 0, 15, 12);
+    const enteredAt18 = FoodTargets_toProfile(
+      { ...FoodTargets_start(profile, weight, "kg", 2027).form, age: "18", seasons: true },
+      january
+    );
+    const body: IFoodBody = { weightKg: 80, heightCm: 180, sex: "male", age: 18 };
+    expect(FoodTargets_compute(body, "moderate", "bulk").isDeficitBlocked).to.equal(false);
+    const lean = change(SeasonNudge_for({ foodLog: logWith(enteredAt18), latestWeight: weight, now: april }));
+    expect(lean.text).not.to.contain("Under 18");
+    expect(lean.goals).to.deep.equal(FoodTargets_compute(body, "moderate", "lean").goals);
+  });
+
   it("keeps the old targets when the profile has no body to compute from", () => {
     const nudge = change(
       SeasonNudge_for({ foodLog: logWith({ heightCm: undefined }), latestWeight: weight, now: april })

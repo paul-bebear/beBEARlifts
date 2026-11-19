@@ -5,7 +5,7 @@ import { Slider } from "./primitives/slider";
 import { Switch } from "./primitives/switch";
 import { Circle, Path, Svg } from "./primitives/svg";
 import { FoodChip, FoodTextInput } from "./foodUi";
-import { IFoodSex } from "../models/foodTargets";
+import { FoodTargets_deficitBlockedNote, IFoodSex } from "../models/foodTargets";
 import { BodyFat_band, BodyFat_figure, BodyFat_figurePath, BodyFat_range } from "../models/bodyFatEstimate";
 import { ProgramGoal_kinds, ProgramGoal_stepsBands } from "../models/programGoal";
 import {
@@ -266,6 +266,9 @@ export function GoalWizardResultStep(props: IStepProps & { preview: IGoalWizardP
             {targets.goals.calories.min} to {targets.goals.calories.max} cal · {targets.goals.protein.min} to{" "}
             {targets.goals.protein.max} g protein. Maintenance is about {targets.maintenance} cal.
           </Text>
+          {targets.isDeficitBlocked && (
+            <Text className="mt-1 text-sm text-text-secondary">{FoodTargets_deficitBlockedNote}</Text>
+          )}
         </View>
       ) : (
         <Text className="mt-2 text-sm text-text-secondary">
