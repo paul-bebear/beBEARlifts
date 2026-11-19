@@ -1,14 +1,12 @@
 import { JSX, useState } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
-import { INutrients } from "../models/foodLog";
 import { IFoodPhotoChoice } from "../models/foodAddFlow";
 import { FoodScanSteps_modes, IScanMode, IScanResume } from "../models/foodScanSteps";
 import { AiConsent_disabledMessage, AiConsent_ensure } from "../utils/aiConsentClient";
 import { AiConsentGate } from "./aiConsentGate";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
 import { FoodAiPanel } from "./foodAiPanel";
-import { FoodQuickAddPanel } from "./foodQuickAddPanel";
 import { FoodRepeatList } from "./foodRepeatList";
 
 interface IProps {
@@ -18,12 +16,11 @@ interface IProps {
   onMode: (mode: IScanMode) => void;
   onBarcode: (code: string) => void;
   onAiReviewed: (choices: IFoodPhotoChoice[], photo?: string, text?: string) => void;
-  onQuick: (name: string, nutrients: INutrients) => void;
   onSearch: () => void;
   onCopied: () => void;
 }
 
-const modeLabels: Record<IScanMode, string> = { barcode: "Barcode", ai: "AI", quick: "Quick add" };
+const modeLabels: Record<IScanMode, string> = { barcode: "Barcode", ai: "AI" };
 
 function ModeToggle(props: { modes: IScanMode[]; mode: IScanMode; onPick: (mode: IScanMode) => void }): JSX.Element {
   return (
@@ -73,7 +70,6 @@ export function FoodScanCamera(props: IProps): JSX.Element {
           <FoodAiPanel resume={props.resume} onAdd={props.onAiReviewed} />
         </AiConsentGate>
       )}
-      {props.mode === "quick" && <FoodQuickAddPanel onBack={() => props.onMode("barcode")} onSubmit={props.onQuick} />}
       <View className="mt-4">
         <ModeToggle modes={FoodScanSteps_modes()} mode={props.mode} onPick={pickMode} />
         {aiNotice != null && <Text className="pt-2 text-sm text-center text-text-secondary">{aiNotice}</Text>}
