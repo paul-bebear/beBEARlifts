@@ -35,15 +35,10 @@ import {
   IStats,
   ISubscription,
 } from "../types";
-import { IState, updateProgress, updateState } from "../models/state";
+import { updateProgress, updateState } from "../models/state";
 import { useIsFocused } from "@react-navigation/native";
-import {
-  FirstUseTips_recordSeen,
-  FirstUseTips_transition,
-  FirstUseTips_workoutEvent,
-  IFirstUseEvent,
-  IFirstUseTipsState,
-} from "../models/firstUseTips";
+import { FirstUseTips_workoutEvent } from "../models/firstUseTips";
+import { useFirstUseTip } from "../utils/useFirstUseTip";
 import { FirstUseTipContext } from "./firstUseTipContext";
 import { TipBar } from "./tipBar";
 import { IEvaluatedProgram, IEvaluatedProgramDay, Program_isEmpty } from "../models/program";
@@ -118,41 +113,6 @@ interface IWorkoutViewProps {
   dispatch: IDispatch;
   renderHeaderMenu?: (onOpenChange: (isOpen: boolean) => void) => ReactNode;
   onCancel?: () => void;
-}
-
-export function useFirstUseTip(
-  helps: string[],
-  dispatch: IDispatch
-): {
-  tip: IFirstUseTipsState["tip"];
-  reportTip: (event: IFirstUseEvent | "close") => void;
-} {
-  const stateRef = useRef<IFirstUseTipsState>({ helps });
-  const helpsRef = useRef(helps);
-  helpsRef.current = helps;
-  const [tip, setTip] = useState<IFirstUseTipsState["tip"]>();
-  const reportTip = useCallback(
-    (event: IFirstUseEvent | "close") => {
-      const next = FirstUseTips_transition(stateRef.current, event, helpsRef.current);
-      stateRef.current = next.state;
-      setTip(next.state.tip);
-      if (next.shownId != null) {
-        const id = next.shownId;
-        updateState(
-          dispatch,
-          [
-            lb<IState>()
-              .p("storage")
-              .p("helps")
-              .recordModify((hs) => FirstUseTips_recordSeen(hs, id)),
-          ],
-          "Show first-use tip"
-        );
-      }
-    },
-    [dispatch]
-  );
-  return { tip, reportTip };
 }
 
 function WorkoutInner(props: IWorkoutViewProps): JSX.Element {

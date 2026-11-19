@@ -1,4 +1,4 @@
-import { MathUtils_roundFloat, n } from "../utils/math";
+import { MathUtils_clamp, MathUtils_roundFloat, n } from "../utils/math";
 import { IExerciseType, ISettings, IUnit } from "../types";
 import { Exercise_toKey } from "./exercise";
 import { Weight_build, Weight_convertTo, Weight_increment, Weight_round } from "./weight";
@@ -127,6 +127,25 @@ export function RulerTape_spec(kind: IRulerKind, unit: string | undefined): IRul
     return kind === "weight" ? WEIGHT_LB : WEIGH_IN_LB;
   }
   return undefined;
+}
+
+export const RulerTape_reps = RulerTape_spec("reps", undefined);
+
+export interface IRulerChange {
+  value: number;
+  text: string;
+  shouldCommit: boolean;
+}
+
+export function RulerTape_applyChange(
+  rulerValue: number,
+  min: number | undefined,
+  max: number | undefined,
+  commitMode: string
+): IRulerChange {
+  const clamped = MathUtils_clamp(rulerValue, min, max);
+  const value = isNaN(clamped) ? MathUtils_clamp(0, min, max) : clamped;
+  return { value, text: value.toString(), shouldCommit: commitMode !== "blur" };
 }
 
 const STOPS_CEILING_KG = 300;

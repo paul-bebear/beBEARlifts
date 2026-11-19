@@ -62,6 +62,7 @@ function openExternal(url: string): void {
 
 function ScreenSettingsInner(props: IProps): JSX.Element {
   usePerfRenderCount("ScreenSettings");
+  const isOffline = OfflineOnly_isEnabled();
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const osFontScale = useOsFontScale();
   // This screen reads settings via `untrack`, so it doesn't re-render when `theme` changes.
@@ -86,8 +87,8 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
           props.dispatch(Thunk_pushScreen("programs"));
         }}
       />
-      {!OfflineOnly_isEnabled() && <GroupHeader name="Account" topPadding={true} />}
-      {!OfflineOnly_isEnabled() && (
+      {!isOffline && <GroupHeader name="Account" topPadding={true} />}
+      {!isOffline && (
         <MenuItem
           name="Account"
           value={
@@ -103,7 +104,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
           onClick={() => props.dispatch(Thunk_pushScreen("account"))}
         />
       )}
-      {!OfflineOnly_isEnabled() && (
+      {!isOffline && (
         <MenuItemEditable
           type="text"
           name="Nickname"
@@ -173,7 +174,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
         />
       )}
 
-      {!OfflineOnly_isEnabled() && (
+      {!isOffline && (
         <MenuItem
           name="API Keys"
           shouldShowRightArrow={true}
@@ -484,7 +485,7 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
           });
         }}
       />
-      {OfflineOnly_isEnabled() && Platform.OS === "web" && (
+      {isOffline && Platform.OS === "web" && (
         <MenuItemEditable
           type="boolean"
           name="Monochrome"
@@ -552,14 +553,14 @@ function ScreenSettingsInner(props: IProps): JSX.Element {
       )}
 
       <GroupHeader name="Miscellaneous" topPadding={true} />
-      {!OfflineOnly_isEnabled() && <MenuItem name="Changelog" onClick={() => WhatsNew_showWhatsNew(props.dispatch)} />}
+      {!isOffline && <MenuItem name="Changelog" onClick={() => WhatsNew_showWhatsNew(props.dispatch)} />}
       <Pressable
         className="py-3 border-b border-border-neutral"
         onPress={() => openExternal(`mailto:${Support_email}`)}
       >
         <Text className="text-base text-text-primary">Contact Us</Text>
       </Pressable>
-      {!OfflineOnly_isEnabled() && (
+      {!isOffline && (
         <Pressable
           className="py-3 border-b border-border-neutral"
           onPress={() => openExternal("https://discord.com/invite/AAh3cvdBRs")}
