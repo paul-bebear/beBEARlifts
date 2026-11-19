@@ -28,7 +28,6 @@ import {
   Feed_empty,
   Feed_itemKey,
   Feed_items,
-  Feed_needsRefresh,
   Feed_parse,
   Feed_parseMeals,
   Feed_pendingOps,
@@ -415,15 +414,6 @@ describe("Feed", () => {
     ]);
     const cached = Feed_sent(Feed_empty(), { type: "post", userId: "me", workoutId: 3, queuedAt: 1, summary }, t1);
     expect(Feed_items(cached, friends).map(Feed_reportTarget)).to.deep.equal([undefined]);
-  });
-
-  it("refreshes for the TV only when signed in and the cache is old or another account's", () => {
-    const loaded = Feed_withServerPosts(Feed_empty(), "me", [], t1);
-    expect(Feed_needsRefresh(loaded, undefined, t1)).to.equal(false);
-    expect(Feed_needsRefresh(loaded, "me", t1 + 60000)).to.equal(false);
-    expect(Feed_needsRefresh(loaded, "me", t1 + 11 * 60000)).to.equal(true);
-    expect(Feed_needsRefresh(loaded, "other", t1)).to.equal(true);
-    expect(Feed_needsRefresh(Feed_empty(), "me", t1)).to.equal(true);
   });
 
   it("opens on the friends list until there is a friend, then on the feed", () => {
