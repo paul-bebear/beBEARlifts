@@ -1,7 +1,10 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  MusicLog_disconnect,
   MusicLog_empty,
+  MusicLog_exportJson,
+  MusicLog_parse,
   MusicLog_keepNote,
   MusicLog_maxSessions,
   MusicLog_playStatus,
@@ -83,5 +86,23 @@ describe("MusicLog texts", () => {
   it("names the cap from the constant", () => {
     expect(MusicLog_keepNote).to.contain(`newest ${MusicLog_maxSessions} workouts`);
     expect(MusicLog_keepNote).to.contain("newest 210 workouts");
+  });
+});
+
+describe("MusicLog tokens in the plain store", () => {
+  const tokens = { accessToken: "test-access", refreshToken: "test-refresh", expiresAt: t0 };
+  const saved = { version: 1, tokens, displayName: "Bear", sessions: [{ id: 1, startedAt: t0, plays: [] }] };
+
+  it("still reads a token that an older build or an old backup saved", () => {
+    expect(MusicLog_parse(saved).tokens).to.deep.equal(tokens);
+  });
+
+  it("keeps the token out of the export and drops it and the name on sign-out", () => {
+    const log = MusicLog_parse(saved);
+    expect(JSON.parse(MusicLog_exportJson(log))).to.not.have.property("tokens");
+    const out = MusicLog_disconnect(log);
+    expect(out.tokens).to.equal(undefined);
+    expect(out.displayName).to.equal(undefined);
+    expect(out.sessions).to.deep.equal(log.sessions);
   });
 });
