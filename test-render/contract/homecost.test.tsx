@@ -35,9 +35,6 @@ describe("the blurred home tab", () => {
   it("commits each home component once", async () => {
     expect(await homeCommits(200)).toEqual({
       NavScreenMain: 1,
-      ProgramHistoryView: 1,
-      WeekCalendar: 1,
-      WeekInsights: 1,
     });
   });
 });

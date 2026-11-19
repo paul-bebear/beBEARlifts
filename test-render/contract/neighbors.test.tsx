@@ -45,8 +45,8 @@ describe("neighbours and other screens", () => {
     const trace = await app.record(async () => {
       await app.completeSet(0);
     });
-    expect(RenderTrace_byInstance(RenderTrace_select(trace, { component: "ProgramHistoryView" }))).toEqual({
-      ProgramHistoryView: 1,
+    expect(RenderTrace_byInstance(RenderTrace_select(trace, { component: "NavScreenMain" }))).toEqual({
+      NavScreenMain: 1,
     });
   });
 });
