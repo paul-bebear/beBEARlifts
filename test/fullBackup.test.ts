@@ -228,39 +228,6 @@ describe("FullBackup", () => {
     expect(FullBackup_unwrap(older).schedule).to.equal(undefined);
   });
 
-  it("loads a backup from the first Export everything, with only workouts, food and music", () => {
-    const entry = {
-      id: "e1",
-      day: "2026-10-20",
-      meal: "lunch",
-      name: "Rice",
-      source: "manual",
-      nutrients: { calories: 200, protein: 4, carbs: 44, fat: 1 },
-      createdAt: now,
-    };
-    const old = {
-      format: FullBackup_format,
-      version: 1,
-      exportedAt: "2026-10-20T18:00:00.000Z",
-      readme: "Backup of the beBEAR app.",
-      workouts: Storage_getDefault(),
-      food: { version: 1, entries: [entry], goals: FoodLog_empty().goals, recents: [] },
-      music: MusicLog_empty(),
-    };
-    const contents = FullBackup_unwrap(JSON.parse(JSON.stringify(old)));
-    expect(Storage_get(contents.storage as Record<string, unknown>, false).success).to.equal(true);
-    expect(contents.food?.entries.map((e) => e.id)).to.deep.equal(["e1"]);
-    expect(contents.body).to.equal(undefined);
-    expect(contents.notes).to.equal(undefined);
-  });
-
-  it("leaves the food on the phone alone when the food part cannot be read", () => {
-    for (const food of [{}, "broken", { entries: "x" }, 7]) {
-      const backup = { ...FullBackup_build(parts({}), now), food };
-      expect(FullBackup_unwrap(JSON.parse(JSON.stringify(backup))).food).to.equal(undefined);
-    }
-  });
-
   it("parses a broken bear in a backup to the empty value", () => {
     const backup = { ...FullBackup_build(parts({}), now), bear: { line: "bad" } };
     expect(FullBackup_unwrap(backup).bear).to.deep.equal(BearStoreData_empty());

@@ -5,8 +5,6 @@ import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } fr
 import { NumberText_round1, NumberText_round3 } from "./numberText";
 import { LocalDay_key, LocalDay_parse } from "./localDay";
 import { DayNames_monthDay, DayNames_weekdaysShort } from "./dayNames";
-import { StringUtils_pluralize } from "../utils/string";
-
 export type IFoodMeal = "breakfast" | "lunch" | "dinner" | "snacks";
 
 export const FoodLog_meals: IFoodMeal[] = ["breakfast", "lunch", "dinner", "snacks"];
@@ -227,39 +225,6 @@ export function FoodLog_parseImport(raw: unknown): IFoodLog | undefined {
     log.recipes.length < rawCount(r.recipes);
   const hasContent = log.entries.length + log.meals.length + log.recipes.length + log.savedFoods.length > 0;
   return hasContent && !dropped ? log : undefined;
-}
-
-function newById<T extends { id: string }>(current: T[], imported: T[]): T[] {
-  const ids = new Set(current.map((item) => item.id));
-  return imported.filter((item) => !ids.has(item.id));
-}
-
-export function FoodLog_mergeImport(current: IFoodLog, imported: IFoodLog): IFoodLog {
-  const keepsTargets = FoodLog_hasGoals(current.goals);
-  return {
-    ...current,
-    entries: [...current.entries, ...newById(current.entries, imported.entries)],
-    meals: [...current.meals, ...newById(current.meals, imported.meals)],
-    recipes: [...current.recipes, ...newById(current.recipes, imported.recipes)],
-    savedFoods: current.savedFoods.reduceRight((list, product) => SavedFoods_save(list, product), imported.savedFoods),
-    goals: keepsTargets ? current.goals : imported.goals,
-    profile: keepsTargets ? current.profile : imported.profile,
-  };
-}
-
-export function FoodLog_importQuestion(current: IFoodLog, imported: IFoodLog): string | undefined {
-  const added = newById(current.entries, imported.entries).length;
-  const extras = newById(current.meals, imported.meals).length + newById(current.recipes, imported.recipes).length;
-  if (added === 0 && extras === 0) {
-    return undefined;
-  }
-  const kept = current.entries.length;
-  const keptText = kept > 0 ? ` The ${kept} ${StringUtils_pluralize("food", kept)} on this phone stay.` : "";
-  const extrasText =
-    extras > 0
-      ? ` and ${extras} ${StringUtils_pluralize("meal", extras)} or ${StringUtils_pluralize("recipe", extras)}`
-      : "";
-  return `Add ${added} ${StringUtils_pluralize("food", added)}${extrasText} from this file?${keptText}`;
 }
 
 function parseRecents(raw: unknown): IFoodRecent[] {

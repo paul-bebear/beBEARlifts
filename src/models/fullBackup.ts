@@ -141,11 +141,6 @@ export interface IFullBackupContents {
   photos?: IProgressPhotoIndexEntry[];
 }
 
-function readableFood(raw: unknown): IFoodLog | undefined {
-  const r = raw as Record<string, unknown> | null | undefined;
-  return r != null && typeof r === "object" && Array.isArray(r.entries) ? FoodLog_parse(r) : undefined;
-}
-
 // A plain Liftosaur export has no format field, so it passes through as the storage alone.
 export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
   const r = (parsed ?? {}) as Record<string, unknown>;
@@ -154,7 +149,7 @@ export function FullBackup_unwrap(parsed: unknown): IFullBackupContents {
   }
   return {
     storage: r.workouts,
-    food: readableFood(r.food),
+    food: r.food != null ? FoodLog_parse(r.food) : undefined,
     music: r.music != null ? MusicLog_parse(r.music) : undefined,
     body: r.body != null ? BodyScans_parse(r.body) : undefined,
     warmups: r.warmups != null ? WarmupPlan_parseLog(r.warmups) : undefined,
