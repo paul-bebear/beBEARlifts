@@ -4,12 +4,12 @@ import {
   FoodLog_dayLabel,
   FoodLog_entriesFor,
   FoodLog_formatNumber,
-  FoodLog_meals,
   FoodLog_shiftDay,
   IFoodEntry,
   IFoodLog,
   IFoodMeal,
 } from "./foodLog";
+import { FoodDayPage_meals } from "./foodDayPage";
 
 export interface IFoodRepeatState {
   day: string;
@@ -44,9 +44,7 @@ export function FoodRepeat_retry(state: IFoodRepeatState): IFoodRepeatState {
 }
 
 export function FoodRepeat_groups(log: IFoodLog, day: string): { meal: IFoodMeal; entries: IFoodEntry[] }[] {
-  return FoodLog_meals.map((meal) => ({ meal, entries: FoodLog_entriesFor(log, day, meal) })).filter(
-    (group) => group.entries.length > 0
-  );
+  return FoodDayPage_meals(log, day, false);
 }
 
 export function FoodRepeat_fallback(log: IFoodLog, today: string): string | undefined {
