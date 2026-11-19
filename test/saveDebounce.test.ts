@@ -41,10 +41,7 @@ describe("SaveDebounce", () => {
     const first = SaveDebounce_type(SaveDebounce_empty<string>(), "a");
     expect(first.effects).to.eql([{ kind: "startTimer", ms: SaveDebounce_quietMs }]);
     const second = SaveDebounce_type(first.state, "ab");
-    expect(SaveDebounce_flush(second.state).effects).to.eql([
-      { kind: "clearTimer" },
-      { kind: "save", value: "ab" },
-    ]);
+    expect(SaveDebounce_flush(second.state).effects).to.eql([{ kind: "clearTimer" }, { kind: "save", value: "ab" }]);
   });
 
   it("does nothing on flush when nothing is pending", () => {
@@ -65,7 +62,9 @@ describe("SaveDebounce", () => {
   it("writes once for a burst of keys", async () => {
     const saved: string[] = [];
     const clock = fakeTimers();
-    const saver = SaveDebounce_controller<string>(async (value) => void saved.push(value), clock.timers);
+    const saver = SaveDebounce_controller<string>(async (value) => {
+      saved.push(value);
+    }, clock.timers);
     "hello".split("").forEach((_, i) => saver.type("hello".slice(0, i + 1)));
     expect(saved).to.eql([]);
     clock.fire();
@@ -109,7 +108,9 @@ describe("SaveDebounce", () => {
   it("saves the pending text when the editor closes before the timer", async () => {
     const saved: string[] = [];
     const clock = fakeTimers();
-    const saver = SaveDebounce_controller<string>(async (value) => void saved.push(value), clock.timers);
+    const saver = SaveDebounce_controller<string>(async (value) => {
+      saved.push(value);
+    }, clock.timers);
     saver.type("note");
     saver.flush();
     await settle();
@@ -120,7 +121,9 @@ describe("SaveDebounce", () => {
   it("drops the pending text after a discard", async () => {
     const saved: string[] = [];
     const clock = fakeTimers();
-    const saver = SaveDebounce_controller<string>(async (value) => void saved.push(value), clock.timers);
+    const saver = SaveDebounce_controller<string>(async (value) => {
+      saved.push(value);
+    }, clock.timers);
     saver.type("note");
     saver.discard();
     saver.flush();

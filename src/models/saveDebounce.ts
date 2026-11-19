@@ -5,7 +5,10 @@ export interface ISaveDebounce<T> {
   isHeld: boolean;
 }
 
-export type ISaveDebounceEffect<T> = { kind: "startTimer"; ms: number } | { kind: "clearTimer" } | { kind: "save"; value: T };
+export type ISaveDebounceEffect<T> =
+  | { kind: "startTimer"; ms: number }
+  | { kind: "clearTimer" }
+  | { kind: "save"; value: T };
 
 export interface ISaveDebounceStep<T> {
   state: ISaveDebounce<T>;
@@ -58,7 +61,10 @@ export interface ISaveDebounceController<T> {
 
 export function SaveDebounce_controller<T>(
   save: (value: T) => Promise<void>,
-  timers: ISaveDebounceTimers = { set: (run, ms) => setTimeout(run, ms), clear: (handle) => clearTimeout(handle as never) }
+  timers: ISaveDebounceTimers = {
+    set: (run, ms) => setTimeout(run, ms),
+    clear: (handle) => clearTimeout(handle as never),
+  }
 ): ISaveDebounceController<T> {
   let state = SaveDebounce_empty<T>();
   let handle: unknown;

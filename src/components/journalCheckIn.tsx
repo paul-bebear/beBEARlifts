@@ -12,7 +12,7 @@ import {
   Notes_updateCheckIn,
 } from "../models/notes";
 import { SaveDebounce_controller } from "../models/saveDebounce";
-import { NotesStore,NotesStore_newId } from "../utils/notesStore";
+import { NotesStore, NotesStore_newId } from "../utils/notesStore";
 
 function FaceRow(props: {
   field: ICheckInField;
