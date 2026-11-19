@@ -85,7 +85,9 @@ export function FoodScanCamera(props: IProps): JSX.Element {
           data-testid="food-copy-day"
           onPress={() => setIsRepeating(true)}
         >
-          <Text className="text-base text-text-link">{FoodRepeat_heading(FoodRepeat_initial(props.day), new Date()).title}</Text>
+          <Text className="text-base text-text-link">
+            {FoodRepeat_heading(FoodRepeat_initial(props.day), new Date()).title}
+          </Text>
         </Pressable>
       </View>
     </View>
