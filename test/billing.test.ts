@@ -277,6 +277,38 @@ describe("api/billing routes", () => {
     expect(JSON.parse(put?.args[1].body)).to.deep.include({ p_user: userA, p_active: true });
   });
 
+  function stubCaps(answer: Response): void {
+    fetchStub.withArgs(sinon.match(/rest\/v1\/ai_settings\?/)).callsFake(() => Promise.resolve(answer));
+  }
+
+  it("sync adds the AI caps from ai_settings to the plan answer", async () => {
+    fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).resolves(reply({ id: userA }));
+    stubRefresh(userA, { plan: "free", grant: null });
+    stubCaps(reply([{ free_day_cap: 3, free_week_cap: 10, plus_day_cap: 40, plus_week_cap: 200, onboard_runs: 0 }]));
+    const response = await syncPost(syncRequest());
+    expect(response.status).to.equal(200);
+    expect(await response.json()).to.deep.equal({
+      plan: "free",
+      grant: null,
+      canManageSubscription: false,
+      aiCaps: { day: 3, week: 10, plusDay: 40, plusWeek: 200, lifetime: 3 },
+    });
+    const read = fetchStub.getCalls().find((c) => String(c.args[0]).includes("ai_settings?"));
+    expect(read?.args[1].headers).to.deep.include({ apikey: "sb_secret_test" });
+  });
+
+  it("sync answers the plan without caps when ai_settings does not answer", async () => {
+    fetchStub.withArgs(sinon.match(/auth\/v1\/user$/)).callsFake(() => Promise.resolve(reply({ id: userA })));
+    stubRefresh(userA, { plan: "plus", grant: "subscription", canManageSubscription: true });
+    const answers = [reply({ message: "denied" }, 401), reply([])];
+    fetchStub.withArgs(sinon.match(/rest\/v1\/ai_settings\?/)).callsFake(() => Promise.resolve(answers.shift()));
+    for (let i = 0; i < 2; i += 1) {
+      const response = await syncPost(syncRequest());
+      expect(await response.json()).to.deep.equal({ plan: "plus", grant: "subscription", canManageSubscription: true });
+    }
+    expect(answers).to.have.length(0);
+  });
+
   it("sync refuses a missing token, a bad token and an anonymous user", async () => {
     const missing = await syncPost(syncRequest({}));
     expect(missing.status).to.equal(401);

@@ -1,8 +1,10 @@
 import "mocha";
 import { expect } from "chai";
+import { AiCaps_defaults } from "../src/models/aiCaps";
 import {
   AccountPlan_accept,
   AccountPlan_activatingTries,
+  AccountPlan_aiCaps,
   AccountPlan_codeRedeemed,
   AccountPlan_empty,
   AccountPlan_isPlus,
@@ -89,6 +91,28 @@ describe("AccountPlan", () => {
     expect(AccountPlan_settingsRow({ status: "activating", userId: "a" }, "a").subtitle).to.equal(
       "Purchase done. Activating…"
     );
+  });
+
+  const aiCaps = { day: 3, week: 10, plusDay: 40, plusWeek: 200, lifetime: 3 };
+
+  it("stores the caps the sync answer sends and quotes them in the offer row", () => {
+    const synced = AccountPlan_parseSync("a", { plan: "free", grant: null, aiCaps });
+    expect(synced).to.deep.equal({ ...free, aiCaps });
+    expect(AccountPlan_parse(synced)).to.deep.equal(synced);
+    expect(AccountPlan_aiCaps(synced)).to.deep.equal(aiCaps);
+    expect(AccountPlan_settingsRow(synced as IAccountPlanState, "a").subtitle).to.equal(
+      "40 AI uses a day. Tracking stays free."
+    );
+    expect(AccountPlan_codeRedeemed(synced as IAccountPlanState, "a")).to.deep.include({ aiCaps });
+  });
+
+  it("uses the app's caps when the sync answer has none or bad ones", () => {
+    expect(AccountPlan_parseSync("a", { plan: "free", grant: null })).to.deep.equal(free);
+    expect(AccountPlan_aiCaps(free)).to.deep.equal(AiCaps_defaults);
+    expect(AccountPlan_aiCaps({ status: "activating", userId: "a" })).to.deep.equal(AiCaps_defaults);
+    expect(AccountPlan_settingsRow(free, "a").subtitle).to.equal("30 AI uses a day. Tracking stays free.");
+    const bad = AccountPlan_parseSync("a", { plan: "free", grant: null, aiCaps: { plusDay: 0 } });
+    expect(AccountPlan_aiCaps(bad as IAccountPlanState)).to.deep.equal(AiCaps_defaults);
   });
 
   it("keeps a running subscription when the same user redeems a code", () => {

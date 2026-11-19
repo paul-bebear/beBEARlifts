@@ -6,10 +6,57 @@ export interface IAiCapsUsage {
 export type IAiCapsRefusal =
   | { reason: "day" | "week"; plan: "free" | "plus"; used: IAiCapsUsage; caps: IAiCapsUsage; weekFreesIn?: number }
   | { reason: "onboard"; used: number; cap: number }
-  | { reason: "report" | "global"; error: string };
+  | { reason: "report" | "reportDay" | "share" | "global"; error: string };
 
-// The Vercel defaults in api/_auth.mjs. The app shows them in its beBEAR+ text, because only the server reads the variables.
-export const AiCaps_plus: IAiCapsUsage = { day: 30, week: 150 };
+export interface IAiCapsPlan {
+  day: number;
+  week: number;
+  plusDay: number;
+  plusWeek: number;
+  lifetime: number;
+}
+
+// The ai_settings defaults. An app on an older API, which sends no caps, shows these.
+export const AiCaps_defaults: IAiCapsPlan = { day: 3, week: 10, plusDay: 30, plusWeek: 150, lifetime: 3 };
+
+export const AiCaps_plus: IAiCapsUsage = { day: AiCaps_defaults.plusDay, week: AiCaps_defaults.plusWeek };
+
+const textReasons = ["report", "reportDay", "share", "global"] as const;
+
+const planKeys: (keyof IAiCapsPlan)[] = ["day", "week", "plusDay", "plusWeek", "lifetime"];
+
+function positiveCap(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
+export function AiCaps_fromServer(raw: unknown): IAiCapsPlan | undefined {
+  if (raw == null || typeof raw !== "object") {
+    return undefined;
+  }
+  const r = raw as Record<string, unknown>;
+  const caps = { ...AiCaps_defaults };
+  for (const key of planKeys) {
+    caps[key] = positiveCap(r[key], AiCaps_defaults[key]);
+  }
+  return caps;
+}
+
+export function AiCaps_plusOf(caps: IAiCapsPlan | undefined): IAiCapsUsage {
+  const c = caps ?? AiCaps_defaults;
+  return { day: c.plusDay, week: c.plusWeek };
+}
+
+export function AiCaps_offerSubtitle(caps: IAiCapsPlan | undefined): string {
+  return `${AiCaps_plusOf(caps).day} AI uses a day. Tracking stays free.`;
+}
+
+export function AiCaps_plusFeature(caps: IAiCapsPlan | undefined): { title: string; description: string } {
+  const c = caps ?? AiCaps_defaults;
+  return {
+    title: `${c.plusWeek} AI uses a week`,
+    description: `${c.plusDay} a day instead of ${c.day}. Meal photos, meal text, nutrition labels, body scans and the AI warm-up.`,
+  };
+}
 
 function count(value: unknown): number | undefined {
   return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
@@ -43,8 +90,9 @@ export function AiCaps_parse(body: unknown): IAiCapsRefusal | undefined {
     const cap = count((r.caps as Record<string, unknown> | undefined)?.lifetime);
     return used == null || cap == null ? undefined : { reason: "onboard", used, cap };
   }
-  if ((r.reason === "report" || r.reason === "global") && typeof r.error === "string") {
-    return { reason: r.reason, error: r.error };
+  const textReason = textReasons.find((reason) => reason === r.reason);
+  if (textReason != null && typeof r.error === "string") {
+    return { reason: textReason, error: r.error };
   }
   return undefined;
 }
@@ -66,6 +114,8 @@ export function AiCaps_message(refusal: IAiCapsRefusal): string {
     case "onboard":
       return `You used all ${refusal.cap} AI setups. Pick a beBEAR plan instead.`;
     case "report":
+    case "reportDay":
+    case "share":
     case "global":
       return refusal.error;
   }

@@ -1,4 +1,5 @@
 import { AccountPlan_isPlus, IAccountPlanState } from "./accountPlan";
+import { AiCaps_plusFeature, IAiCapsPlan } from "./aiCaps";
 
 export type IPlusFeature =
   | "ai"
@@ -30,12 +31,7 @@ export interface IPlusAccountRow {
 
 // Decided 2026-10-25: anything that logs is free. Anything that analyzes, uses AI or connects to another tool is beBEAR+.
 const features: IPlusFeatureInfo[] = [
-  {
-    key: "ai",
-    tier: "plus",
-    title: "150 AI uses a week",
-    description: "30 a day instead of 3. Meal photos, meal text, nutrition labels, body scans and the AI warm-up.",
-  },
+  { key: "ai", tier: "plus", ...AiCaps_plusFeature(undefined) },
   {
     key: "weekInsights",
     tier: "plus",
@@ -81,8 +77,10 @@ const screenFeatures: Partial<Record<string, IPlusFeature>> = {
 
 export const PlusAccess_prices = "$6.99 a month, $39.99 a year, or $79.99 once for life.";
 
-export function PlusAccess_list(tier: IPlusTier): IPlusFeatureInfo[] {
-  return features.filter((f) => f.tier === tier);
+export function PlusAccess_list(tier: IPlusTier, caps?: IAiCapsPlan): IPlusFeatureInfo[] {
+  return features
+    .filter((f) => f.tier === tier)
+    .map((f) => (f.key === "ai" ? { ...f, ...AiCaps_plusFeature(caps) } : f));
 }
 
 export function PlusAccess_needsPlus(feature: IPlusFeature): boolean {
