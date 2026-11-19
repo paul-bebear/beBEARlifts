@@ -10,6 +10,7 @@ import { IPlannerEvalResult, PlannerExerciseEvaluator } from "../pages/planner/p
 import {
   PlannerProgramExercise_sets,
   PlannerProgramExercise_progressionType,
+  PlannerProgramExercise_beatProgression,
 } from "../pages/planner/models/plannerProgramExercise";
 import { IPlannerProgramExercise, IPlannerProgramExerciseSet } from "../pages/planner/models/types";
 import { Markdown } from "./markdown";
@@ -327,6 +328,19 @@ interface IProgressionProps {
 }
 
 export function Progression(props: IProgressionProps): JSX.Element | null {
+  const beat = PlannerProgramExercise_beatProgression(props.exercise);
+  if (beat != null) {
+    return (
+      <Text className="text-sm">
+        <Text className="text-sm font-bold">Beat Last Week</Text>
+        <Text className="text-sm">: more weight × reps than last time. Past </Text>
+        <Text className="text-sm font-bold">{beat.maxReps}</Text>
+        <Text className="text-sm"> reps, </Text>
+        <Text className="text-sm font-bold text-text-success">+{Weight_print(beat.increase)}</Text>
+        <Text className="text-sm">.</Text>
+      </Text>
+    );
+  }
   const type = PlannerProgramExercise_progressionType(props.exercise);
   if (type == null) {
     return null;

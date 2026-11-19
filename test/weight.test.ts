@@ -13,7 +13,7 @@ import {
   Weight_strictParse,
 } from "../src/models/weight";
 import { IPlate, ISettings } from "../src/types";
-import { Exercise_toKey } from "../src/models/exercise";
+import { Exercise_defaultRounding, Exercise_toKey } from "../src/models/exercise";
 
 function buildSettings(plates: IPlate[], bar: number = 45): ISettings {
   const settings = Settings_build();
@@ -189,6 +189,32 @@ describe("Weight", () => {
       expect(Weight_calculatePlates(Weight_build(11, "kg"), settings, "kg", hammerCurl).totalWeight).to.eql(
         Weight_build(10, "kg")
       );
+    });
+
+    it("step in the dumbbell unit when the weight is in the other unit", () => {
+      const settings = Settings_build();
+      settings.units = "lb";
+      settings.gyms[0].equipment.dumbbell!.unit = "kg";
+      expect(Weight_increment(Weight_build(50, "lb"), settings, hammerCurl)).to.eql(Weight_build(52.2, "lb"));
+      expect(Weight_decrement(Weight_build(50, "lb"), settings, hammerCurl)).to.eql(Weight_build(47.8, "lb"));
+      expect(Weight_increment(Weight_build(20, "kg"), settings, hammerCurl)).to.eql(Weight_build(21, "kg"));
+      settings.gyms[0].equipment.dumbbell!.unit = "lb";
+      expect(Weight_increment(Weight_build(20, "kg"), settings, hammerCurl)).to.eql(Weight_build(21.15, "kg"));
+      expect(Weight_increment(Weight_build(50, "lb"), settings, hammerCurl)).to.eql(Weight_build(52.5, "lb"));
+    });
+
+    it("show the same default rounding that the step uses", () => {
+      const settings = Settings_build();
+      settings.units = "kg";
+      settings.gyms[0].equipment.dumbbell!.unit = "kg";
+      expect(Exercise_defaultRounding(hammerCurl, settings)).to.equal(1);
+      settings.gyms[0].equipment.dumbbell!.unit = "lb";
+      expect(Exercise_defaultRounding(hammerCurl, settings)).to.equal(2.5);
+      settings.exerciseData[Exercise_toKey(hammerCurl)] = { rounding: 2 };
+      expect(Exercise_defaultRounding(hammerCurl, settings)).to.equal(2);
+      expect(Exercise_defaultRounding(exerciseType, buildSettings([]))).to.equal(5);
+      const noGear = { id: "hammerCurl", equipment: "noSuchGear" };
+      expect(Exercise_defaultRounding(noGear, Settings_build())).to.equal(5);
     });
   });
 
