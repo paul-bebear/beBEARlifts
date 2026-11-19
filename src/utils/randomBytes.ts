@@ -2,7 +2,8 @@ interface IRandomSource {
   crypto?: { getRandomValues?: (array: Uint8Array) => Uint8Array };
 }
 
-// Hermes (the iPhone and Android JS engine) has no Web Crypto, so the native app falls back to Math.random.
+// Hermes (the iPhone JS engine) has no Web Crypto, so the phone falls back to Math.random, which is not secure.
+// react-native-get-random-values would install a secure crypto.getRandomValues. The owner has not chosen it yet.
 export function RandomBytes_get(
   length: number,
   source: IRandomSource = globalThis as IRandomSource,

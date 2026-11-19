@@ -6,6 +6,7 @@ import {
   SpotifyAuth_randomString,
   SpotifyAuth_readAuthSession,
 } from "../models/spotifyAuth";
+import { RandomBytes_get } from "./randomBytes";
 
 export interface ISpotifyPkce {
   verifier: string;
@@ -15,15 +16,9 @@ export interface ISpotifyPkce {
 
 let lastError: string | undefined;
 
-// Hermes has no crypto.getRandomValues. ASWebAuthenticationSession hands the callback only to this app,
-// so the verifier does not have to hide from another app that claims the bebear:// scheme.
-function randomBytes(length: number): Uint8Array {
-  return Uint8Array.from({ length }, () => Math.floor(Math.random() * 256));
-}
-
 export async function SpotifyLoginPlatform_pkce(): Promise<ISpotifyPkce> {
-  const verifier = SpotifyAuth_randomString(randomBytes(64));
-  const state = SpotifyAuth_randomString(randomBytes(24));
+  const verifier = SpotifyAuth_randomString(RandomBytes_get(64));
+  const state = SpotifyAuth_randomString(RandomBytes_get(24));
   return { verifier, state, codeChallenge: SpotifyAuth_codeChallenge(verifier) };
 }
 
