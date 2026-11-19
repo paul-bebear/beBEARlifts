@@ -4,10 +4,10 @@ import { Weight_convertTo } from "./weight";
 import { EffortRating_efforts } from "./effortRating";
 import { NumberText_round1 } from "./numberText";
 
-export type IReportItemKind = "heavier" | "lighter" | "fewerReps" | "missed" | "tooHard" | "tooEasy" | "followUp";
-export type IReportAnswer = "onPurpose" | "feltOff" | "hurt" | "mistake" | "better" | "same" | "worse";
+type IReportItemKind = "heavier" | "lighter" | "fewerReps" | "missed" | "tooHard" | "tooEasy" | "followUp";
+type IReportAnswer = "onPurpose" | "feltOff" | "hurt" | "mistake" | "better" | "same" | "worse";
 
-export interface IReportItem {
+interface IReportItem {
   key: string;
   exerciseKey: string;
   exerciseName: string;
@@ -313,7 +313,7 @@ export function WorkoutReport_parseLog(raw: unknown): IReportLog {
   return { version: 1, reports };
 }
 
-export interface IReportWeek {
+interface IReportWeek {
   weekStart: number;
   workouts: number;
   heavier: number;

@@ -1,4 +1,4 @@
-export type IBearThemeOverrides = Record<string, Record<string, string>>;
+type IBearThemeOverrides = Record<string, Record<string, string>>;
 
 export const BearThemeColors_honey = "#F5A524";
 

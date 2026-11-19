@@ -1,6 +1,6 @@
 import { UnknownValue_finite, UnknownValue_textOrEmpty } from "./unknownValue";
 
-export type INoteKind = "note" | "checkIn";
+type INoteKind = "note" | "checkIn";
 
 export type ICheckInScore = 1 | 2 | 3 | 4 | 5;
 
@@ -24,7 +24,7 @@ export interface INotesLog {
   notes: INote[];
 }
 
-export interface ICheckInScale {
+interface ICheckInScale {
   field: ICheckInField;
   label: string;
   question: string;
@@ -133,7 +133,7 @@ export function Notes_canEditCheckIn(day: string, today: string): boolean {
   return day === today;
 }
 
-export interface ICheckInChange {
+interface ICheckInChange {
   day: string;
   newId: string;
   now: number;

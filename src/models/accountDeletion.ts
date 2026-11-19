@@ -5,7 +5,7 @@ export const AccountDeletion_confirmWord = "DELETE";
 export const AccountDeletion_signInMessage = "Sign in again, then delete the account.";
 export const AccountDeletion_doneMessage = "Account deleted. Your workouts and settings are still on this phone.";
 
-export type IAccountDeletionResult = { ok: true } | { ok: false; error: string };
+type IAccountDeletionResult = { ok: true } | { ok: false; error: string };
 
 export function AccountDeletion_isConfirmed(text: string): boolean {
   return text.trim() === AccountDeletion_confirmWord;

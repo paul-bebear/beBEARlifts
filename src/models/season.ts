@@ -2,7 +2,7 @@ import { DayNames_monthsLong } from "./dayNames";
 
 export type ISeason = "bulk" | "lean" | "summer";
 
-export const Season_all: ISeason[] = ["bulk", "lean", "summer"];
+const Season_all: ISeason[] = ["bulk", "lean", "summer"];
 
 export const Season_names: Record<ISeason, string> = { bulk: "Bulk", lean: "Lean", summer: "Summer" };
 

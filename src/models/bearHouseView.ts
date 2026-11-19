@@ -14,7 +14,7 @@ export interface IBearHouseView {
   objects: IBearHouseObject[];
 }
 
-export interface IBearHouseViewInput {
+interface IBearHouseViewInput {
   hasWorkout: boolean;
   level: number;
   objects: IBearHouseObject[];

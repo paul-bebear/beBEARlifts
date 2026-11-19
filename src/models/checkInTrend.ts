@@ -1,28 +1,28 @@
 import { FoodLog_shiftDay } from "./foodLog";
 import { ICheckInField, INotesLog, Notes_checkIns, Notes_checkInScales } from "./notes";
 
-export interface ICheckInTrendLine {
+interface ICheckInTrendLine {
   field: ICheckInField;
   label: string;
   values: (number | undefined)[];
   average?: number;
 }
 
-export interface ICheckInTrend {
+interface ICheckInTrend {
   days: string[];
   lines: ICheckInTrendLine[];
   workoutDays: boolean[];
   checkInCount: number;
 }
 
-export interface ICheckInTrendInput {
+interface ICheckInTrendInput {
   notes: INotesLog;
   today: string;
   length: number;
   workoutDays: Set<string>;
 }
 
-export interface IChartPoint {
+interface IChartPoint {
   x: number;
   y: number;
 }

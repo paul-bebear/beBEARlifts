@@ -22,7 +22,7 @@ export type ICloudBackupCommand = {
   proCode?: string;
 };
 
-export interface ICloudBackupForm {
+interface ICloudBackupForm {
   step: "email" | "code" | "signedIn";
   email: string;
   code: string;

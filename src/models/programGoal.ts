@@ -34,7 +34,7 @@ export interface IProgramGoalLog {
   past: IProgramGoal[];
 }
 
-export interface IProgramGoalRecommendation {
+interface IProgramGoalRecommendation {
   pace?: IProgramGoalPace;
   note?: string;
 }
@@ -251,7 +251,7 @@ export function ProgramGoal_toFoodProfile(
   return { ...profile, goal: ProgramGoal_foodGoalKind(goal.kind), activity: ProgramGoal_foodActivity(goal.activity) };
 }
 
-export function ProgramGoal_weightIn(weight: IWeight, units: IUnit): number {
+function ProgramGoal_weightIn(weight: IWeight, units: IUnit): number {
   return weight.unit === units ? weight.value : units === "kg" ? weight.value * kgPerLb : weight.value / kgPerLb;
 }
 

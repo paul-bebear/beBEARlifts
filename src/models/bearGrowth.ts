@@ -9,7 +9,7 @@ export interface IBearCountedWorkout {
   countedKg: number;
 }
 
-export interface IBearGrowth {
+interface IBearGrowth {
   countedKg: number;
   workouts: IBearCountedWorkout[];
   sameDayExtras: IHistoryRecord[];
@@ -51,7 +51,7 @@ function workoutMinutes(record: IHistoryRecord): number {
   return positive(Math.min(activeMs, record.endTime - record.startTime) / 60000);
 }
 
-export function BearGrowth_isEligible(record: IHistoryRecord): boolean {
+function BearGrowth_isEligible(record: IHistoryRecord): boolean {
   return workoutMinutes(record) >= 10 && record.entries.some((entry) => entry.sets.some((set) => set.isCompleted));
 }
 

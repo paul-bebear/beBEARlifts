@@ -4,7 +4,7 @@ import { FoodLog_dayKey, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import { IBearCountedWorkout } from "./bearGrowth";
 import { BearTier_all, IBearTierSet } from "./bearTier";
 
-export type IBearBadgeId =
+type IBearBadgeId =
   | "firstPr"
   | "bearWeek"
   | "outOfHibernation"
@@ -39,7 +39,7 @@ export interface IBearBadgeSources {
   celebratedLevel: number;
 }
 
-export interface IBearBadgeEntry {
+interface IBearBadgeEntry {
   info: IBearBadgeInfo;
   badge?: IBearBadge;
 }

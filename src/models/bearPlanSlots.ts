@@ -39,7 +39,7 @@ export type IBearSlot =
   | "lateralJump"
   | "jumpRope";
 
-export type IBearSlotKind = "compound" | "isolation" | "cardio" | "mobility" | "agility";
+type IBearSlotKind = "compound" | "isolation" | "cardio" | "mobility" | "agility";
 
 export interface IBearPick {
   name: string;
@@ -50,7 +50,7 @@ export interface IBearPick {
   note?: string;
 }
 
-export interface IBearSlotRow {
+interface IBearSlotRow {
   kind: IBearSlotKind;
   picks: Partial<Record<IBearPlace, IBearPick>>;
 }

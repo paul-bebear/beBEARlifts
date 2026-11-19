@@ -18,7 +18,7 @@ import { BearStore } from "./bearStore";
 import { FoodLogStore_load, useFoodLog } from "./foodLogStore";
 import { useBear } from "./useBear";
 
-export interface IBearBadgesView {
+interface IBearBadgesView {
   badges: IBearBadge[];
   grid: IBearBadgeGrid;
   doneDays: Set<string>;
@@ -58,7 +58,7 @@ export function useBearBadges(): IBearBadgesView {
   return { badges, grid, doneDays, streak, today, countedKg: state.countedKg, tierSet: state.tierSet };
 }
 
-export interface IBadgeCelebration {
+interface IBadgeCelebration {
   badge?: IBearBadgeInfo;
   dismiss: (showNext: boolean) => void;
 }

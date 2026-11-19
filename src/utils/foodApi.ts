@@ -18,7 +18,7 @@ import {
   OpenFoodFacts_parseSearchResponse,
 } from "../models/openFoodFacts";
 
-export type IFoodApiResult<T> = { ok: true; value: T } | { ok: false; error: string };
+type IFoodApiResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
 const offlineError = "No connection. Food lookup needs a signal.";
 export const FoodApi_timeoutError = "The food lookup took too long. Try again.";

@@ -19,7 +19,7 @@ export function FoodTextInput(props: TextInputProps & { testID?: string }): JSX.
 }
 
 // Digits grow with the iOS text size setting. A fixed 64 pt box showed 650 g as "65" at a large text size.
-export function useGramsFieldWidth(digits: number): number {
+function useGramsFieldWidth(digits: number): number {
   const { fontScale } = useWindowDimensions();
   return Math.ceil(26 + digits * 10 * fontScale);
 }

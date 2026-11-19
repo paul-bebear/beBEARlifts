@@ -1,18 +1,18 @@
 import type { IFoodSex } from "./foodTargets";
 
-export interface IBodyFatRange {
+interface IBodyFatRange {
   min: number;
   max: number;
   step: number;
   initial: number;
 }
 
-export interface IBodyFatBand {
+interface IBodyFatBand {
   label: string;
   detail: string;
 }
 
-export interface IBodyFatFigure {
+interface IBodyFatFigure {
   shoulder: number;
   chest: number;
   waist: number;
@@ -20,7 +20,7 @@ export interface IBodyFatFigure {
   thigh: number;
 }
 
-export interface IBodyFatNavyInput {
+interface IBodyFatNavyInput {
   sex: IFoodSex;
   heightCm: number;
   waistCm: number;

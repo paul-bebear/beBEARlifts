@@ -21,7 +21,7 @@ export interface IRecipeRecommendation {
   reasons: string[];
 }
 
-export interface IRecipeRecommendations {
+interface IRecipeRecommendations {
   items: IRecipeRecommendation[];
   usesGoals: boolean;
 }
@@ -31,7 +31,7 @@ export const RecipeRecommendations_noFilters: IRecipeFilters = { avoid: [], diet
 const quickMinutes = 25;
 
 // An "unknown" tag never passes a filter: a missing label is not proof that a dish is safe.
-export function RecipeRecommendations_passes(recipe: ICatalogRecipe, filters: IRecipeFilters): boolean {
+function RecipeRecommendations_passes(recipe: ICatalogRecipe, filters: IRecipeFilters): boolean {
   return (
     filters.avoid.every((a) => recipe.allergens[a] === "no") &&
     filters.diets.every((d) => recipe.diet[d] === "yes") &&
@@ -97,7 +97,7 @@ export function RecipeRecommendations_for(
   return { items, usesGoals };
 }
 
-export type IRecipeFilterChip =
+type IRecipeFilterChip =
   | { kind: "diet"; value: IRecipeDiet; title: string }
   | { kind: "avoid"; value: IRecipeAllergen; title: string }
   | { kind: "time"; value: number; title: string }

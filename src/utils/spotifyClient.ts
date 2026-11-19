@@ -45,13 +45,13 @@ const apiBase = "https://api.spotify.com/v1";
 export const SpotifyClient_testerLimitMessage =
   "This Spotify app allows 5 testers. Ask Paul to add your Spotify email.";
 
-export type ISpotifyResult<T> = { ok: true; value: T } | { ok: false; message: string };
+type ISpotifyResult<T> = { ok: true; value: T } | { ok: false; message: string };
 
-export type ISpotifyPlaylistResult =
+type ISpotifyPlaylistResult =
   | { ok: true; value: ISpotifyPlaylistRef }
   | { ok: false; message: string; created?: ISpotifyPlaylistRef };
 
-export const SpotifyClient_noSongsMessage = "There are no kept songs to save.";
+const SpotifyClient_noSongsMessage = "There are no kept songs to save.";
 
 // Only invalid_grant means the refresh token is dead. Every other answer, a 5xx or an unreadable body keeps the link.
 export function SpotifyClient_refreshMeansSignedOut(status: number, body: unknown): boolean {
@@ -61,7 +61,7 @@ export function SpotifyClient_refreshMeansSignedOut(status: number, body: unknow
   return (body as { error?: unknown }).error === "invalid_grant";
 }
 
-export interface IListenTarget {
+interface IListenTarget {
   url: string;
   appUri?: string;
 }

@@ -16,7 +16,7 @@ export interface IExerciseDemoTips {
   mistakes: string[];
 }
 
-export type IExerciseDemoLookup =
+type IExerciseDemoLookup =
   | { kind: "demo"; key: string; url: string; media: IExerciseDemoMedia; tips: IExerciseDemoTips }
   | { kind: "missing"; key: string; message: string };
 
@@ -26,7 +26,7 @@ export function ExerciseDemos_key(type: IExerciseType, customExercises: IAllCust
   return ExerciseImageUtils_id({ id: type.id, equipment });
 }
 
-export function ExerciseDemos_url(key: string): string {
+function ExerciseDemos_url(key: string): string {
   return `/images/exercises/demo/${key}.webp`;
 }
 

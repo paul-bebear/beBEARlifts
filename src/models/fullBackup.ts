@@ -42,7 +42,7 @@ const readme = [
   "schedule: the bebear_schedule store. programs maps a program id to 7 entries, Monday first. Each entry is the position of a program day in its week (0 is the first day), or null for a rest day.",
 ].join("\n");
 
-export interface IFullBackup {
+interface IFullBackup {
   format: typeof FullBackup_format;
   version: 1;
   exportedAt: string;

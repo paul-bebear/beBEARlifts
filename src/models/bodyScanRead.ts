@@ -65,7 +65,7 @@ export function BodyScanRead_merge(form: IBodyScanForm, scan: IBodyScanRead, uni
   return next;
 }
 
-export type IBodyScanReadResult =
+type IBodyScanReadResult =
   | { kind: "read"; value: IBodyScanRead }
   | { kind: "cancelled" }
   | { kind: "error"; error: string };

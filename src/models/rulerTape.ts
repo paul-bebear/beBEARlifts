@@ -4,7 +4,7 @@ import { Exercise_toKey } from "./exercise";
 import { Weight_build, Weight_convertTo, Weight_increment, Weight_round } from "./weight";
 
 export type IRulerKind = "reps" | "weight" | "weighIn";
-export type IRulerUnit = "kg" | "lb";
+type IRulerUnit = "kg" | "lb";
 
 export interface IRulerSpec {
   kind: IRulerKind;
@@ -20,30 +20,30 @@ export interface IRulerSpec {
   stops?: number[];
 }
 
-export interface IRulerTick {
+interface IRulerTick {
   index: number;
   value: number;
   isTall: boolean;
   label?: string;
 }
 
-export interface IRulerWindow {
+interface IRulerWindow {
   first: number;
   last: number;
 }
 
-export interface IRulerMove {
+interface IRulerMove {
   index: number;
   value: number;
   changed: boolean;
 }
 
-export interface IRulerWidths {
+interface IRulerWidths {
   leftSpacer: number;
   rightSpacer: number;
 }
 
-export type IRulerPanelMode = "ruler" | "pad";
+type IRulerPanelMode = "ruler" | "pad";
 
 const TICK_SPACING = 12;
 const REPS_TICK_SPACING = 16;
@@ -131,7 +131,7 @@ export function RulerTape_spec(kind: IRulerKind, unit: string | undefined): IRul
 
 export const RulerTape_reps = RulerTape_spec("reps", undefined);
 
-export interface IRulerChange {
+interface IRulerChange {
   value: number;
   text: string;
   shouldCommit: boolean;
@@ -168,7 +168,7 @@ function nextAchievable(cursor: number, unit: IUnit, settings: ISettings, exerci
   return MathUtils_roundFloat(Weight_round(inUnit, settings, unit, exerciseType).value, 3);
 }
 
-export function RulerTape_buildStops(
+function RulerTape_buildStops(
   settings: ISettings,
   exerciseType: IExerciseType,
   unit: IUnit,
@@ -355,7 +355,7 @@ export function RulerTape_windowNeedsShift(
   return nearStart || nearEnd;
 }
 
-export function RulerTape_edgePad(spec: IRulerSpec, viewportWidth: number): number {
+function RulerTape_edgePad(spec: IRulerSpec, viewportWidth: number): number {
   return Math.max(0, viewportWidth / 2 - spec.tickSpacing / 2);
 }
 

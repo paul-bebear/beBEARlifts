@@ -1,6 +1,6 @@
 import { AiCaps_defaults, AiCaps_fromServer, AiCaps_offerSubtitle, IAiCapsPlan } from "./aiCaps";
 
-export type IAccountGrant = "code" | "subscription" | "lifetime";
+type IAccountGrant = "code" | "subscription" | "lifetime";
 
 export type IAccountPlanState =
   | { status: "unknown" }
@@ -13,9 +13,9 @@ export const AccountPlan_activatingTries = 5;
 
 export type IAccountPlanSync = "plus" | "free" | "stale" | "error";
 
-export type IAccountPlanAction = "open" | "manage" | "none";
+type IAccountPlanAction = "open" | "manage" | "none";
 
-export interface IAccountPlanRow {
+interface IAccountPlanRow {
   title: string;
   subtitle?: string;
   action: IAccountPlanAction;

@@ -189,7 +189,7 @@ export function MusicLog_sameTokens(a: ISpotifyTokens | undefined, b: ISpotifyTo
 
 export type IMusicSecureRead = { ok: true; tokens?: ISpotifyTokens } | { ok: false };
 
-export interface IMusicTokenStart {
+interface IMusicTokenStart {
   secure?: ISpotifyTokens;
   isKnown: boolean;
   deleteSecure: boolean;
@@ -211,7 +211,7 @@ export function MusicLog_tokenStart(log: IMusicLog, read: IMusicSecureRead): IMu
   return { ...none, deleteSecure: read.tokens != null };
 }
 
-export interface IMusicTokenMove {
+interface IMusicTokenMove {
   tokens?: ISpotifyTokens;
   copyToSecure?: ISpotifyTokens;
 }

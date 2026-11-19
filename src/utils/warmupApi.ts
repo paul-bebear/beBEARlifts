@@ -1,7 +1,7 @@
 import { IWarmupExercise, IWarmupItem, WarmupPlan_parseAi } from "../models/warmupPlan";
 import { AiRequest_post, AiRequest_text } from "./aiRequest";
 
-export type IWarmupApiResult = { ok: true; items: IWarmupItem[] } | { ok: false; error: string };
+type IWarmupApiResult = { ok: true; items: IWarmupItem[] } | { ok: false; error: string };
 
 export async function WarmupApi_generate(exercises: IWarmupExercise[]): Promise<IWarmupApiResult> {
   const result = await AiRequest_post("/api/ai/warmup", { exercises });

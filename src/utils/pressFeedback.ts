@@ -2,7 +2,7 @@
 // React Native Web renders Pressable as a div with tabindex and cursor: pointer, and no role, so CSS alone
 // cannot find it. Cursor is inherited, so the tabindex check is what picks the Pressable over its children.
 
-export const PRESSED_ATTRIBUTE = "data-pressed";
+const PRESSED_ATTRIBUTE = "data-pressed";
 
 export interface IPressFeedbackNode {
   tagName: string;

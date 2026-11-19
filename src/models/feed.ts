@@ -51,7 +51,7 @@ export type IFeedItem =
 
 export type IFeedReportTarget = { kind: "workout"; id: number } | { kind: "meal"; id: string };
 
-export type IFeedShareStatus = "shared" | "sending" | "notShared";
+type IFeedShareStatus = "shared" | "sending" | "notShared";
 
 export type IFeedScreenView = "feed" | "people";
 

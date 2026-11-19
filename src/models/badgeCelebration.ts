@@ -3,7 +3,7 @@ import { IBearStoreData } from "./bearStoreData";
 import { BearCelebration_reachedLevel } from "./bearCelebration";
 import { IBearTierSet } from "./bearTier";
 
-export interface IBadgeCelebrationStep {
+interface IBadgeCelebrationStep {
   store: IBearStoreData;
   badge?: IBearBadge;
 }

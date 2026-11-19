@@ -106,7 +106,7 @@ export function FoodLog_empty(): IFoodLog {
   };
 }
 
-export function FoodLog_zero(): INutrients {
+function FoodLog_zero(): INutrients {
   return { calories: 0, protein: 0, carbs: 0, fat: 0 };
 }
 
@@ -463,7 +463,7 @@ export function FoodLog_applyGoals(log: IFoodLog, goals: IFoodGoals, profile: IF
   return { ...log, goals, profile: profile ?? log.profile };
 }
 
-export interface IFoodProgress {
+interface IFoodProgress {
   value: number;
   fraction: number;
   isOver: boolean;

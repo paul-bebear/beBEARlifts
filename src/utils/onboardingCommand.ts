@@ -42,7 +42,7 @@ const cutOffMessage =
   "The AI plan was too long and got cut off. Pick a beBEAR plan, or use fewer screenshots and try again.";
 
 // A correction resends the cut text, so the second answer stops at the same token limit and spends one more setup.
-export function OnboardingCommand_wasCutOff(body: unknown): boolean {
+function OnboardingCommand_wasCutOff(body: unknown): boolean {
   return (body as { finishReason?: unknown } | undefined)?.finishReason === "length";
 }
 
