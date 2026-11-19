@@ -133,3 +133,27 @@ describe("NutritionLabel_toProduct", () => {
     expect(result.ok && result.product.per100g).to.not.have.property("micros");
   });
 });
+
+describe("NutritionLabel_parse nutrient table", () => {
+  const read = (perServing: unknown): unknown => NutritionLabel_parse(JSON.stringify({ perServing }))?.perServing;
+  const base = { calories: 100, protein: 5, carbs: 10, fat: 4 };
+  const cases: [string, unknown, unknown][] = [
+    ["a full set", base, base],
+    ["a negative protein, read as 0", { ...base, protein: -1 }, { ...base, protein: 0 }],
+    ["a negative calorie count, dropped", { ...base, calories: -1 }, undefined],
+    ["a numeric string protein, read as 0", { ...base, protein: "5" }, { ...base, protein: 0 }],
+    ["a numeric string calorie count, dropped", { ...base, calories: "100" }, undefined],
+    ["a missing protein, read as 0", { calories: 100, carbs: 10, fat: 4 }, { ...base, protein: 0 }],
+    ["a missing calorie count, dropped", { protein: 5, carbs: 10, fat: 4 }, undefined],
+    ["a null fat, read as 0", { ...base, fat: null }, { ...base, fat: 0 }],
+    ["a very large calorie count, kept", { ...base, calories: 1e9 }, { ...base, calories: 1e9 }],
+    ["micros in core fields", { ...base, fiber: 2, sodiumMg: 300 }, { ...base, micros: { fiber: 2, sodium: 300 } }],
+    ["micros in the micros field, ignored", { ...base, micros: { fiber: 2 } }, base],
+    ["a string", "junk", undefined],
+  ];
+  for (const [name, input, expected] of cases) {
+    it(name, () => {
+      expect(read(input)).to.deep.equal(expected);
+    });
+  }
+});

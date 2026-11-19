@@ -179,3 +179,30 @@ describe("ProgramGoal", () => {
     expect(profile).to.deep.equal({ activity: "veryActive", goal: "gain", heightCm: 170 });
   });
 });
+
+describe("ProgramGoal_parse start weight table", () => {
+  const read = (startWeight: unknown): unknown =>
+    ProgramGoal_parse({ current: { kind: "maintain", startedAt: 1, startWeight } }).current?.startWeight;
+  const cases: [string, unknown, unknown][] = [
+    ["kilograms", { value: 80, unit: "kg" }, { value: 80, unit: "kg" }],
+    ["pounds", { value: 176, unit: "lb" }, { value: 176, unit: "lb" }],
+    ["a fraction", { value: 80.5, unit: "kg" }, { value: 80.5, unit: "kg" }],
+    ["zero, dropped", { value: 0, unit: "kg" }, undefined],
+    ["a negative value, dropped", { value: -80, unit: "kg" }, undefined],
+    ["a numeric string, dropped", { value: "80", unit: "kg" }, undefined],
+    ["NaN, dropped", { value: NaN, unit: "kg" }, undefined],
+    ["Infinity, dropped", { value: Infinity, unit: "kg" }, undefined],
+    ["a very large value, kept", { value: 1e9, unit: "kg" }, { value: 1e9, unit: "kg" }],
+    ["an unknown unit, dropped", { value: 80, unit: "st" }, undefined],
+    ["a missing unit, dropped", { value: 80 }, undefined],
+    ["a missing value, dropped", { unit: "kg" }, undefined],
+    ["extra keys, removed", { value: 80, unit: "kg", note: "x" }, { value: 80, unit: "kg" }],
+    ["a bare number, dropped", 80, undefined],
+    ["null, dropped", null, undefined],
+  ];
+  for (const [name, input, expected] of cases) {
+    it(name, () => {
+      expect(read(input)).to.deep.equal(expected);
+    });
+  }
+});
