@@ -16,6 +16,7 @@ import { NumberText_round1 } from "./numberText";
 import { IProgramGoal, ProgramGoal_formatWeight, ProgramGoal_kindLabel } from "./programGoal";
 import { TodayPill_text } from "./todayPill";
 import { Weight_convertTo } from "./weight";
+import { DayNames_monthDayYearIfOtherYear } from "./dayNames";
 
 export type IBearBoardTarget = "plus" | "goal" | "bear" | "streak";
 
@@ -41,7 +42,6 @@ export interface IBearBoardInput {
 }
 
 const dayMs = 86400000;
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const trendDays = 30;
 const maxChangeSpanDays = 60;
 
@@ -119,17 +119,11 @@ function levelText(level: IBearTierProgress): string {
   return level.next == null ? `${head} · top level` : `${head} · ${BearText_kg(level.kgToNext)} to go`;
 }
 
-function sinceDate(startedAt: number, now: number): string {
-  const date = new Date(startedAt);
-  const day = `${monthNames[date.getMonth()]} ${date.getDate()}`;
-  return date.getFullYear() === new Date(now).getFullYear() ? day : `${day}, ${date.getFullYear()}`;
-}
-
 export function BearBoard_goalLines(goal: IProgramGoal | undefined, units: IUnit, now: number): IBearBoardLine[] {
   if (goal == null) {
     return [{ id: "goal", text: "Goal: tap to set one", isDone: false, target: "goal" }];
   }
-  const since = sinceDate(goal.startedAt, now);
+  const since = DayNames_monthDayYearIfOtherYear(goal.startedAt, now);
   const text = goal.startWeight == null ? since : `${since} · ${ProgramGoal_formatWeight(goal.startWeight, units)}`;
   return [
     { id: "goal", text: `Goal: ${ProgramGoal_kindLabel(goal.kind).toLowerCase()}`, isDone: false, target: "goal" },

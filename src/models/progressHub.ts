@@ -10,6 +10,7 @@ import {
 import { IStepsLog, Steps_count } from "./steps";
 import { IProgressPhotoLog } from "./progressPhotos";
 import { LocalDay_between, LocalDay_ms, LocalDay_start } from "./localDay";
+import { DayNames_monthDayYearIfOtherYear } from "./dayNames";
 
 export interface IProgressHubInput {
   goalLog: IProgramGoalLog;
@@ -40,12 +41,8 @@ export interface IProgressHub {
 
 const defaultPlannedPerWeek = 3;
 const consistencyDays = { min: 7, max: 28 };
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 export function ProgressHub_formatDate(timestamp: number, now: number): string {
-  const date = new Date(timestamp);
-  const monthDay = `${monthNames[date.getMonth()]} ${date.getDate()}`;
-  return date.getFullYear() === new Date(now).getFullYear() ? monthDay : `${monthDay}, ${date.getFullYear()}`;
+  return DayNames_monthDayYearIfOtherYear(timestamp, now);
 }
 
 export function ProgressHub_plannedPerWeek(weeks: { days: unknown[] }[] | undefined): number {

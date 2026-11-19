@@ -1,5 +1,6 @@
 import { IOAuthPending, OAuthFlow_parsePending } from "./oauthFlow";
 import { StoreRecovery_readError } from "./storeRecovery";
+import { DayNames_weekdaysLong } from "./dayNames";
 
 export interface ICloudSession {
   email: string;
@@ -62,7 +63,6 @@ type IWorkoutLike = { id: number; startTime: number; endTime?: number };
 
 const refreshMarginMs = 60 * 1000;
 const catchUpGapMs = 30 * 1000;
-const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export function CloudBackup_empty(): ICloudState {
   return { version: 1 };
@@ -305,7 +305,7 @@ export function CloudBackup_olderCopies(now: number): ICloudCopyChoice[] {
   const today = new Date(now).getDay();
   const days = [0, 1, 2, 3, 4, 5, 6].map((back): ICloudCopyChoice => {
     const day = (today - back + 7) % 7;
-    const name = weekdays[day];
+    const name = DayNames_weekdaysLong[day];
     return { copy: `day-${day}`, label: back === 0 ? `Today's copy (${name})` : `${name}'s copy` };
   });
   return [...days, { copy: "replaced", label: "Copy saved before “Keep this phone's data”" }];

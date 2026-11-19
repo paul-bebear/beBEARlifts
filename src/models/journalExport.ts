@@ -4,8 +4,11 @@ import {
   FoodLog_formatNumber,
   FoodLog_mealNames,
   FoodLog_meals,
+  FoodLog_shiftDay,
   IFoodLog,
 } from "./foodLog";
+import { LocalDay_parse } from "./localDay";
+import { DayNames_monthsLong, DayNames_weekdaysLong } from "./dayNames";
 import { IJournalDay, IJournalDayInput, JournalDay_build } from "./journalDay";
 import { Notes_days, Notes_scoresLine, Notes_toMarkdown } from "./notes";
 import { WorkoutPost_build } from "./workoutPost";
@@ -28,8 +31,7 @@ export function JournalExport_rangeDays(sources: IJournalExportSources, range: I
   if (range === "today") {
     return [sources.today];
   }
-  const [year, month, date] = sources.today.split("-").map(Number);
-  const start = FoodLog_dayKey(new Date(year, month - 1, date - 6, 12));
+  const start = FoodLog_shiftDay(sources.today, -6);
   return JournalExport_days(sources).filter((day) => range === "all" || day >= start);
 }
 
@@ -149,26 +151,10 @@ export function JournalExport_output(
   return { kind: "zip", filename: `${filename}.zip`, files };
 }
 
-const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
 export function JournalExport_dateTitle(day: string): string {
-  const [year, month, date] = day.split("-").map(Number);
-  const weekday = weekdays[new Date(year, month - 1, date, 12).getDay()];
-  return `${weekday}, ${months[month - 1]} ${date}, ${year}`;
+  const date = LocalDay_parse(day);
+  const weekday = DayNames_weekdaysLong[date.getDay()];
+  return `${weekday}, ${DayNames_monthsLong[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
 function JournalExport_path(day: string): string {

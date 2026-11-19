@@ -1,5 +1,6 @@
 import { AiCaps_plus, IAiCapsRefusal } from "./aiCaps";
 import { IAccountPlanState, IAccountPlanSync } from "./accountPlan";
+import { LocalDay_key } from "./localDay";
 
 export type IPaywallOutcome = "purchased" | "restored" | "cancelled" | "notPresented" | "error" | "unavailable";
 export type IRestoreOutcome = "restored" | "none" | "error";
@@ -117,9 +118,7 @@ export function PlusOffer_fromRefusal(refusal: IAiCapsRefusal | undefined): bool
 }
 
 export function PlusOffer_day(now: Date): string {
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
+  return LocalDay_key(now);
 }
 
 export function PlusOffer_capSheetDue(lastDay: string | undefined, today: string): boolean {

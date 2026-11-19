@@ -1,6 +1,7 @@
 import { IHistoryRecord, ISet, ISettings } from "../types";
 import { Exercise_get } from "./exercise";
 import { Weight_convertTo } from "./weight";
+import { DayNames_weekdaysLong } from "./dayNames";
 import {
   IScheduleProgram,
   IWeekScheduleLog,
@@ -43,7 +44,6 @@ export interface IGymBagPlan {
 const dayMs = 86400000;
 const minutesPerSet = 2.5;
 const beltShare = 0.8;
-const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const labels: Record<IGymBagItemId, string> = {
   water: "Water bottle",
@@ -137,7 +137,7 @@ function nextWeekday(
     const at = now + offset * dayMs;
     const today = WeekSchedule_today(program, slots, at);
     if (today.kind === "day" && today.day === program.nextDay) {
-      return weekdays[new Date(at).getDay()];
+      return DayNames_weekdaysLong[new Date(at).getDay()];
     }
   }
   return undefined;

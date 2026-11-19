@@ -1,8 +1,8 @@
 import { IHistoryRecord, ISettings, IStats, IWeight } from "../types";
-import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_hasGoals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
+import { FoodLog_dayTotals, FoodLog_hasGoals, FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import { History_totalRecordWeight } from "./history";
 import { Weight_add, Weight_build, Weight_convertTo } from "./weight";
-import { LocalDay_between, LocalDay_ms, LocalDay_start } from "./localDay";
+import { LocalDay_between, LocalDay_key, LocalDay_ms, LocalDay_start } from "./localDay";
 
 export const ProgressDashboard_days = 7;
 
@@ -96,7 +96,7 @@ export function ProgressDashboard_build(input: {
   now: number;
 }): IProgressDashboard {
   const { history, stats, foodLog, settings, now } = input;
-  const today = FoodLog_dayKey(new Date(now));
+  const today = LocalDay_key(new Date(now));
   const lastDays = Array.from({ length: ProgressDashboard_days }, (_, i) => FoodLog_shiftDay(today, -i));
   const loggedDays = new Set(foodLog.entries.map((e) => e.day));
   const windowStart = LocalDay_start(now) - (ProgressDashboard_days - 1) * LocalDay_ms;

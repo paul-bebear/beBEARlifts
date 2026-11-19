@@ -1,3 +1,5 @@
+import { DayNames_monthDayYear } from "./dayNames";
+
 export interface ISpotifyProfile {
   id: string;
   displayName: string;
@@ -9,11 +11,8 @@ export interface ISpotifyPlaylistRef {
 }
 
 const maxUrisPerCall = 100;
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 export function SpotifyPlaylist_name(startedAt: number): string {
-  const d = new Date(startedAt);
-  return `Workout ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  return `Workout ${DayNames_monthDayYear(new Date(startedAt))}`;
 }
 
 export function SpotifyPlaylist_chunks<T>(items: T[]): T[][] {

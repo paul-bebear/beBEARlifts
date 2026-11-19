@@ -4,10 +4,8 @@ import { FoodLog_dayKey } from "./foodLog";
 import { BearComparison_for } from "./bearComparison";
 import { BearTier_all, IBearTierProgress, IBearTierSet } from "./bearTier";
 import { IHistoryRecord } from "../types";
-
-const dayMs = 86400000;
-const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+import { LocalDay_ms, LocalDay_start } from "./localDay";
+import { DayNames_dayMonth, DayNames_weekdaysLong } from "./dayNames";
 
 export function BearText_kg(kg: number): string {
   return `${Math.round(Math.max(0, kg)).toLocaleString("en-US")} kg`;
@@ -29,15 +27,14 @@ export function BearText_levelLine(progress: IBearTierProgress): string {
 
 function since(time: number, now: number): string {
   const date = new Date(time);
-  const startOfToday = new Date(now);
-  startOfToday.setHours(0, 0, 0, 0);
-  if (time >= startOfToday.getTime() - dayMs) {
-    return time >= startOfToday.getTime() ? "today" : "yesterday";
+  const startOfToday = LocalDay_start(now);
+  if (time >= startOfToday - LocalDay_ms) {
+    return time >= startOfToday ? "today" : "yesterday";
   }
-  if (time >= startOfToday.getTime() - 6 * dayMs) {
-    return weekdays[date.getDay()];
+  if (time >= startOfToday - 6 * LocalDay_ms) {
+    return DayNames_weekdaysLong[date.getDay()];
   }
-  return `${date.getDate()} ${months[date.getMonth()]}`;
+  return DayNames_dayMonth(date);
 }
 
 export function BearText_status(state: IBearState, now: number): string {
