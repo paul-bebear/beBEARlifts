@@ -1,23 +1,10 @@
+import { DayNames_monthsLong } from "./dayNames";
+
 export type ISeason = "bulk" | "lean" | "summer";
 
 export const Season_all: ISeason[] = ["bulk", "lean", "summer"];
 
 export const Season_names: Record<ISeason, string> = { bulk: "Bulk", lean: "Lean", summer: "Summer" };
-
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 const monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -39,7 +26,7 @@ export function Season_for(date: Date, south: boolean): ISeason {
 
 export function Season_lastDay(season: ISeason, south: boolean): string {
   const month = (northernLastMonth[season] + (south ? southShift : 0)) % 12;
-  return `${monthNames[month]} ${monthLengths[month]}`;
+  return `${DayNames_monthsLong[month]} ${monthLengths[month]}`;
 }
 
 export function Season_summary(south: boolean): string {

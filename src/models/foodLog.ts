@@ -3,6 +3,8 @@ import type { IFoodProduct } from "./openFoodFacts";
 import { SavedFoods_parse, SavedFoods_save } from "./savedFoods";
 import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } from "./foodTargets";
 import { NumberText_round1, NumberText_round3 } from "./numberText";
+import { LocalDay_key, LocalDay_parse } from "./localDay";
+import { DayNames_monthDay, DayNames_weekdaysShort } from "./dayNames";
 
 export type IFoodMeal = "breakfast" | "lunch" | "dinner" | "snacks";
 
@@ -91,9 +93,6 @@ export const FoodLog_mealNames: Record<IFoodMeal, string> = {
   dinner: "Dinner",
   snacks: "Snacks",
 };
-
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function FoodLog_empty(): IFoodLog {
   return {
@@ -265,28 +264,19 @@ function parseRecipe(r: Record<string, unknown>): IFoodRecipe | undefined {
     : undefined;
 }
 
-function pad2(n: number): string {
-  return n < 10 ? `0${n}` : `${n}`;
-}
-
 export function FoodLog_dayKey(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
-}
-
-function dayToDate(day: string): Date {
-  const [year, month, date] = day.split("-").map(Number);
-  return new Date(year, month - 1, date, 12);
+  return LocalDay_key(date);
 }
 
 export function FoodLog_shiftDay(day: string, delta: number): string {
-  const date = dayToDate(day);
+  const date = LocalDay_parse(day);
   date.setDate(date.getDate() + delta);
-  return FoodLog_dayKey(date);
+  return LocalDay_key(date);
 }
 
 export function FoodLog_dayLabel(day: string, today: string): string {
-  const date = dayToDate(day);
-  const monthDay = `${monthNames[date.getMonth()]} ${date.getDate()}`;
+  const date = LocalDay_parse(day);
+  const monthDay = DayNames_monthDay(date);
   if (day === today) {
     return `Today, ${monthDay}`;
   }
@@ -296,7 +286,7 @@ export function FoodLog_dayLabel(day: string, today: string): string {
   if (day === FoodLog_shiftDay(today, 1)) {
     return `Tomorrow, ${monthDay}`;
   }
-  return `${weekdayNames[date.getDay()]}, ${monthDay}`;
+  return `${DayNames_weekdaysShort[date.getDay()]}, ${monthDay}`;
 }
 
 export function FoodLog_mealForHour(hour: number): IFoodMeal {

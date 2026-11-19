@@ -3,6 +3,8 @@ import { IBearCountedWorkout } from "./bearGrowth";
 import { FoodLog_dayKey, FoodLog_dayTotals, FoodLog_shiftDay, IFoodLog, IFoodRange } from "./foodLog";
 import { MonthCalendar_dayTitle } from "./monthCalendar";
 import { ProgramGoal_formatWeight } from "./programGoal";
+import { LocalDay_weekday } from "./localDay";
+import { DayNames_weekdaysLong } from "./dayNames";
 
 export type IChecklistItemKey = "train" | "food" | "weight";
 
@@ -77,13 +79,6 @@ function dayOf(timestamp: number): string {
   return FoodLog_dayKey(new Date(timestamp));
 }
 
-function weekdayOf(day: string): number {
-  const [year, month, date] = day.split("-").map(Number);
-  return new Date(year, month - 1, date, 12).getDay();
-}
-
-const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
 // The goal store keeps only startedAt, so the weigh-in weekday is the weekday the goal started.
 // Without a goal it is the first day of the user's week.
 export function DailyChecklist_weighInWeekday(
@@ -100,7 +95,7 @@ export function DailyChecklist_weighInDayName(
   goalStartedAt: number | undefined,
   startWeekFromMonday?: boolean
 ): string {
-  return weekdayNames[DailyChecklist_weighInWeekday(goalStartedAt, startWeekFromMonday)];
+  return DayNames_weekdaysLong[DailyChecklist_weighInWeekday(goalStartedAt, startWeekFromMonday)];
 }
 
 function trainItem(input: IChecklistDayInput): IChecklistItem {
@@ -112,7 +107,7 @@ function trainItem(input: IChecklistDayInput): IChecklistItem {
 function weightItem(input: IChecklistDayInput): IChecklistItem {
   const { stats, day, units } = input;
   const weekday = DailyChecklist_weighInWeekday(input.goalStartedAt, input.startWeekFromMonday);
-  const weekStart = FoodLog_shiftDay(day, -((weekdayOf(day) - weekday + 7) % 7));
+  const weekStart = FoodLog_shiftDay(day, -((LocalDay_weekday(day) - weekday + 7) % 7));
   const upToDay = (stats.weight.weight ?? []).filter((w) => dayOf(w.timestamp) <= day);
   const latestOf = (list: typeof upToDay): IWeight | undefined =>
     list.reduce<{ value: IWeight; timestamp: number } | undefined>(
@@ -125,7 +120,7 @@ function weightItem(input: IChecklistDayInput): IChecklistItem {
   const weekWeight = latestOf(inWeek);
   const lastWeight = latestOf(upToDay);
   const isDone = weekWeight != null;
-  const every = `Weekly, every ${weekdayNames[weekday]}`;
+  const every = `Weekly, every ${DayNames_weekdaysLong[weekday]}`;
   let subtitle = every;
   if (weekWeight != null) {
     subtitle = `Done this week · ${ProgramGoal_formatWeight(weekWeight, units)}`;

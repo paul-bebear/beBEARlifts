@@ -1,4 +1,5 @@
 import { IHealthDailyMetric, IHealthDailyValue } from "./healthAdapter";
+import { LocalDay_key, LocalDay_start } from "../models/localDay";
 
 export interface IHealthDailySample {
   timestamp: number;
@@ -33,9 +34,7 @@ export function HealthDaily_sleepMinutesByDay(intervals: IHealthDailyInterval[])
 }
 
 export function HealthDaily_localDayStartMs(ms: number): number {
-  const d = new Date(ms);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+  return LocalDay_start(ms);
 }
 
 // Start of the rolling read window, aligned to local midnight. Starting mid-day would read the oldest
@@ -45,10 +44,7 @@ export function HealthDaily_windowStartMs(nowMs: number, windowDays: number): nu
 }
 
 export function HealthDaily_dayKey(dayStartMs: number): string {
-  const d = new Date(dayStartMs);
-  const month = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${d.getFullYear()}-${month}-${day}`;
+  return LocalDay_key(new Date(dayStartMs));
 }
 
 export function HealthDaily_sumByDay(samples: IHealthDailySample[]): Map<number, number> {

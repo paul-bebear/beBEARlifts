@@ -1,4 +1,5 @@
 import { FoodLog_dayKey, FoodLog_shiftDay } from "./foodLog";
+import { DayNames_mondayFirst, DayNames_monthsLong, DayNames_weekdayLetters } from "./dayNames";
 
 export interface ICalendarCell {
   day: string;
@@ -25,23 +26,7 @@ export interface IMonthCalendarInput {
   startsMonday: boolean;
 }
 
-const mondayFirstLabels = ["M", "T", "W", "T", "F", "S", "S"];
-const sundayFirstLabels = ["S", "M", "T", "W", "T", "F", "S"];
-
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const mondayFirstLabels = DayNames_mondayFirst(DayNames_weekdayLetters);
 
 function parseMonth(month: string): { year: number; monthIndex: number } {
   const [year, monthNumber] = month.split("-").map(Number);
@@ -64,12 +49,12 @@ export function MonthCalendar_shift(month: string, delta: number): string {
 
 export function MonthCalendar_title(month: string): string {
   const { year, monthIndex } = parseMonth(month);
-  return `${monthNames[monthIndex]} ${year}`;
+  return `${DayNames_monthsLong[monthIndex]} ${year}`;
 }
 
 export function MonthCalendar_dayTitle(day: string): string {
   const [, monthNumber, date] = day.split("-").map(Number);
-  return `${monthNames[monthNumber - 1]} ${date}`;
+  return `${DayNames_monthsLong[monthNumber - 1]} ${date}`;
 }
 
 export function MonthCalendar_workoutDays(history: { startTime: number }[]): Set<string> {
@@ -104,7 +89,7 @@ export function MonthCalendar_build(input: IMonthCalendarInput): IMonthCalendar 
   return {
     month,
     title: MonthCalendar_title(month),
-    weekdayLabels: startsMonday ? mondayFirstLabels : sundayFirstLabels,
+    weekdayLabels: startsMonday ? mondayFirstLabels : DayNames_weekdayLetters,
     weeks,
   };
 }

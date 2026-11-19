@@ -1,4 +1,5 @@
 import { FoodLog_dayKey } from "./foodLog";
+import { DayNames_mondayFirst, DayNames_weekdaysLong } from "./dayNames";
 
 // Seven entries, Monday first. Each holds the index of a program day within its week, or null for rest.
 export type IWeekSlots = (number | null)[];
@@ -27,7 +28,7 @@ export type IStartChoice =
 
 const dayKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
 
-export const WeekSchedule_weekdayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+export const WeekSchedule_weekdayNames = DayNames_mondayFirst(DayNames_weekdaysLong);
 
 // Rest days sit between the hard days: 3 days is Mon, Wed, Fri, and 5 days is Mon, Tue, Thu, Fri, Sat.
 const defaultWeekdays: number[][] = [

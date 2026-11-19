@@ -1,4 +1,4 @@
-import { FoodLog_dayKey } from "./foodLog";
+import { LocalDay_between } from "./localDay";
 import { IScheduleToday } from "./weekSchedule";
 
 export interface ITodayPillInput {
@@ -20,8 +20,7 @@ export function TodayPill_dayName(today: IScheduleToday, nextDayName?: string): 
 }
 
 export function TodayPill_text(input: ITodayPillInput): string {
-  const today = FoodLog_dayKey(new Date(input.now));
-  if (input.history.some((r) => FoodLog_dayKey(new Date(r.startTime)) === today)) {
+  if (input.history.some((r) => LocalDay_between(r.startTime, input.now) === 0)) {
     return todayPillDone;
   }
   const name = (input.dayName ?? "").trim().replace(/\s+/g, " ");

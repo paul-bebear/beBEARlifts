@@ -1,4 +1,6 @@
 import { FoodLog_dayKey, FoodLog_shiftDay } from "./foodLog";
+import { LocalDay_weekday } from "./localDay";
+import { DayNames_weekdayLetters } from "./dayNames";
 
 export type IStepsSource = "health" | "manual";
 
@@ -41,7 +43,6 @@ const goalLimits = { min: 1000, max: 50000 };
 const maxCount = 200000;
 const keptDays = 400;
 const dayKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
-const weekdayLetters = ["S", "M", "T", "W", "T", "F", "S"];
 
 export function Steps_empty(): IStepsLog {
   return { version: 1, goal: Steps_defaultGoal, syncHealth: false, days: {} };
@@ -134,16 +135,11 @@ function niceCeiling(value: number): number {
   return Math.ceil(value / step) * step;
 }
 
-function weekdayLetter(day: string): string {
-  const [year, month, date] = day.split("-").map(Number);
-  return weekdayLetters[new Date(year, month - 1, date, 12).getDay()];
-}
-
 export function Steps_chart(log: IStepsLog, endDay: string, length: number = Steps_chartDays): IStepsChart {
   const days = Array.from({ length }, (_, i) => FoodLog_shiftDay(endDay, i - length + 1));
   const bars = days.map((day) => {
     const count = log.days[day]?.count ?? 0;
-    return { day, count, isGoalHit: count >= log.goal, label: weekdayLetter(day) };
+    return { day, count, isGoalHit: count >= log.goal, label: DayNames_weekdayLetters[LocalDay_weekday(day)] };
   });
   const withData = bars.filter((b) => log.days[b.day] != null);
   const total = withData.reduce((sum, b) => sum + b.count, 0);
