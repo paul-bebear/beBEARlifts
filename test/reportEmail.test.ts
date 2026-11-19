@@ -10,7 +10,9 @@ import {
 } from "../api/_reportEmail.mjs";
 import { POST as reportPost, GET as reportGet } from "../api/moderation/report.mjs";
 
-function parse(body: unknown): Record<string, unknown> | null {
+type IClassified = ReturnType<typeof ReportEmail_classify>;
+
+function parse(body: unknown): Extract<IClassified, { report: unknown }>["report"] | null | undefined {
   const result = ReportEmail_classify(body);
   return result.kind === "report" ? result.report : null;
 }
