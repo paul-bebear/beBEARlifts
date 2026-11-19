@@ -101,6 +101,15 @@ export function ProgressPhotos_base64(dataUrl: string): string | undefined {
   return ProgressPhotos_isValidDataUrl(dataUrl) ? dataUrl.slice(dataUrlPrefix.length) : undefined;
 }
 
+export type IProgressPhotoRefusal = "too-large" | "not-jpeg";
+
+export function ProgressPhotos_refusal(dataUrl: string): IProgressPhotoRefusal | undefined {
+  if (!dataUrlPattern.test(dataUrl)) {
+    return "not-jpeg";
+  }
+  return dataUrl.length > ProgressPhotos_maxDataUrlLength ? "too-large" : undefined;
+}
+
 export function ProgressPhotos_dataUrl(base64: string): string | undefined {
   const dataUrl = `${dataUrlPrefix}${base64}`;
   return ProgressPhotos_isValidDataUrl(dataUrl) ? dataUrl : undefined;
