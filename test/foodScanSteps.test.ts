@@ -200,15 +200,6 @@ describe("FoodScanSteps camera to serving", () => {
     });
   });
 
-  it("puts a typed quick entry on the serving step without a grams field", () => {
-    const serving = servingOf(
-      run([{ type: "quickEntered", name: "Protein bar", nutrients: { calories: 200, protein: 20, carbs: 20, fat: 6 } }])
-    );
-    expect(serving.mode).to.equal("quick");
-    expect(serving.items[0].grams).to.equal(0);
-    expect(FoodScanSteps_description(serving)).to.equal("Protein bar");
-  });
-
   it("goes back from serving, notFound and reading to the camera in the same mode", () => {
     const afterPhoto = run([{ type: "aiReviewed", choices: plate, nonce: 1 }, { type: "back" }]);
     expect(afterPhoto).to.deep.equal({ kind: "camera", mode: "ai", resume: { choices: plate } });
@@ -336,7 +327,7 @@ describe("FoodScanSteps_entries", () => {
 describe("FoodScanSteps_title", () => {
   it("names each camera mode and the serving step", () => {
     expect(FoodScanSteps_title({ kind: "camera", mode: "ai" })).to.equal("AI");
-    expect(FoodScanSteps_title({ kind: "camera", mode: "quick" })).to.equal("Quick add");
+    expect(FoodScanSteps_title({ kind: "camera", mode: "barcode" })).to.equal("Scan barcode");
     expect(FoodScanSteps_title(run(scanNutella))).to.equal("Serving size");
     expect(FoodScanSteps_title({ kind: "browse" })).to.equal(undefined);
   });

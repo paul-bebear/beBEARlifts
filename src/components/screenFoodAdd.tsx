@@ -1,22 +1,18 @@
-import { JSX, useReducer, useRef, useState } from "react";
+import { JSX, useMemo, useReducer, useRef, useState } from "react";
 import { View, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "./primitives/text";
 import {
-  FoodLog_addAll,
   FoodLog_dayTotals,
   FoodLog_mealNames,
   FoodLog_removeMeal,
   FoodLog_removeRecipe,
-  FoodLog_saveFood,
-  FoodLog_saveMeal,
   FoodLog_saveRecipe,
   IFoodMeal,
 } from "../models/foodLog";
 import { FoodAddFlow_initialGrams, FoodAddFlow_manualPick, FoodAddFlow_pickFromProduct } from "../models/foodAddFlow";
 import {
-  FoodBasket_entries,
   FoodBasket_keyOf,
   FoodBasket_put,
   FoodBasket_putAll,
@@ -27,21 +23,23 @@ import {
   IFoodBasketItem,
 } from "../models/foodBasket";
 import {
+  FoodBasketFlow_logBasket,
+  FoodBasketFlow_logServing,
+  FoodBasketFlow_saveGroup,
+  FoodBasketFlow_saveLabel,
+} from "../models/foodBasketFlow";
+import {
   FoodScanSteps_canLeave,
-  FoodScanSteps_entries,
   FoodScanSteps_initial,
   FoodScanSteps_reduce,
-  FoodScanSteps_shareFailed,
   FoodScanSteps_title,
   IScanAccess,
   IScanServing,
 } from "../models/foodScanSteps";
-import { FoodLabel_saveFailed } from "../models/foodCapture";
 import type { IFoodProduct } from "../models/openFoodFacts";
-import { FoodSaveGuard_run } from "../models/foodSaveGuard";
 import { TabBarLayout_hiddenBarFooterGap } from "../models/tabBarLayout";
 import { FoodSuggestions_forMeal } from "../models/foodSuggestions";
-import { Recipes_fromBasket, Recipes_servingPick, SavedMeals_fromBasket, SavedMeals_items } from "../models/savedMeals";
+import { Recipes_servingPick, SavedMeals_items } from "../models/savedMeals";
 import { FoodApi_lookupBarcode } from "../utils/foodApi";
 import { FoodLogStore_newId, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
@@ -68,12 +66,14 @@ import { FoodMealPicker } from "./foodUi";
 import { Button } from "./button";
 import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
 import { AiConsentStore, AiConsent_ensure } from "../utils/aiConsentClient";
-import { MealPost_fromServing, MealPost_newId, MealPost_shareSwitch } from "../models/mealPost";
+import { MealPost_newId, MealPost_shareSwitch } from "../models/mealPost";
 import { Friends_forUser } from "../models/friends";
 import { FeedClient_shareMeal } from "../utils/feedClient";
 import { FriendsStore } from "../utils/friendsClient";
 import { CloudStore } from "../utils/supabaseClient";
 import { RandomBytes_get } from "../utils/randomBytes";
+
+const dayMs = 24 * 60 * 60 * 1000;
 
 function NotFound(props: {
   code: string;
@@ -134,6 +134,9 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   const [isPickingMeal, setIsPickingMeal] = useState(false);
   const [browseTab, setBrowseTab] = useState<IFoodBrowseTab>("food");
   const browse = (): void => send({ type: "browseOpened" });
+  const dayStart = Math.floor(Date.now() / dayMs) * dayMs;
+  const suggestions = useMemo(() => FoodSuggestions_forMeal(log, meal, dayStart), [log, meal, dayStart]);
+  const dayConsumed = useMemo(() => FoodLog_dayTotals(log, props.params.day), [log, props.params.day]);
   const stepTitle = FoodScanSteps_title(step);
   const catalogRecipe = step.kind === "catalogRecipe" ? RecipeCatalog_find(step.recipeId) : undefined;
   const userId = CloudStore.use().session?.userId;
@@ -172,52 +175,48 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
     }
   };
 
+  const write = { update: FoodLogStore_update, newId: FoodLogStore_newId };
+
   const saveGroup = async (group: "meal" | "recipe", name: string, servings: number): Promise<void> => {
-    if (group === "meal") {
-      const saved = SavedMeals_fromBasket(name, basket, FoodLogStore_newId());
-      const save = (): Promise<void> => FoodLogStore_update((l) => FoodLog_saveMeal(l, saved));
-      if (await FoodSaveGuard_run(isSavingGroupRef, save, false)) {
-        setBrowseTab("meals");
-        browse();
-      }
+    const saved = await FoodBasketFlow_saveGroup(group, name, servings, basket, isSavingGroupRef, write);
+    if (saved == null) {
       return;
     }
-    const recipe = Recipes_fromBasket(name, servings, basket, FoodLogStore_newId());
-    if (
-      await FoodSaveGuard_run(isSavingGroupRef, () => FoodLogStore_update((l) => FoodLog_saveRecipe(l, recipe)), false)
-    ) {
-      setBasket(FoodBasket_put([], Recipes_servingPick(recipe)));
-      send({ type: "basketOpened" });
+    if (saved.basket != null) {
+      setBasket(saved.basket);
     }
+    if (saved.isMealsTab) {
+      setBrowseTab("meals");
+    }
+    send(saved.step);
   };
 
   const logBasket = async (): Promise<void> => {
-    const entries = FoodBasket_entries(basket, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
-    if (await FoodSaveGuard_run(isLoggingRef, () => FoodLogStore_update((l) => FoodLog_addAll(l, entries)), true)) {
+    const where = { day: props.params.day, meal };
+    if (await FoodBasketFlow_logBasket(basket, where, isLoggingRef, { ...write, now: Date.now() })) {
       navigation.goBack();
     }
   };
 
-  const logServing = async (serving: IScanServing): Promise<void> => {
-    const entries = FoodScanSteps_entries(serving, { day: props.params.day, meal }, FoodLogStore_newId, Date.now());
-    const save = (): Promise<void> => FoodLogStore_update((l) => FoodLog_addAll(l, entries));
-    if (!(await FoodSaveGuard_run(isLoggingRef, save, true))) {
-      return;
-    }
-    navigation.goBack();
-    const post = MealPost_fromServing(serving, share, () => MealPost_newId(RandomBytes_get(16)));
-    if (post != null) {
-      await FeedClient_shareMeal(post, serving.photo).catch(() => Dialog_alert(FoodScanSteps_shareFailed));
-    }
-  };
+  const logServing = (serving: IScanServing): Promise<void> =>
+    FoodBasketFlow_logServing(
+      serving,
+      { day: props.params.day, meal },
+      {
+        guard: isLoggingRef,
+        write: { ...write, now: Date.now() },
+        share,
+        newPostId: () => MealPost_newId(RandomBytes_get(16)),
+        goBack: () => navigation.goBack(),
+        sharePost: FeedClient_shareMeal,
+        alert: Dialog_alert,
+      }
+    );
 
   const saveLabel = async (product: IFoodProduct, code?: string): Promise<void> => {
-    const save = (): Promise<void> => FoodLogStore_update((l) => FoodLog_saveFood(l, product));
-    const isSaved = await FoodSaveGuard_run(isSavingLabelRef, save, false);
-    if (isSaved) {
-      send({ type: "amountOpened", pick: FoodAddFlow_pickFromProduct(product, code != null ? "barcode" : "search") });
-    } else if (!isSavingLabelRef.current) {
-      Dialog_alert(FoodLabel_saveFailed);
+    const next = await FoodBasketFlow_saveLabel(product, code, isSavingLabelRef, FoodLogStore_update, Dialog_alert);
+    if (next != null) {
+      send(next);
     }
   };
 
@@ -257,7 +256,6 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             onAiReviewed={(choices, photo, text) =>
               send({ type: "aiReviewed", choices, nonce: Date.now(), photo, text })
             }
-            onQuick={(name, nutrients) => send({ type: "quickEntered", name, nutrients })}
             onSearch={browse}
             onCopied={() => navigation.goBack()}
           />
@@ -278,7 +276,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
         {step.kind === "browse" && (
           <FoodBrowsePanel
             meal={meal}
-            suggestions={FoodSuggestions_forMeal(log, meal, Date.now())}
+            suggestions={suggestions}
             savedFoods={log.savedFoods}
             meals={log.meals}
             recipes={log.recipes}
@@ -303,7 +301,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             }}
             onSaveMeal={() => send({ type: "saveOpened", group: "meal" })}
             onSaveRecipe={() => send({ type: "saveOpened", group: "recipe" })}
-            dayConsumed={FoodLog_dayTotals(log, props.params.day)}
+            dayConsumed={dayConsumed}
             goals={log.goals}
             onOpenCatalogRecipe={(recipe) => send({ type: "catalogRecipeOpened", recipeId: recipe.id })}
             tab={browseTab}

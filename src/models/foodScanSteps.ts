@@ -1,5 +1,5 @@
 import { FoodLog_sum, IFoodEntry, IFoodMeal, INutrients } from "./foodLog";
-import { FoodAddFlow_manualPick, IFoodPhotoChoice, IFoodPick } from "./foodAddFlow";
+import { IFoodPhotoChoice, IFoodPick } from "./foodAddFlow";
 import {
   FoodBasket_entries,
   FoodBasket_fromChoices,
@@ -11,7 +11,7 @@ import {
   IFoodBasketItem,
 } from "./foodBasket";
 
-export type IScanMode = "barcode" | "ai" | "quick";
+export type IScanMode = "barcode" | "ai";
 export type IScanEntryMode = "barcode" | "photo" | "describe" | "quick" | undefined;
 
 export interface IScanResume {
@@ -62,7 +62,6 @@ export type IScanEvent =
   | { type: "barcodeFound"; code: string; pick: IFoodPick }
   | { type: "barcodeMissed"; code: string; error?: string }
   | { type: "aiReviewed"; choices: IFoodPhotoChoice[]; nonce: number; photo?: string; text?: string }
-  | { type: "quickEntered"; name: string; nutrients: INutrients }
   | { type: "gramsChanged"; key: string; grams: number }
   | { type: "itemRemoved"; key: string }
   | { type: "descriptionChanged"; text: string }
@@ -112,7 +111,7 @@ export function FoodScanSteps_title(step: IScanStep): string | undefined {
     case "catalogRecipe":
       return "Recipe";
     case "camera":
-      return step.mode === "barcode" ? "Scan barcode" : step.mode === "ai" ? "AI" : "Quick add";
+      return step.mode === "barcode" ? "Scan barcode" : "AI";
     default:
       return undefined;
   }
@@ -202,8 +201,6 @@ export function FoodScanSteps_reduce(step: IScanStep, event: IScanEvent): IScanS
       );
       return event.photo != null ? mapServing(serving, (s) => ({ ...s, photo: event.photo })) : serving;
     }
-    case "quickEntered":
-      return servingOf("quick", FoodBasket_put([], FoodAddFlow_manualPick(event.name, event.nutrients), 0));
     case "gramsChanged":
       return mapServing(step, (s) => ({ ...s, items: FoodBasket_setGrams(s.items, event.key, event.grams) }));
     case "itemRemoved":
