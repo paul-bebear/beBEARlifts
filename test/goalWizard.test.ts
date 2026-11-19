@@ -6,17 +6,22 @@ import {
   GoalWizard_finish,
   GoalWizard_latestLengths,
   GoalWizard_measureError,
+  GoalWizard_canContinue,
   GoalWizard_next,
   GoalWizard_pickActivity,
   GoalWizard_pickGoal,
   GoalWizard_pickMethod,
   GoalWizard_preview,
   GoalWizard_progress,
+  GoalWizard_runSave,
   GoalWizard_setMeasure,
   GoalWizard_setSex,
   GoalWizard_setVisual,
   GoalWizard_start,
+  GoalWizard_visualError,
   IGoalWizard,
+  IGoalWizardSave,
+  IGoalWizardSaveIo,
   IGoalWizardContext,
 } from "../src/models/goalWizard";
 import { IFoodProfile } from "../src/models/foodTargets";
@@ -65,16 +70,19 @@ describe("GoalWizard", () => {
   });
 
   it("takes the newest waist, neck and hips from body measurements", () => {
-    const latest = GoalWizard_latestLengths({
-      weight: {},
-      percentage: {},
-      length: {
-        waist: [
-          { vtype: "stat", value: { value: 90, unit: "cm" }, timestamp: 1 },
-          { vtype: "stat", value: { value: 86, unit: "cm" }, timestamp: 2 },
-        ],
+    const latest = GoalWizard_latestLengths(
+      {
+        weight: {},
+        percentage: {},
+        length: {
+          waist: [
+            { vtype: "stat", value: { value: 90, unit: "cm" }, timestamp: 1 },
+            { vtype: "stat", value: { value: 86, unit: "cm" }, timestamp: 2 },
+          ],
+        },
       },
-    });
+      5000
+    );
     expect(latest).to.deep.equal({ waist: { value: 86, unit: "cm" } });
   });
 
@@ -214,5 +222,78 @@ describe("GoalWizard", () => {
     const save = GoalWizard_finish(w, ctx());
     expect(save?.goal.kind).to.equal("maintain");
     expect(save?.goal.pace).to.equal(undefined);
+  });
+
+  it("blocks Continue on the visual step until a sex is picked", () => {
+    const bare: IFoodProfile = { activity: "moderate", goal: "maintain" };
+    const w = GoalWizard_pickMethod(
+      GoalWizard_pickActivity(GoalWizard_pickGoal(GoalWizard_next(start(bare)), "loseFat"), "5to10k"),
+      "visual"
+    );
+    expect(w.step).to.equal("bodyFatVisual");
+    expect(GoalWizard_canContinue(w)).to.equal(false);
+    expect(GoalWizard_visualError(w)).to.be.a("string");
+    expect(GoalWizard_next(w).step).to.equal("bodyFatVisual");
+    const picked = GoalWizard_setSex(w, "female");
+    expect(GoalWizard_canContinue(picked)).to.equal(true);
+    expect(GoalWizard_visualError(picked)).to.equal(undefined);
+    expect(GoalWizard_next(picked).step).to.equal("result");
+  });
+
+  describe("GoalWizard_runSave", () => {
+    const save: IGoalWizardSave = {
+      goal: { kind: "loseFat", activity: "5to10k", startedAt: 700 },
+      food: { goals: {} as never, profile: fullProfile },
+      bodyFatPct: 22,
+    };
+
+    function makeIo(calls: string[]): IGoalWizardSaveIo {
+      return {
+        setGoal: async () => {
+          calls.push("goal");
+          await new Promise((resolve) => setTimeout(resolve, 5));
+        },
+        setFood: async () => {
+          calls.push("food");
+        },
+        addBodyFat: (pct: number, at: number) => {
+          calls.push(`bodyfat ${pct} ${at}`);
+        },
+        goBack: () => {
+          calls.push("back");
+        },
+      };
+    }
+
+    it("saves goal, food and body fat in order, then goes back once", async () => {
+      const calls: string[] = [];
+      expect(await GoalWizard_runSave({ busy: false }, save, makeIo(calls))).to.equal(true);
+      expect(calls).to.deep.equal(["goal", "food", "bodyfat 22 700", "back"]);
+    });
+
+    it("ignores a second tap while the first save runs", async () => {
+      const calls: string[] = [];
+      const guard = { busy: false };
+      const io = makeIo(calls);
+      const results = await Promise.all([GoalWizard_runSave(guard, save, io), GoalWizard_runSave(guard, save, io)]);
+      expect(results).to.deep.equal([true, false]);
+      expect(calls.filter((c) => c === "goal")).to.have.length(1);
+      expect(calls.filter((c) => c === "back")).to.have.length(1);
+    });
+
+    it("lets the user retry after a failed save", async () => {
+      const calls: string[] = [];
+      const guard = { busy: false };
+      const failing = { ...makeIo(calls), setGoal: async () => Promise.reject(new Error("offline")) };
+      let message = "";
+      try {
+        await GoalWizard_runSave(guard, save, failing);
+      } catch (e) {
+        message = (e as Error).message;
+      }
+      expect(message).to.equal("offline");
+      expect(calls).to.deep.equal([]);
+      expect(await GoalWizard_runSave(guard, save, makeIo(calls))).to.equal(true);
+    });
   });
 });

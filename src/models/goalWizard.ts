@@ -92,8 +92,7 @@ function lengthIn(length: ILength | undefined, unit: ILengthUnit): string {
   return `${NumberText_round1(value)}`;
 }
 
-// screenGoalWizard.tsx calls this without now. That file is outside batch 4.1, so now has a default.
-export function GoalWizard_latestLengths(stats: IStats, now: number = Date.now()): IGoalWizardStartInput["latest"] {
+export function GoalWizard_latestLengths(stats: IStats, now: number): IGoalWizardStartInput["latest"] {
   const latest: IGoalWizardStartInput["latest"] = {};
   for (const key of ["waist", "neck", "hips"] as const) {
     const newest = StatsLatest_entry(stats.length[key], now);
@@ -191,11 +190,16 @@ export function GoalWizard_measureError(w: IGoalWizard): string | undefined {
   return GoalWizard_bodyFat(w) == null ? "Check the numbers. The waist must be bigger than the neck." : undefined;
 }
 
+export function GoalWizard_visualError(w: IGoalWizard): string | undefined {
+  return w.sex == null ? "Pick male or female. The figure differs." : undefined;
+}
+
 export function GoalWizard_canContinue(w: IGoalWizard): boolean {
   switch (w.step) {
     case "intro":
-    case "bodyFatVisual":
       return true;
+    case "bodyFatVisual":
+      return w.sex != null;
     case "goal":
       return w.kind != null;
     case "activity":
@@ -328,4 +332,41 @@ export function GoalWizard_finish(w: IGoalWizard, ctx: IGoalWizardContext): IGoa
     ...(food != null ? { food } : {}),
     ...(w.mode === "goal" && bodyFatPct != null ? { bodyFatPct } : {}),
   };
+}
+
+export interface IGoalWizardSaveGuard {
+  busy: boolean;
+}
+
+export interface IGoalWizardSaveIo {
+  setGoal: (goal: IProgramGoal) => Promise<unknown>;
+  setFood: (food: NonNullable<IGoalWizardSave["food"]>) => Promise<unknown>;
+  addBodyFat: (pct: number, at: number) => void;
+  goBack: () => void;
+}
+
+// After a successful save the guard stays busy, so a tap during the back animation cannot save again.
+export async function GoalWizard_runSave(
+  guard: IGoalWizardSaveGuard,
+  save: IGoalWizardSave,
+  io: IGoalWizardSaveIo
+): Promise<boolean> {
+  if (guard.busy) {
+    return false;
+  }
+  guard.busy = true;
+  try {
+    await io.setGoal(save.goal);
+    if (save.food != null) {
+      await io.setFood(save.food);
+    }
+    if (save.bodyFatPct != null) {
+      io.addBodyFat(save.bodyFatPct, save.goal.startedAt);
+    }
+  } catch (error) {
+    guard.busy = false;
+    throw error;
+  }
+  io.goBack();
+  return true;
 }
