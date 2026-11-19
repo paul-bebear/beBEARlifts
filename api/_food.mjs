@@ -45,3 +45,24 @@ export async function fetchJson(url, init, timeoutMs) {
     clearTimeout(timer);
   }
 }
+
+export function isBarcode(code) {
+  return /^\d{8,14}$/.test(code);
+}
+
+export function barcodeKey(code) {
+  return code.replace(/^0+/, "");
+}
+
+export async function barcodeRoute(request, lookup, timeoutError, onTimeout = () => {}) {
+  const code = new URL(request.url).searchParams.get("code") ?? "";
+  if (!isBarcode(code)) {
+    return json({ error: "Barcode must be 8 to 14 digits" }, 400);
+  }
+  try {
+    return await lookup(code);
+  } catch {
+    onTimeout();
+    return json({ error: timeoutError }, 504);
+  }
+}
