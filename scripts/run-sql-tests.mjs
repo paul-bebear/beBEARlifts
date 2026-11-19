@@ -20,32 +20,19 @@ export function SqlTests_connection(value) {
   if (/[#,?]/.test(value) || value.split("@").length > 2) {
     return { ok: false, error: "SQL_TEST_DB_URL must have no #, comma, query string or second @." };
   }
-  let url;
+  let url, user, password, database;
   try {
     url = new URL(value);
+    [user, password, database] = [url.username, url.password, url.pathname.slice(1)].map(decodeURIComponent);
   } catch {
     return { ok: false, error: "SQL_TEST_DB_URL is not a URL." };
   }
-  if (!["postgres:", "postgresql:"].includes(url.protocol)) {
-    return { ok: false, error: "SQL_TEST_DB_URL must start with postgresql://" };
-  }
   const host = Object.hasOwn(localHosts, url.hostname) ? localHosts[url.hostname] : undefined;
-  if (host == null) {
-    return {
-      ok: false,
-      error: `SQL_TEST_DB_URL points at ${url.hostname}. Only localhost, 127.0.0.1 and [::1] are allowed.`,
-    };
+  if (!["postgres:", "postgresql:"].includes(url.protocol) || host == null) {
+    return { ok: false, error: `Use postgresql:// with localhost, 127.0.0.1 or [::1], not ${url.hostname}` };
   }
-  let user;
-  let password;
-  let database;
-  try {
-    user = decodeURIComponent(url.username) || "postgres";
-    password = decodeURIComponent(url.password);
-    database = decodeURIComponent(url.pathname.replace(/^\//, "")) || "postgres";
-  } catch {
-    return { ok: false, error: "SQL_TEST_DB_URL has a bad percent escape." };
-  }
+  user ||= "postgres";
+  database ||= "postgres";
   if (!plainName.test(user) || !plainName.test(database)) {
     return { ok: false, error: "The user and database names may hold only letters, digits, _ and -." };
   }

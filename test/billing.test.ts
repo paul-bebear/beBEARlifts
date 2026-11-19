@@ -288,10 +288,7 @@ describe("api/billing routes", () => {
     const response = await syncPost(syncRequest());
     expect(response.status).to.equal(200);
     const puts = fetchStub.getCalls().filter((c) => String(c.args[0]).endsWith("store_entitlement_put"));
-    expect(puts.map((c) => Object.keys(JSON.parse(c.args[1].body)).includes("p_lifetime"))).to.deep.equal([
-      true,
-      false,
-    ]);
+    expect(puts.map((c) => "p_lifetime" in JSON.parse(c.args[1].body))).to.deep.equal([true, false]);
   });
 
   function stubCaps(answer: Response): void {
