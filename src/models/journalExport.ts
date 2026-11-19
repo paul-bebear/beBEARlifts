@@ -8,6 +8,7 @@ import {
   IFoodLog,
 } from "./foodLog";
 import { LocalDay_parse } from "./localDay";
+import { IMusicPlay } from "./musicSession";
 import { DayNames_monthsLong, DayNames_weekdaysLong } from "./dayNames";
 import { IJournalDay, IJournalDayInput, JournalDay_build } from "./journalDay";
 import { Notes_days, Notes_scoresLine, Notes_toMarkdown } from "./notes";
@@ -63,7 +64,19 @@ function csvCell(value: string | number | undefined): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-function csvRows(sources: IJournalExportSources, day: string): ICsvRow[] {
+function firstPlayByTrack(sources: IJournalExportSources): Map<string, IMusicPlay> {
+  const plays = new Map<string, IMusicPlay>();
+  for (const session of sources.music.sessions) {
+    for (const play of session.plays) {
+      if (!plays.has(play.track.id)) {
+        plays.set(play.track.id, play);
+      }
+    }
+  }
+  return plays;
+}
+
+function csvRows(sources: IJournalExportSources, day: string, playByTrack: Map<string, IMusicPlay>): ICsvRow[] {
   const journal = JournalDay_build({ ...sources, day });
   const rows: ICsvRow[] = [];
   for (const record of sources.history) {
@@ -108,7 +121,7 @@ function csvRows(sources: IJournalExportSources, day: string): ICsvRow[] {
     });
   }
   for (const song of journal.songs) {
-    const play = sources.music.sessions.flatMap((session) => session.plays).find((p) => p.track.id === song.id);
+    const play = playByTrack.get(song.id);
     rows.push({
       date: day,
       kind: "song",
@@ -121,7 +134,8 @@ function csvRows(sources: IJournalExportSources, day: string): ICsvRow[] {
 }
 
 export function JournalExport_csv(sources: IJournalExportSources, range: IJournalExportRange): string {
-  const rows = JournalExport_rangeDays(sources, range).flatMap((day) => csvRows(sources, day));
+  const playByTrack = firstPlayByTrack(sources);
+  const rows = JournalExport_rangeDays(sources, range).flatMap((day) => csvRows(sources, day, playByTrack));
   return `\uFEFF${[csvColumns.join(","), ...rows.map((row) => csvColumns.map((c) => csvCell(row[c])).join(","))].join("\r\n")}\r\n`;
 }
 
