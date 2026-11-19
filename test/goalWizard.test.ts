@@ -21,6 +21,7 @@ import {
   GoalWizard_visualError,
   IGoalWizard,
   IGoalWizardSave,
+  IGoalWizardSaveIo,
   IGoalWizardContext,
 } from "../src/models/goalWizard";
 import { IFoodProfile } from "../src/models/foodTargets";
@@ -246,7 +247,7 @@ describe("GoalWizard", () => {
       bodyFatPct: 22,
     };
 
-    function makeIo(calls: string[]) {
+    function makeIo(calls: string[]): IGoalWizardSaveIo {
       return {
         setGoal: async () => {
           calls.push("goal");
