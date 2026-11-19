@@ -483,3 +483,16 @@ export function FoodLog_formatRange(range: IFoodRange, unit: string): string {
 export function FoodLog_formatNumber(n: number): string {
   return Math.abs(n) >= 100 ? `${Math.round(n)}` : `${NumberText_round1(n)}`;
 }
+
+const macroLetters = { protein: "P", carbs: "C", fat: "F" } as const;
+type IMacroKey = keyof typeof macroLetters;
+
+export function FoodLog_macroLine(
+  nutrients: Pick<INutrients, IMacroKey>,
+  keys: IMacroKey[] = ["protein", "carbs", "fat"]
+): string {
+  return (["protein", "carbs", "fat"] as const)
+    .filter((key) => keys.indexOf(key) !== -1)
+    .map((key) => `${FoodLog_formatNumber(nutrients[key])} ${macroLetters[key]}`)
+    .join(" · ");
+}

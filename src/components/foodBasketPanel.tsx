@@ -1,7 +1,7 @@
 import { JSX } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_formatNumber, IFoodMeal } from "../models/foodLog";
+import { FoodLog_formatNumber, FoodLog_macroLine, IFoodMeal } from "../models/foodLog";
 import { FoodBasket_hasPortion, FoodBasket_nutrients, FoodBasket_totals, IFoodBasketItem } from "../models/foodBasket";
 import { FoodGramsField, FoodMealPicker } from "./foodUi";
 import { Button } from "./button";
@@ -45,7 +45,7 @@ function BasketRow(props: {
         </View>
         <View className="items-end">
           <Text className="text-base">
-            {nutrients.calories} Cal · {Math.round(nutrients.protein)} P
+            {nutrients.calories} Cal · {FoodLog_macroLine(nutrients, ["protein"])}
           </Text>
           {item.grams > 0 && (
             <Text className="text-base text-text-secondary">{FoodLog_formatNumber(item.grams)} g</Text>
