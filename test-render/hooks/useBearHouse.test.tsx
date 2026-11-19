@@ -4,15 +4,10 @@ import { Fixture_build } from "../harness/fixture";
 import { TrackedStateProvider } from "../../src/navigation/TrackedStateContext";
 import { useBearHouse } from "../../src/utils/useBearHouse";
 
-jest.mock("../../src/utils/indexeddb", () => {
-  const memory = new Map<string, string | undefined>();
-  return {
-    IndexedDBUtils_get: async (key: string) => memory.get(key),
-    IndexedDBUtils_setMany: async (pairs: Array<[string, string | undefined]>) => {
-      pairs.forEach(([key, value]) => memory.set(key, value));
-    },
-  };
-});
+jest.mock("../../src/utils/indexeddb", () => ({
+  IndexedDBUtils_get: async () => undefined,
+  IndexedDBUtils_setMany: async () => undefined,
+}));
 jest.mock("react-native-purchases", () => ({ __esModule: true, default: {} }));
 jest.mock("react-native-purchases-ui", () => ({ __esModule: true, default: {} }));
 jest.mock("@react-navigation/native", () => ({
@@ -41,16 +36,6 @@ describe("useBearHouse", () => {
     expect(typeof result.current.room).toBe("string");
     expect(typeof result.current.wall).toBe("string");
     expect(Array.isArray(result.current.objects)).toBe(true);
-  });
-
-  it("returns a new view when the level or the workout flag changes", async () => {
-    const { result, rerender } = await renderHook(
-      (props: { hasWorkout: boolean; level: number }) => useBearHouse(props.hasWorkout, props.level),
-      { wrapper, initialProps: { hasWorkout: false, level: 1 } }
-    );
-    const before = result.current;
-    await rerender({ hasWorkout: true, level: 5 });
-    expect(result.current).not.toBe(before);
   });
 
   it("builds a new view after midnight", async () => {

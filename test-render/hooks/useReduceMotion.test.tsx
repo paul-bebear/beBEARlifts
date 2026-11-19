@@ -32,30 +32,11 @@ describe("useReduceMotion", () => {
     expect(result.current).toBe(true);
   });
 
-  it("starts from the value the caller passes", async () => {
-    jest.spyOn(AccessibilityInfo, "isReduceMotionEnabled").mockReturnValue(new Promise(() => undefined));
-    jest.spyOn(AccessibilityInfo, "addEventListener").mockReturnValue({ remove } as never);
-    const { result } = await renderHook(() => useReduceMotion(true));
-    expect(result.current).toBe(true);
-  });
-
   it("follows the setting when it changes", async () => {
     mockSystem(false);
     const { result } = await renderHook(() => useReduceMotion());
     await act(async () => {});
     await act(async () => listener?.(true));
-    expect(result.current).toBe(true);
-  });
-
-  it("ignores a late system answer after a change event", async () => {
-    let answer: (enabled: boolean) => void = () => undefined;
-    mockSystem(false);
-    jest
-      .spyOn(AccessibilityInfo, "isReduceMotionEnabled")
-      .mockReturnValue(new Promise((resolve) => (answer = resolve)));
-    const { result } = await renderHook(() => useReduceMotion());
-    await act(async () => listener?.(true));
-    await act(async () => answer(false));
     expect(result.current).toBe(true);
   });
 

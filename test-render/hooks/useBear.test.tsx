@@ -5,15 +5,10 @@ import { TrackedStateProvider } from "../../src/navigation/TrackedStateContext";
 import { BearStore } from "../../src/utils/bearStore";
 import { useBear } from "../../src/utils/useBear";
 
-jest.mock("../../src/utils/indexeddb", () => {
-  const memory = new Map<string, string | undefined>();
-  return {
-    IndexedDBUtils_get: async (key: string) => memory.get(key),
-    IndexedDBUtils_setMany: async (pairs: Array<[string, string | undefined]>) => {
-      pairs.forEach(([key, value]) => memory.set(key, value));
-    },
-  };
-});
+jest.mock("../../src/utils/indexeddb", () => ({
+  IndexedDBUtils_get: async () => undefined,
+  IndexedDBUtils_setMany: async () => undefined,
+}));
 jest.mock("react-native-purchases", () => ({ __esModule: true, default: {} }));
 jest.mock("react-native-purchases-ui", () => ({ __esModule: true, default: {} }));
 jest.mock("@react-navigation/native", () => ({

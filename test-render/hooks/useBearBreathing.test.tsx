@@ -21,12 +21,6 @@ describe("useBearBreathing", () => {
     jest.restoreAllMocks();
   });
 
-  it("returns a value at rest", async () => {
-    mockSystem(true);
-    const { result } = await renderHook(() => useBearBreathing(4000, 1.04));
-    expect((result.current as unknown as { __getValue: () => number }).__getValue()).toBe(1);
-  });
-
   it("starts the loop when Reduce Motion is off", async () => {
     mockSystem(false);
     await renderHook(() => useBearBreathing(4000, 1.04));

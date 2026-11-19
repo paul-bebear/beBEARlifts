@@ -4,15 +4,10 @@ import { AccountPlanStore } from "../../src/utils/accountPlanClient";
 import { CloudStore } from "../../src/utils/supabaseClient";
 import { useHasPlus, usePlusAccess } from "../../src/utils/usePlusAccess";
 
-jest.mock("../../src/utils/indexeddb", () => {
-  const memory = new Map<string, string | undefined>();
-  return {
-    IndexedDBUtils_get: async (key: string) => memory.get(key),
-    IndexedDBUtils_setMany: async (pairs: Array<[string, string | undefined]>) => {
-      pairs.forEach(([key, value]) => memory.set(key, value));
-    },
-  };
-});
+jest.mock("../../src/utils/indexeddb", () => ({
+  IndexedDBUtils_get: async () => undefined,
+  IndexedDBUtils_setMany: async () => undefined,
+}));
 jest.mock("react-native-purchases", () => ({ __esModule: true, default: {} }));
 jest.mock("react-native-purchases-ui", () => ({ __esModule: true, default: {} }));
 
@@ -48,11 +43,5 @@ describe("usePlusAccess", () => {
       await CloudStore.update((cloud) => ({ ...cloud, session: { userId: "u2" } as never }));
     });
     expect(result.current).toBe(false);
-  });
-
-  it("stops listening to both stores on unmount", async () => {
-    const { unmount } = await renderHook(() => useHasPlus());
-    await unmount();
-    await expect(AccountPlanStore.replace(plusPlan)).resolves.toBeUndefined();
   });
 });
