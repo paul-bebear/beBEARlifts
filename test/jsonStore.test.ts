@@ -1,7 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { JsonStore_create, JsonStore_setRecovery } from "../src/utils/jsonStore";
+import { JsonStore_create, JsonStore_persistSilently, JsonStore_setRecovery } from "../src/utils/jsonStore";
 import * as indexeddb from "../src/utils/indexeddb";
 import * as dialogs from "../src/utils/dialog";
 import { FoodLogStore_load, FoodLogStore_update } from "../src/utils/foodLogStore";
@@ -376,4 +376,18 @@ describe("JsonStore", () => {
       expect(await store.load()).to.deep.equal(JSON.parse(saved.get(store.key)!));
     });
   }
+
+  describe("JsonStore_persistSilently", () => {
+    it("writes the value", async () => {
+      await JsonStore_persistSilently("quiet", "7");
+      expect(saved.get("quiet")).to.equal("7");
+    });
+
+    it("rethrows a failed write and shows no alert", async () => {
+      (indexeddb.IndexedDBUtils_setMany as sinon.SinonStub).rejects(new Error("Quota exceeded"));
+      const error = await rejection(JsonStore_persistSilently("quiet", "7"));
+      expect((error as Error).message).to.equal("Quota exceeded");
+      expect(alert.called).to.equal(false);
+    });
+  });
 });
