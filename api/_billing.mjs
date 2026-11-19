@@ -64,7 +64,10 @@ export function Billing_entitlementRow(status, body, options) {
   const snapshotAt = new Date(snapshot).toISOString();
   const entitlement = subscriber.entitlements?.[Billing_entitlementId];
   if (entitlement == null) {
-    return { ok: true, row: { active: false, productId: null, expiresAt: null, sandbox: false, snapshotAt } };
+    return {
+      ok: true,
+      row: { active: false, productId: null, expiresAt: null, sandbox: false, lifetime: false, snapshotAt },
+    };
   }
   const productId = typeof entitlement.product_identifier === "string" ? entitlement.product_identifier : null;
   const expires = time(entitlement.expires_date);
@@ -81,7 +84,7 @@ export function Billing_entitlementRow(status, body, options) {
     : activeUntil == null
       ? null
       : new Date(activeUntil).toISOString();
-  return { ok: true, row: { active, productId, expiresAt, sandbox, snapshotAt } };
+  return { ok: true, row: { active, productId, expiresAt, sandbox, lifetime, snapshotAt } };
 }
 
 export function Billing_planAnswer(body) {
@@ -190,18 +193,19 @@ export async function Billing_refresh(userId, config) {
   if (!read.ok) {
     return { ok: false, status: 502, error: `RevenueCat returned ${customer.status}` };
   }
-  const put = await rpc(
-    "store_entitlement_put",
-    {
-      p_user: userId,
-      p_active: read.row.active,
-      p_product: read.row.productId,
-      p_expires: read.row.expiresAt,
-      p_sandbox: read.row.sandbox,
-      p_snapshot: read.row.snapshotAt,
-    },
-    config.serviceKey
-  );
+  const sixArgs = {
+    p_user: userId,
+    p_active: read.row.active,
+    p_product: read.row.productId,
+    p_expires: read.row.expiresAt,
+    p_sandbox: read.row.sandbox,
+    p_snapshot: read.row.snapshotAt,
+  };
+  let put = await rpc("store_entitlement_put", { ...sixArgs, p_lifetime: read.row.lifetime }, config.serviceKey);
+  // Before 20261120100000_store_entitlements_lifetime.sql runs, PostgREST knows only the six-argument version and answers 404.
+  if (put.status === 404) {
+    put = await rpc("store_entitlement_put", sixArgs, config.serviceKey);
+  }
   if (put.status !== 200) {
     return { ok: false, status: 502, error: `Supabase returned ${put.status}` };
   }
