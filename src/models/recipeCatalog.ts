@@ -9,6 +9,7 @@ import {
 } from "./foodLog";
 import { IFoodPick } from "./foodAddFlow";
 import { Recipes_perServing } from "./savedMeals";
+import { NumberText_parsePositive } from "./numberText";
 import { RecipeCatalogData_recipes } from "./recipeCatalogData";
 
 export type IRecipeTag = "yes" | "no" | "unknown";
@@ -128,8 +129,8 @@ export function RecipeCatalog_servingsLabel(servings: number): string {
 }
 
 export function RecipeCatalog_parseServings(text: string): number | undefined {
-  const value = Number(text.replace(",", "."));
-  return isFinite(value) && value > 0 && value <= 20 ? Math.round(value * 100) / 100 : undefined;
+  const value = NumberText_parsePositive(text);
+  return value != null && value <= 20 ? Math.round(value * 100) / 100 : undefined;
 }
 
 export function RecipeCatalog_basketKey(recipe: ICatalogRecipe): string {

@@ -2,6 +2,7 @@ import { JSX, useState } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { IFoodMeal, INutrients } from "../models/foodLog";
+import { NumberText_parseNonNegative } from "../models/numberText";
 import { FoodMealPicker, FoodTextInput } from "./foodUi";
 import { Button } from "./button";
 
@@ -21,8 +22,7 @@ const fields: { key: IQuickField; label: string }[] = [
 ];
 
 function toNumber(text: string): number {
-  const value = Number(text.replace(",", "."));
-  return isFinite(value) && value >= 0 ? value : 0;
+  return NumberText_parseNonNegative(text) ?? 0;
 }
 
 export function FoodQuickAddPanel(props: IProps): JSX.Element {

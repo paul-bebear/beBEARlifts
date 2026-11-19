@@ -1,4 +1,5 @@
 import { IPercentage, IStatsPercentageKey, IWeight } from "../types";
+import { NumberText_parse, NumberText_round1 } from "./numberText";
 
 export type IBodyScanUnit = "kg" | "lb";
 
@@ -113,8 +114,8 @@ export function BodyScans_readForm(form: IBodyScanForm): IBodyScanFormResult {
     if (text === "") {
       continue;
     }
-    const value = Number(text.replace(",", "."));
-    if (isValid(field.kind, value)) {
+    const value = NumberText_parse(text);
+    if (value != null && isValid(field.kind, value)) {
       values[field.key] = value;
     } else {
       invalid.push(field.label);
@@ -147,7 +148,7 @@ export interface IBodyScanStats {
 }
 
 function percent(value: number): IPercentage {
-  return { value: Math.round(value * 10) / 10, unit: "%" };
+  return { value: NumberText_round1(value), unit: "%" };
 }
 
 // Body measurements hold the scale's five readings, so the scale form and a scan write the same series.
@@ -220,7 +221,7 @@ export function BodyScans_change(
 }
 
 export function BodyScans_formatValue(field: IBodyScanField, value: number, unit: IBodyScanUnit): string {
-  const rounded = Math.round(value * 10) / 10;
+  const rounded = NumberText_round1(value);
   if (field.kind === "percent") {
     return `${rounded}%`;
   }

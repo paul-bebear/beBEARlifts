@@ -1,6 +1,7 @@
 import type { IFoodGoals, IFoodRange } from "./foodLog";
 import type { IUnit, IWeight } from "../types";
 import { ISeason, Season_for, Season_lastDay, Season_names, Season_parse } from "./season";
+import { NumberText_parse, NumberText_round1 } from "./numberText";
 
 export type IFoodSex = "male" | "female";
 export type IFoodActivity = "sedentary" | "light" | "moderate" | "active" | "veryActive";
@@ -191,22 +192,16 @@ export function FoodTargets_start(
   };
 }
 
-function parseNumber(text: string): number | undefined {
-  const trimmed = text.trim().replace(",", ".");
-  const n = Number(trimmed);
-  return trimmed === "" || !isFinite(n) ? undefined : n;
-}
-
 function within(n: number | undefined, range: readonly [number, number]): number | undefined {
   return n != null && n >= range[0] && n <= range[1] ? n : undefined;
 }
 
 function heightCmFrom(form: IFoodTargetsForm): number | undefined {
   if (form.heightUnit === "cm") {
-    return parseNumber(form.heightCm);
+    return NumberText_parse(form.heightCm);
   }
-  const ft = parseNumber(form.heightFt);
-  const inches = form.heightIn.trim() === "" ? 0 : parseNumber(form.heightIn);
+  const ft = NumberText_parse(form.heightFt);
+  const inches = form.heightIn.trim() === "" ? 0 : NumberText_parse(form.heightIn);
   return ft == null || inches == null ? undefined : (ft * 12 + inches) * cmPerInch;
 }
 
@@ -216,13 +211,13 @@ export function FoodTargets_setHeightUnit(form: IFoodTargetsForm, heightUnit: IF
 }
 
 export function FoodTargets_parseBody(form: IFoodTargetsForm): IFoodBody | undefined {
-  const weight = parseNumber(form.weight);
+  const weight = NumberText_parse(form.weight);
   const weightKg = within(
     weight == null ? undefined : form.weightUnit === "kg" ? weight : weight * kgPerLb,
     limits.weightKg
   );
   const heightCm = within(heightCmFrom(form), limits.heightCm);
-  const age = within(parseNumber(form.age), limits.age);
+  const age = within(NumberText_parse(form.age), limits.age);
   if (weightKg == null || heightCm == null || age == null || form.sex == null) {
     return undefined;
   }
@@ -230,7 +225,7 @@ export function FoodTargets_parseBody(form: IFoodTargetsForm): IFoodBody | undef
 }
 
 export function FoodTargets_bodyError(form: IFoodTargetsForm): string | undefined {
-  const weight = parseNumber(form.weight);
+  const weight = NumberText_parse(form.weight);
   if (weight == null || within(form.weightUnit === "kg" ? weight : weight * kgPerLb, limits.weightKg) == null) {
     return form.weightUnit === "kg" ? "Enter a weight from 30 to 300 kg." : "Enter a weight from 66 to 660 lb.";
   }
@@ -242,7 +237,7 @@ export function FoodTargets_bodyError(form: IFoodTargetsForm): string | undefine
   if (form.sex == null) {
     return "Pick male or female. The formula uses it.";
   }
-  if (within(parseNumber(form.age), limits.age) == null) {
+  if (within(NumberText_parse(form.age), limits.age) == null) {
     return "Enter an age from 14 to 100.";
   }
   return undefined;
@@ -374,7 +369,7 @@ export function FoodTargets_toProfile(form: IFoodTargetsForm, today: Date): IFoo
     goal: form.goal,
     heightUnit: form.heightUnit,
     ...(form.sex == null ? {} : { sex: form.sex }),
-    ...(body == null ? {} : { heightCm: Math.round(body.heightCm * 10) / 10, birthYear: year - Math.round(body.age) }),
+    ...(body == null ? {} : { heightCm: NumberText_round1(body.heightCm), birthYear: year - Math.round(body.age) }),
     ...(form.seasons ? { seasons: true, lastSeason: Season_for(today, !!form.south) } : {}),
     ...(form.south ? { south: true } : {}),
   };

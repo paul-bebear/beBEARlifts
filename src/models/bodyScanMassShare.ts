@@ -1,5 +1,6 @@
 import { IStatsWeightValue } from "../types";
 import type { IBodyScanRead } from "./bodyScanRead";
+import { NumberText_parsePositive, NumberText_round1 } from "./numberText";
 import {
   BodyScans_fields,
   BodyScans_formatValue,
@@ -26,12 +27,11 @@ export function BodyScanMassShare_isShareKey(key: string): key is IBodyScanShare
 }
 
 function oneDecimal(value: number): string {
-  return `${Math.round(value * 10) / 10}`;
+  return `${NumberText_round1(value)}`;
 }
 
 function readNumber(text: string | undefined): number | undefined {
-  const value = Number((text ?? "").trim().replace(",", "."));
-  return (text ?? "").trim() !== "" && isFinite(value) && value > 0 ? value : undefined;
+  return NumberText_parsePositive(text ?? "");
 }
 
 export function BodyScanMassShare_toMass(percent: number, bodyWeight: number): number {

@@ -9,6 +9,7 @@ import {
 import type { IBearHouseManifest, IBearHouseObject, IBearHouseSources } from "./bearHouse";
 import type { IBearSceneArt } from "./bearScene";
 import { HouseFrame_canvas } from "./houseFrame";
+import { MathUtils_clamp } from "../utils/math";
 
 export interface IHouseArrangeState {
   manifest: IBearHouseManifest;
@@ -65,12 +66,11 @@ function floorToGrid(value: number): number {
   return Math.floor(value / grid) * grid;
 }
 
-function clamp(value: number, low: number, high: number): number {
-  return Math.max(low, Math.min(high, value));
-}
-
 function clampPoint(point: number[]): number[] {
-  return [clamp(point[0], 0, HouseFrame_canvas.width), clamp(point[1], 0, HouseFrame_canvas.height)];
+  return [
+    MathUtils_clamp(point[0], 0, HouseFrame_canvas.width),
+    MathUtils_clamp(point[1], 0, HouseFrame_canvas.height),
+  ];
 }
 
 function movePoint(point: number[], dx: number, dy: number): number[] {
@@ -79,18 +79,18 @@ function movePoint(point: number[], dx: number, dy: number): number[] {
 
 function moveRect(rect: number[], dx: number, dy: number): number[] {
   const [x1, y1, x2, y2] = rect;
-  const nx = clamp(snap(x1 + dx), 0, floorToGrid(HouseFrame_canvas.width - (x2 - x1)));
-  const ny = clamp(snap(y1 + dy), 0, floorToGrid(HouseFrame_canvas.height - (y2 - y1)));
+  const nx = MathUtils_clamp(snap(x1 + dx), 0, floorToGrid(HouseFrame_canvas.width - (x2 - x1)));
+  const ny = MathUtils_clamp(snap(y1 + dy), 0, floorToGrid(HouseFrame_canvas.height - (y2 - y1)));
   return [nx, ny, nx + (x2 - x1), ny + (y2 - y1)];
 }
 
 // Objects stand on the bottom of their slot, so the bottom edge and the centre stay put.
 function scaleRect(rect: number[], factor: number): number[] {
   const [x1, y1, x2, y2] = rect;
-  const width = clamp(snap((x2 - x1) * factor), minSize, HouseFrame_canvas.width);
-  const height = clamp(snap((y2 - y1) * factor), minSize, y2);
-  const left = clamp(snap((x1 + x2) / 2 - width / 2), 0, floorToGrid(HouseFrame_canvas.width - width));
-  const top = clamp(snap(y2 - height), 0, y2);
+  const width = MathUtils_clamp(snap((x2 - x1) * factor), minSize, HouseFrame_canvas.width);
+  const height = MathUtils_clamp(snap((y2 - y1) * factor), minSize, y2);
+  const left = MathUtils_clamp(snap((x1 + x2) / 2 - width / 2), 0, floorToGrid(HouseFrame_canvas.width - width));
+  const top = MathUtils_clamp(snap(y2 - height), 0, y2);
   return [left, top, left + width, y2];
 }
 

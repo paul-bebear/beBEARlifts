@@ -12,6 +12,7 @@ import {
 } from "./dailyChecklist";
 import { FoodLog_dayKey, FoodLog_dayTotals, IFoodLog } from "./foodLog";
 import { MonthCalendar_workoutDays } from "./monthCalendar";
+import { NumberText_round1 } from "./numberText";
 import { IProgramGoal, ProgramGoal_formatWeight, ProgramGoal_kindLabel } from "./programGoal";
 import { TodayPill_text } from "./todayPill";
 import { Weight_convertTo } from "./weight";
@@ -45,7 +46,7 @@ const trendDays = 30;
 const maxChangeSpanDays = 60;
 
 function oneDecimal(value: number): string {
-  return (Math.round(value * 10) / 10).toFixed(1);
+  return NumberText_round1(value).toFixed(1);
 }
 
 function formatCount(value: number): string {

@@ -1,3 +1,5 @@
+import { NumberText_round3 } from "./numberText";
+
 export type IMicroUnit = "g" | "mg" | "µg";
 
 export type IMicroKey =
@@ -93,12 +95,8 @@ export const FoodMicros_saltPerSodium = 2.5;
 
 const unitPerGram: Record<IMicroUnit, number> = { g: 1, mg: 1000, µg: 1000000 };
 
-function round3(value: number): number {
-  return Math.round(value * 1000) / 1000;
-}
-
 export function FoodMicros_fromGrams(unit: IMicroUnit, grams: number): number {
-  return round3(grams * unitPerGram[unit]);
+  return NumberText_round3(grams * unitPerGram[unit]);
 }
 
 export function FoodMicros_sodiumFromSalt(saltInUnit: number): number {
@@ -121,7 +119,7 @@ export function FoodMicros_fromCoreFields(raw: Record<string, unknown>): IMicros
   for (const [key, value] of fields) {
     const n = nonNegative(value);
     if (n != null) {
-      micros[key] = round3(n);
+      micros[key] = NumberText_round3(n);
     }
   }
   return Object.keys(micros).length > 0 ? micros : undefined;

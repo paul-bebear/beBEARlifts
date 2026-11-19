@@ -2,6 +2,7 @@ import type { ILength, ILengthUnit, IStats, IStatsLengthValue, IWeight } from ".
 import type { IFoodGoals } from "./foodLog";
 import type { IFoodBody, IFoodProfile, IFoodSex, IFoodTargetsResult } from "./foodTargets";
 import { BodyFat_clamp, BodyFat_navy, BodyFat_range } from "./bodyFatEstimate";
+import { NumberText_parsePositive, NumberText_round1 } from "./numberText";
 import {
   IBodyFatMethod,
   IProgramGoal,
@@ -87,7 +88,7 @@ function lengthIn(length: ILength | undefined, unit: ILengthUnit): string {
   }
   const value =
     length.unit === unit ? length.value : unit === "cm" ? length.value * cmPerInch : length.value / cmPerInch;
-  return `${Math.round(value * 10) / 10}`;
+  return `${NumberText_round1(value)}`;
 }
 
 export function GoalWizard_latestLengths(stats: IStats): IGoalWizardStartInput["latest"] {
@@ -143,9 +144,8 @@ export function GoalWizard_progress(w: IGoalWizard): number {
 }
 
 function parseLength(text: string, unit: ILengthUnit): number | undefined {
-  const trimmed = text.trim().replace(",", ".");
-  const n = Number(trimmed);
-  if (trimmed === "" || !isFinite(n) || n <= 0) {
+  const n = NumberText_parsePositive(text);
+  if (n == null) {
     return undefined;
   }
   return unit === "cm" ? n : n * cmPerInch;
@@ -265,7 +265,7 @@ function profileFor(w: IGoalWizard, profile: IFoodProfile): IFoodProfile {
   return {
     ...profile,
     ...(w.sex != null ? { sex: w.sex } : {}),
-    ...(profile.heightCm == null && height != null ? { heightCm: Math.round(height * 10) / 10 } : {}),
+    ...(profile.heightCm == null && height != null ? { heightCm: NumberText_round1(height) } : {}),
   };
 }
 

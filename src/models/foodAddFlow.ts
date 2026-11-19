@@ -2,6 +2,7 @@ import { FoodLog_scale, IFoodEntry, IFoodMeal, IFoodRecent, IFoodSource, INutrie
 import { FoodMicros_fromCoreFields, IMicros } from "./foodMicros";
 import { IFoodPhotoItem } from "./foodPhotoEstimate";
 import { IFoodProduct } from "./openFoodFacts";
+import { NumberText_parsePositive, NumberText_round1 } from "./numberText";
 
 export interface IFoodPick {
   name: string;
@@ -61,8 +62,8 @@ export function FoodAddFlow_nutrientsFor(pick: IFoodPick, grams: number): INutri
 }
 
 export function FoodAddFlow_parseGrams(text: string): number | undefined {
-  const value = Number(text.replace(",", "."));
-  return isFinite(value) && value > 0 && value <= 5000 ? Math.round(value * 10) / 10 : undefined;
+  const value = NumberText_parsePositive(text);
+  return value != null && value <= 5000 ? NumberText_round1(value) : undefined;
 }
 
 export function FoodAddFlow_entryFromPick(
@@ -98,13 +99,9 @@ export function FoodAddFlow_entryFromPick(
 
 export const FoodAddFlow_maxSodiumMgPerGram = 400;
 
-function round1(value: number): number {
-  return Math.round(value * 10) / 10;
-}
-
 export function FoodAddFlow_aiMicros(item: IFoodPhotoItem): IMicros | undefined {
   const { carbs, fat } = item.nutrients;
-  const fiberAndSugarFit = round1((item.fiber ?? 0) + (item.sugar ?? 0)) <= carbs;
+  const fiberAndSugarFit = NumberText_round1((item.fiber ?? 0) + (item.sugar ?? 0)) <= carbs;
   return FoodMicros_fromCoreFields({
     fiber: fiberAndSugarFit ? item.fiber : undefined,
     sugar: fiberAndSugarFit ? item.sugar : undefined,

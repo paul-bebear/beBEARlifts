@@ -2,6 +2,7 @@ import { JSX, useState } from "react";
 import { View } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodTextInput } from "./foodUi";
+import { NumberText_parse } from "../models/numberText";
 import { Button } from "./button";
 
 interface IProps {
@@ -14,7 +15,7 @@ interface IProps {
 export function FoodSaveGroupPanel(props: IProps): JSX.Element {
   const [name, setName] = useState("");
   const [servingsText, setServingsText] = useState("4");
-  const servings = Math.round(Number(servingsText.replace(",", ".")));
+  const servings = Math.round(NumberText_parse(servingsText) ?? 0);
   const isValid = name.trim() !== "" && (props.kind === "meal" || (servings >= 1 && servings <= 100));
   return (
     <View testID="food-save-group" data-testid="food-save-group">

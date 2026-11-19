@@ -1,5 +1,6 @@
 import { INutrients } from "./foodLog";
 import { FoodMicros_fromGrams, FoodMicros_sodiumFromSalt, FoodMicros_table, IMicros } from "./foodMicros";
+import { NumberText_parsePositive, NumberText_round1 } from "./numberText";
 
 export interface IFoodProduct {
   barcode?: string;
@@ -52,18 +53,13 @@ function energyKcal(nutriments: INutriments, portion: IPortion): number | undefi
   return kcal ?? fromKj;
 }
 
-function round1(n: number): number {
-  return Math.round(n * 10) / 10;
-}
-
 function servingGrams(product: Record<string, unknown>): number | undefined {
   const quantity = num(product.serving_quantity);
   if (quantity != null && quantity > 0) {
     return quantity;
   }
   const match = str(product.serving_size)?.match(/(\d+(?:[.,]\d+)?)\s*(?:g|gr|grams?|ml)\b/i);
-  const parsed = match != null ? Number(match[1].replace(",", ".")) : undefined;
-  return parsed != null && parsed > 0 ? parsed : undefined;
+  return match != null ? NumberText_parsePositive(match[1]) : undefined;
 }
 
 // Imports are often entered only in their own language ("product_name_ko"), leaving "product_name" empty.
@@ -102,7 +98,8 @@ function per100g(nutriments: INutriments, grams: number | undefined): INutrients
   if (calories == null) {
     return undefined;
   }
-  const macro = (name: string): number => round1(value((portion) => num(nutriments[`${name}${portion}`])) ?? 0);
+  const macro = (name: string): number =>
+    NumberText_round1(value((portion) => num(nutriments[`${name}${portion}`])) ?? 0);
   const result: INutrients = {
     calories: Math.round(calories),
     protein: macro("proteins"),
