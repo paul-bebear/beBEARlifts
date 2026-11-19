@@ -76,25 +76,24 @@ describe("BearBadges", () => {
     expect(ids(sources([workout(1, at("2026-10-01", 12))]))).to.deep.equal([]);
   });
 
-  it("ignores a 3-minute or empty record for early bear, night bear and 100 workouts", () => {
+  it("keeps early bear, night bear and 100 workouts earned from a 3-minute or empty record", () => {
     const short = workout(1, at("2026-10-01", 6), 3);
     const empty = workout(2, at("2026-10-02", 23), 60, false);
-    expect(ids(sources([short, empty]))).to.deep.equal([]);
-    const real = Array.from({ length: 99 }, (_, i) => workout(i + 10, at("2026-01-01", 12) + i * day));
-    expect(ids(sources([short, empty, ...real]))).to.not.include("hundredWorkouts");
-    expect(ids(sources([short, empty, ...real, workout(500, at("2026-06-01", 12))]))).to.include("hundredWorkouts");
+    expect(BearBadges_compute(sources([short, empty]))).to.deep.equal([
+      { id: "earlyBear", recordId: 1, at: short.endTime },
+      { id: "nightBear", recordId: 2, at: empty.endTime },
+    ]);
+    const real = Array.from({ length: 98 }, (_, i) => workout(i + 10, at("2026-01-01", 12) + i * day));
+    const hundredth = BearBadges_compute(sources([...real, short, empty])).find((b) => b.id === "hundredWorkouts");
+    expect(hundredth).to.deep.include({ recordId: 2 });
   });
 
-  it("keeps a badge the user already has when the new count is lower", () => {
+  it("keeps a celebrated level badge next to a badge from a short record", () => {
     const short = workout(1, at("2026-10-01", 6), 3);
-    const kept = { id: "earlyBear" as const, recordId: 1, at: short.endTime! };
-    expect(ids(sources([short]))).to.deep.equal([]);
-    expect(BearBadges_compute(sources([short], { keptBadges: [kept] }))).to.deep.equal([kept]);
-    const real = workout(2, at("2026-10-02", 5));
-    expect(BearBadges_compute(sources([short, real], { keptBadges: [kept] }))[0]).to.deep.include({
-      id: "earlyBear",
-      recordId: 2,
-    });
+    const real = workout(2, at("2026-10-02", 12));
+    const counted = [{ record: real, countedKg: 10 }];
+    const badges = ids(sources([short, real], { workouts: counted, celebratedLevel: 2 }));
+    expect(badges).to.include.members(["earlyBear", "level2"]);
   });
 
   it("needs a beaten previous best for First PR", () => {
