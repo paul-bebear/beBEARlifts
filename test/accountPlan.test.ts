@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { AiCaps_defaults } from "../src/models/aiCaps";
 import {
   AccountPlan_accept,
+  AccountPlan_accountRowOpens,
   AccountPlan_activatingTries,
   AccountPlan_aiCaps,
   AccountPlan_codeRedeemed,
@@ -79,6 +80,7 @@ describe("AccountPlan", () => {
     expect(AccountPlan_settingsRow({ ...plusA, grant: "code", canManage: false }, "a")).to.deep.equal({
       title: "beBEAR+ from a code",
       action: "none",
+      actionLabel: "View",
     });
     expect(AccountPlan_settingsRow({ ...plusA, grant: "lifetime", canManage: false }, "a").title).to.equal(
       "beBEAR+ for life"
@@ -91,6 +93,28 @@ describe("AccountPlan", () => {
     expect(AccountPlan_settingsRow({ status: "activating", userId: "a" }, "a").subtitle).to.equal(
       "Purchase done. Activating…"
     );
+  });
+
+  it("gives the account screen the same row as Settings, with a label for its action", () => {
+    expect(AccountPlan_settingsRow({ status: "activating", userId: "a" }, "a")).to.deep.equal({
+      title: "beBEAR+",
+      subtitle: "Purchase done. Activating…",
+      action: "none",
+      actionLabel: "View",
+    });
+    expect(AccountPlan_settingsRow(free, "a").actionLabel).to.equal("Get beBEAR+");
+    expect(AccountPlan_settingsRow(plusA, "a").actionLabel).to.equal("Manage");
+    expect(AccountPlan_settingsRow({ ...plusA, grant: "lifetime", canManage: false }, "a").actionLabel).to.equal(
+      "View"
+    );
+  });
+
+  it("opens the store's manage sheet from the account screen only for a running subscription", () => {
+    expect(AccountPlan_accountRowOpens(AccountPlan_settingsRow(plusA, "a"), true)).to.equal("manage");
+    expect(AccountPlan_accountRowOpens(AccountPlan_settingsRow(plusA, "a"), false)).to.equal("plusScreen");
+    expect(AccountPlan_accountRowOpens(AccountPlan_settingsRow(free, "a"), true)).to.equal("plusScreen");
+    const code: IAccountPlanState = { ...plusA, grant: "code", canManage: false };
+    expect(AccountPlan_accountRowOpens(AccountPlan_settingsRow(code, "a"), true)).to.equal("plusScreen");
   });
 
   const aiCaps = { day: 3, week: 10, plusDay: 40, plusWeek: 200, lifetime: 3 };

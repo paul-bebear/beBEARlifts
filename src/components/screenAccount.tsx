@@ -1,5 +1,5 @@
 import { JSX, useEffect, useState } from "react";
-import { View, Pressable, Platform, AppState } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import { Text } from "./primitives/text";
 import { IDispatch } from "../ducks/types";
 import {
@@ -11,7 +11,6 @@ import {
   Thunk_createAccount,
   Thunk_deleteAccountRemote,
   Thunk_pushScreen,
-  Thunk_iapRefreshActiveSubscriptions,
   Thunk_fetchAccounts,
 } from "../ducks/thunks";
 import { INavCommon } from "../models/state";
@@ -33,8 +32,10 @@ import { EmailAuthButton } from "./account";
 import { navigateToModal } from "../navigation/navigationService";
 import { Tailwind_colors, Tailwind_semantic } from "../utils/tailwindConfig";
 import { IIapActiveSubscription } from "../utils/iapAdapter";
-import { PlusAccess_accountRow } from "../models/plusAccess";
-import { useHasPlus } from "../utils/usePlusAccess";
+import { AccountPlan_accountRowOpens, AccountPlan_settingsRow } from "../models/accountPlan";
+import { AccountPlanStore } from "../utils/accountPlanClient";
+import { Purchases_isAvailable, Purchases_manage } from "../utils/purchases";
+import { CloudStore } from "../utils/supabaseClient";
 import { Support_email } from "../utils/support";
 
 declare let __HOST__: string;
@@ -78,19 +79,8 @@ export function ScreenAccount(props: IProps): JSX.Element {
     refetchAccounts();
   }, [currentAccountId]);
 
-  useEffect(() => {
-    props.dispatch(Thunk_iapRefreshActiveSubscriptions());
-    // Re-check on foreground so a cancel/change made in the system subscription manager (App Store /
-    // Google Play) — e.g. after tapping "Cancel subscription" here — is reflected when the user returns.
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        props.dispatch(Thunk_iapRefreshActiveSubscriptions());
-      }
-    });
-    return () => sub.remove();
-  }, []);
-
-  const plusRow = PlusAccess_accountRow(useHasPlus());
+  const plusRow = AccountPlan_settingsRow(AccountPlanStore.use(), CloudStore.use().session?.userId);
+  const plusRowOpens = AccountPlan_accountRowOpens(plusRow, Purchases_isAvailable());
 
   useEffect(() => {
     if (Platform.OS === "web" && typeof window !== "undefined" && window.AppleID?.auth) {
@@ -212,8 +202,14 @@ export function ScreenAccount(props: IProps): JSX.Element {
         value={plusRow.actionLabel}
         shouldShowRightArrow={true}
         expandName={true}
-        onClick={() => props.dispatch(Thunk_pushScreen("subscription"))}
-        addons={<Text className="-mt-1 text-xs text-text-secondary">{plusRow.subtitle}</Text>}
+        onClick={() =>
+          plusRowOpens === "manage" ? Purchases_manage() : props.dispatch(Thunk_pushScreen("subscription"))
+        }
+        addons={
+          plusRow.subtitle == null ? undefined : (
+            <Text className="-mt-1 text-xs text-text-secondary">{plusRow.subtitle}</Text>
+          )
+        }
       />
       <GroupHeader
         name="Other local accounts"
