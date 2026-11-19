@@ -17,7 +17,7 @@ import {
   WarmupPlan_exercises,
   WarmupPlan_find,
   WarmupPlan_put,
-  WarmupPlan_toggle,
+  WarmupPlan_toggleIn,
 } from "../models/warmupPlan";
 
 function save(plan: IWarmupPlan): Promise<void> {
@@ -85,7 +85,7 @@ export function WorkoutWarmupCard(props: {
             <Pressable
               key={i}
               className="flex-row items-start py-1.5"
-              onPress={() => save(WarmupPlan_toggle(plan, i))}
+              onPress={() => WarmupStore_update((current) => WarmupPlan_toggleIn(current, workoutId, i))}
               testID={`warmup-item-${i}`}
             >
               <IconCheckCircle isChecked={plan.done[i]} color={semantic.icon.green} size={20} />

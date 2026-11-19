@@ -160,6 +160,11 @@ export function WarmupPlan_toggle(plan: IWarmupPlan, index: number): IWarmupPlan
   return { ...plan, done: plan.done.map((d, i) => (i === index ? !d : d)) };
 }
 
+export function WarmupPlan_toggleIn(log: IWarmupLog, workoutId: number, index: number): IWarmupLog {
+  const plan = WarmupPlan_find(log, workoutId);
+  return plan == null ? log : WarmupPlan_put(log, WarmupPlan_toggle(plan, index));
+}
+
 export function WarmupPlan_doneCount(plan: IWarmupPlan): number {
   return plan.done.filter((d) => d).length;
 }

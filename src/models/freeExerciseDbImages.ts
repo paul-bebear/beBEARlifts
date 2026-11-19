@@ -69,7 +69,6 @@ export const FreeExerciseDbImages_byKey: Readonly<Record<string, string>> = {
   frontsquat_kettlebell: "Front_Squats_With_Two_Kettlebells",
   glutebridge_barbell: "Barbell_Glute_Bridge",
   glutekickback_cable: "One-Legged_Cable_Kickback",
-  gobletsquat_dumbbell: "Goblet_Squat",
   gobletsquat_kettlebell: "Goblet_Squat",
   goodmorning_barbell: "Good_Morning",
   hacksquat_barbell: "Barbell_Hack_Squat",

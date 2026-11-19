@@ -94,6 +94,10 @@ function minutes(record: IHistoryRecord): number {
   return Math.max(5, Math.round((sets * minutesPerSet) / 5) * 5);
 }
 
+export function GymBagCheck_needsStraps(name: string): boolean {
+  return /\brow|deadlift/i.test(name);
+}
+
 // Water always. A belt for a heavy squat or deadlift, straps for a row or a deadlift, shoes for a run.
 export function GymBagCheck_items(
   day: IGymBagCheckDay,
@@ -106,7 +110,7 @@ export function GymBagCheck_items(
   if (record != null && needsBelt(record, history, settings)) {
     ids.push("belt");
   }
-  if (names.some((name) => /row|deadlift/i.test(name))) {
+  if (names.some(GymBagCheck_needsStraps)) {
     ids.push("straps");
   }
   if (names.some((name) => /\brun|jog|treadmill/i.test(name))) {

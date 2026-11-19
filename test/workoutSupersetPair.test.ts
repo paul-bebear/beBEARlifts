@@ -33,6 +33,16 @@ describe("WorkoutSupersetPair", () => {
     expect(groups(WorkoutSupersetPair_join(entries, "c", "a"))).to.deep.equal(["legs", "A", "legs"]);
   });
 
+  it("clears the group the entry left when it would hold one exercise", () => {
+    const entries = [entry("a", "A"), entry("x", "A"), entry("b", "B"), entry("y", "B")];
+    expect(groups(WorkoutSupersetPair_join(entries, "a", "b"))).to.deep.equal(["B", undefined, "B", "B"]);
+  });
+
+  it("keeps the group the entry left when two or more remain", () => {
+    const entries = [entry("a", "A"), entry("x", "A"), entry("z", "A"), entry("b", "B")];
+    expect(groups(WorkoutSupersetPair_join(entries, "a", "b"))).to.deep.equal(["B", "A", "A", "B"]);
+  });
+
   it("returns the same list when nothing changes or an id is unknown", () => {
     const entries = [entry("a", "A"), entry("b", "A")];
     expect(WorkoutSupersetPair_join(entries, "a", "b")).to.equal(entries);

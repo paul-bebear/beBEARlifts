@@ -9,6 +9,8 @@ import { Thunk_pushScreen } from "../ducks/thunks";
 import { FoodLog_dayKey } from "../models/foodLog";
 import { Notes_canEditCheckIn, Notes_checkIn } from "../models/notes";
 import { IReportsHubRow, ReportsHub_actionEffect, ReportsHub_groups, ReportsHub_title } from "../models/reportsHub";
+import { WorkoutReport_keepNote } from "../models/workoutReport";
+import { ReportStore } from "../utils/reportStore";
 import { NotesStore } from "../utils/notesStore";
 import { OfflineOnly_isEnabled } from "../utils/offlineOnly";
 import { RunSensors_isAvailable } from "../utils/runSensors";
@@ -60,6 +62,7 @@ export function ScreenReportsHub(): JSX.Element {
   const dispatch = useTrackedDispatch();
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   useNavOptions({ navTitle: ReportsHub_title });
+  const keepNote = WorkoutReport_keepNote(ReportStore.use().reports.length);
   const today = FoodLog_dayKey(new Date());
   const groups = ReportsHub_groups({
     isOffline: OfflineOnly_isEnabled(),
@@ -101,6 +104,11 @@ export function ScreenReportsHub(): JSX.Element {
             ))}
           </View>
         ))}
+        {keepNote != null && (
+          <Text className="px-4 pt-2 text-xs text-text-secondary" testID="reports-hub-keep-note">
+            {keepNote}
+          </Text>
+        )}
       </View>
     </NavScreenContent>
   );
