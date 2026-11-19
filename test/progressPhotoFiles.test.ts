@@ -4,34 +4,44 @@ import {
   ProgressPhotos_dataUrl,
   ProgressPhotos_fileName,
   ProgressPhotos_isFileBase64,
-  ProgressPhotos_putPlan,
+  ProgressPhotos_isTempFileName,
+  ProgressPhotos_putUnlink,
   ProgressPhotos_tempFileName,
 } from "../src/models/progressPhotos";
 
-describe("ProgressPhotoFiles put rule", () => {
-  it("never lists the final photo file for deletion, whatever the outcome", () => {
-    for (const outcome of ["added", "refused", "failed"] as const) {
-      expect(ProgressPhotos_putPlan(7, outcome).unlink).to.not.include(ProgressPhotos_fileName(7));
-    }
+const withRecord = { version: 1 as const, photos: [{ id: 7, timestamp: 1, file: true as const }] };
+const noRecord = { version: 1 as const, photos: [] };
+
+describe("ProgressPhotos_putUnlink", () => {
+  it("deletes only the temp file when the check before the move refuses", () => {
+    expect(ProgressPhotos_putUnlink(7, "precheck-refused", withRecord)).to.deep.equal([ProgressPhotos_tempFileName(7)]);
   });
 
-  it("deletes only the temp file when the insert is refused or fails", () => {
-    expect(ProgressPhotos_putPlan(7, "refused")).to.deep.equal({
-      promote: false,
-      unlink: [ProgressPhotos_tempFileName(7)],
-    });
-    expect(ProgressPhotos_putPlan(7, "failed")).to.deep.equal({
-      promote: false,
-      unlink: [ProgressPhotos_tempFileName(7)],
-    });
+  it("deletes only the temp file when the move fails", () => {
+    expect(ProgressPhotos_putUnlink(7, "move-failed", noRecord)).to.deep.equal([ProgressPhotos_tempFileName(7)]);
   });
 
-  it("moves the temp file into place and deletes nothing when the photo is added", () => {
-    expect(ProgressPhotos_putPlan(7, "added")).to.deep.equal({ promote: true, unlink: [] });
+  it("deletes nothing when the photo is added", () => {
+    expect(ProgressPhotos_putUnlink(7, "added", withRecord)).to.deep.equal([]);
   });
 
-  it("uses a temp name that differs from the final name", () => {
+  it("keeps the final file when a race made the insert refuse and a record points at it", () => {
+    expect(ProgressPhotos_putUnlink(7, "refused", withRecord)).to.deep.equal([]);
+  });
+
+  it("keeps the final file when another failure left a record for the id", () => {
+    expect(ProgressPhotos_putUnlink(7, "failed", withRecord)).to.deep.equal([]);
+  });
+
+  it("deletes the final file when the insert is refused or fails and no record has the id", () => {
+    expect(ProgressPhotos_putUnlink(7, "refused", noRecord)).to.deep.equal([ProgressPhotos_fileName(7)]);
+    expect(ProgressPhotos_putUnlink(7, "failed", noRecord)).to.deep.equal([ProgressPhotos_fileName(7)]);
+  });
+
+  it("uses a temp name that differs from the final name and matches the stale-file check", () => {
     expect(ProgressPhotos_tempFileName(7)).to.not.equal(ProgressPhotos_fileName(7));
+    expect(ProgressPhotos_isTempFileName(ProgressPhotos_tempFileName(7))).to.equal(true);
+    expect(ProgressPhotos_isTempFileName(ProgressPhotos_fileName(7))).to.equal(false);
   });
 });
 

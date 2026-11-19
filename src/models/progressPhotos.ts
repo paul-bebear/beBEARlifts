@@ -119,19 +119,25 @@ export function ProgressPhotos_isFileBase64(base64: string): boolean {
   return base64.length > 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(base64);
 }
 
-export type IProgressPhotoPutOutcome = "added" | "refused" | "failed";
+export type IProgressPhotoPutOutcome = "precheck-refused" | "move-failed" | "added" | "refused" | "failed";
 
-export interface IProgressPhotoPutPlan {
-  promote: boolean;
-  unlink: string[];
+// A new photo is written to a temp name, moved to its final name, then recorded.
+// Before the move only the temp file may go. After the move the final file may go
+// only when the log has no record of that id, because a record points at it.
+export function ProgressPhotos_putUnlink(
+  id: number,
+  outcome: IProgressPhotoPutOutcome,
+  log: IProgressPhotoLog
+): string[] {
+  if (outcome === "precheck-refused" || outcome === "move-failed") {
+    return [ProgressPhotos_tempFileName(id)];
+  }
+  const recorded = log.photos.some((p) => p.id === id);
+  return outcome === "added" || recorded ? [] : [ProgressPhotos_fileName(id)];
 }
 
-// A new photo is written to a temp name first. Only the temp file is ever deleted here,
-// because the final name may belong to a photo already in the log.
-export function ProgressPhotos_putPlan(id: number, outcome: IProgressPhotoPutOutcome): IProgressPhotoPutPlan {
-  return outcome === "added"
-    ? { promote: true, unlink: [] }
-    : { promote: false, unlink: [ProgressPhotos_tempFileName(id)] };
+export function ProgressPhotos_isTempFileName(name: string): boolean {
+  return /^\d+\.jpg\.part$/.test(name);
 }
 
 export function ProgressPhotos_uri(photo: IProgressPhoto, dir: string | undefined): string | undefined {
