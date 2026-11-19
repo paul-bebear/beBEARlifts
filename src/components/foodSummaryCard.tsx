@@ -15,6 +15,7 @@ import { IconChevronDown } from "./icons/iconFoodUi";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { navigateToModal } from "../navigation/navigationService";
 import { Button } from "./button";
+import { FoodDayPage_pillText } from "../models/foodDayPage";
 
 interface IProps {
   totals: INutrients;
@@ -173,7 +174,7 @@ function SummaryDetails(props: IProps): JSX.Element {
 export function FoodSummaryCard(props: IProps & { isOpenAtStart?: boolean }): JSX.Element {
   const [isOpen, setIsOpen] = useState(props.isOpenAtStart === true);
   const { totals } = props;
-  const text = `🔥 ${Math.round(totals.calories).toLocaleString("en-US")} · C ${Math.round(totals.carbs)} · P ${Math.round(totals.protein)} · F ${Math.round(totals.fat)}`;
+  const text = FoodDayPage_pillText(totals);
   return (
     <View className="px-4 pt-3">
       <Pressable

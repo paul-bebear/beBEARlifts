@@ -2,6 +2,12 @@ import { JSX, useState } from "react";
 import { Image, View } from "react-native";
 import { Text } from "./primitives/text";
 import { ICatalogRecipe } from "../models/recipeCatalog";
+import {
+  RecipePhoto_failed,
+  RecipePhoto_initial,
+  RecipePhoto_shouldDownload,
+  RecipePhoto_showsPlaceholder,
+} from "../models/foodDayPage";
 import { HostConfig_resolveUrl } from "../utils/hostConfig";
 import { ImageCache_download, ImageCache_initialUri, ImageCache_markMissing } from "../utils/imageCache";
 
@@ -27,31 +33,29 @@ function Placeholder(props: { title: string; height: number }): JSX.Element {
 
 export function RecipePhoto(props: IProps): JSX.Element {
   const remote = props.recipe.photo ? HostConfig_resolveUrl(props.recipe.photo.path) : undefined;
-  const [src, setSrc] = useState(remote ? ImageCache_initialUri(remote) : undefined);
-  const [isError, setIsError] = useState(false);
-  if (remote == null || src == null || isError) {
+  const [photo, setPhoto] = useState(() => RecipePhoto_initial(remote, ImageCache_initialUri));
+  if (remote == null || photo.src == null || RecipePhoto_showsPlaceholder(photo, remote)) {
     return <Placeholder title={props.recipe.title} height={props.height} />;
   }
   return (
     <View>
       <Image
-        source={{ uri: src }}
+        source={{ uri: photo.src }}
         resizeMode="cover"
         className="rounded-2xl"
         style={{ width: "100%", height: props.height }}
         accessibilityLabel={`${props.recipe.title}, ${props.recipe.photo?.credit}`}
         onLoad={() => {
-          if (src === remote) {
+          if (RecipePhoto_shouldDownload(photo, remote)) {
             ImageCache_download(remote);
           }
         }}
         onError={() => {
-          if (src !== remote) {
+          const next = RecipePhoto_failed(photo, remote);
+          if (next.marksMissing) {
             ImageCache_markMissing(remote);
-            setSrc(remote);
-          } else {
-            setIsError(true);
           }
+          setPhoto(next.state);
         }}
       />
       {props.showCredit && <Text className="mt-1 text-xs text-text-secondary">{props.recipe.photo?.credit}</Text>}
