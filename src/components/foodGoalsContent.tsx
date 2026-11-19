@@ -1,10 +1,17 @@
 import { JSX, useRef, useState } from "react";
 import { View, Platform } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_applyGoals, FoodLog_hasGoals, FoodLog_parseImport, IFoodGoals } from "../models/foodLog";
+import {
+  FoodLog_applyGoals,
+  FoodLog_hasGoals,
+  FoodLog_importQuestion,
+  FoodLog_mergeImport,
+  FoodLog_parseImport,
+  IFoodGoals,
+} from "../models/foodLog";
 import { IFoodProfile } from "../models/foodTargets";
 import { FoodGoals_parseForm, IFoodGoalsForm, FoodGoals_toForm } from "../models/foodGoals";
-import { FoodLogStore_replace, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
+import { FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Exporter_toFile } from "../utils/exporter";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
 import { FoodTextInput } from "./foodUi";
@@ -58,11 +65,16 @@ export function FoodGoalsContent(props: { onClose: () => void; latestWeight?: IW
       Dialog_alert("That file is not a food log export, or it has no foods, meals or recipes.");
       return;
     }
-    const message = `Replace your food log with ${imported.entries.length} foods from this file?`;
-    if (await Dialog_confirm(message)) {
-      await FoodLogStore_replace(imported);
+    const question = FoodLog_importQuestion(log, imported);
+    if (question == null) {
+      Dialog_alert("Everything in this file is already on this phone.");
+      return;
+    }
+    if (await Dialog_confirm(question)) {
+      const merged = FoodLog_mergeImport(log, imported);
+      await FoodLogStore_update((current) => FoodLog_mergeImport(current, imported));
       setFilledProfile(undefined);
-      setForm(FoodGoals_toForm(imported.goals));
+      setForm(FoodGoals_toForm(merged.goals));
     }
   };
 

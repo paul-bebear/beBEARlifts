@@ -7,6 +7,7 @@ import {
   FoodRepeat_details,
   FoodRepeat_fallback,
   FoodRepeat_groups,
+  FoodRepeat_heading,
   FoodRepeat_initial,
   FoodRepeat_offer,
   FoodRepeat_retry,
@@ -25,6 +26,7 @@ export function FoodRepeatList(props: { day: string; onBack: () => void; onCopie
   const groups = FoodRepeat_groups(log, state.day);
   const fallback = FoodRepeat_fallback(log, props.day);
   const count = FoodRepeat_selected(log, state).length;
+  const heading = FoodRepeat_heading(state, new Date());
 
   const save = async (): Promise<void> => {
     const next = FoodRepeat_begin(log, pending.current);
@@ -44,8 +46,11 @@ export function FoodRepeatList(props: { day: string; onBack: () => void; onCopie
 
   return (
     <View testID="food-repeat-list" className="py-4">
-      <Text className="mb-4 text-lg font-semibold">Same as yesterday</Text>
-      {groups.length === 0 && <Text className="text-base">Nothing logged yesterday</Text>}
+      <Text className="text-lg font-semibold">{heading.title}</Text>
+      <Text testID="food-repeat-source" className="mb-4 text-sm text-text-secondary">
+        {heading.source}
+      </Text>
+      {groups.length === 0 && <Text className="text-base">Nothing logged on this day</Text>}
       {groups.length === 0 && fallback != null && (
         <Pressable
           testID="food-repeat-fallback"

@@ -11,7 +11,6 @@ import {
   FoodLog_entriesFor,
   FoodLog_formatRange,
   FoodLog_hasGoals,
-  FoodLog_mealForHour,
   FoodLog_parse,
   FoodLog_parseNutrients,
   FoodLog_progress,
@@ -19,6 +18,8 @@ import {
   FoodLog_removeAll,
   FoodLog_sameDayCopies,
   FoodLog_parseImport,
+  FoodLog_mergeImport,
+  FoodLog_importQuestion,
   FoodLog_applyGoals,
   FoodLog_toRecent,
   FoodLog_saveMeal,
@@ -57,14 +58,6 @@ describe("FoodLog days", () => {
   it("shifts across month and year ends", () => {
     expect(FoodLog_shiftDay("2026-10-31", 1)).to.equal("2026-11-01");
     expect(FoodLog_shiftDay("2027-01-01", -1)).to.equal("2026-12-31");
-  });
-
-  it("picks a meal from the hour", () => {
-    expect(FoodLog_mealForHour(8)).to.equal("breakfast");
-    expect(FoodLog_mealForHour(13)).to.equal("lunch");
-    expect(FoodLog_mealForHour(20)).to.equal("dinner");
-    expect(FoodLog_mealForHour(16)).to.equal("snacks");
-    expect(FoodLog_mealForHour(2)).to.equal("snacks");
   });
 });
 
@@ -162,6 +155,12 @@ describe("FoodLog_progress", () => {
     expect(FoodLog_progress(742, range, "remaining").value).to.equal(2358);
     expect(FoodLog_progress(3300, range, "remaining").value).to.equal(0);
     expect(FoodLog_progress(3300, range, "remaining").isOver).to.equal(true);
+  });
+
+  it("is never over a target that is not set", () => {
+    const unset = { min: 0, max: 0 };
+    expect(FoodLog_progress(500, unset, "consumed").isOver).to.equal(false);
+    expect(FoodLog_progress(500, unset, "remaining").isOver).to.equal(false);
   });
 
   it("formats a range and a single target", () => {
@@ -322,6 +321,37 @@ describe("FoodLog_parseImport", () => {
 
   it("refuses a food log with no entries, meals or recipes", () => {
     expect(FoodLog_parseImport(JSON.parse(JSON.stringify(FoodLog_empty())))).to.equal(undefined);
+  });
+
+  it("reads a food log exported before saved foods, meals, recipes and the profile existed", () => {
+    const old = { version: 1, entries: [entry({})], goals: FoodLog_empty().goals, recents: [] };
+    expect(FoodLog_parseImport(old)?.entries.map((e) => e.id)).to.deep.equal(["a"]);
+  });
+});
+
+describe("FoodLog_mergeImport", () => {
+  const goals = { ...FoodLog_empty().goals, calories: { min: 2600, max: 2800 } };
+  const phone = { ...FoodLog_empty(), goals, entries: [entry({ id: "a", name: "Phone oats" }), entry({ id: "b" })] };
+  const file = {
+    ...FoodLog_empty(),
+    goals: { ...FoodLog_empty().goals, calories: { min: 1800, max: 1900 } },
+    entries: [entry({ id: "a", name: "File oats" }), entry({ id: "c" })],
+  };
+
+  it("keeps every food on the phone and adds only the new ones", () => {
+    const merged = FoodLog_mergeImport(phone, file);
+    expect(merged.entries.map((e) => `${e.id} ${e.name}`)).to.deep.equal(["a Phone oats", "b Oats", "c Oats"]);
+    expect(merged.goals).to.equal(goals);
+  });
+
+  it("takes the targets from the file when the phone has none", () => {
+    expect(FoodLog_mergeImport(FoodLog_empty(), file).goals.calories).to.deep.equal({ min: 1800, max: 1900 });
+  });
+
+  it("asks with the number of new foods and the foods that stay", () => {
+    expect(FoodLog_importQuestion(phone, file)).to.equal("Add 1 food from this file? The 2 foods on this phone stay.");
+    expect(FoodLog_importQuestion(FoodLog_empty(), file)).to.equal("Add 2 foods from this file?");
+    expect(FoodLog_importQuestion(phone, phone)).to.equal(undefined);
   });
 });
 

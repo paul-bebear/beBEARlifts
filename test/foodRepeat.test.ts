@@ -7,6 +7,7 @@ import {
   FoodRepeat_details,
   FoodRepeat_fallback,
   FoodRepeat_groups,
+  FoodRepeat_heading,
   FoodRepeat_initial,
   FoodRepeat_offer,
   FoodRepeat_retry,
@@ -96,7 +97,17 @@ describe("FoodRepeat", () => {
       entries: [entry("older", { day: "2026-10-17" }), entry("recent", { day: "2026-10-20" })],
     };
     expect(FoodRepeat_fallback(log, today)).to.equal("2026-10-20");
-    expect(FoodRepeat_offer("2026-10-20")).to.equal("Nothing yesterday. Show Tuesday?");
+    expect(FoodRepeat_offer("2026-10-20")).to.equal("Nothing on the day before. Show Tuesday?");
+  });
+
+  it("names the day it copies from, also when the page shows an older day", () => {
+    const at = new Date(2026, 9, 22, 10, 30);
+    expect(FoodRepeat_heading(initial, at)).to.deep.equal({
+      title: "Copy from another day",
+      source: "Yesterday, Oct 21",
+    });
+    expect(FoodRepeat_heading(FoodRepeat_initial("2026-10-20"), at).source).to.equal("Mon, Oct 19");
+    expect(FoodRepeat_heading(FoodRepeat_showDay(initial, "2026-10-17"), at).source).to.equal("Sat, Oct 17");
   });
 
   it("includes seven days ago and excludes eight days ago and today", () => {
