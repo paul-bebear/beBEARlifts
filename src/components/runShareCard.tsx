@@ -1,19 +1,23 @@
-import { JSX, useEffect, useMemo, useState } from "react";
+import { JSX, useEffect, useMemo, useRef, useState } from "react";
 import { Image, View, useWindowDimensions } from "react-native";
 import { IRun, RunLog_cardDate, RunLog_pace } from "../models/runLog";
 import { RunTrack_formatDuration, RunTrack_formatKm, RunTrack_formatPaceNumber } from "../models/runTrack";
 import { RunEquivalents_pick } from "../models/runEquivalents";
 import { ILatLon, IRouteMap, RunRoute_forCard, RunRoute_hiddenEndsM } from "../models/runRoute";
 import { RunMapSnapshot_render } from "../utils/runMapSnapshot";
-import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
-import { Dialog_alert } from "../utils/dialog";
-import { ShareCardImage_prepareAhead } from "../utils/shareCardImage";
+import { useShareCardPhoto } from "../utils/useShareCardPhoto";
+import { ShareCardImage_prepareAhead, ShareCardImage_cleanup } from "../utils/shareCardImage";
 import { Text } from "./primitives/text";
 import { Button } from "./button";
 import { PhotoSourceMenu } from "./photoSourceMenu";
-import { IPhotoSource } from "../models/photoSourceChoice";
 import { RunRouteSvg } from "./runRouteSvg";
-import { ShareCardBrand, ShareCardFrame, ShareCardScrim, ShareCardText } from "./shareCards/cardParts";
+import {
+  ShareCardBrand,
+  ShareCardFrame,
+  ShareCardPhotoBackground,
+  ShareCardStat,
+  ShareCardText,
+} from "./shareCards/cardParts";
 import { ShareCardExportSurface } from "./shareCards/shareCardExportSurface";
 import { useShareCardExport } from "./shareCards/useShareCardExport";
 import { ShareCardTheme as T } from "./shareCards/shareCardTheme";
@@ -32,16 +36,7 @@ const mapHeight = 270;
 const mapPadding = 24;
 
 function Stat(props: { label: string; value: string }): JSX.Element {
-  return (
-    <View style={{ alignItems: "center", flex: 1 }}>
-      <ShareCardText size={24} weight="bold">
-        {props.value}
-      </ShareCardText>
-      <ShareCardText size={10} weight="semibold" spacing={2} style={{ opacity: 0.85 }}>
-        {props.label}
-      </ShareCardText>
-    </View>
-  );
+  return <ShareCardStat label={props.label} value={props.value} valueSize={24} labelSize={10} style={{ flex: 1 }} />;
 }
 
 function RunStoryCard(props: ICardProps): JSX.Element {
@@ -51,16 +46,7 @@ function RunStoryCard(props: ICardProps): JSX.Element {
   const equivalent = RunEquivalents_pick(run.distanceM, props.seed);
   return (
     <ShareCardFrame background={T.green}>
-      {photo != null && (
-        <Image
-          source={{ uri: photo }}
-          resizeMode="cover"
-          onLoad={() => props.onImageLoad?.(photo)}
-          style={{ position: "absolute", top: 0, left: 0, width: T.width, height: T.height }}
-        />
-      )}
-      <ShareCardScrim edge="top" height={320} opacity={photo != null ? 0.75 : 0.3} />
-      <ShareCardScrim edge="bottom" height={260} opacity={photo != null ? 0.85 : 0.3} />
+      <ShareCardPhotoBackground photo={photo} topHeight={320} bottomHeight={260} onImageLoad={props.onImageLoad} />
       <View style={{ alignItems: "center", paddingTop: 22, paddingHorizontal: 24 }}>
         <ShareCardBrand size={28} color={T.cream} faceColor={T.green} />
         <ShareCardText size={13} weight="semibold" style={{ marginTop: 4, opacity: 0.85 }}>
@@ -138,7 +124,7 @@ interface IFrozen {
 const page = "run";
 
 export function RunShareCard(props: { run: IRun }): JSX.Element {
-  const [photo, setPhoto] = useState<string>();
+  const { photo, pickPhoto } = useShareCardPhoto("Could not open that photo. Try another photo.");
   const [seed, setSeed] = useState(0);
   const [hideEnds, setHideEnds] = useState(false);
   const [map, setMap] = useState<IRouteMap>();
@@ -162,18 +148,22 @@ export function RunShareCard(props: { run: IRun }): JSX.Element {
       active = false;
     };
   }, [route]);
+  const mapUris = useRef<string[]>([]);
+  useEffect(() => {
+    if (map != null && !mapUris.current.includes(map.uri)) {
+      mapUris.current.push(map.uri);
+    }
+  }, [map]);
+  useEffect(() => {
+    return () => {
+      ShareCardImage_cleanup(mapUris.current).catch(() => undefined);
+    };
+  }, []);
   useEffect(() => {
     if (ShareCardImage_prepareAhead) {
       prepare([page], current, images);
     }
   }, [props.run, seed, photo, route, map]);
-  const pickPhoto = async (source: IPhotoSource): Promise<void> => {
-    try {
-      setPhoto(await ProgressPhotoPick_pick(source));
-    } catch {
-      Dialog_alert("Could not open that photo. Try another photo.");
-    }
-  };
   return (
     <View className="mt-6" testID="run-share-card">
       <Text className="mb-3 text-lg font-semibold">Story card</Text>
