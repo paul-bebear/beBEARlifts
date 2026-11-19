@@ -16,15 +16,13 @@ import { useFoodLog } from "../utils/foodLogStore";
 import { BearStore } from "../utils/bearStore";
 import { BearTier_setFor } from "../models/bearTier";
 import { BearGrowth_history } from "../models/bearGrowth";
-import { ProgressPhotoPick_pick } from "../utils/progressPhotoPick";
-import { Dialog_alert } from "../utils/dialog";
+import { useShareCardPhoto } from "../utils/useShareCardPhoto";
 import { ShareCardImage_prepareAhead } from "../utils/shareCardImage";
 import { Text } from "./primitives/text";
 import { IconCamera } from "./icons/iconCamera";
 import { IconShare } from "./icons/iconShare";
 import { IconSpeaker } from "./icons/iconSpeaker";
 import { FinishDayActions_storyButtons } from "../models/finishDayActions";
-import { IPhotoSource } from "../models/photoSourceChoice";
 import { GroupHeader } from "./groupHeader";
 import { PhotoSourceMenu } from "./photoSourceMenu";
 import { ShareCardPager } from "./shareCards/shareCardPager";
@@ -48,7 +46,7 @@ interface IFrozen {
 
 export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   const [page, setPage] = useState<IShareCardPage>("rank");
-  const [photo, setPhoto] = useState<string | undefined>(undefined);
+  const { photo, pickPhoto } = useShareCardPhoto("Couldn't open that photo. Try another one.");
   const [seed] = useState(() => Math.floor(Date.now() / 1000));
   const foodLog = useFoodLog();
   const { line, fur, celebratedLevel: liveCelebratedLevel } = BearStore.use();
@@ -105,14 +103,6 @@ export function WorkoutStoryCardSection(props: IProps): JSX.Element {
   }, [dataKey, photo]);
   const share = (pages: IShareCardPage[]): void => {
     exporter.share(pages, { data, photo }, WorkoutStoryCard_exportImages(data, pages, photo));
-  };
-
-  const pickPhoto = async (source: IPhotoSource): Promise<void> => {
-    try {
-      setPhoto(await ProgressPhotoPick_pick(source));
-    } catch {
-      Dialog_alert("Couldn't open that photo. Try another one.");
-    }
   };
 
   return (

@@ -1,5 +1,5 @@
 import { JSX, ReactNode } from "react";
-import { StyleProp, TextStyle, View, ViewStyle } from "react-native";
+import { Image, StyleProp, TextStyle, View, ViewStyle } from "react-native";
 import { TextRaw, Text_resolveFontFamily } from "../primitives/text";
 import { Svg, Defs, LinearGradient, Rect, Stop } from "../primitives/svg";
 import { IBearFur } from "../../models/bearStoreData";
@@ -127,5 +127,47 @@ export function ShareCardProgress(props: {
     <View style={{ width: props.width, height: 8, borderRadius: 4, backgroundColor: props.track, overflow: "hidden" }}>
       <View style={{ width: props.width * props.fraction, height: 8, backgroundColor: props.color }} />
     </View>
+  );
+}
+
+export function ShareCardStat(props: {
+  label: string;
+  value: string;
+  valueSize: number;
+  labelSize: number;
+  style: ViewStyle;
+}): JSX.Element {
+  return (
+    <View style={[{ alignItems: "center" }, props.style]}>
+      <ShareCardText size={props.valueSize} weight="bold">
+        {props.value}
+      </ShareCardText>
+      <ShareCardText size={props.labelSize} weight="semibold" spacing={2} style={{ opacity: 0.85 }}>
+        {props.label}
+      </ShareCardText>
+    </View>
+  );
+}
+
+export function ShareCardPhotoBackground(props: {
+  photo?: string;
+  topHeight: number;
+  bottomHeight: number;
+  onImageLoad?: (uri: string) => void;
+}): JSX.Element {
+  const photo = props.photo;
+  return (
+    <>
+      {photo != null && (
+        <Image
+          source={{ uri: photo }}
+          resizeMode="cover"
+          onLoad={() => props.onImageLoad?.(photo)}
+          style={{ position: "absolute", top: 0, left: 0, width: ShareCardTheme.width, height: ShareCardTheme.height }}
+        />
+      )}
+      <ShareCardScrim edge="top" height={props.topHeight} opacity={photo != null ? 0.75 : 0.3} />
+      <ShareCardScrim edge="bottom" height={props.bottomHeight} opacity={photo != null ? 0.85 : 0.3} />
+    </>
   );
 }

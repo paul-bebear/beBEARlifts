@@ -7,6 +7,7 @@ import {
   ShareCardExport_idle,
   ShareCardExport_needsSurface,
   ShareCardExport_next,
+  ShareCardExport_shareEvent,
 } from "../src/models/shareCardExport";
 
 function run(
@@ -201,5 +202,39 @@ describe("ShareCardExport prepared before the tap", () => {
     );
     expect(effects).to.deep.equal(["share", "alert"]);
     expect([job.phase, job.files.length]).to.deep.equal(["prepared", 3]);
+  });
+
+  it("names the refused-share phase needsTap and offers the share again on retry", () => {
+    const refused = run(
+      [
+        { type: "share", pages: ["rank", "receipt"] },
+        { type: "refused", jobId: 1 },
+      ],
+      run(prepare).job
+    ).job;
+    expect([refused.phase, ShareCardExport_buttonTitle(refused, "Share")]).to.deep.equal([
+      "needsTap",
+      "Share 2 images",
+    ]);
+    const again = ShareCardExport_next(refused, { type: "retry" });
+    expect([again.job.phase, again.effects.map((e) => e.kind)]).to.deep.equal(["sharing", ["share"]]);
+  });
+
+  it("picks the event for a Share tap from the phase of the job", () => {
+    const idle = ShareCardExport_idle<number>();
+    const prepared = run(prepare).job;
+    const refused = { ...prepared, phase: "needsTap" as const, selection: ["rank"] };
+    const failed = { ...prepared, phase: "failed" as const };
+    const kind = (job: IShareExportJob<number>): string => ShareCardExport_shareEvent(job, ["rank"], 1, ["i"]).type;
+    expect([idle, prepared, refused, failed].map(kind)).to.deep.equal(["start", "share", "retry", "retry"]);
+    expect(ShareCardExport_shareEvent(idle, ["rank"], 1, ["i"])).to.deep.equal({
+      type: "start",
+      pages: ["rank"],
+      frozen: 1,
+      images: ["i"],
+      share: ["rank"],
+    });
+    const busy = { ...prepared, phase: "capturing" as const };
+    expect(kind(busy)).to.equal("start");
   });
 });
