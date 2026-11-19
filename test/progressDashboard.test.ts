@@ -1,15 +1,32 @@
 import "mocha";
 import { expect } from "chai";
-import { ProgressDashboard_build, ProgressDashboard_workoutsLine } from "../src/models/progressDashboard";
+import {
+  IProgressDashboard,
+  ProgressDashboard_build,
+  ProgressDashboard_workoutsLine,
+} from "../src/models/progressDashboard";
 import { Settings_build } from "../src/models/settings";
 import { FoodLog_empty, IFoodLog } from "../src/models/foodLog";
 import { Weight_build } from "../src/models/weight";
-import { IHistoryRecord, IStats } from "../src/types";
+import { IHistoryRecord } from "../src/types";
+
+function inTimeZone(zone: string, body: () => void): void {
+  const previous = process.env.TZ;
+  process.env.TZ = zone;
+  try {
+    body();
+  } finally {
+    if (previous == null) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = previous;
+    }
+  }
+}
 
 const now = new Date(2026, 9, 19, 20, 0).getTime();
 const day = 24 * 60 * 60 * 1000;
 const settings = { ...Settings_build(), units: "kg" as const };
-const noStats: IStats = { weight: {}, length: {}, percentage: {} };
 
 function record(daysAgo: number, reps: number, kg: number): IHistoryRecord {
   return {
@@ -73,15 +90,30 @@ describe("ProgressDashboard text", () => {
 describe("ProgressDashboard_build", () => {
   it("counts food days in the last 7 days", () => {
     const log = foodOn(["2026-10-19", "2026-10-17", "2026-10-12"], 3500);
-    const { nutrition } = ProgressDashboard_build({ history: [], stats: noStats, foodLog: log, settings, now });
+    const { nutrition } = ProgressDashboard_build({ history: [], foodLog: log, settings, now });
     expect(nutrition).to.deep.equal({ daysLogged: 2 });
   });
 
   it("counts workouts and volume in the last 7 days and the week streak", () => {
     const history = [record(1, 10, 60), record(3, 5, 100), record(9, 5, 100), record(22, 5, 100)];
-    const { workouts } = ProgressDashboard_build({ history, stats: noStats, foodLog: FoodLog_empty(), settings, now });
+    const { workouts } = ProgressDashboard_build({ history, foodLog: FoodLog_empty(), settings, now });
     expect(workouts.count).to.equal(2);
     expect(workouts.volume).to.deep.equal(Weight_build(1100, "kg"));
     expect(workouts.weekStreak).to.equal(2);
+  });
+
+  it("keeps a 00:30 workout on the first day of the window across the 25-hour day", () => {
+    inTimeZone("America/New_York", () => {
+      const firstDay = new Date(2026, 10, 1, 0, 30).getTime();
+      const history = [{ ...record(0, 5, 100), startTime: firstDay }];
+      const build = (at: number): IProgressDashboard["workouts"] =>
+        ProgressDashboard_build({ history, foodLog: FoodLog_empty(), settings, now: at }).workouts;
+      for (const hour of [23, 0]) {
+        const inWindow = build(new Date(2026, 10, 7, hour, 30).getTime());
+        expect(inWindow.count).to.equal(1);
+        expect(inWindow.weekStreak).to.equal(1);
+      }
+      expect(build(new Date(2026, 10, 8, 0, 30).getTime()).count).to.equal(0);
+    });
   });
 });

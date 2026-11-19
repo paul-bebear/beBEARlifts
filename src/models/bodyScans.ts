@@ -176,6 +176,17 @@ export function BodyScans_toStats(scan: IBodyScan): IBodyScanStats {
   };
 }
 
+export function BodyScans_statsToWrite(scan: IBodyScan): {
+  weight?: IWeight;
+  percentage?: IBodyScanStats["percentage"];
+} {
+  const stats = BodyScans_toStats(scan);
+  return {
+    weight: stats.weight,
+    percentage: Object.keys(stats.percentage).length > 0 ? stats.percentage : undefined,
+  };
+}
+
 export function BodyScans_put(log: IBodyScanLog, scan: IBodyScan): IBodyScanLog {
   const others = log.scans.filter((s) => s.id !== scan.id);
   return { ...log, scans: [scan, ...others].sort((a, b) => b.timestamp - a.timestamp).slice(0, maxScans) };

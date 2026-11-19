@@ -93,6 +93,9 @@ export function Steps_setSync(log: IStepsLog, syncHealth: boolean): IStepsLog {
 }
 
 export function Steps_parseCount(text: string): number | undefined {
+  if (/[,.]\d{1,2}$/.test(text.trim())) {
+    return undefined;
+  }
   const trimmed = text.trim().replace(/[,.\s]/g, "");
   const n = Number(trimmed);
   return trimmed !== "" && validCount(n) ? Math.round(n) : undefined;

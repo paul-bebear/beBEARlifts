@@ -6,6 +6,12 @@ export function LocalDay_start(timestamp: number): number {
   return date.getTime();
 }
 
+export function LocalDay_shift(timestamp: number, days: number): number {
+  const date = new Date(timestamp);
+  date.setDate(date.getDate() + days);
+  return date.getTime();
+}
+
 export function LocalDay_between(earlier: number, later: number): number {
   return Math.round((LocalDay_start(later) - LocalDay_start(earlier)) / LocalDay_ms);
 }

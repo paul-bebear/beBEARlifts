@@ -4,9 +4,53 @@ import {
   LocalDay_between,
   LocalDay_key,
   LocalDay_parse,
+  LocalDay_shift,
   LocalDay_start,
   LocalDay_weekday,
 } from "../src/models/localDay";
+
+function inTimeZone(zone: string, body: () => void): void {
+  const previous = process.env.TZ;
+  process.env.TZ = zone;
+  try {
+    body();
+  } finally {
+    if (previous == null) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = previous;
+    }
+  }
+}
+
+describe("LocalDay_shift", () => {
+  it("lands on local midnight across the autumn 25-hour day", () => {
+    inTimeZone("America/New_York", () => {
+      const midnight = new Date(2026, 10, 7).getTime();
+      expect(LocalDay_shift(midnight, -6)).to.equal(new Date(2026, 10, 1).getTime());
+      expect(LocalDay_shift(midnight, -7)).to.equal(new Date(2026, 9, 31).getTime());
+    });
+  });
+
+  it("lands on local midnight across the spring 23-hour day", () => {
+    inTimeZone("America/New_York", () => {
+      const midnight = new Date(2026, 2, 9).getTime();
+      expect(LocalDay_shift(midnight, -1)).to.equal(new Date(2026, 2, 8).getTime());
+      expect(LocalDay_shift(new Date(2026, 2, 7).getTime(), 2)).to.equal(midnight);
+    });
+  });
+
+  it("keeps the time of day at 23:30 and 00:30", () => {
+    inTimeZone("America/New_York", () => {
+      expect(LocalDay_shift(new Date(2026, 10, 2, 23, 30).getTime(), -1)).to.equal(
+        new Date(2026, 10, 1, 23, 30).getTime()
+      );
+      expect(LocalDay_shift(new Date(2026, 10, 2, 0, 30).getTime(), -1)).to.equal(
+        new Date(2026, 10, 1, 0, 30).getTime()
+      );
+    });
+  });
+});
 
 describe("LocalDay", () => {
   it("starts the day at local midnight", () => {

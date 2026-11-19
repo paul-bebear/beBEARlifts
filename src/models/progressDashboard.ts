@@ -1,8 +1,8 @@
-import { IHistoryRecord, ISettings, IStats, IWeight } from "../types";
+import { IHistoryRecord, ISettings, IWeight } from "../types";
 import { FoodLog_shiftDay, IFoodLog } from "./foodLog";
 import { History_totalRecordWeight } from "./history";
 import { Weight_add, Weight_build } from "./weight";
-import { LocalDay_key, LocalDay_ms, LocalDay_start } from "./localDay";
+import { LocalDay_key, LocalDay_shift, LocalDay_start } from "./localDay";
 
 export const ProgressDashboard_days = 7;
 
@@ -15,8 +15,8 @@ export interface IProgressDashboard {
 function weekStreak(workoutTimes: number[], now: number): number {
   let streak = 0;
   for (let week = 0; ; week += 1) {
-    const end = LocalDay_start(now) + LocalDay_ms - week * ProgressDashboard_days * LocalDay_ms;
-    const start = end - ProgressDashboard_days * LocalDay_ms;
+    const end = LocalDay_shift(LocalDay_start(now), 1 - week * ProgressDashboard_days);
+    const start = LocalDay_shift(end, -ProgressDashboard_days);
     if (!workoutTimes.some((t) => t >= start && t < end)) {
       return streak;
     }
@@ -29,10 +29,8 @@ export function ProgressDashboard_workoutsLine(workouts: IProgressDashboard["wor
   return workouts.weekStreak > 1 ? `${volume} · ${workouts.weekStreak}-week streak` : volume;
 }
 
-// screenProgressDashboard.tsx still passes stats. That file is outside this batch, so the field stays.
 export function ProgressDashboard_build(input: {
   history: IHistoryRecord[];
-  stats: IStats;
   foodLog: IFoodLog;
   settings: ISettings;
   now: number;
@@ -41,7 +39,7 @@ export function ProgressDashboard_build(input: {
   const today = LocalDay_key(new Date(now));
   const lastDays = Array.from({ length: ProgressDashboard_days }, (_, i) => FoodLog_shiftDay(today, -i));
   const loggedDays = new Set(foodLog.entries.map((e) => e.day));
-  const windowStart = LocalDay_start(now) - (ProgressDashboard_days - 1) * LocalDay_ms;
+  const windowStart = LocalDay_shift(LocalDay_start(now), -(ProgressDashboard_days - 1));
   const recent = history.filter((r) => r.startTime >= windowStart && r.startTime <= now);
   return {
     nutrition: { daysLogged: lastDays.filter((d) => loggedDays.has(d)).length },

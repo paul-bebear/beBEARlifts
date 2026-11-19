@@ -169,7 +169,7 @@ export function DailyChecklist_build(input: IChecklistDayInput): IChecklistDay {
 export function DailyChecklist_doneDays(sources: IStreakSources): Set<string> {
   const days = new Set<string>();
   for (const { record } of sources.workouts) {
-    days.add(dayOf(record.endTime ?? record.startTime));
+    days.add(dayOf(record.startTime));
   }
   for (const e of sources.foodLog.entries) {
     days.add(e.day);

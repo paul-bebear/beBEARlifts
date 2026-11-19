@@ -1,4 +1,4 @@
-import { JSX, useState } from "react";
+import { JSX, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodTextInput } from "./foodUi";
@@ -16,7 +16,7 @@ import {
   BodyScans_formatDelta,
   BodyScans_put,
   BodyScans_remove,
-  BodyScans_toStats,
+  BodyScans_statsToWrite,
   IBodyScan,
   IBodyScanForm,
   IBodyScanShareKey,
@@ -118,6 +118,7 @@ export function ScreenBodyScans(): JSX.Element {
   const [form, setForm] = useState<IBodyScanForm>({});
   const [pickedModes, setPickedModes] = useState<IBodyScanShareModes>({});
   const [scanning, setScanning] = useState(false);
+  const savingRef = useRef(false);
   const modes = { ...BodyScanMassShare_modes(log), ...pickedModes };
   const nearestWeight = (): number | undefined =>
     BodyScanMassShare_nearestWeight(state.storage.stats.weight.weight, Date.now(), unit);
@@ -138,17 +139,25 @@ export function ScreenBodyScans(): JSX.Element {
       Dialog_alert(result.message);
       return;
     }
+    if (savingRef.current) {
+      return;
+    }
+    savingRef.current = true;
     const { scan } = result;
-    await BodyScanStore_update((l) => BodyScans_put(l, scan));
-    const stats = BodyScans_toStats(scan);
-    if (stats.weight != null) {
-      EditStats_addWeightStats(dispatch, { weight: stats.weight }, scan.timestamp);
+    try {
+      await BodyScanStore_update((l) => BodyScans_put(l, scan));
+      const stats = BodyScans_statsToWrite(scan);
+      if (stats.weight != null) {
+        EditStats_addWeightStats(dispatch, { weight: stats.weight }, scan.timestamp);
+      }
+      if (stats.percentage != null) {
+        EditStats_addPercentageStats(dispatch, stats.percentage, scan.timestamp);
+      }
+      setForm({});
+      setPickedModes({});
+    } finally {
+      savingRef.current = false;
     }
-    if (Object.keys(stats.percentage).length > 0) {
-      EditStats_addPercentageStats(dispatch, stats.percentage, scan.timestamp);
-    }
-    setForm({});
-    setPickedModes({});
   };
 
   const remove = async (id: number): Promise<void> => {

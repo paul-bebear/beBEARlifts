@@ -11,6 +11,7 @@ import {
   DailyChecklist_weighInWeekday,
   IChecklistDayInput,
 } from "../src/models/dailyChecklist";
+import { MonthCalendar_workoutDays } from "../src/models/monthCalendar";
 import { FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
 import { IBearCountedWorkout } from "../src/models/bearGrowth";
 import { IHistoryRecord, IStats } from "../src/types";
@@ -214,11 +215,15 @@ describe("DailyChecklist", () => {
     expect(DailyChecklist_streak(new Set(), "2026-10-22")).to.equal(0);
   });
 
-  it("dates a workout by the day it ended and ignores weigh-ins and check-ins", () => {
-    const lateNight = workout("2026-10-17", 23, 2);
-    const done = DailyChecklist_doneDays({ foodLog: FoodLog_empty(), workouts: [lateNight] });
-    expect(Array.from(done)).to.deep.equal(["2026-10-18"]);
-    expect(DailyChecklist_doneDays({ foodLog: FoodLog_empty(), workouts: [] }).size).to.equal(0);
+  it("dates a workout by the day it started, like the calendar dots", () => {
+    for (const hour of [23, 0]) {
+      const crossing = workout("2026-10-17", hour, 2);
+      const done = DailyChecklist_doneDays({ foodLog: FoodLog_empty(), workouts: [crossing] });
+      expect(Array.from(done)).to.deep.equal(["2026-10-17"]);
+      expect(Array.from(MonthCalendar_workoutDays([crossing.record]))).to.deep.equal(Array.from(done));
+    }
+    const done = DailyChecklist_doneDays({ foodLog: FoodLog_empty(), workouts: [] });
+    expect(done.size).to.equal(0);
   });
 
   it("parses a stored log and keeps the commitment time", () => {

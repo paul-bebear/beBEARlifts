@@ -9,6 +9,7 @@ import {
   BodyScans_massIn,
   BodyScans_parse,
   BodyScans_put,
+  BodyScans_statsToWrite,
   BodyScans_readForm,
   BodyScans_remove,
   BodyScans_toStats,
@@ -115,6 +116,23 @@ describe("BodyScans", () => {
       expect(BodyScans_massIn(w, "kg", "lb")).to.be.closeTo(kgToLb[i], 1e-6);
       expect(BodyScans_massIn(w, "lb", "kg")).to.be.closeTo(lbToKg[i], 1e-6);
       expect(BodyScans_massIn(w, "kg", "kg")).to.equal(w);
+    });
+  });
+
+  it("decides which stats a saved scan writes", () => {
+    const full: IBodyScan = { id: 1, timestamp: 1, unit: "kg", weight: 70, bodyFatPct: 18.26, muscleMass: 35 };
+    expect(BodyScans_statsToWrite(full)).to.deep.equal({
+      weight: { value: 70, unit: "kg" },
+      percentage: { bodyfat: { value: 18.3, unit: "%" }, muscle: { value: 50, unit: "%" } },
+    });
+    expect(BodyScans_statsToWrite({ id: 2, timestamp: 2, unit: "kg", weight: 70 })).to.deep.equal({
+      weight: { value: 70, unit: "kg" },
+      percentage: undefined,
+    });
+    expect(BodyScans_statsToWrite({ id: 3, timestamp: 3, unit: "kg", bodyFatPct: 20 }).weight).to.equal(undefined);
+    expect(BodyScans_statsToWrite({ id: 4, timestamp: 4, unit: "kg", muscleMass: 30 })).to.deep.equal({
+      weight: undefined,
+      percentage: undefined,
     });
   });
 });
