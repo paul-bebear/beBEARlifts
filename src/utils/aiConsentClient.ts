@@ -11,13 +11,20 @@ import { AiConsentPrompt_show } from "./aiConsentPrompt";
 
 export const AiConsentStore = JsonStore_create("bebear_ai_consent", AiConsent_parse, AiConsent_empty);
 export const AiConsent_disabledMessage = "AI is off. You can enable AI features in Settings.";
-let pending: Promise<boolean> | undefined;
+let pending: { ask: IAiConsentAsk; result: Promise<boolean> } | undefined;
 
 export function AiConsent_ensure(ask: IAiConsentAsk = "auto"): Promise<boolean> {
   if (pending != null) {
-    return pending;
+    if (pending.ask === ask) {
+      return pending.result;
+    }
+    // A background answer never shows the prompt, so a tap waits for it and then runs its own check.
+    return pending.result.then(
+      () => AiConsent_ensure(ask),
+      () => AiConsent_ensure(ask)
+    );
   }
-  pending = (async () => {
+  const result = (async () => {
     const stored = await AiConsentStore.load();
     if (!AiConsent_shouldAsk(stored, ask)) {
       return AiConsent_maySend(stored);
@@ -33,5 +40,6 @@ export function AiConsent_ensure(ask: IAiConsentAsk = "auto"): Promise<boolean> 
   })().finally(() => {
     pending = undefined;
   });
-  return pending;
+  pending = { ask, result };
+  return result;
 }

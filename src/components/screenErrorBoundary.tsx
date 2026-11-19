@@ -1,7 +1,9 @@
 import { Component, ErrorInfo, ReactNode } from "react";
-import { View, Pressable } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import { TextRaw as Text } from "./primitives/text";
 import RB from "rollbar";
+import { StoreBuild_showsProCodes } from "../models/storeBuild";
+import { StoreReceipt_name } from "../utils/storeReceipt";
 
 declare let Rollbar: RB | undefined;
 
@@ -19,6 +21,7 @@ interface IProps {
 interface IState {
   hasError: boolean;
   message?: string;
+  reportCode?: string;
 }
 
 export class ScreenErrorBoundary extends Component<IProps, IState> {
@@ -33,8 +36,21 @@ export class ScreenErrorBoundary extends Component<IProps, IState> {
     // throw tears down the Fabric tree and surfaces as an unactionable native
     // EXC_BAD_ACCESS in Hermes, captured by the native crash reporter instead of the JS one.
     if (typeof Rollbar !== "undefined" && Rollbar != null) {
-      Rollbar.error(error, { componentStack: info.componentStack, screen: this.props.screenName });
+      const result = Rollbar.error(error, { componentStack: info.componentStack, screen: this.props.screenName });
+      if (result?.uuid != null) {
+        this.setState({ reportCode: result.uuid });
+      }
     }
+  }
+
+  // An error message can hold a user id, a URL or a file path, so App Store builds show the Rollbar code instead.
+  private detailsText(): string {
+    if (StoreBuild_showsProCodes(Platform.OS, StoreReceipt_name(), __DEV__)) {
+      return `${this.props.screenName}: ${this.state.message ?? ""}`;
+    }
+    return this.state.reportCode != null
+      ? `${this.props.screenName}. Report code: ${this.state.reportCode}`
+      : this.props.screenName;
   }
 
   // canGoBack() can throw while navigation is mid-transition/unmount, which is exactly the
@@ -90,11 +106,9 @@ export class ScreenErrorBoundary extends Component<IProps, IState> {
               </Pressable>
             )}
           </View>
-          {this.state.message != null && (
-            <Text selectable testID="screen-error-message" className="pt-6 text-xs text-center text-text-secondary">
-              {this.props.screenName}: {this.state.message}
-            </Text>
-          )}
+          <Text selectable testID="screen-error-message" className="pt-6 text-xs text-center text-text-secondary">
+            {this.detailsText()}
+          </Text>
         </View>
       );
     }
