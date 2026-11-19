@@ -280,3 +280,36 @@ jest.mock("react-native-fs", () => ({
   unlink: jest.fn().mockResolvedValue(undefined),
   readDir: jest.fn().mockResolvedValue([]),
 }));
+
+jest.mock("react-native-purchases", () => ({
+  __esModule: true,
+  default: {
+    configure: jest.fn(),
+    logIn: jest.fn().mockResolvedValue({}),
+    logOut: jest.fn().mockResolvedValue({}),
+    restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
+    showManageSubscriptions: jest.fn().mockResolvedValue(undefined),
+    getOfferings: jest.fn().mockResolvedValue({ current: null }),
+  },
+}));
+
+jest.mock("react-native-purchases-ui", () => ({
+  __esModule: true,
+  default: { presentPaywall: jest.fn().mockResolvedValue("NOT_PRESENTED") },
+}));
+
+jest.mock("react-native-vision-camera", () => {
+  const { View } = require("react-native");
+  return {
+    Camera: View,
+    isScannedCode: () => false,
+    useCameraDevice: () => undefined,
+    useCameraPermission: () => ({
+      status: "not-determined",
+      hasPermission: false,
+      canRequestPermission: false,
+      requestPermission: jest.fn().mockResolvedValue(false),
+    }),
+    useObjectOutput: () => ({}),
+  };
+});

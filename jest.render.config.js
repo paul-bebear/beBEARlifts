@@ -20,5 +20,5 @@ module.exports = {
   transformIgnorePatterns: [
     "node_modules/(?!(?:jest-)?react-native|@react-native|@react-navigation|react-native-.*|uniwind|@legendapp|react-freeze|@expensify)",
   ],
-  cacheDirectory: path.join(__dirname, "node_modules/.cache/jest-render"),
+  cacheDirectory: path.join(require("os").tmpdir(), "bebearlifts-jest-render-w2-7-2"),
 };

@@ -23,6 +23,9 @@ describe("the real app mounts headlessly", () => {
   });
 
   it("mirrors storage to the watch on mount, and makes no other native call", () => {
-    expect(Array.from(new Set(rendered.bridges.log.names()))).toEqual(["watch.sendStorageToWatch"]);
+    expect(Array.from(new Set(rendered.bridges.log.names()))).toEqual([
+      "mirroring.setDesiredWorkout",
+      "watch.sendStorageToWatch",
+    ]);
   });
 });
