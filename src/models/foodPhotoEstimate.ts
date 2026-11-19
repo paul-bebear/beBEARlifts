@@ -1,5 +1,6 @@
 import { INutrients } from "./foodLog";
 import { JsonInText_extract } from "./jsonInText";
+import { NumberText_round1 } from "./numberText";
 
 export interface IFoodPhotoItem {
   name: string;
@@ -26,10 +27,6 @@ const fatCaloriesPerGram = 9;
 const macroMismatchShare = 0.15;
 const macroMismatchCalories = 20;
 
-function oneDecimal(value: number): number {
-  return Math.round(value * 10) / 10;
-}
-
 function checkedCalories(calories: number, macros: Omit<INutrients, "calories">, alcohol: number | undefined): number {
   const fromMacros = 4 * macros.protein + 4 * macros.carbs + 9 * macros.fat + 7 * (alcohol ?? 0);
   const gap = Math.abs(calories - fromMacros);
@@ -52,9 +49,9 @@ function parseItem(raw: unknown): IFoodPhotoItem | undefined {
     return undefined;
   }
   const macros = {
-    protein: oneDecimal(num(r.protein) ?? 0),
-    carbs: oneDecimal(num(r.carbs) ?? 0),
-    fat: oneDecimal(num(r.fat) ?? 0),
+    protein: NumberText_round1(num(r.protein) ?? 0),
+    carbs: NumberText_round1(num(r.carbs) ?? 0),
+    fat: NumberText_round1(num(r.fat) ?? 0),
   };
   const calories = checkedCalories(Math.round(rawCalories), macros, num(r.alcohol));
   const item: IFoodPhotoItem = { name, grams: Math.round(grams), nutrients: { calories, ...macros } };

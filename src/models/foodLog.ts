@@ -2,6 +2,7 @@ import { FoodMicros_keys, FoodMicros_parse, IMicroKey, IMicros } from "./foodMic
 import type { IFoodProduct } from "./openFoodFacts";
 import { SavedFoods_parse, SavedFoods_save } from "./savedFoods";
 import { FoodTargets_defaultProfile, FoodTargets_parseProfile, IFoodProfile } from "./foodTargets";
+import { NumberText_round1, NumberText_round3 } from "./numberText";
 
 export type IFoodMeal = "breakfast" | "lunch" | "dinner" | "snacks";
 
@@ -311,15 +312,7 @@ export function FoodLog_mealForHour(hour: number): IFoodMeal {
   return "snacks";
 }
 
-function round1(n: number): number {
-  return Math.round(n * 10) / 10;
-}
-
-function round3(n: number): number {
-  return Math.round(n * 1000) / 1000;
-}
-
-function mapMicros(micros: IMicros | undefined, change: (value: number) => number): IMicros | undefined {
+export function FoodLog_mapMicros(micros: IMicros | undefined, change: (value: number) => number): IMicros | undefined {
   if (micros == null) {
     return undefined;
   }
@@ -342,11 +335,11 @@ export function FoodLog_scale(per100g: INutrients, grams: number): INutrients {
   return withMicros(
     {
       calories: Math.round(per100g.calories * k),
-      protein: round1(per100g.protein * k),
-      carbs: round1(per100g.carbs * k),
-      fat: round1(per100g.fat * k),
+      protein: NumberText_round1(per100g.protein * k),
+      carbs: NumberText_round1(per100g.carbs * k),
+      fat: NumberText_round1(per100g.fat * k),
     },
-    mapMicros(per100g.micros, (value) => round3(value * k))
+    FoodLog_mapMicros(per100g.micros, (value) => NumberText_round3(value * k))
   );
 }
 
@@ -358,7 +351,7 @@ export function FoodLog_scaleBy(nutrients: INutrients, k: number): INutrients {
       carbs: nutrients.carbs * k,
       fat: nutrients.fat * k,
     },
-    mapMicros(nutrients.micros, (value) => value * k)
+    FoodLog_mapMicros(nutrients.micros, (value) => value * k)
   );
 }
 
@@ -372,7 +365,7 @@ function sumMicros(items: INutrients[]): IMicros | undefined {
       }
     }
   }
-  return mapMicros(totals, round3);
+  return FoodLog_mapMicros(totals, NumberText_round3);
 }
 
 export function FoodLog_sum(items: INutrients[]): INutrients {
@@ -388,9 +381,9 @@ export function FoodLog_sum(items: INutrients[]): INutrients {
   return withMicros(
     {
       calories: Math.round(total.calories),
-      protein: round1(total.protein),
-      carbs: round1(total.carbs),
-      fat: round1(total.fat),
+      protein: NumberText_round1(total.protein),
+      carbs: NumberText_round1(total.carbs),
+      fat: NumberText_round1(total.fat),
     },
     sumMicros(items)
   );
@@ -526,5 +519,5 @@ export function FoodLog_formatRange(range: IFoodRange, unit: string): string {
 }
 
 export function FoodLog_formatNumber(n: number): string {
-  return Math.abs(n) >= 100 ? `${Math.round(n)}` : `${Math.round(n * 10) / 10}`;
+  return Math.abs(n) >= 100 ? `${Math.round(n)}` : `${NumberText_round1(n)}`;
 }

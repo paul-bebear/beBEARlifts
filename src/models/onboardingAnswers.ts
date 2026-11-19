@@ -15,6 +15,7 @@ import { Settings_defaultEquipment } from "./settings";
 import { IBearPlacePick } from "./bearPlace";
 import { IBearGoal } from "./bearPlan";
 import { IBearPlanInput } from "./bearPlanRecommend";
+import { NumberText_parse } from "./numberText";
 
 export interface IOnboardingAnswers {
   places: IBearPlacePick[];
@@ -66,8 +67,8 @@ export function OnboardingAnswers_togglePlace(places: IBearPlacePick[], pick: IB
 }
 
 function inRange(text: string, min: number, max: number): number | undefined {
-  const n = Number(text.trim().replace(",", "."));
-  return text.trim() !== "" && Number.isFinite(n) && n >= min && n <= max ? n : undefined;
+  const n = NumberText_parse(text);
+  return n != null && n >= min && n <= max ? n : undefined;
 }
 
 function OnboardingAnswers_age(answers: IOnboardingAnswers): number | undefined {

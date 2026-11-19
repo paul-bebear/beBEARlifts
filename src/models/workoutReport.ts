@@ -2,6 +2,7 @@ import { IEffort, IHistoryEntry, IHistoryRecord, ISettings, IUnit } from "../typ
 import { Exercise_get } from "./exercise";
 import { Weight_convertTo } from "./weight";
 import { EffortRating_efforts } from "./effortRating";
+import { NumberText_round1 } from "./numberText";
 
 export type IReportItemKind = "heavier" | "lighter" | "fewerReps" | "missed" | "tooHard" | "tooEasy" | "followUp";
 export type IReportAnswer = "onPurpose" | "feltOff" | "hurt" | "mistake" | "better" | "same" | "worse";
@@ -132,7 +133,7 @@ function weightItems(
     const reps =
       today.sets === last.sets
         ? `${today.reps} reps in total, down from ${last.reps}`
-        : `${oneDecimal(repsPerSet(today))} reps a set, down from ${oneDecimal(repsPerSet(last))}`;
+        : `${NumberText_round1(repsPerSet(today))} reps a set, down from ${NumberText_round1(repsPerSet(last))}`;
     return [makeItem(key, name, "fewerReps", `${name}: ${reps} last time at about the same weight.`, true)];
   }
   return [];
@@ -140,10 +141,6 @@ function weightItems(
 
 function repsPerSet(session: IExerciseSession): number {
   return session.reps / session.sets;
-}
-
-function oneDecimal(value: number): number {
-  return Math.round(value * 10) / 10;
 }
 
 function effortItems(key: string, name: string, today: IExerciseSession, asked: boolean): IReportItem[] {

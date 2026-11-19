@@ -1,6 +1,7 @@
 import { FoodLog_scale, INutrients } from "./foodLog";
 import { FoodMicros_fromCoreFields, IMicros } from "./foodMicros";
 import { JsonInText_extract } from "./jsonInText";
+import { NumberText_parseNonNegative, NumberText_round1, NumberText_round3 } from "./numberText";
 import { IFoodProduct } from "./openFoodFacts";
 
 export interface INutritionLabel {
@@ -81,7 +82,7 @@ export function NutritionLabel_note(text: string): string | undefined {
 }
 
 function formNumber(n: number | undefined): string {
-  return n == null ? "" : `${Math.round(n * 10) / 10}`;
+  return n == null ? "" : `${NumberText_round1(n)}`;
 }
 
 export function NutritionLabel_toForm(label: INutritionLabel | undefined): INutritionLabelForm {
@@ -100,19 +101,10 @@ export function NutritionLabel_toForm(label: INutritionLabel | undefined): INutr
   };
 }
 
-function parseNumber(text: string): number | undefined {
-  const trimmed = text.trim().replace(",", ".");
-  if (trimmed === "") {
-    return undefined;
-  }
-  const value = Number(trimmed);
-  return isFinite(value) && value >= 0 ? value : undefined;
-}
-
 // Calories keep one decimal here, so one serving scales back to the label's own number.
 function per100gFromServing(perServing: INutrients, grams: number): INutrients {
   const k = 100 / grams;
-  const round1 = (n: number): number => Math.round(n * k * 10) / 10;
+  const round1 = (n: number): number => NumberText_round1(n * k);
   const result: INutrients = {
     calories: round1(perServing.calories),
     protein: round1(perServing.protein),
@@ -125,24 +117,24 @@ function per100gFromServing(perServing: INutrients, grams: number): INutrients {
   }
   const scaled: IMicros = {};
   for (const [key, value] of Object.entries(micros) as [keyof IMicros, number][]) {
-    scaled[key] = Math.round(value * k * 1000) / 1000;
+    scaled[key] = NumberText_round3(value * k);
   }
   return { ...result, micros: scaled };
 }
 
 function formMicros(form: INutritionLabelForm): IMicros | undefined {
   return FoodMicros_fromCoreFields({
-    fiber: parseNumber(form.fiber),
-    sugar: parseNumber(form.sugar),
-    saturatedFat: parseNumber(form.saturatedFat),
-    sodiumMg: parseNumber(form.sodium),
+    fiber: NumberText_parseNonNegative(form.fiber),
+    sugar: NumberText_parseNonNegative(form.sugar),
+    saturatedFat: NumberText_parseNonNegative(form.saturatedFat),
+    sodiumMg: NumberText_parseNonNegative(form.sodium),
   });
 }
 
 export function NutritionLabel_toProduct(form: INutritionLabelForm, barcode?: string): INutritionLabelResult {
   const name = form.name.trim();
-  const grams = parseNumber(form.servingGrams);
-  const calories = parseNumber(form.calories);
+  const grams = NumberText_parseNonNegative(form.servingGrams);
+  const calories = NumberText_parseNonNegative(form.calories);
   if (name === "") {
     return { ok: false, error: "Give the food a name." };
   }
@@ -154,9 +146,9 @@ export function NutritionLabel_toProduct(form: INutritionLabelForm, barcode?: st
   }
   const perServing: INutrients = {
     calories,
-    protein: parseNumber(form.protein) ?? 0,
-    carbs: parseNumber(form.carbs) ?? 0,
-    fat: parseNumber(form.fat) ?? 0,
+    protein: NumberText_parseNonNegative(form.protein) ?? 0,
+    carbs: NumberText_parseNonNegative(form.carbs) ?? 0,
+    fat: NumberText_parseNonNegative(form.fat) ?? 0,
   };
   const micros = formMicros(form);
   if (micros != null) {
