@@ -1,6 +1,6 @@
 import "mocha";
 import { expect } from "chai";
-import { BearBoard_goalLines, BearBoard_lines, IBearBoardInput } from "../src/models/bearBoard";
+import { BearBoard_goalLines, BearBoard_latestWeight, BearBoard_lines, IBearBoardInput } from "../src/models/bearBoard";
 import { IProgramGoal } from "../src/models/programGoal";
 import { BearTier_progress } from "../src/models/bearTier";
 import { FoodLog_dayKey, FoodLog_empty, IFoodEntry, IFoodLog } from "../src/models/foodLog";
@@ -142,7 +142,31 @@ describe("BearBoard_lines", () => {
     const thursday = new Date(2026, 9, 15, 9).getTime();
     const lines = BearBoard_lines(input({ goal: goal({ startedAt: thursday }), stats, units: "lb" }));
     expect(lines[2].text).to.equal("Weight: Thursday");
-    expect(lines[6].text).to.equal("141.0 lb");
+    expect(lines[6].text).to.equal("141.1 lb");
+  });
+
+  it("keeps one decimal of body weight across units and does not round to half steps", () => {
+    const lb = (at: number, value: number): IStatsWeightValue => ({
+      vtype: "stat",
+      value: Weight_build(value, "lb"),
+      timestamp: at,
+    });
+    const stats: IStats = {
+      weight: { weight: [lb(now - 10 * dayMs, 175), lb(now - hourMs, 176)] },
+      length: {},
+      percentage: {},
+    };
+    expect(BearBoard_latestWeight(stats, "kg", now)).to.equal("79.8");
+    expect(BearBoard_lines(input({ stats })).find((l) => l.id === "weight")!.text).to.equal("79.8 kg · +0.4 in 10 d");
+  });
+
+  it("ignores a weigh-in dated in the future", () => {
+    const stats: IStats = {
+      weight: { weight: [weight(now - dayMs, 72), weight(now + dayMs, 90)] },
+      length: {},
+      percentage: {},
+    };
+    expect(BearBoard_latestWeight(stats, "kg", now)).to.equal("72.0");
   });
 
   it("prints the real span of the weight change", () => {

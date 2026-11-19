@@ -115,6 +115,25 @@ describe("ProgressHub", () => {
     });
   });
 
+  it("ignores a weigh-in dated in the future and an unreadable one", () => {
+    const hub = ProgressHub_build(
+      input({
+        stats: {
+          weight: {
+            weight: [
+              { vtype: "stat", value: { value: 79.8, unit: "kg" }, timestamp: now - day },
+              { vtype: "stat", value: { value: 95, unit: "kg" }, timestamp: now + 3 * day },
+              { vtype: "stat", value: { value: 0, unit: "kg" }, timestamp: now - 60 * 1000 },
+            ],
+          },
+          length: {},
+          percentage: {},
+        },
+      })
+    );
+    expect(hub.weight).to.deep.equal({ value: "79.8 kg", subtitle: "Logged yesterday", change: undefined });
+  });
+
   it("counts food days since the goal started", () => {
     const foodLog = {
       ...FoodLog_empty(),

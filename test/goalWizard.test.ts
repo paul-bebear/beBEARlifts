@@ -78,6 +78,23 @@ describe("GoalWizard", () => {
     expect(latest).to.deep.equal({ waist: { value: 86, unit: "cm" } });
   });
 
+  it("skips a measurement dated in the future", () => {
+    const latest = GoalWizard_latestLengths(
+      {
+        weight: {},
+        percentage: {},
+        length: {
+          neck: [
+            { vtype: "stat", value: { value: 38, unit: "cm" }, timestamp: 100 },
+            { vtype: "stat", value: { value: 50, unit: "cm" }, timestamp: 300 },
+          ],
+        },
+      },
+      200
+    );
+    expect(latest).to.deep.equal({ neck: { value: 38, unit: "cm" } });
+  });
+
   it("walks the visual path and fills the progress bar", () => {
     const w = throughToResult(start());
     expect(w.step).to.equal("result");
