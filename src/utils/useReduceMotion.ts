@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { AccessibilityInfo } from "react-native";
 
-export function useReduceMotion(): boolean {
-  const [reduceMotion, setReduceMotion] = useState(false);
+export function useReduceMotion(initial: boolean = false): boolean {
+  const [reduceMotion, setReduceMotion] = useState(initial);
   useEffect(() => {
     let active = true;
     let changed = false;

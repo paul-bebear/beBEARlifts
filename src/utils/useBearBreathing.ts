@@ -1,31 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, Platform } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, Platform } from "react-native";
+import { useReduceMotion } from "./useReduceMotion";
 
 // The bear breathes by a small vertical stretch. Reduce Motion in the OS settings stops it.
 export function useBearBreathing(durationMs: number, maxScaleY: number): Animated.Value {
-  const [reduceMotion, setReduceMotion] = useState(true);
+  const reduceMotion = useReduceMotion(true);
   const scaleY = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    let active = true;
-    let changed = false;
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", (enabled) => {
-      changed = true;
-      setReduceMotion(enabled);
-    });
-    AccessibilityInfo.isReduceMotionEnabled().then(
-      (enabled) => {
-        if (active && !changed) {
-          setReduceMotion(enabled);
-        }
-      },
-      () => {}
-    );
-    return () => {
-      active = false;
-      subscription?.remove();
-    };
-  }, []);
 
   useEffect(() => {
     scaleY.setValue(1);

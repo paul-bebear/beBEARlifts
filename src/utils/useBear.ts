@@ -8,7 +8,7 @@ import { Program_evaluate, Program_isEmpty } from "../models/program";
 import { ProgressHub_plannedPerWeek } from "../models/progressHub";
 import { BearStore } from "./bearStore";
 import { FoodLogStore_load, useFoodLog } from "./foodLogStore";
-import { useDayKey } from "./useDayKey";
+import { useDayClock } from "./useDayClock";
 
 export interface IBearView {
   state: IBearState;
@@ -27,7 +27,7 @@ export function useBear(): IBearView {
   );
   const foodLog = useFoodLog();
   const store = BearStore.use();
-  const dayClock = useDayKey();
+  const dayClock = useDayClock();
   const plannedPerWeek = useMemo(
     () =>
       ProgressHub_plannedPerWeek(
