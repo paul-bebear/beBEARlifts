@@ -1,5 +1,6 @@
 import { IRunSplit, RunTrack_fastest, RunTrack_pace } from "./runTrack";
 import { ILatLon } from "./runRoute";
+import { UnknownValue_isNonNegative } from "./unknownValue";
 
 export interface IRun {
   id: number;
@@ -38,13 +39,9 @@ export function RunLog_date(startedAt: number): string {
   });
 }
 
-function nonnegative(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0;
-}
-
 function parseSplit(raw: unknown): IRunSplit | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  return nonnegative(r.km) && nonnegative(r.ms) ? { km: r.km, ms: r.ms } : undefined;
+  return UnknownValue_isNonNegative(r.km) && UnknownValue_isNonNegative(r.ms) ? { km: r.km, ms: r.ms } : undefined;
 }
 
 function parseLatLon(raw: unknown): ILatLon | undefined {
@@ -64,11 +61,11 @@ function compact<T>(values: (T | undefined)[]): T[] {
 function parseRun(raw: unknown): IRun | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   if (
-    !nonnegative(r.id) ||
-    !nonnegative(r.startedAt) ||
-    !nonnegative(r.endedAt) ||
-    !nonnegative(r.distanceM) ||
-    !nonnegative(r.movingMs)
+    !UnknownValue_isNonNegative(r.id) ||
+    !UnknownValue_isNonNegative(r.startedAt) ||
+    !UnknownValue_isNonNegative(r.endedAt) ||
+    !UnknownValue_isNonNegative(r.distanceM) ||
+    !UnknownValue_isNonNegative(r.movingMs)
   ) {
     return undefined;
   }
@@ -82,7 +79,7 @@ function parseRun(raw: unknown): IRun | undefined {
     endedAt: r.endedAt,
     distanceM: r.distanceM,
     movingMs: r.movingMs,
-    elevationGainM: nonnegative(r.elevationGainM) ? r.elevationGainM : 0,
+    elevationGainM: UnknownValue_isNonNegative(r.elevationGainM) ? r.elevationGainM : 0,
     splits,
     route,
   };

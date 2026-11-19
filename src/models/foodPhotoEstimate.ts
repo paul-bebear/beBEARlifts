@@ -1,6 +1,7 @@
 import { INutrients } from "./foodLog";
 import { JsonInText_extract } from "./jsonInText";
 import { NumberText_round1 } from "./numberText";
+import { UnknownValue_isRecord } from "./unknownValue";
 
 export interface IFoodPhotoItem {
   name: string;
@@ -38,7 +39,7 @@ function checkedCalories(calories: number, macros: Omit<INutrients, "calories">,
 }
 
 function parseItem(raw: unknown): IFoodPhotoItem | undefined {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return undefined;
   }
   const r = raw as Record<string, unknown>;
@@ -100,7 +101,7 @@ export function FoodPhotoEstimate_failure(text: string, finishReason: string | u
 
 export function FoodPhotoEstimate_parse(text: string): IFoodPhotoEstimate | undefined {
   const json = JsonInText_extract(text);
-  if (json == null || typeof json !== "object") {
+  if (!UnknownValue_isRecord(json)) {
     return salvageItems(text);
   }
   const r = json as Record<string, unknown>;

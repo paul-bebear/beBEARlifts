@@ -1,3 +1,5 @@
+import { UnknownValue_isRecord, UnknownValue_nonNegative, UnknownValue_text } from "./unknownValue";
+
 export interface ISpotifyTrack {
   id: string;
   uri: string;
@@ -19,33 +21,27 @@ export interface ISpotifyHistoryItem {
   endedAt: number;
 }
 
-function str(value: unknown): string | undefined {
-  return typeof value === "string" && value !== "" ? value : undefined;
-}
-
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) && value >= 0 ? value : undefined;
-}
-
 export function SpotifyTracks_parseTrack(raw: unknown): ISpotifyTrack | undefined {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return undefined;
   }
   const r = raw as Record<string, unknown>;
-  const id = str(r.id);
-  const uri = str(r.uri);
-  const name = str(r.name);
-  const durationMs = num(r.duration_ms);
+  const id = UnknownValue_text(r.id);
+  const uri = UnknownValue_text(r.uri);
+  const name = UnknownValue_text(r.name);
+  const durationMs = UnknownValue_nonNegative(r.duration_ms);
   if (id == null || uri == null || name == null || durationMs == null || r.type === "episode") {
     return undefined;
   }
   const artists = Array.isArray(r.artists)
-    ? r.artists.map((a) => str((a as Record<string, unknown> | null)?.name)).filter((a): a is string => a != null)
+    ? r.artists
+        .map((a) => UnknownValue_text((a as Record<string, unknown> | null)?.name))
+        .filter((a): a is string => a != null)
     : [];
   const images = (r.album as Record<string, unknown> | undefined)?.images;
   const image = Array.isArray(images) ? images[images.length - 1] : undefined;
   const track: ISpotifyTrack = { id, uri, name, artists: artists.join(", "), durationMs };
-  const imageUrl = str((image as Record<string, unknown> | undefined)?.url);
+  const imageUrl = UnknownValue_text((image as Record<string, unknown> | undefined)?.url);
   if (imageUrl != null) {
     track.imageUrl = imageUrl;
   }
@@ -53,12 +49,12 @@ export function SpotifyTracks_parseTrack(raw: unknown): ISpotifyTrack | undefine
 }
 
 export function SpotifyTracks_parseNowPlaying(raw: unknown): ISpotifyNowPlaying | undefined {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return undefined;
   }
   const r = raw as Record<string, unknown>;
   const track = SpotifyTracks_parseTrack(r.item);
-  const progressMs = num(r.progress_ms);
+  const progressMs = UnknownValue_nonNegative(r.progress_ms);
   if (track == null || progressMs == null) {
     return undefined;
   }
@@ -66,7 +62,7 @@ export function SpotifyTracks_parseNowPlaying(raw: unknown): ISpotifyNowPlaying 
 }
 
 export function SpotifyTracks_parseHistory(raw: unknown): ISpotifyHistoryItem[] {
-  const items = raw != null && typeof raw === "object" ? (raw as Record<string, unknown>).items : undefined;
+  const items = UnknownValue_isRecord(raw) ? (raw as Record<string, unknown>).items : undefined;
   if (!Array.isArray(items)) {
     return [];
   }

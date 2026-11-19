@@ -1,6 +1,7 @@
 import { INutrients } from "./foodLog";
 import { FoodMicros_fromGrams, FoodMicros_sodiumFromSalt, FoodMicros_table, IMicros } from "./foodMicros";
 import { NumberText_parsePositive, NumberText_round1 } from "./numberText";
+import { UnknownValue_isRecord } from "./unknownValue";
 
 export interface IFoodProduct {
   barcode?: string;
@@ -133,7 +134,7 @@ function readMicros(
 }
 
 export function OpenFoodFacts_parseProduct(raw: unknown): IFoodProduct | undefined {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return undefined;
   }
   const product = raw as Record<string, unknown>;
@@ -154,7 +155,7 @@ export function OpenFoodFacts_parseProduct(raw: unknown): IFoodProduct | undefin
 }
 
 export function OpenFoodFacts_parseBarcodeResponse(raw: unknown): IFoodProduct | undefined {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return undefined;
   }
   const response = raw as Record<string, unknown>;
@@ -165,7 +166,7 @@ export function OpenFoodFacts_parseBarcodeResponse(raw: unknown): IFoodProduct |
 }
 
 export function OpenFoodFacts_parseSearchResponse(raw: unknown): IFoodProduct[] {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return [];
   }
   const hits = (raw as Record<string, unknown>).hits;

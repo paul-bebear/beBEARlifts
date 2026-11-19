@@ -2,6 +2,7 @@ import { ISpotifyTokens, SpotifyAuth_parseTokensRecord } from "./spotifyAuth";
 import { IMusicPlay, IMusicSession, MusicSession_dropCopies, MusicSession_setKept } from "./musicSession";
 import { SpotifyTracks_parseTrack, ISpotifyTrack } from "./spotifyTracks";
 import { IHistoryRecord } from "../types";
+import { UnknownValue_finite, UnknownValue_isRecord } from "./unknownValue";
 
 type IWorkoutTimes = Pick<IHistoryRecord, "id" | "startTime" | "endTime">;
 
@@ -21,10 +22,6 @@ export function MusicLog_empty(): IMusicLog {
   return { version: 1, sessions: [] };
 }
 
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) ? value : undefined;
-}
-
 // Stored tracks use the app's own field names, so they go through the same checks under Spotify's.
 function parseStoredTrack(raw: unknown): ISpotifyTrack | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -41,8 +38,8 @@ function parseStoredTrack(raw: unknown): ISpotifyTrack | undefined {
 function parsePlay(raw: unknown): IMusicPlay | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const track = parseStoredTrack(r.track);
-  const startedAt = num(r.startedAt);
-  const heardMs = num(r.heardMs);
+  const startedAt = UnknownValue_finite(r.startedAt);
+  const heardMs = UnknownValue_finite(r.heardMs);
   if (track == null || startedAt == null || heardMs == null) {
     return undefined;
   }
@@ -51,21 +48,21 @@ function parsePlay(raw: unknown): IMusicPlay | undefined {
 
 function parseSession(raw: unknown): IMusicSession | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const id = num(r.id);
-  const startedAt = num(r.startedAt);
+  const id = UnknownValue_finite(r.id);
+  const startedAt = UnknownValue_finite(r.startedAt);
   if (id == null || startedAt == null) {
     return undefined;
   }
   const plays = Array.isArray(r.plays) ? r.plays.map(parsePlay).filter((p): p is IMusicPlay => p != null) : [];
   const session: IMusicSession = { id, startedAt, plays };
-  const endedAt = num(r.endedAt);
+  const endedAt = UnknownValue_finite(r.endedAt);
   if (endedAt != null) {
     session.endedAt = endedAt;
   }
   const current = (r.current ?? undefined) as Record<string, unknown> | undefined;
   const currentTrack = current != null ? parseStoredTrack(current.track) : undefined;
-  const firstSeenAt = num(current?.firstSeenAt);
-  const maxProgressMs = num(current?.maxProgressMs);
+  const firstSeenAt = UnknownValue_finite(current?.firstSeenAt);
+  const maxProgressMs = UnknownValue_finite(current?.maxProgressMs);
   if (currentTrack != null && firstSeenAt != null && maxProgressMs != null) {
     session.current = { track: currentTrack, firstSeenAt, maxProgressMs };
   }
@@ -73,7 +70,7 @@ function parseSession(raw: unknown): IMusicSession | undefined {
 }
 
 export function MusicLog_parse(raw: unknown): IMusicLog {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return MusicLog_empty();
   }
   const r = raw as Record<string, unknown>;

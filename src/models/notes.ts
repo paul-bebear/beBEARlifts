@@ -1,3 +1,5 @@
+import { UnknownValue_finite, UnknownValue_textOrEmpty } from "./unknownValue";
+
 export type INoteKind = "note" | "checkIn";
 
 export type ICheckInScore = 1 | 2 | 3 | 4 | 5;
@@ -45,23 +47,15 @@ export function Notes_empty(): INotesLog {
   return { version: 1, notes: [] };
 }
 
-function str(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) ? value : undefined;
-}
-
 function score(value: unknown): ICheckInScore | undefined {
   return value === 1 || value === 2 || value === 3 || value === 4 || value === 5 ? value : undefined;
 }
 
 function parseNote(raw: unknown): INote | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const id = str(r.id);
-  const day = str(r.day);
-  const createdAt = num(r.createdAt);
+  const id = UnknownValue_textOrEmpty(r.id);
+  const day = UnknownValue_textOrEmpty(r.day);
+  const createdAt = UnknownValue_finite(r.createdAt);
   if (id === "" || !dayPattern.test(day) || createdAt == null) {
     return undefined;
   }
@@ -69,10 +63,10 @@ function parseNote(raw: unknown): INote | undefined {
     id,
     day,
     createdAt,
-    updatedAt: num(r.updatedAt) ?? createdAt,
+    updatedAt: UnknownValue_finite(r.updatedAt) ?? createdAt,
     kind: r.kind === "checkIn" ? "checkIn" : "note",
-    title: str(r.title),
-    body: str(r.body),
+    title: UnknownValue_textOrEmpty(r.title),
+    body: UnknownValue_textOrEmpty(r.body),
   };
   for (const { field } of Notes_checkInScales) {
     const value = score(r[field]);

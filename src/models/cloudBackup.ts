@@ -1,6 +1,7 @@
 import { IOAuthPending, OAuthFlow_parsePending } from "./oauthFlow";
 import { StoreRecovery_readError } from "./storeRecovery";
 import { DayNames_weekdaysLong } from "./dayNames";
+import { UnknownValue_text } from "./unknownValue";
 
 export interface ICloudSession {
   email: string;
@@ -68,18 +69,14 @@ export function CloudBackup_empty(): ICloudState {
   return { version: 1 };
 }
 
-function str(value: unknown): string | undefined {
-  return typeof value === "string" && value !== "" ? value : undefined;
-}
-
 // Supabase Auth answers /verify and /token with the same shape: tokens, a lifetime in seconds, and the user.
 export function CloudBackup_sessionFromAuth(raw: unknown, now: number): ICloudSession | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const user = (r.user ?? {}) as Record<string, unknown>;
-  const accessToken = str(r.access_token);
-  const refreshToken = str(r.refresh_token);
-  const userId = str(user.id);
-  const email = str(user.email);
+  const accessToken = UnknownValue_text(r.access_token);
+  const refreshToken = UnknownValue_text(r.refresh_token);
+  const userId = UnknownValue_text(user.id);
+  const email = UnknownValue_text(user.email);
   const expiresIn = typeof r.expires_in === "number" ? r.expires_in : undefined;
   if (accessToken == null || refreshToken == null || userId == null || email == null || expiresIn == null) {
     return undefined;
@@ -92,10 +89,10 @@ export function CloudBackup_parse(raw: unknown): ICloudState {
   const state: ICloudState = { version: 1 };
   const s = (r.session ?? {}) as Record<string, unknown>;
   if (
-    str(s.email) != null &&
-    str(s.userId) != null &&
-    str(s.accessToken) != null &&
-    str(s.refreshToken) != null &&
+    UnknownValue_text(s.email) != null &&
+    UnknownValue_text(s.userId) != null &&
+    UnknownValue_text(s.accessToken) != null &&
+    UnknownValue_text(s.refreshToken) != null &&
     typeof s.expiresAt === "number"
   ) {
     state.session = s as unknown as ICloudSession;
@@ -103,19 +100,19 @@ export function CloudBackup_parse(raw: unknown): ICloudState {
   if (typeof r.lastBackupAt === "number") {
     state.lastBackupAt = r.lastBackupAt;
   }
-  if (str(r.syncedExportedAt) != null) {
+  if (UnknownValue_text(r.syncedExportedAt) != null) {
     state.syncedExportedAt = r.syncedExportedAt as string;
   }
-  if (str(r.backedUpWorkouts) != null) {
+  if (UnknownValue_text(r.backedUpWorkouts) != null) {
     state.backedUpWorkouts = r.backedUpWorkouts as string;
   }
-  if (str(r.backedUpStores) != null) {
+  if (UnknownValue_text(r.backedUpStores) != null) {
     state.backedUpStores = r.backedUpStores as string;
   }
-  if (str(r.ownerUserId) != null) {
+  if (UnknownValue_text(r.ownerUserId) != null) {
     state.ownerUserId = r.ownerUserId as string;
   }
-  if (str(r.uploadDeclinedFor) != null) {
+  if (UnknownValue_text(r.uploadDeclinedFor) != null) {
     state.uploadDeclinedFor = r.uploadDeclinedFor as string;
   }
   if (Array.isArray(r.uploadedPhotos)) {
@@ -131,10 +128,10 @@ export function CloudBackup_parse(raw: unknown): ICloudState {
   if (pending != null) {
     state.pending = pending;
   }
-  if (str(r.signInError) != null) {
+  if (UnknownValue_text(r.signInError) != null) {
     state.signInError = r.signInError as string;
   }
-  if (str(r.backupBlocked) != null) {
+  if (UnknownValue_text(r.backupBlocked) != null) {
     state.backupBlocked = r.backupBlocked as string;
   }
   return state;
@@ -167,7 +164,7 @@ function summary(raw: unknown): ICloudBackupSummary | undefined {
   if (typeof r.workouts !== "number" || typeof r.foodDays !== "number") {
     return undefined;
   }
-  return { exportedAt: str(r.exportedAt), workouts: r.workouts, foodDays: r.foodDays };
+  return { exportedAt: UnknownValue_text(r.exportedAt), workouts: r.workouts, foodDays: r.foodDays };
 }
 
 // Older Supabase Auth answers a dead refresh token with invalid_grant, newer with an error_code. A 401 can come from the

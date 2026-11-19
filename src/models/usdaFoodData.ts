@@ -1,6 +1,7 @@
 import { INutrients } from "./foodLog";
 import { FoodMicros_table, IMicros } from "./foodMicros";
 import { IFoodProduct } from "./openFoodFacts";
+import { UnknownValue_isRecord, UnknownValue_nonNegative, UnknownValue_trimmedText } from "./unknownValue";
 
 const kjPerKcal = 4.184;
 
@@ -12,14 +13,6 @@ const nutrientNumbers = {
   fat: ["204"],
   carbs: ["205"],
 };
-
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) && value >= 0 ? value : undefined;
-}
-
-function str(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
-}
 
 function barcodeKey(barcode: string): string {
   return barcode.replace(/^0+/, "");
@@ -38,9 +31,9 @@ function readableCase(text: string): string {
 function nutrientValue(nutrients: unknown[], numbers: string[]): number | undefined {
   for (const n of numbers) {
     const found = nutrients.find(
-      (item) => item != null && typeof item === "object" && `${(item as Record<string, unknown>).nutrientNumber}` === n
+      (item) => UnknownValue_isRecord(item) && `${(item as Record<string, unknown>).nutrientNumber}` === n
     ) as Record<string, unknown> | undefined;
-    const value = num(found?.value);
+    const value = UnknownValue_nonNegative(found?.value);
     if (value != null) {
       return value;
     }
@@ -77,18 +70,18 @@ function readMicros(nutrients: unknown[]): IMicros | undefined {
 }
 
 function parseFood(raw: Record<string, unknown>, barcode: string): IFoodProduct | undefined {
-  const name = str(raw.description);
+  const name = UnknownValue_trimmedText(raw.description);
   const per100g = Array.isArray(raw.foodNutrients) ? parseNutrients(raw.foodNutrients) : undefined;
   if (name == null || per100g == null) {
     return undefined;
   }
   const product: IFoodProduct = { barcode, name: readableCase(name), per100g };
-  const brand = str(raw.brandName) ?? str(raw.brandOwner);
+  const brand = UnknownValue_trimmedText(raw.brandName) ?? UnknownValue_trimmedText(raw.brandOwner);
   if (brand != null) {
     product.brand = readableCase(brand);
   }
-  const unit = str(raw.servingSizeUnit)?.toLowerCase();
-  const serving = num(raw.servingSize);
+  const unit = UnknownValue_trimmedText(raw.servingSizeUnit)?.toLowerCase();
+  const serving = UnknownValue_nonNegative(raw.servingSize);
   if (serving != null && serving > 0 && (unit === "g" || unit === "grm" || unit === "ml" || unit === "mlt")) {
     product.servingGrams = Math.round(serving * 10) / 10;
   }
@@ -96,7 +89,7 @@ function parseFood(raw: Record<string, unknown>, barcode: string): IFoodProduct 
 }
 
 export function UsdaFoodData_parseBarcodeResponse(raw: unknown, barcode: string): IFoodProduct | undefined {
-  if (raw == null || typeof raw !== "object") {
+  if (!UnknownValue_isRecord(raw)) {
     return undefined;
   }
   const foods = (raw as Record<string, unknown>).foods;
@@ -105,10 +98,10 @@ export function UsdaFoodData_parseBarcodeResponse(raw: unknown, barcode: string)
   }
   const key = barcodeKey(barcode);
   for (const food of foods) {
-    if (food == null || typeof food !== "object") {
+    if (!UnknownValue_isRecord(food)) {
       continue;
     }
-    const gtin = str((food as Record<string, unknown>).gtinUpc);
+    const gtin = UnknownValue_trimmedText((food as Record<string, unknown>).gtinUpc);
     const product =
       gtin != null && barcodeKey(gtin) === key ? parseFood(food as Record<string, unknown>, barcode) : undefined;
     if (product != null) {

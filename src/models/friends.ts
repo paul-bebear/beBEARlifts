@@ -1,3 +1,5 @@
+import { UnknownValue_text } from "./unknownValue";
+
 export interface IProfile {
   userId: string;
   handle: string;
@@ -33,10 +35,6 @@ export function Friends_empty(): IFriendsState {
   return { version: 1, links: [] };
 }
 
-function str(value: unknown): string | undefined {
-  return typeof value === "string" && value !== "" ? value : undefined;
-}
-
 export function Friends_normalizeHandle(text: string): string {
   return text.trim().replace(/^@/, "").toLowerCase();
 }
@@ -60,9 +58,9 @@ export function Friends_errorText(error: string): string {
 
 function parseProfile(raw: unknown): IProfile | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const userId = str(r.user_id ?? r.userId);
-  const handle = str(r.handle);
-  const displayName = str(r.display_name ?? r.displayName) ?? handle;
+  const userId = UnknownValue_text(r.user_id ?? r.userId);
+  const handle = UnknownValue_text(r.handle);
+  const displayName = UnknownValue_text(r.display_name ?? r.displayName) ?? handle;
   return userId != null && handle != null && displayName != null ? { userId, handle, displayName } : undefined;
 }
 
@@ -78,13 +76,13 @@ export function Friends_fromServer(userId: string, profilesRaw: unknown, friends
   const links: IFriendLink[] = [];
   for (const raw of Array.isArray(friendshipsRaw) ? friendshipsRaw : []) {
     const r = (raw ?? {}) as Record<string, unknown>;
-    const requester = str(r.requester);
-    const addressee = str(r.addressee);
+    const requester = UnknownValue_text(r.requester);
+    const addressee = UnknownValue_text(r.addressee);
     const status = r.status === "accepted" || r.status === "pending" ? r.status : undefined;
     const incoming = addressee === userId;
     const other = byId.get((incoming ? requester : addressee) ?? "");
     if (status != null && other != null && (incoming || requester === userId)) {
-      links.push({ other, status, incoming, createdAt: str(r.created_at) ?? "" });
+      links.push({ other, status, incoming, createdAt: UnknownValue_text(r.created_at) ?? "" });
     }
   }
   return { version: 1, userId, me: byId.get(userId), links };
@@ -92,7 +90,7 @@ export function Friends_fromServer(userId: string, profilesRaw: unknown, friends
 
 export function Friends_parse(raw: unknown): IFriendsState {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const userId = str(r.userId);
+  const userId = UnknownValue_text(r.userId);
   if (userId == null) {
     return Friends_empty();
   }
@@ -101,7 +99,12 @@ export function Friends_parse(raw: unknown): IFriendsState {
     const l = (item ?? {}) as Record<string, unknown>;
     const other = parseProfile(l.other);
     if (other != null && (l.status === "pending" || l.status === "accepted")) {
-      links.push({ other, status: l.status, incoming: l.incoming === true, createdAt: str(l.createdAt) ?? "" });
+      links.push({
+        other,
+        status: l.status,
+        incoming: l.incoming === true,
+        createdAt: UnknownValue_text(l.createdAt) ?? "",
+      });
     }
   }
   return { version: 1, userId, me: parseProfile(r.me), links };
