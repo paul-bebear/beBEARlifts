@@ -13,9 +13,7 @@ import { Subscriptions_hasSubscription } from "../utils/subscriptions";
 import { LinkButton } from "./linkButton";
 import { InputNumber2 } from "./inputNumber2";
 import { InputWeight2 } from "./inputWeight2";
-import { RulerTape_spec } from "../models/rulerTape";
-
-const REPS_RULER = RulerTape_spec("reps", undefined);
+import { RulerTape_reps } from "../models/rulerTape";
 import { WorkoutExerciseUtils_getBgColor100, WorkoutExerciseUtils_getIconColor } from "../utils/workoutExerciseUtils";
 import { DateUtils_formatDayMonth } from "../utils/date";
 import { ActionMenu, IActionMenuAction } from "./actionMenu";
@@ -151,7 +149,7 @@ export function WorkoutExerciseSetExpanded(props: IWorkoutExerciseSetBodyProps):
                     min={0}
                     max={9999}
                     step={1}
-                    ruler={REPS_RULER}
+                    ruler={RulerTape_reps}
                     inputCommitMode="blur"
                   />
                   <Text className="text-xs text-text-secondary">R</Text>
@@ -170,7 +168,7 @@ export function WorkoutExerciseSetExpanded(props: IWorkoutExerciseSetBodyProps):
                     min={0}
                     max={9999}
                     step={1}
-                    ruler={REPS_RULER}
+                    ruler={RulerTape_reps}
                     inputCommitMode="blur"
                   />
                 </>
@@ -190,7 +188,7 @@ export function WorkoutExerciseSetExpanded(props: IWorkoutExerciseSetBodyProps):
                   min={0}
                   max={9999}
                   step={1}
-                  ruler={REPS_RULER}
+                  ruler={RulerTape_reps}
                   inputCommitMode="blur"
                 />
               )}

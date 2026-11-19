@@ -5,6 +5,7 @@ import {
   ProgressHub_build,
   ProgressHub_goal,
   ProgressHub_plannedPerWeek,
+  ProgressHub_weekRanges,
 } from "../src/models/progressHub";
 import { Settings_build } from "../src/models/settings";
 import { FoodLog_empty, IFoodEntry } from "../src/models/foodLog";
@@ -12,6 +13,20 @@ import { ProgramGoal_empty } from "../src/models/programGoal";
 import { Steps_empty, Steps_setManual } from "../src/models/steps";
 import { ProgressPhotos_add, ProgressPhotos_empty } from "../src/models/progressPhotos";
 import { IHistoryRecord } from "../src/types";
+
+function inTimeZone(zone: string, body: () => void): void {
+  const previous = process.env.TZ;
+  process.env.TZ = zone;
+  try {
+    body();
+  } finally {
+    if (previous == null) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = previous;
+    }
+  }
+}
 
 const now = new Date(2026, 9, 21, 18, 0).getTime();
 const day = 24 * 60 * 60 * 1000;
@@ -171,5 +186,40 @@ describe("ProgressHub", () => {
     expect(hub.steps).to.deep.equal({ today: 4000, goal: 10000, fraction: 0.4 });
     expect(hub.photos).to.deep.equal({ count: 1, subtitle: "1 photo · latest Oct 21" });
     expect(ProgressHub_build(input()).photos.subtitle).to.equal("Add your first photo");
+  });
+
+  it("keeps a 00:30 workout on the first day of the 28-day window across the 25-hour day", () => {
+    inTimeZone("America/New_York", () => {
+      const history = [{ startTime: new Date(2026, 10, 1, 0, 30).getTime() } as IHistoryRecord];
+      for (const hour of [23, 0]) {
+        const at = new Date(2026, 10, 28, hour, 30).getTime();
+        expect(ProgressHub_build(input({ history, now: at })).consistency.done).to.equal(1);
+      }
+      expect(
+        ProgressHub_build(input({ history, now: new Date(2026, 10, 29, 0, 30).getTime() })).consistency.done
+      ).to.equal(0);
+    });
+  });
+
+  it("finds this week and last week at 23:30 and 00:30 on Sunday and Monday", () => {
+    for (const [at, startsMonday, thisWeek, lastWeek] of [
+      [new Date(2026, 10, 15, 23, 30), true, new Date(2026, 10, 9), new Date(2026, 10, 2)],
+      [new Date(2026, 10, 16, 0, 30), true, new Date(2026, 10, 16), new Date(2026, 10, 9)],
+      [new Date(2026, 10, 14, 23, 30), false, new Date(2026, 10, 8), new Date(2026, 10, 1)],
+      [new Date(2026, 10, 15, 0, 30), false, new Date(2026, 10, 15), new Date(2026, 10, 8)],
+    ] as [Date, boolean, Date, Date][]) {
+      expect(ProgressHub_weekRanges(at.getTime(), startsMonday)).to.deep.equal({
+        thisWeekStart: thisWeek.getTime(),
+        lastWeekStart: lastWeek.getTime(),
+      });
+    }
+  });
+
+  it("puts last week at local midnight when the week crosses the autumn clock change", () => {
+    inTimeZone("America/New_York", () => {
+      const ranges = ProgressHub_weekRanges(new Date(2026, 10, 3, 0, 30).getTime(), true);
+      expect(ranges.thisWeekStart).to.equal(new Date(2026, 10, 2).getTime());
+      expect(ranges.lastWeekStart).to.equal(new Date(2026, 9, 26).getTime());
+    });
   });
 });

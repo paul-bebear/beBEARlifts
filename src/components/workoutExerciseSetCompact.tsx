@@ -8,9 +8,7 @@ import { IconPlayCircle } from "./icons/iconPlayCircle";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 import { InputNumber2 } from "./inputNumber2";
 import { InputWeight2 } from "./inputWeight2";
-import { RulerTape_spec } from "../models/rulerTape";
-
-const REPS_RULER = RulerTape_spec("reps", undefined);
+import { RulerTape_reps } from "../models/rulerTape";
 import { WorkoutExerciseUtils_getBgColor50, WorkoutExerciseUtils_getIconColor } from "../utils/workoutExerciseUtils";
 import type { IWorkoutExerciseSetBodyProps } from "./workoutExerciseSet";
 import {
@@ -86,7 +84,7 @@ export function WorkoutExerciseSetCompact(props: IWorkoutExerciseSetBodyProps): 
                 min={0}
                 max={9999}
                 step={1}
-                ruler={REPS_RULER}
+                ruler={RulerTape_reps}
                 inputCommitMode="blur"
               />
             </View>
@@ -110,7 +108,7 @@ export function WorkoutExerciseSetCompact(props: IWorkoutExerciseSetBodyProps): 
               min={0}
               max={9999}
               step={1}
-              ruler={REPS_RULER}
+              ruler={RulerTape_reps}
               inputCommitMode="blur"
             />
           </View>

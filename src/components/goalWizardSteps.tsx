@@ -15,6 +15,7 @@ import {
   GoalWizard_setPace,
   GoalWizard_setSex,
   GoalWizard_setUpdateTargets,
+  GoalWizard_visualError,
   IGoalWizard,
   IGoalWizardMeasureKey,
   IGoalWizardPreview,
@@ -159,6 +160,9 @@ export function GoalWizardVisualStep(props: IStepProps & { onSlide: (pct: number
   return (
     <View>
       <SexChips sex={wizard.sex} onChange={(sex) => props.setWizard(GoalWizard_setSex(wizard, sex))} />
+      {GoalWizard_visualError(wizard) != null && (
+        <Text className="mb-2 text-sm text-text-secondary">{GoalWizard_visualError(wizard)}</Text>
+      )}
       <View className="flex-row items-center">
         <BodyOutline sex={wizard.sex} pct={wizard.visualPct} />
         <View className="flex-1 ml-4">

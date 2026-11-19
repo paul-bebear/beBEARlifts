@@ -1,7 +1,14 @@
 import { JSX } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
-import { FoodLog_formatNumber, FoodLog_mealNames, FoodLog_sum, IFoodEntry, IFoodMeal } from "../models/foodLog";
+import {
+  FoodLog_formatNumber,
+  FoodLog_macroLine,
+  FoodLog_mealNames,
+  FoodLog_sum,
+  IFoodEntry,
+  IFoodMeal,
+} from "../models/foodLog";
 import { IconChevronDown, IconPlusThin } from "./icons/iconFoodUi";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
@@ -43,8 +50,7 @@ function EntryRow(props: { entry: IFoodEntry; onPress: () => void }): JSX.Elemen
         </Text>
         <Text className="text-xs text-text-secondary" numberOfLines={1}>
           {details !== "" ? `${details} · ` : ""}
-          {FoodLog_formatNumber(entry.nutrients.protein)} P · {FoodLog_formatNumber(entry.nutrients.carbs)} C ·{" "}
-          {FoodLog_formatNumber(entry.nutrients.fat)} F
+          {FoodLog_macroLine(entry.nutrients)}
         </Text>
       </View>
       <Text className="text-base font-semibold">{entry.nutrients.calories}</Text>

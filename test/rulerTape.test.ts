@@ -1,6 +1,8 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  RulerTape_applyChange,
+  RulerTape_reps,
   RulerTape_clampIndex,
   RulerTape_flickSteps,
   RulerTape_flickValue,
@@ -538,5 +540,31 @@ describe("RulerTape workout weight fallbacks", () => {
     const settings = gymSettings("lb", "dumbbell", { isFixed: true, fixed: [Weight_build(10, "kg")] });
     const result = RulerTape_weightSpec(settings, { id: "benchPress", equipment: "dumbbell" }, "lb", 40);
     expect(result).to.equal(RulerTape_spec("weight", "lb"));
+  });
+});
+
+describe("RulerTape_applyChange", () => {
+  it("clamps to the bounds and formats the text", () => {
+    expect(RulerTape_applyChange(150, 0, 100, "debounced")).to.eql({ value: 100, text: "100", shouldCommit: true });
+    expect(RulerTape_applyChange(-5, 0, 100, "debounced")).to.eql({ value: 0, text: "0", shouldCommit: true });
+  });
+
+  it("keeps a value inside the bounds and without bounds", () => {
+    expect(RulerTape_applyChange(62.5, 0, 300, "immediate").text).to.equal("62.5");
+    expect(RulerTape_applyChange(62.5, undefined, undefined, "immediate").value).to.equal(62.5);
+  });
+
+  it("does not commit in blur mode", () => {
+    expect(RulerTape_applyChange(8, 0, 100, "blur").shouldCommit).to.equal(false);
+  });
+
+  it("falls back to the clamped zero for NaN", () => {
+    expect(RulerTape_applyChange(NaN, 5, 100, "debounced").value).to.equal(5);
+  });
+});
+
+describe("RulerTape_reps", () => {
+  it("is the reps spec", () => {
+    expect(RulerTape_reps).to.equal(RulerTape_spec("reps", undefined));
   });
 });

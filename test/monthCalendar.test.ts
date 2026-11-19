@@ -20,6 +20,15 @@ const octoberInput: IMonthCalendarInput = {
 };
 const october = MonthCalendar_build(octoberInput);
 
+describe("MonthCalendar_workoutDays", () => {
+  it("dates a workout by its start at 23:30 and 00:30", () => {
+    const late = new Date(2026, 9, 17, 23, 30).getTime();
+    const early = new Date(2026, 9, 18, 0, 30).getTime();
+    expect(Array.from(MonthCalendar_workoutDays([{ startTime: late }]))).to.deep.equal(["2026-10-17"]);
+    expect(Array.from(MonthCalendar_workoutDays([{ startTime: early }]))).to.deep.equal(["2026-10-18"]);
+  });
+});
+
 describe("MonthCalendar", () => {
   it("starts weeks on Monday and pads with the neighbouring months", () => {
     expect(october.title).to.equal("October 2026");

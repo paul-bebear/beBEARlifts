@@ -2,6 +2,7 @@ import "mocha";
 import { expect } from "chai";
 import {
   FoodBasketFlow_logBasket,
+  FoodBasketFlow_reduce,
   FoodBasketFlow_logServing,
   FoodBasketFlow_saveGroup,
   FoodBasketFlow_saveLabel,
@@ -9,9 +10,11 @@ import {
   IServingLogDeps,
 } from "../src/models/foodBasketFlow";
 import { FoodAddFlow_pickFromProduct } from "../src/models/foodAddFlow";
-import { FoodBasket_put, IFoodBasketItem } from "../src/models/foodBasket";
+import { FoodBasket_keyOf, FoodBasket_put, IFoodBasketItem } from "../src/models/foodBasket";
 import { FoodLabel_saveFailed } from "../src/models/foodCapture";
-import { FoodLog_empty, IFoodLog } from "../src/models/foodLog";
+import { FoodLog_empty, IFoodLog, IFoodSavedMeal } from "../src/models/foodLog";
+import { RecipeCatalogData_recipes } from "../src/models/recipeCatalogData";
+import { RecipeCatalog_basketKey } from "../src/models/recipeCatalog";
 import { FoodScanSteps_shareFailed, IScanServing } from "../src/models/foodScanSteps";
 
 const product = {
@@ -179,5 +182,98 @@ describe("FoodBasketFlow_saveLabel", () => {
     );
     expect(step).to.equal(undefined);
     expect(alerts).to.deep.equal([FoodLabel_saveFailed]);
+  });
+});
+
+describe("FoodBasketFlow_reduce", () => {
+  const rice = FoodAddFlow_pickFromProduct(
+    { name: "Rice", per100g: { calories: 130, protein: 2.7, carbs: 28, fat: 0.3 } } as typeof product,
+    "search"
+  );
+  const nutellaKey = FoodBasket_keyOf(nutella);
+  const riceKey = FoodBasket_keyOf(rice);
+
+  it("returns to the start when the same food is toggled twice", () => {
+    const on = FoodBasketFlow_reduce([], { type: "toggled", pick: nutella });
+    expect(on).to.deep.equal([{ key: nutellaKey, pick: nutella, grams: 15 }]);
+    expect(FoodBasketFlow_reduce(on, { type: "toggled", pick: nutella })).to.deep.equal([]);
+  });
+
+  it("replaces a food that is already in the basket and keeps its place", () => {
+    const start = FoodBasketFlow_reduce(FoodBasketFlow_reduce([], { type: "put", pick: nutella, grams: 30 }), {
+      type: "put",
+      pick: rice,
+      grams: 200,
+    });
+    const next = FoodBasketFlow_reduce(start, { type: "put", pick: nutella, grams: 45 });
+    expect(next.map((i) => [i.key, i.grams])).to.deep.equal([
+      [nutellaKey, 45],
+      [riceKey, 200],
+    ]);
+  });
+
+  it("empties the basket when the last item is removed, and ignores an unknown key", () => {
+    const one = FoodBasketFlow_reduce([], { type: "toggled", pick: nutella });
+    expect(FoodBasketFlow_reduce(one, { type: "removed", key: "nope" })).to.deep.equal(one);
+    expect(FoodBasketFlow_reduce(one, { type: "removed", key: nutellaKey })).to.deep.equal([]);
+  });
+
+  it("changes grams, ignores 0 and below, and passes a huge value through", () => {
+    const one = FoodBasketFlow_reduce([], { type: "toggled", pick: nutella });
+    const gramsOf = (b: IFoodBasketItem[]): number | undefined => b[0]?.grams;
+    expect(gramsOf(FoodBasketFlow_reduce(one, { type: "gramsChanged", key: nutellaKey, grams: 60 }))).to.equal(60);
+    expect(gramsOf(FoodBasketFlow_reduce(one, { type: "gramsChanged", key: nutellaKey, grams: 0 }))).to.equal(15);
+    expect(gramsOf(FoodBasketFlow_reduce(one, { type: "gramsChanged", key: nutellaKey, grams: -5 }))).to.equal(15);
+    expect(gramsOf(FoodBasketFlow_reduce(one, { type: "gramsChanged", key: nutellaKey, grams: 99999 }))).to.equal(
+      99999
+    );
+  });
+
+  it("adds a quick item with 0 grams and a key of its own, so two quick items stay separate", () => {
+    const nutrients = { calories: 300, protein: 10, carbs: 20, fat: 5 };
+    const a = FoodBasketFlow_reduce([], { type: "quickAdded", name: " Cake ", nutrients, now: 1 });
+    const b = FoodBasketFlow_reduce(a, { type: "quickAdded", name: "Cake", nutrients, now: 2 });
+    expect(a[0]).to.deep.include({ key: "quick|1", grams: 0 });
+    expect(a[0].pick.name).to.equal("Cake");
+    expect(b.map((i) => i.key)).to.deep.equal(["quick|1", "quick|2"]);
+  });
+
+  it("adds a catalog recipe as one row with 0 grams, and a second add replaces it", () => {
+    const recipe = RecipeCatalogData_recipes.find((r) => r.ingredients.length > 1)!;
+    const one = FoodBasketFlow_reduce([], { type: "catalogRecipeAdded", recipe, servings: 1 });
+    const two = FoodBasketFlow_reduce(one, { type: "catalogRecipeAdded", recipe, servings: 2 });
+    expect(one).to.have.length(1);
+    expect(one[0]).to.deep.include({ key: RecipeCatalog_basketKey(recipe), grams: 0 });
+    expect(two).to.have.length(1);
+    expect(two[0].pick.fixed!.nutrients.calories).to.be.closeTo(one[0].pick.fixed!.nutrients.calories * 2, 1);
+  });
+
+  it("adds a saved meal on top of a basket that has one of its foods, replacing that row in place", () => {
+    const meal: IFoodSavedMeal = {
+      id: "m1",
+      name: "Lunch",
+      items: [
+        { name: "Rice", source: "search", per100g: rice.per100g, grams: 150, nutrients: rice.per100g! },
+        {
+          name: "Nutella",
+          source: "barcode",
+          barcode: product.barcode,
+          per100g: product.per100g,
+          grams: 20,
+          nutrients: product.per100g,
+        },
+      ],
+    };
+    const start = FoodBasketFlow_reduce(FoodBasketFlow_reduce([], { type: "toggled", pick: nutella }), {
+      type: "put",
+      pick: FoodAddFlow_pickFromProduct({ name: "Egg", per100g: product.per100g } as typeof product, "search"),
+      grams: 50,
+    });
+    const next = FoodBasketFlow_reduce(start, { type: "mealAdded", meal });
+    expect(next.map((i) => [i.pick.name, i.grams])).to.deep.equal([
+      ["Nutella", 20],
+      ["Egg", 50],
+      ["Rice", 150],
+    ]);
   });
 });

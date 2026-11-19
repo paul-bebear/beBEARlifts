@@ -11,22 +11,15 @@ import {
   FoodLog_saveRecipe,
   IFoodMeal,
 } from "../models/foodLog";
-import { FoodAddFlow_initialGrams, FoodAddFlow_manualPick, FoodAddFlow_pickFromProduct } from "../models/foodAddFlow";
-import {
-  FoodBasket_keyOf,
-  FoodBasket_put,
-  FoodBasket_putAll,
-  FoodBasket_remove,
-  FoodBasket_setGrams,
-  FoodBasket_toggle,
-  FoodBasket_totals,
-  IFoodBasketItem,
-} from "../models/foodBasket";
+import { FoodAddFlow_initialGrams, FoodAddFlow_pickFromProduct } from "../models/foodAddFlow";
+import { FoodBasket_keyOf, FoodBasket_totals, IFoodBasketItem } from "../models/foodBasket";
 import {
   FoodBasketFlow_logBasket,
+  FoodBasketFlow_reduce,
   FoodBasketFlow_logServing,
   FoodBasketFlow_saveGroup,
   FoodBasketFlow_saveLabel,
+  IBasketEvent,
 } from "../models/foodBasketFlow";
 import {
   FoodScanSteps_canLeave,
@@ -39,7 +32,7 @@ import {
 import type { IFoodProduct } from "../models/openFoodFacts";
 import { TabBarLayout_hiddenBarFooterGap } from "../models/tabBarLayout";
 import { FoodSuggestions_forMeal } from "../models/foodSuggestions";
-import { Recipes_servingPick, SavedMeals_items } from "../models/savedMeals";
+import { Recipes_servingPick } from "../models/savedMeals";
 import { FoodApi_lookupBarcode } from "../utils/foodApi";
 import { FoodLogStore_newId, FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
 import { Dialog_alert, Dialog_confirm } from "../utils/dialog";
@@ -55,13 +48,7 @@ import { FoodQuickAddPanel } from "./foodQuickAddPanel";
 import { FoodLabelPanel } from "./foodLabelPanel";
 import { FoodSaveGroupPanel } from "./foodSaveGroupPanel";
 import { RecipeDetailPanel } from "./recipeDetailPanel";
-import {
-  RecipeCatalog_basketKey,
-  RecipeCatalog_find,
-  RecipeCatalog_isSaved,
-  RecipeCatalog_servingPick,
-  RecipeCatalog_toUserRecipe,
-} from "../models/recipeCatalog";
+import { RecipeCatalog_find, RecipeCatalog_isSaved, RecipeCatalog_toUserRecipe } from "../models/recipeCatalog";
 import { FoodMealPicker } from "./foodUi";
 import { Button } from "./button";
 import { AiConsent_isFoodAi, AiConsent_showFeatures } from "../models/aiConsent";
@@ -134,6 +121,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
   const [isPickingMeal, setIsPickingMeal] = useState(false);
   const [browseTab, setBrowseTab] = useState<IFoodBrowseTab>("food");
   const browse = (): void => send({ type: "browseOpened" });
+  const editBasket = (event: IBasketEvent): void => setBasket(FoodBasketFlow_reduce(basket, event));
   const dayStart = Math.floor(Date.now() / dayMs) * dayMs;
   const suggestions = useMemo(() => FoodSuggestions_forMeal(log, meal, dayStart), [log, meal, dayStart]);
   const dayConsumed = useMemo(() => FoodLog_dayTotals(log, props.params.day), [log, props.params.day]);
@@ -283,10 +271,10 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             basket={basket}
             recipePick={Recipes_servingPick}
             onTile={onTile}
-            onToggle={(pick) => setBasket(FoodBasket_toggle(basket, pick))}
+            onToggle={(pick) => editBasket({ type: "toggled", pick })}
             onOpen={(pick) => send({ type: "amountOpened", pick })}
             onAddMeal={(m) => {
-              setBasket(FoodBasket_putAll(basket, SavedMeals_items(m)));
+              editBasket({ type: "mealAdded", meal: m });
               send({ type: "basketOpened" });
             }}
             onDeleteMeal={async (m) => {
@@ -313,8 +301,8 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             basket={basket}
             meal={meal}
             onMeal={setMeal}
-            onGrams={(key, grams) => setBasket(FoodBasket_setGrams(basket, key, grams))}
-            onRemove={(key) => setBasket(FoodBasket_remove(basket, key))}
+            onGrams={(key, grams) => editBasket({ type: "gramsChanged", key, grams })}
+            onRemove={(key) => editBasket({ type: "removed", key })}
             onAddMore={browse}
             onLog={logBasket}
           />
@@ -328,7 +316,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             submitTitle="Add"
             onBack={browse}
             onSubmit={(grams) => {
-              setBasket(FoodBasket_put(basket, step.pick, grams));
+              editBasket({ type: "put", pick: step.pick, grams });
               browse();
             }}
           />
@@ -355,7 +343,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
           <FoodQuickAddPanel
             onBack={browse}
             onSubmit={(name, nutrients) => {
-              setBasket(FoodBasket_put(basket, FoodAddFlow_manualPick(name, nutrients), 0, `quick|${Date.now()}`));
+              editBasket({ type: "quickAdded", name, nutrients, now: Date.now() });
               send({ type: "basketOpened" });
             }}
           />
@@ -366,8 +354,7 @@ export function ScreenFoodAdd(props: { params: IFoodAddScreenParams }): JSX.Elem
             isSaved={RecipeCatalog_isSaved(log.recipes, catalogRecipe)}
             onSave={() => FoodLogStore_update((l) => FoodLog_saveRecipe(l, RecipeCatalog_toUserRecipe(catalogRecipe)))}
             onLog={(servings) => {
-              const pick = RecipeCatalog_servingPick(catalogRecipe, servings);
-              setBasket(FoodBasket_put(basket, pick, 0, RecipeCatalog_basketKey(catalogRecipe)));
+              editBasket({ type: "catalogRecipeAdded", recipe: catalogRecipe, servings });
               send({ type: "basketOpened" });
             }}
             onBack={browse}

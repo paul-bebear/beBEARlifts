@@ -1,12 +1,63 @@
-import { FoodLog_addAll, FoodLog_saveFood, FoodLog_saveMeal, FoodLog_saveRecipe, IFoodLog, IFoodMeal } from "./foodLog";
-import { FoodAddFlow_pickFromProduct } from "./foodAddFlow";
-import { FoodBasket_entries, FoodBasket_put, IFoodBasketItem } from "./foodBasket";
+import {
+  FoodLog_addAll,
+  FoodLog_saveFood,
+  FoodLog_saveMeal,
+  FoodLog_saveRecipe,
+  IFoodLog,
+  IFoodMeal,
+  IFoodSavedMeal,
+  INutrients,
+} from "./foodLog";
+import { FoodAddFlow_manualPick, FoodAddFlow_pickFromProduct, IFoodPick } from "./foodAddFlow";
+import {
+  FoodBasket_entries,
+  FoodBasket_put,
+  FoodBasket_putAll,
+  FoodBasket_remove,
+  FoodBasket_setGrams,
+  FoodBasket_toggle,
+  IFoodBasketItem,
+} from "./foodBasket";
 import { FoodLabel_saveFailed } from "./foodCapture";
 import type { IFoodProduct } from "./openFoodFacts";
 import { FoodSaveGuard_run, IFoodSaveGuard } from "./foodSaveGuard";
 import { FoodScanSteps_entries, FoodScanSteps_shareFailed, IScanEvent, IScanServing } from "./foodScanSteps";
 import { IMealPostDraft, IMealShareSwitch, MealPost_fromServing } from "./mealPost";
-import { Recipes_fromBasket, Recipes_servingPick, SavedMeals_fromBasket } from "./savedMeals";
+import { ICatalogRecipe, RecipeCatalog_basketKey, RecipeCatalog_servingPick } from "./recipeCatalog";
+import { Recipes_fromBasket, Recipes_servingPick, SavedMeals_fromBasket, SavedMeals_items } from "./savedMeals";
+
+export type IBasketEvent =
+  | { type: "toggled"; pick: IFoodPick }
+  | { type: "put"; pick: IFoodPick; grams: number }
+  | { type: "removed"; key: string }
+  | { type: "gramsChanged"; key: string; grams: number }
+  | { type: "quickAdded"; name: string; nutrients: INutrients; now: number }
+  | { type: "catalogRecipeAdded"; recipe: ICatalogRecipe; servings: number }
+  | { type: "mealAdded"; meal: IFoodSavedMeal };
+
+export function FoodBasketFlow_reduce(basket: IFoodBasketItem[], event: IBasketEvent): IFoodBasketItem[] {
+  switch (event.type) {
+    case "toggled":
+      return FoodBasket_toggle(basket, event.pick);
+    case "put":
+      return FoodBasket_put(basket, event.pick, event.grams);
+    case "removed":
+      return FoodBasket_remove(basket, event.key);
+    case "gramsChanged":
+      return FoodBasket_setGrams(basket, event.key, event.grams);
+    case "quickAdded":
+      return FoodBasket_put(basket, FoodAddFlow_manualPick(event.name, event.nutrients), 0, `quick|${event.now}`);
+    case "catalogRecipeAdded":
+      return FoodBasket_put(
+        basket,
+        RecipeCatalog_servingPick(event.recipe, event.servings),
+        0,
+        RecipeCatalog_basketKey(event.recipe)
+      );
+    case "mealAdded":
+      return FoodBasket_putAll(basket, SavedMeals_items(event.meal));
+  }
+}
 
 export interface IFoodLogWrite {
   update: (change: (log: IFoodLog) => IFoodLog) => Promise<void>;

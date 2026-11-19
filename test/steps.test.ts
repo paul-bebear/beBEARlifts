@@ -44,8 +44,16 @@ describe("Steps", () => {
 
   it("reads a typed count with separators", () => {
     expect(Steps_parseCount("12,345")).to.equal(12345);
+    expect(Steps_parseCount("12.345")).to.equal(12345);
+    expect(Steps_parseCount("8000")).to.equal(8000);
     expect(Steps_parseCount("")).to.equal(undefined);
     expect(Steps_parseCount("abc")).to.equal(undefined);
+  });
+
+  it("rejects a count typed with a decimal point instead of reading 8.5 as 85", () => {
+    expect(Steps_parseCount("8.5")).to.equal(undefined);
+    expect(Steps_parseCount("1,5")).to.equal(undefined);
+    expect(Steps_parseCount("12.34")).to.equal(undefined);
   });
 
   it("keeps a typed count when Health syncs the same day", () => {

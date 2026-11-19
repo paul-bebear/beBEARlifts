@@ -38,6 +38,7 @@ import { IWorkoutSetPreviousLine } from "../utils/workoutSetPrevious";
 import { IWorkoutSetPlatesLine, WorkoutSetPlates_line } from "../utils/workoutSetPlates";
 import { Thunk_pushScreen } from "../ducks/thunks";
 import { IWorkoutSetType } from "./workoutExerciseSetFields";
+import { WorkoutSetType_decide } from "../models/workoutSetType";
 import { WorkoutExerciseSetCompact } from "./workoutExerciseSetCompact";
 import { WorkoutExerciseSetExpanded } from "./workoutExerciseSetExpanded";
 import { SetCompleteHaptic_play } from "../utils/setCompleteHaptic";
@@ -355,8 +356,7 @@ function WorkoutExerciseSetInner(props: IWorkoutExerciseSet): JSX.Element {
     set.weight != null &&
     set.originalWeight != null &&
     !Weight_eq(set.weight, set.originalWeight);
-  const setType: IWorkoutSetType =
-    props.type === "warmup" ? "warmup" : props.isCurrentProgress && props.programExercise == null ? "adhoc" : "program";
+  const setType: IWorkoutSetType = WorkoutSetType_decide(props.type, props.isCurrentProgress, props.programExercise);
 
   const body: IWorkoutExerciseSetBodyProps = {
     clipWorkoutId: props.clipWorkoutId,

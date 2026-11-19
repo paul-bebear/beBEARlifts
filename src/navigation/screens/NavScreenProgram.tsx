@@ -1,7 +1,7 @@
 import { JSX, useEffect } from "react";
 import { View } from "react-native";
 import { useIsFocused, useRoute } from "@react-navigation/native";
-import { useFirstUseTip } from "../../components/workout";
+import { useFirstUseTip } from "../../utils/useFirstUseTip";
 import { TipBar } from "../../components/tipBar";
 import { useAppState } from "../StateContext";
 import { buildNavCommon } from "../utils";

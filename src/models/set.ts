@@ -254,7 +254,7 @@ function Reps_movedAtLeastTarget(set: ISet, targetReps: number | undefined): boo
   if (set.completedReps == null || set.completedWeight == null) {
     return false;
   }
-  if (targetReps == null || set.weight == null) {
+  if (targetReps == null || set.weight == null || set.weight.value <= 0 || set.completedWeight.value <= 0) {
     const isRepsMet = targetReps == null || set.completedReps >= targetReps;
     return isRepsMet && (set.weight == null || Weight_gte(set.completedWeight, set.weight));
   }

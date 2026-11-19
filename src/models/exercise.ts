@@ -37,7 +37,12 @@ import {
 import { UidFactory_generateUid } from "../utils/generator";
 import { CollectionUtils_compact, CollectionUtils_sort, CollectionUtils_flat } from "../utils/collection";
 import { ExerciseImageUtils_exists } from "./exerciseImage";
-import { Equipment_getUnitOrDefaultForExerciseType, Equipment_currentEquipment } from "./equipment";
+import {
+  Equipment_getUnitOrDefaultForExerciseType,
+  Equipment_currentEquipment,
+  Equipment_exactWeightStep,
+  Equipment_defaultRounding,
+} from "./equipment";
 import { IDispatch } from "../ducks/types";
 import { Program_changeExerciseName } from "./program";
 import { EditProgram_updateProgram } from "./editProgram";
@@ -4507,7 +4512,11 @@ export function Exercise_onerm(type: IExerciseType, settings: ISettings): IWeigh
 
 export function Exercise_defaultRounding(type: IExerciseType, settings: ISettings): number {
   const units = Equipment_getUnitOrDefaultForExerciseType(settings, type);
-  return Math.max(0.1, settings.exerciseData[Exercise_toKey(type)]?.rounding ?? (units === "kg" ? 2.5 : 5));
+  const rounding =
+    Equipment_exactWeightStep(settings, type) ??
+    settings.exerciseData[Exercise_toKey(type)]?.rounding ??
+    Equipment_defaultRounding.noEquipment[units];
+  return Math.max(0.1, rounding);
 }
 
 export function Exercise_find(type: IExerciseType, customExercises: IAllCustomExercises): IExercise | undefined {

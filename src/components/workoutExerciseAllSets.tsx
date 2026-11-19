@@ -41,6 +41,7 @@ import { usePerfRenderCount } from "../utils/usePerfRenderCount";
 import { useTrackClick } from "../utils/clickTracking";
 import { useRem } from "../utils/useRem";
 import { EffortRating_stripSetIndex } from "../models/effortRating";
+import { WorkoutSetType_isAdhoc } from "../models/workoutSetType";
 import { EffortRatingStrip } from "./effortRatingStrip";
 
 interface IWorkoutExerciseAllSets {
@@ -186,7 +187,7 @@ function WorkoutExerciseAllSetsInner(props: IWorkoutExerciseAllSets): JSX.Elemen
     trackClick("workout-add-set");
     const unilateral = Exercise_getIsUnilateral(exerciseType, settings);
     const unit = Equipment_getUnitOrDefaultForExerciseType(settings, exerciseType);
-    const isAdhoc = isCurrentProgress && programExercise == null;
+    const isAdhoc = WorkoutSetType_isAdhoc(isCurrentProgress, programExercise);
     updateProgress(
       dispatch,
       [lbSets.recordModify((s) => Reps_addSet(s, unilateral, lastSets?.[lastSets.length - 1], false, unit, isAdhoc))],

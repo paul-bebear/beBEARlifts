@@ -5,7 +5,8 @@ import { NumberText_round1 } from "./numberText";
 import { StatsLatest_bodyWeightIn, StatsLatest_entry } from "./statsLatest";
 import { IStepsLog, Steps_count } from "./steps";
 import { IProgressPhotoLog } from "./progressPhotos";
-import { LocalDay_between, LocalDay_ms, LocalDay_start } from "./localDay";
+import { LocalDay_between, LocalDay_shift, LocalDay_start } from "./localDay";
+import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 import { DayNames_monthDayYearIfOtherYear } from "./dayNames";
 
 export interface IProgressHubInput {
@@ -39,6 +40,14 @@ const defaultPlannedPerWeek = 3;
 const consistencyDays = { min: 7, max: 28 };
 export function ProgressHub_formatDate(timestamp: number, now: number): string {
   return DayNames_monthDayYearIfOtherYear(timestamp, now);
+}
+
+export function ProgressHub_weekRanges(
+  now: number,
+  startWeekFromMonday: boolean
+): { thisWeekStart: number; lastWeekStart: number } {
+  const thisWeekStart = DateUtils_firstDayOfWeekTimestamp(now, startWeekFromMonday);
+  return { thisWeekStart, lastWeekStart: LocalDay_shift(thisWeekStart, -7) };
 }
 
 export function ProgressHub_plannedPerWeek(weeks: { days: unknown[] }[] | undefined): number {
@@ -96,7 +105,7 @@ function consistencyRow(input: IProgressHubInput): IProgressHub["consistency"] {
   const startedAt = goalLog.current?.startedAt;
   const sinceStart = startedAt != null ? LocalDay_between(startedAt, now) + 1 : consistencyDays.max;
   const windowDays = Math.min(consistencyDays.max, Math.max(consistencyDays.min, sinceStart));
-  const windowStart = LocalDay_start(now) - (windowDays - 1) * LocalDay_ms;
+  const windowStart = LocalDay_shift(LocalDay_start(now), -(windowDays - 1));
   const done = history.filter((r) => r.startTime >= windowStart && r.startTime <= now).length;
   const planned = Math.max(1, Math.round((plannedPerWeek * windowDays) / 7));
   return { percent: Math.min(100, Math.round((done / planned) * 100)), done, planned, windowDays };

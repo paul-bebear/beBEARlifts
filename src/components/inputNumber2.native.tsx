@@ -20,7 +20,7 @@ import { useModal } from "../navigation/ModalStateContext";
 import { useRem } from "../utils/useRem";
 import { FitText_fontSize } from "../utils/fitText";
 import { NavScreenScrollContext } from "../navigation/NavScreenContent";
-import { IRulerSpec, RulerTape_parse } from "../models/rulerTape";
+import { IRulerSpec, RulerTape_applyChange, RulerTape_parse } from "../models/rulerTape";
 import {
   IKeyboardConfig,
   IKeyboardRuler,
@@ -499,12 +499,12 @@ function InputNumber2Inner(props: IInputNumber2Props): JSX.Element {
     pendingInputRef.current = undefined;
     setIsTyping(false);
     isTypingRef.current = false;
-    const newValue = clamp(rulerValue, minRef.current, maxRef.current);
-    valueRef.current = newValue != null ? newValue.toString() : "";
-    setValue(valueRef.current);
-    onPreviewRef.current?.(newValue);
-    if (commitModeRef.current !== "blur" && onInputRef.current) {
-      onInputRef.current(newValue);
+    const change = RulerTape_applyChange(rulerValue, minRef.current, maxRef.current, commitModeRef.current);
+    valueRef.current = change.text;
+    setValue(change.text);
+    onPreviewRef.current?.(change.value);
+    if (change.shouldCommit && onInputRef.current) {
+      onInputRef.current(change.value);
     }
   }, []);
 

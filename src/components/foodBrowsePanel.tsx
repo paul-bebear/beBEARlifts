@@ -3,6 +3,7 @@ import { View, Pressable, ActivityIndicator } from "react-native";
 import { Text } from "./primitives/text";
 import {
   FoodLog_formatNumber,
+  FoodLog_macroLine,
   FoodLog_mealNames,
   IFoodGoals,
   IFoodMeal,
@@ -125,7 +126,7 @@ function FoodRow(props: {
 }
 
 function shortMacros(calories: number, protein: number): string {
-  return `${Math.round(calories)} Cal · ${Math.round(protein)} P`;
+  return `${Math.round(calories)} Cal · ${FoodLog_macroLine({ protein, carbs: 0, fat: 0 }, ["protein"])}`;
 }
 
 function useFoodSearch(

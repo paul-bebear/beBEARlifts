@@ -12,7 +12,7 @@ import { lg } from "../utils/posthog";
 import { FocusedInputFlush_register, FocusedInputFlush_unregister } from "../utils/focusedInputFlush";
 import { useRem } from "../utils/useRem";
 import { FitText_fontSize } from "../utils/fitText";
-import { IRulerSpec, RulerTape_panelMode, RulerTape_parse } from "../models/rulerTape";
+import { IRulerSpec, RulerTape_applyChange, RulerTape_panelMode, RulerTape_parse } from "../models/rulerTape";
 import { RulerPicker } from "./rulerPicker";
 
 export type IInputCommitMode = "live" | "debounced" | "blur";
@@ -348,12 +348,12 @@ function InputNumber2Inner(props: IInputNumber2Props): JSX.Element {
       cancelPendingInput();
       setIsTyping(false);
       isTypingRef.current = false;
-      const newValue = clamp(rulerValue, minRef.current, maxRef.current);
-      valueRef.current = newValue != null ? newValue.toString() : "";
-      setValue(valueRef.current);
-      onPreviewRef.current?.(newValue);
-      if (commitModeRef.current !== "blur" && onInputRef.current) {
-        onInputRef.current(newValue);
+      const change = RulerTape_applyChange(rulerValue, minRef.current, maxRef.current, commitModeRef.current);
+      valueRef.current = change.text;
+      setValue(change.text);
+      onPreviewRef.current?.(change.value);
+      if (change.shouldCommit && onInputRef.current) {
+        onInputRef.current(change.value);
       }
     },
     [cancelPendingInput]

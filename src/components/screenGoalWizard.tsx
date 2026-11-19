@@ -1,4 +1,4 @@
-import { JSX, useMemo, useState } from "react";
+import { JSX, useMemo, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./primitives/text";
@@ -20,9 +20,11 @@ import {
   GoalWizard_pickMethod,
   GoalWizard_preview,
   GoalWizard_progress,
+  GoalWizard_runSave,
   GoalWizard_setVisual,
   GoalWizard_start,
   IGoalWizardMode,
+  IGoalWizardSaveGuard,
   IGoalWizardStep,
 } from "../models/goalWizard";
 import { FoodLogStore_update, useFoodLog } from "../utils/foodLogStore";
@@ -63,7 +65,7 @@ export function ScreenGoalWizard(props: { mode: IGoalWizardMode }): JSX.Element 
       current: goalLog.current,
       profile: foodLog.profile,
       lengthUnit: settings.lengthUnits,
-      latest: GoalWizard_latestLengths(stats),
+      latest: GoalWizard_latestLengths(stats, Date.now()),
     })
   );
   const context = useMemo(
@@ -76,6 +78,8 @@ export function ScreenGoalWizard(props: { mode: IGoalWizardMode }): JSX.Element 
     }),
     [goalLog, foodLog.profile, stats]
   );
+  const saveGuard = useRef<IGoalWizardSaveGuard>({ busy: false });
+  const [saving, setSaving] = useState(false);
   const preview = useMemo(() => GoalWizard_preview(wizard, context), [wizard, context]);
 
   useNavOptions({ navTitle: wizard.mode === "pace" ? "Change pace" : "Change goal" });
@@ -94,15 +98,19 @@ export function ScreenGoalWizard(props: { mode: IGoalWizardMode }): JSX.Element 
     if (save == null) {
       return;
     }
-    await ProgramGoalStore.update((log) => ProgramGoal_set(log, save.goal));
-    const food = save.food;
-    if (food != null) {
-      await FoodLogStore_update((log) => FoodLog_setGoals(FoodLog_setProfile(log, food.profile), food.goals));
+    setSaving(true);
+    try {
+      await GoalWizard_runSave(saveGuard.current, save, {
+        setGoal: (goal) => ProgramGoalStore.update((log) => ProgramGoal_set(log, goal)),
+        setFood: (food) =>
+          FoodLogStore_update((log) => FoodLog_setGoals(FoodLog_setProfile(log, food.profile), food.goals)),
+        addBodyFat: (pct, at) => EditStats_addPercentageStats(dispatch, { bodyfat: { value: pct, unit: "%" } }, at),
+        goBack: () => navigation.goBack(),
+      });
+    } catch (error) {
+      setSaving(false);
+      throw error;
     }
-    if (save.bodyFatPct != null) {
-      EditStats_addPercentageStats(dispatch, { bodyfat: { value: save.bodyFatPct, unit: "%" } }, save.goal.startedAt);
-    }
-    navigation.goBack();
   };
 
   const canContinue = GoalWizard_canContinue(wizard);
@@ -166,7 +174,13 @@ export function ScreenGoalWizard(props: { mode: IGoalWizardMode }): JSX.Element 
       )}
       {wizard.step === "result" && (
         <View className="flex-row mt-6">
-          <Button name="goal-wizard-save" kind="pill" className="flex-1" disabled={!canContinue} onPress={onSave}>
+          <Button
+            name="goal-wizard-save"
+            kind="pill"
+            className="flex-1"
+            disabled={!canContinue || saving}
+            onPress={onSave}
+          >
             Save goal
           </Button>
         </View>

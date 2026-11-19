@@ -11,7 +11,7 @@ import {
   ProgressDashboard_days,
   ProgressDashboard_workoutsLine,
 } from "../models/progressDashboard";
-import { ProgressHub_build, ProgressHub_plannedPerWeek } from "../models/progressHub";
+import { ProgressHub_build, ProgressHub_plannedPerWeek, ProgressHub_weekRanges } from "../models/progressHub";
 import { Program_evaluate, Program_isEmpty } from "../models/program";
 import { ProgramGoalStore } from "../utils/programGoalStore";
 import { StepsStore } from "../utils/stepsStore";
@@ -20,7 +20,6 @@ import { useIsFocused } from "@react-navigation/native";
 import { ProgressPhotoStore } from "../utils/progressPhotoStore";
 import { ProgressDetailLine, ProgressDetailLink, ProgressExpandRow } from "./progressHubCards";
 import { History_getHistoryRecordsForTimerange, History_getHomeAggregates } from "../models/history";
-import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 import { WeekInsights } from "./weekInsights";
 import { useFoodLog } from "../utils/foodLogStore";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
@@ -83,8 +82,8 @@ export function StatsSections(): JSX.Element {
   const foodLog = useFoodLog();
   const isFocused = useIsFocused();
   const dashboard = useMemo(
-    () => ProgressDashboard_build({ history, stats, foodLog, settings, now: Date.now() }),
-    [history, stats, foodLog, settings, isFocused]
+    () => ProgressDashboard_build({ history, foodLog, settings, now: Date.now() }),
+    [history, foodLog, settings, isFocused]
   );
   const currentProgramId = state.storage.currentProgramId;
   const program = untrack(
@@ -109,19 +108,12 @@ export function StatsSections(): JSX.Element {
   const subscription = untrack(state.storage.subscription);
   const weekInsights = useMemo(() => {
     const startWeekFromMonday = !!settings.startWeekFromMonday;
-    const thisWeekStart = DateUtils_firstDayOfWeekTimestamp(Date.now(), startWeekFromMonday);
-    const lastWeekStart = new Date(thisWeekStart);
-    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+    const { thisWeekStart, lastWeekStart } = ProgressHub_weekRanges(Date.now(), startWeekFromMonday);
     return {
       prs: History_getHomeAggregates(history, startWeekFromMonday).prs,
       thisWeekStart,
       thisWeekHistory: History_getHistoryRecordsForTimerange(history, thisWeekStart, "week", startWeekFromMonday),
-      lastWeekHistory: History_getHistoryRecordsForTimerange(
-        history,
-        lastWeekStart.getTime(),
-        "week",
-        startWeekFromMonday
-      ),
+      lastWeekHistory: History_getHistoryRecordsForTimerange(history, lastWeekStart, "week", startWeekFromMonday),
     };
   }, [history, settings.startWeekFromMonday, isFocused]);
 

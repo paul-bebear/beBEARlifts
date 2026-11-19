@@ -3,9 +3,11 @@ import { expect } from "chai";
 import { PlannerProgram_evaluate, PlannerProgram_generateFullText } from "../src/pages/planner/models/plannerProgram";
 import { Settings_build } from "../src/models/settings";
 import {
+  PlannerProgramExercise_beatProgression,
   PlannerProgramExercise_buildProgress,
   PlannerProgramExercise_getProgressDefaultArgs,
 } from "../src/pages/planner/models/plannerProgramExercise";
+import { IPlannerProgramExercise } from "../src/pages/planner/models/types";
 import { Weight_build } from "../src/models/weight";
 import { PlannerTestUtils_finish, PlannerTestUtils_get } from "./utils/plannerTestUtils";
 import { IWeight } from "../src/types";
@@ -57,6 +59,25 @@ describe("beat progression", () => {
 
   it("rejects a beat increment that has no unit", () => {
     expect(evaluationError("Squat / 3x8 / 100lb / progress: beat(5, 12)")).to.contain("1st argument of 'beat'");
+  });
+
+  it("gives the share output a beat summary with the increment and the rep ceiling", () => {
+    const exercise = (body: string): IPlannerProgramExercise => {
+      const { planner } = PlannerTestUtils_get(plan(body));
+      const day = PlannerProgram_evaluate(planner, Settings_build()).evaluatedWeeks[0][0];
+      if (!day.success) {
+        throw new Error(day.error.message);
+      }
+      return day.data[0];
+    };
+    expect(PlannerProgramExercise_beatProgression(exercise("Squat / 3x8 / 100lb / progress: beat(5lb, 12)"))).to.eql({
+      type: "beat",
+      increase: Weight_build(5, "lb"),
+      maxReps: 12,
+    });
+    expect(PlannerProgramExercise_beatProgression(exercise("Squat / 3x8 / 100lb / progress: lp(5lb)"))).to.equal(
+      undefined
+    );
   });
 
   it("accepts beat(5lb, 12)", () => {
