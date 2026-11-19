@@ -18,8 +18,8 @@ import type { IFoodCaptureSource } from "../models/foodCapture";
 import type { IScanResume } from "../models/foodScanSteps";
 import { FoodApi_estimate } from "../utils/foodApi";
 import { FoodMealPhoto_pick } from "../utils/foodMealPhoto";
-import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
-import { AiConsent_disabledMessage, AiConsent_ensure } from "../utils/aiConsentClient";
+import { CloudStore } from "../utils/supabaseClient";
+import { AiRequest_check } from "../utils/aiRequest";
 
 interface IProps {
   resume?: IScanResume;
@@ -42,13 +42,9 @@ export function FoodAiPanel(props: IProps): JSX.Element {
     }
     const requestId = FoodAiEstimate_nextRequestId(state);
     dispatch({ type: "sent", requestId });
-    if (!(await AiConsent_ensure())) {
-      dispatch({ type: "failed", error: AiConsent_disabledMessage, requestId });
-      return;
-    }
-    const auth = await SupabaseClient_accessToken();
-    if (!auth.ok) {
-      dispatch({ type: "signedOut", error: auth.error, requestId });
+    const gate = await AiRequest_check();
+    if (!gate.ok) {
+      dispatch({ type: gate.reason === "consent" ? "failed" : "signedOut", error: gate.error, requestId });
       return;
     }
     const result = await FoodApi_estimate(request);

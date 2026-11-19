@@ -1,7 +1,7 @@
-import { SupabaseClient_accessToken, Supabase_notSignedIn } from "./supabaseClient";
+import { ICloudResult, SupabaseClient_accessToken, Supabase_notSignedIn } from "./supabaseClient";
 import { ApiRequest_errorText, ApiRequest_send } from "./apiRequest";
 import { AiConsent_disabledMessage, AiConsent_ensure, AiConsentStore } from "./aiConsentClient";
-import { AiConsent_maySend } from "../models/aiConsent";
+import { AiConsent_maySend, IAiConsentAsk } from "../models/aiConsent";
 import { AiCaps_parse, AiCaps_refusalText } from "../models/aiCaps";
 import { PlusOfferClient_onRefusal } from "./plusOfferClient";
 
@@ -15,23 +15,41 @@ const defaultTimeoutMs = 60_000;
 
 export type IAiRequestResult = { ok: true; body: unknown } | { ok: false; error: string };
 
+export type IAiRequestGate =
+  | { ok: true; token: string }
+  | { ok: false; reason: "consent" | "signedOut" | "noToken"; error: string };
+
+export function AiRequest_gate(auth: ICloudResult<string> | "declined"): IAiRequestGate {
+  if (auth === "declined") {
+    return { ok: false, reason: "consent", error: AiConsent_disabledMessage };
+  }
+  if (!auth.ok) {
+    return auth.error === Supabase_notSignedIn
+      ? { ok: false, reason: "signedOut", error: AiRequest_signInMessage }
+      : { ok: false, reason: "noToken", error: auth.error };
+  }
+  return { ok: true, token: auth.value };
+}
+
+// The token is read only after consent, so a declined user sends no auth refresh either.
+export async function AiRequest_check(ask?: IAiConsentAsk): Promise<IAiRequestGate> {
+  return AiRequest_gate((await AiConsent_ensure(ask)) ? await SupabaseClient_accessToken() : "declined");
+}
+
 // The /api/ai and /api/food/photo functions bill the owner's AI Gateway credit, so they serve signed-in users only.
 export async function AiRequest_post(
   path: string,
   payload: unknown,
   timeoutMs: number = defaultTimeoutMs
 ): Promise<IAiRequestResult> {
-  if (!(await AiConsent_ensure())) {
-    return { ok: false, error: AiConsent_disabledMessage };
-  }
-  const auth = await SupabaseClient_accessToken();
-  if (!auth.ok) {
-    return { ok: false, error: auth.error === Supabase_notSignedIn ? AiRequest_signInMessage : auth.error };
+  const gate = await AiRequest_check();
+  if (!gate.ok) {
+    return { ok: false, error: gate.error };
   }
   if (!AiConsent_maySend(await AiConsentStore.load())) {
     return { ok: false, error: AiConsent_disabledMessage };
   }
-  const sent = await ApiRequest_send(path, { method: "POST", token: auth.value, json: payload }, timeoutMs);
+  const sent = await ApiRequest_send(path, { method: "POST", token: gate.token, json: payload }, timeoutMs);
   if (sent.kind !== "reply") {
     return { ok: false, error: sent.kind === "timeout" ? AiRequest_timeoutMessage : AiRequest_offlineMessage };
   }

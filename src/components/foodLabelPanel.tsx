@@ -7,8 +7,8 @@ import { FoodApi_readLabel } from "../utils/foodApi";
 import { ImageResize_toJpegDataUrl } from "../utils/imageResize";
 import { Button } from "./button";
 import { FoodLabelForm } from "./foodLabelForm";
-import { AiConsent_disabledMessage, AiConsent_ensure } from "../utils/aiConsentClient";
-import { CloudStore, SupabaseClient_accessToken } from "../utils/supabaseClient";
+import { AiRequest_check } from "../utils/aiRequest";
+import { CloudStore } from "../utils/supabaseClient";
 import { FoodAiSignIn } from "./foodAiSignIn";
 
 interface IProps {
@@ -29,13 +29,9 @@ export function FoodLabelPanel(props: IProps): JSX.Element {
   // iPhone Safari drops a file picker opened after an await, so the tap only clicks the input and the checks run here.
   const onFile = async (file: File): Promise<void> => {
     setError(undefined);
-    if (!(await AiConsent_ensure("tap"))) {
-      setError(AiConsent_disabledMessage);
-      return;
-    }
-    const auth = await SupabaseClient_accessToken();
-    if (!auth.ok) {
-      setError(auth.error);
+    const gate = await AiRequest_check("tap");
+    if (!gate.ok) {
+      setError(gate.error);
       return;
     }
     setIsReading(true);

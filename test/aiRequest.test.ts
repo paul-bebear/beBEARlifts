@@ -2,12 +2,13 @@ import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
 import {
+  AiRequest_gate,
   AiRequest_offlineMessage,
   AiRequest_post,
   AiRequest_signInMessage,
   AiRequest_timeoutMessage,
 } from "../src/utils/aiRequest";
-import { CloudStore } from "../src/utils/supabaseClient";
+import { CloudStore, Supabase_notSignedIn } from "../src/utils/supabaseClient";
 import { ICloudState } from "../src/models/cloudBackup";
 import { WarmupApi_generate } from "../src/utils/warmupApi";
 import { ReportApi_summary } from "../src/utils/reportStore";
@@ -27,6 +28,36 @@ describe("AiRequest sign-in message", () => {
     expect(AiRequest_signInMessage).to.contain("gear at the top right");
     expect(AiRequest_signInMessage).to.contain("Cloud backup");
     expect(AiRequest_signInMessage).to.not.contain("Progress");
+  });
+});
+
+describe("AiRequest_gate", () => {
+  const signedInAuth = { ok: true as const, value: "token" };
+  const signedOutAuth = { ok: false as const, error: Supabase_notSignedIn };
+  const offlineAuth = { ok: false as const, error: "No connection" };
+
+  it("says AI is off when consent is declined, whatever the sign-in or connection state", () => {
+    expect(AiRequest_gate("declined")).to.deep.equal({
+      ok: false,
+      reason: "consent",
+      error: AiConsent_disabledMessage,
+    });
+  });
+
+  it("hands back the token when consent is given, the user is signed in and online", () => {
+    expect(AiRequest_gate(signedInAuth)).to.deep.equal({ ok: true, token: "token" });
+  });
+
+  it("gives the web label panel the sign-in steps instead of the raw Not signed in", () => {
+    expect(AiRequest_gate(signedOutAuth)).to.deep.equal({
+      ok: false,
+      reason: "signedOut",
+      error: AiRequest_signInMessage,
+    });
+  });
+
+  it("keeps the connection error when a signed-in user is offline and the token needs a refresh", () => {
+    expect(AiRequest_gate(offlineAuth)).to.deep.equal({ ok: false, reason: "noToken", error: "No connection" });
   });
 });
 

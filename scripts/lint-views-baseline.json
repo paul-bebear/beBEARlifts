@@ -83,9 +83,6 @@
   "src/components/foodBrowsePanel.tsx": {
     "decision-in-view:useEffect#1": "The debounce timer and its stale-result guard. Barcode vs text routing lives in FoodApi_find."
   },
-  "src/components/foodPhotoPanel.tsx": {
-    "decision-in-view:onFile": "Runs the sign-in check, the photo resize and the estimate call in order, and sets view state after each. The item choices come from FoodAddFlow_photoChoices."
-  },
   "src/components/graphExercise.tsx": {
     "decision-in-view:useMemo#1": "predates the rule"
   },
