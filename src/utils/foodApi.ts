@@ -30,7 +30,10 @@ async function request(path: string): Promise<IFoodApiResult<unknown>> {
     return { ok: false, error: sent.kind === "timeout" ? FoodApi_timeoutError : offlineError };
   }
   if (sent.body === undefined) {
-    return { ok: false, error: sent.bodyTimedOut ? FoodApi_timeoutError : ApiRequest_errorText(sent.status, undefined) };
+    return {
+      ok: false,
+      error: sent.bodyTimedOut ? FoodApi_timeoutError : ApiRequest_errorText(sent.status, undefined),
+    };
   }
   return sent.ok ? { ok: true, value: sent.body } : { ok: false, error: ApiRequest_errorText(sent.status, sent.body) };
 }

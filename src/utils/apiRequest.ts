@@ -28,11 +28,7 @@ export function ApiRequest_fetch(path: string, request: IApiRequest, signal?: Ab
 }
 
 // A body that is not JSON comes back as undefined, since JSON itself can never parse to undefined.
-export async function ApiRequest_send(
-  path: string,
-  request: IApiRequest,
-  timeoutMs?: number
-): Promise<IApiSendResult> {
+export async function ApiRequest_send(path: string, request: IApiRequest, timeoutMs?: number): Promise<IApiSendResult> {
   const controller = timeoutMs != null ? new AbortController() : undefined;
   const timer = controller != null ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
   const aborted = (): boolean => controller?.signal.aborted === true;
