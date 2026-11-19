@@ -1,7 +1,7 @@
 import { IHistoryRecord } from "../types";
-import { IPersonalRecords } from "./history";
+import { History_hasBeatenPrevious, IPersonalRecords } from "./history";
 import { FoodLog_dayKey, FoodLog_shiftDay, IFoodLog } from "./foodLog";
-import { IBearCountedWorkout } from "./bearGrowth";
+import { BearGrowth_isEligible, IBearCountedWorkout } from "./bearGrowth";
 import { BearTier_all, IBearTierSet } from "./bearTier";
 
 export type IBearBadgeId =
@@ -35,6 +35,7 @@ export interface IBearBadgeSources {
   doneDays: Set<string>;
   foodLog: IFoodLog;
   workouts?: readonly IBearCountedWorkout[];
+  keptBadges?: readonly IBearBadge[];
   tierSet: IBearTierSet;
   celebratedLevel: number;
 }
@@ -160,12 +161,11 @@ function proteinDays(foodLog: IFoodLog): Set<string> {
   );
 }
 
-function beatPrevious(prs: IPersonalRecords, record: IHistoryRecord): boolean {
-  return Object.values(prs[record.id] ?? {}).some((pr) => pr?.prevMaxWeightSet != null || pr?.prevMax1RMSet != null);
-}
+const countedBadgeIds: readonly IBearBadgeId[] = ["earlyBear", "nightBear", "hundredWorkouts"];
 
 export function BearBadges_compute(sources: IBearBadgeSources): IBearBadge[] {
   const records = [...sources.history].sort((a, b) => recordTime(a) - recordTime(b));
+  const counted = records.filter(BearGrowth_isEligible);
   const earned = new Map<IBearBadgeId, IBearBadge>();
   const earn = (id: IBearBadgeId, record: IHistoryRecord): void => {
     if (!earned.has(id)) {
@@ -173,14 +173,16 @@ export function BearBadges_compute(sources: IBearBadgeSources): IBearBadge[] {
     }
   };
   records.forEach((record, i) => {
-    const hour = new Date(record.startTime).getHours();
     const previous = records[i - 1];
-    if (beatPrevious(sources.prs, record)) {
+    if (History_hasBeatenPrevious(sources.prs, record.id)) {
       earn("firstPr", record);
     }
     if (previous != null && record.startTime - recordTime(previous) >= hibernationDays * dayMs) {
       earn("outOfHibernation", record);
     }
+  });
+  counted.forEach((record, i) => {
+    const hour = new Date(record.startTime).getHours();
     if (hour < earlyHour) {
       earn("earlyBear", record);
     }
@@ -203,6 +205,11 @@ export function BearBadges_compute(sources: IBearBadgeSources): IBearBadge[] {
     const day = lastDayOfFirstRun(sources.doneDays, streak.days);
     if (day != null) {
       earned.set(streak.id, { id: streak.id, day });
+    }
+  }
+  for (const kept of sources.keptBadges ?? []) {
+    if (countedBadgeIds.includes(kept.id) && !earned.has(kept.id)) {
+      earned.set(kept.id, kept);
     }
   }
   addLevelBadges(earned, sources.workouts ?? [], sources.tierSet, sources.celebratedLevel);

@@ -12,6 +12,7 @@ export interface IBearCountedWorkout {
 export interface IBearGrowth {
   countedKg: number;
   workouts: IBearCountedWorkout[];
+  sameDayExtras: IHistoryRecord[];
 }
 
 function positive(value: number): number {
@@ -50,7 +51,7 @@ function workoutMinutes(record: IHistoryRecord): number {
   return positive(Math.min(activeMs, record.endTime - record.startTime) / 60000);
 }
 
-function eligible(record: IHistoryRecord): boolean {
+export function BearGrowth_isEligible(record: IHistoryRecord): boolean {
   return workoutMinutes(record) >= 10 && record.entries.some((entry) => entry.sets.some((set) => set.isCompleted));
 }
 
@@ -83,8 +84,10 @@ export function BearGrowth_countedKg(
   settings: ISettings,
   bodyweight?: IWeight
 ): number {
-  const earlier = earlierCounted.filter((previous) => previous.endTime! <= record.startTime && eligible(previous));
-  if (!eligible(record) || earlier.some((previous) => day(previous) === day(record))) {
+  const earlier = earlierCounted.filter(
+    (previous) => previous.endTime! <= record.startTime && BearGrowth_isEligible(previous)
+  );
+  if (!BearGrowth_isEligible(record) || earlier.some((previous) => day(previous) === day(record))) {
     return 0;
   }
   return volumeKg(record, bestWeights(earlier), settings, bodyweight);
@@ -118,12 +121,13 @@ export function BearGrowth_history(
   settings: ISettings,
   stats?: IStats
 ): IBearGrowth {
-  const ordered = [...history].filter(eligible).sort((a, b) => a.endTime! - b.endTime! || a.id - b.id);
+  const ordered = [...history].filter(BearGrowth_isEligible).sort((a, b) => a.endTime! - b.endTime! || a.id - b.id);
   const weights = (stats?.weight.weight ?? [])
     .filter((stat) => stat.value.value > 0 && Number.isFinite(stat.value.value))
     .sort((a, b) => a.timestamp - b.timestamp);
   const workouts: IBearCountedWorkout[] = [];
   const earlier: IHistoryRecord[] = [];
+  const sameDayExtras: IHistoryRecord[] = [];
   const days = new Set<string>();
   const best = new Map<string, number>();
   let merged = 0;
@@ -131,6 +135,7 @@ export function BearGrowth_history(
   for (const record of ordered) {
     const key = day(record);
     if (days.has(key)) {
+      sameDayExtras.push(record);
       continue;
     }
     let low = 0;
@@ -157,5 +162,5 @@ export function BearGrowth_history(
     days.add(key);
     countedKg += kg;
   }
-  return { countedKg, workouts };
+  return { countedKg, workouts, sameDayExtras };
 }

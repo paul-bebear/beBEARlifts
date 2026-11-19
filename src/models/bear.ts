@@ -4,7 +4,7 @@ import { BearFullness_hungryBelow, BearFullness_percent } from "./bearFullness";
 import { BearGrowth_history, IBearCountedWorkout } from "./bearGrowth";
 import { BearStoreData_empty, IBearFur, IBearLine, IBearStoreData } from "./bearStoreData";
 import { BearTier_floorKg, BearTier_progress, BearTier_setFor, IBearTierProgress, IBearTierSet } from "./bearTier";
-import { History_getPersonalRecords } from "./history";
+import { History_getPersonalRecords, History_hasBeatenPrevious } from "./history";
 
 export type IBearMood = "pumped" | "tired" | "hungry" | "normal";
 
@@ -42,7 +42,10 @@ export function Bear_state(sources: IBearSources, now: number): IBearState {
   const tierSet = BearTier_setFor(sources.foodLog.profile.sex, store.line);
   const level = BearTier_progress(BearTier_floorKg(store.celebratedLevel, tierSet), growth.countedKg, tierSet);
   const fullness = BearFullness_percent(sources.foodLog, now);
-  const last = growth.workouts.slice(-1)[0]?.record;
+  const finished = [...growth.workouts.map(({ record }) => record), ...growth.sameDayExtras].sort(
+    (a, b) => a.endTime! - b.endTime! || a.id - b.id
+  );
+  const last = finished.slice(-1)[0];
   const lastCountedWorkoutAt = last?.endTime;
   const plannedDays = sources.plannedDaysPerWeek;
   const graceHours =
@@ -51,10 +54,7 @@ export function Bear_state(sources: IBearSources, now: number): IBearState {
   const hoursSinceWorkout = elapsedMs / hourMs;
   const graceMs = graceHours * hourMs;
   const energy = Math.max(0, 100 - (100 * Math.max(0, elapsedMs - graceMs)) / (3 * graceMs));
-  const prs = last == null ? {} : History_getPersonalRecords(growth.workouts.map(({ record }) => record))[last.id];
-  const personalRecord = Object.values(prs ?? {}).some(
-    (pr) => pr?.prevMaxWeightSet != null || pr?.prevMax1RMSet != null
-  );
+  const personalRecord = last != null && History_hasBeatenPrevious(History_getPersonalRecords(finished), last.id);
   const mood =
     hoursSinceWorkout <= (personalRecord ? pumpedHoursAfterRecord : pumpedHours)
       ? "pumped"
