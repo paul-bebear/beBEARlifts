@@ -4,6 +4,7 @@ import { Exercise_get, Exercise_reverseName, Exercise_toKey } from "../../models
 import { exerciseDescriptions } from "../../models/exerciseDescriptions";
 import { ExerciseImageUtils_ogImageUrl } from "../../models/exerciseImage";
 import { IExerciseType } from "../../types";
+import { ProgramsHost_fork } from "../../utils/programsHost";
 import { ExerciseContent } from "./exerciseContent";
 
 interface IProps {
@@ -69,7 +70,7 @@ export function ExerciseHtml(props: IProps): JSX.Element {
       description={description}
       ogUrl={url}
       ogDescription={description}
-      ogImage={`https://www.liftosaur.com${ExerciseImageUtils_ogImageUrl(data.exerciseType)}`}
+      ogImage={`${ProgramsHost_fork}${ExerciseImageUtils_ogImageUrl(data.exerciseType)}`}
       jsonLd={jsonLd}
       data={data}
       client={client}

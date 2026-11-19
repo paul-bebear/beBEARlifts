@@ -8,6 +8,7 @@ import { AiConsentGate } from "./aiConsentGate";
 import { FoodBarcodeScanner } from "./foodBarcodeScanner";
 import { FoodAiPanel } from "./foodAiPanel";
 import { FoodRepeatList } from "./foodRepeatList";
+import { FoodRepeat_heading, FoodRepeat_initial } from "../models/foodRepeat";
 
 interface IProps {
   day: string;
@@ -84,7 +85,9 @@ export function FoodScanCamera(props: IProps): JSX.Element {
           data-testid="food-copy-day"
           onPress={() => setIsRepeating(true)}
         >
-          <Text className="text-base text-text-link">Same as yesterday</Text>
+          <Text className="text-base text-text-link">
+            {FoodRepeat_heading(FoodRepeat_initial(props.day), new Date()).title}
+          </Text>
         </Pressable>
       </View>
     </View>

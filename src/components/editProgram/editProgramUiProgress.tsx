@@ -6,6 +6,7 @@ import { useRem } from "../../utils/useRem";
 import { Weight_print } from "../../models/weight";
 import {
   PlannerProgramExercise_progressionType,
+  PlannerProgramExercise_beatProgression,
   PlannerProgramExercise_getState,
 } from "../../pages/planner/models/plannerProgramExercise";
 import { IPlannerProgramExercise } from "../../pages/planner/models/types";
@@ -79,6 +80,22 @@ function Progression(props: IProgressionProps): JSX.Element {
   const bold = cls("font-bold");
   const success = cls("font-bold text-text-success");
   const error = cls("font-bold text-text-error");
+  const beat = PlannerProgramExercise_beatProgression(props.progressExercise);
+  if (beat != null) {
+    const builder = new StyledText();
+    builder.add("Beat Last Week", bold);
+    builder.add(": more weight × reps than last time. Past ");
+    builder.add(`${beat.maxReps}`, bold);
+    builder.add(" reps, ");
+    builder.add(`+${Weight_print(beat.increase)}`, success);
+    builder.add(".");
+    const built = builder.build();
+    return (
+      <View>
+        <FastText text={built.text} fragments={built.fragments} {...base} />
+      </View>
+    );
+  }
   const type = props.progressExercise ? PlannerProgramExercise_progressionType(props.progressExercise) : undefined;
   if (type == null) {
     return <View />;
