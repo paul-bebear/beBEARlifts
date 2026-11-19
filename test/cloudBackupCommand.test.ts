@@ -8,7 +8,10 @@ import * as supabase from "../src/utils/supabaseClient";
 import { ICloudBackupEvent, ICloudBackupOperation } from "../src/models/cloudBackupForm";
 import { CloudBackupCommand_run } from "../src/utils/cloudBackupCommand";
 
-async function run(operation: ICloudBackupOperation, extra: { proCode?: string; copy?: "previous" } = {}) {
+async function run(
+  operation: ICloudBackupOperation,
+  extra: { proCode?: string; copy?: "previous" } = {}
+): Promise<ICloudBackupEvent[]> {
   const events: ICloudBackupEvent[] = [];
   const thunk = CloudBackupCommand_run({ operation, email: "bear@example.com", code: "123456", ...extra }, (e) =>
     events.push(e)
@@ -65,9 +68,7 @@ describe("CloudBackupCommand_run", () => {
   it("turns a thrown error into a failed event, with a fixed text for a non-Error", async () => {
     const signOut = sinon.stub(client, "CloudBackupClient_signOut").rejects(new Error("boom"));
     expect(await run("signOut")).to.deep.equal([{ type: "failed", error: "boom" }]);
-    signOut.callsFake(async () => {
-      throw "boom";
-    });
+    signOut.callsFake(() => Promise.reject("boom"));
     expect(await run("signOut")).to.deep.equal([{ type: "failed", error: "Cloud backup failed" }]);
   });
 });

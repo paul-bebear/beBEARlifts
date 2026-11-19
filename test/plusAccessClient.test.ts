@@ -8,7 +8,7 @@ import { PlusAccessClient_allows } from "../src/utils/plusAccessClient";
 import { CloudStore } from "../src/utils/supabaseClient";
 
 const plus = { status: "known", userId: "u1", plan: "plus" } as IAccountPlanState;
-const signedIn = (userId: string) => ({ version: 1, session: { userId } }) as unknown as ICloudState;
+const signedIn = (userId: string): ICloudState => ({ version: 1, session: { userId } }) as unknown as ICloudState;
 
 describe("PlusAccessClient_allows", () => {
   afterEach(() => sinon.restore());
