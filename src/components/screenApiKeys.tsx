@@ -41,6 +41,7 @@ export function ScreenApiKeys(props: IProps): JSX.Element {
 
   useEffect(() => {
     if (isSubscribed) {
+      setIsLoading(true);
       props.service.getApiKeys().then((result) => {
         setKeys(result);
         setIsLoading(false);

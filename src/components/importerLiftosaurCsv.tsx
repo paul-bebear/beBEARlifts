@@ -28,13 +28,26 @@ export function ImporterLiftosaurCsv(props: IImporterLiftosaurCsvProps): JSX.Ele
 
   // Safari shows its own "Paste" bubble on readText, and only inside a tap handler.
   const onPaste = useCallback(async () => {
+    let readFailed = false;
+    const onReadError = (): undefined => {
+      readFailed = true;
+      return undefined;
+    };
     const text =
       Platform.OS === "web"
-        ? await navigator.clipboard?.readText().catch(() => undefined)
-        : await ClipboardUtils_paste().catch(() => undefined);
-    const csv = text != null ? CsvFromChat_extract(text) : undefined;
-    if (csv == null) {
+        ? await navigator.clipboard?.readText().catch(onReadError)
+        : await ClipboardUtils_paste().catch(onReadError);
+    if (readFailed) {
+      Dialog_alert("The clipboard could not be read. Allow paste in the browser prompt, then try again.");
+      return;
+    }
+    if (text == null || text.trim() === "") {
       Dialog_alert("The clipboard is empty. Copy the CSV block from the AI chat first.");
+      return;
+    }
+    const csv = CsvFromChat_extract(text);
+    if (csv == null) {
+      Dialog_alert("No CSV found in the clipboard. Copy the CSV block from the AI chat first.");
       return;
     }
     props.dispatch(Thunk_importCsvData(csv));

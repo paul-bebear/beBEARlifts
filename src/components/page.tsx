@@ -2,6 +2,7 @@ import React, { JSX } from "react";
 import { IPageWrapperProps, PageWrapper } from "./pageWrapper";
 import { Tailwind_markPageContext, TAILWIND_PAGE_MARKER_CLASS } from "../utils/tailwindConfig";
 import { PAGE_THEME_STORAGE_KEY, PageTheme_backgroundColor } from "../utils/pageTheme";
+import { ProgramsHost_fork } from "../utils/programsHost";
 
 Tailwind_markPageContext();
 
@@ -98,7 +99,7 @@ function jsonLdToSchema(ld: IJsonLd): object {
         headline: ld.headline,
         ...(ld.description ? { description: ld.description } : {}),
         ...(ld.author ? { author: { "@type": "Person", name: ld.author } } : {}),
-        publisher: { "@type": "Organization", name: "beBEAR", url: "https://www.liftosaur.com" },
+        publisher: { "@type": "Organization", name: "beBEAR", url: ProgramsHost_fork },
         ...(ld.image ? { image: ld.image } : {}),
         ...(ld.mainEntityOfPage ? { mainEntityOfPage: ld.mainEntityOfPage } : {}),
         ...(ld.datePublished ? { datePublished: ld.datePublished } : {}),
@@ -219,7 +220,6 @@ export function Page<T>(props: IProps<T>): JSX.Element {
           <link key={c} rel="stylesheet" type="text/css" href={`/${c}.css?version=${commitHash}`} />
         ))}
         <meta charSet="UTF-8" />
-        <link rel="preconnect" href="https://api3.liftosaur.com" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="shortcut icon" type="image/x-icon" href="/icons/favicon.ico" />
         <link rel="canonical" href={props.canonical} />

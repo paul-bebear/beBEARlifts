@@ -1,4 +1,4 @@
-import { JSX, memo, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { JSX, memo, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { View, Pressable, Platform, LayoutChangeEvent, StyleSheet } from "react-native";
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 import { Text } from "./primitives/text";
@@ -16,7 +16,7 @@ import {
   useSetCustomKeyboardHeight,
 } from "../navigation/CustomKeyboardContext";
 import { RulerPicker } from "./rulerPicker";
-import { RulerTape_panelMode } from "../models/rulerTape";
+import { RulerTape_padRequested, RulerTape_panelMode } from "../models/rulerTape";
 
 export interface INativeCustomKeyboardProps {
   ruler?: IKeyboardRuler;
@@ -91,14 +91,9 @@ export const NativeCustomKeyboard = memo(function NativeCustomKeyboard(props: IN
   );
 
   const [padForId, setPadForId] = useState<string | null>(null);
-  useEffect(() => {
-    if (activeId != null) {
-      setPadForId((prev) => (prev === activeId ? prev : null));
-    }
-  }, [activeId]);
   const showPad = useCallback(() => setPadForId(activeIdRef.current), []);
   const showRuler = useCallback(() => setPadForId(null), []);
-  const mode = RulerTape_panelMode(props.ruler != null, padForId != null);
+  const mode = RulerTape_panelMode(props.ruler != null, RulerTape_padRequested(padForId, activeId));
 
   const addonRow = (props.keyboardAddon || props.enableCalculator) && (
     <View className="flex-row items-center gap-2 px-4 bg-background-subtle">
