@@ -1,4 +1,4 @@
-export const LocalDay_ms = 24 * 60 * 60 * 1000;
+const dayMs = 24 * 60 * 60 * 1000;
 
 export function LocalDay_start(timestamp: number): number {
   const date = new Date(timestamp);
@@ -13,7 +13,7 @@ export function LocalDay_shift(timestamp: number, days: number): number {
 }
 
 export function LocalDay_between(earlier: number, later: number): number {
-  return Math.round((LocalDay_start(later) - LocalDay_start(earlier)) / LocalDay_ms);
+  return Math.round((LocalDay_start(later) - LocalDay_start(earlier)) / dayMs);
 }
 
 function pad2(n: number): string {

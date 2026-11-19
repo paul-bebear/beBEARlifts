@@ -1,5 +1,6 @@
 import { IExerciseType, IHistoryEntry, IHistoryRecord, ISet, ISettings } from "../types";
 import { Exercise_fullName, Exercise_get, Exercise_targetMusclesGroups, Exercise_toKey } from "./exercise";
+import { StringUtils_pluralize } from "../utils/string";
 
 export interface IOrderFatigueLookup {
   key: (exercise: IExerciseType) => string;
@@ -113,7 +114,7 @@ export function ExerciseOrderFatigue_notes(
     const lastTime =
       last === 0
         ? "Last time you did this lift fresh"
-        : `Last time only ${last} ${last === 1 ? "lift" : "lifts"} for these muscles came before it`;
+        : `Last time only ${last} ${StringUtils_pluralize("lift", last)} for these muscles came before it`;
     notes[entry.id] = `${list(before)} came first today. ${lastTime}, so a few reps fewer is normal.`;
   });
   return notes;

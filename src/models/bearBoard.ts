@@ -4,9 +4,8 @@ import { BearText_kg } from "./bearText";
 import { IBearTierProgress } from "./bearTier";
 import {
   DailyChecklist_build,
-  DailyChecklist_doneDays,
   DailyChecklist_goalTarget,
-  DailyChecklist_streak,
+  DailyChecklist_streakOf,
   DailyChecklist_weighInDayName,
   IChecklistItem,
 } from "./dailyChecklist";
@@ -17,6 +16,7 @@ import { IProgramGoal, ProgramGoal_formatWeight, ProgramGoal_kindLabel } from ".
 import { TodayPill_text } from "./todayPill";
 import { StatsLatest_bodyWeightIn, StatsLatest_entries, StatsLatest_entry } from "./statsLatest";
 import { DayNames_monthDayYearIfOtherYear } from "./dayNames";
+import { StringUtils_pluralize } from "../utils/string";
 
 export type IBearBoardTarget = "plus" | "goal" | "bear" | "streak";
 
@@ -74,11 +74,13 @@ export function BearBoard_latestWeight(stats: IStats, units: IUnit, now: number)
 }
 
 function streakLine(input: IBearBoardInput, today: string): IBearBoardLine {
-  const days = DailyChecklist_streak(
-    DailyChecklist_doneDays({ workouts: input.workouts, foodLog: input.foodLog }),
-    today
-  );
-  return { id: "streak", text: `Streak · ${days} ${days === 1 ? "day" : "days"}`, isDone: false, target: "streak" };
+  const days = DailyChecklist_streakOf({ workouts: input.workouts, foodLog: input.foodLog }, today);
+  return {
+    id: "streak",
+    text: `Streak · ${days} ${StringUtils_pluralize("day", days)}`,
+    isDone: false,
+    target: "streak",
+  };
 }
 
 function weightLine(input: IBearBoardInput): IBearBoardLine {

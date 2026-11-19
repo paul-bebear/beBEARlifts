@@ -6,6 +6,7 @@ import { ProgramGoal_formatWeight } from "./programGoal";
 import { LocalDay_weekday } from "./localDay";
 import { DayNames_weekdaysLong } from "./dayNames";
 import { StatsLatest_newest } from "./statsLatest";
+import { StringUtils_pluralize } from "../utils/string";
 
 export type IChecklistItemKey = "train" | "food" | "weight";
 
@@ -149,7 +150,7 @@ function foodItem(input: IChecklistDayInput): IChecklistItem {
   }
   const subtitle =
     count > 0
-      ? `${count} ${count === 1 ? "item" : "items"} · ${calories.toLocaleString("en-US")} Cal`
+      ? `${count} ${StringUtils_pluralize("item", count)} · ${calories.toLocaleString("en-US")} Cal`
       : day === today
         ? "Start logging today"
         : "Nothing logged";
@@ -186,4 +187,8 @@ export function DailyChecklist_streak(doneDays: Set<string>, today: string): num
     day = FoodLog_shiftDay(day, -1);
   }
   return streak;
+}
+
+export function DailyChecklist_streakOf(sources: IStreakSources, today: string): number {
+  return DailyChecklist_streak(DailyChecklist_doneDays(sources), today);
 }

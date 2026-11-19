@@ -8,6 +8,7 @@ import { IProgressPhotoLog } from "./progressPhotos";
 import { LocalDay_between, LocalDay_shift, LocalDay_start } from "./localDay";
 import { DateUtils_firstDayOfWeekTimestamp } from "../utils/date";
 import { DayNames_monthDayYearIfOtherYear } from "./dayNames";
+import { StringUtils_pluralize } from "../utils/string";
 
 export interface IProgressHubInput {
   goalLog: IProgramGoalLog;
@@ -119,7 +120,7 @@ function photosRow(photos: IProgressPhotoLog, now: number): IProgressHub["photos
   const count = photos.photos.length;
   return {
     count,
-    subtitle: `${count} ${count === 1 ? "photo" : "photos"} · latest ${ProgressHub_formatDate(latest.timestamp, now)}`,
+    subtitle: `${count} ${StringUtils_pluralize("photo", count)} · latest ${ProgressHub_formatDate(latest.timestamp, now)}`,
   };
 }
 

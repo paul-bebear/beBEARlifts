@@ -72,6 +72,31 @@ describe("BearText", () => {
     expect(BearText_status(state({ mood: "tired" }), now)).to.equal("Your bear is waiting for its first workout");
   });
 
+  describe("in the week the clocks go back", () => {
+    const savedZone = process.env.TZ;
+    before(() => {
+      process.env.TZ = "America/New_York";
+    });
+    after(() => {
+      if (savedZone == null) {
+        delete process.env.TZ;
+      } else {
+        process.env.TZ = savedZone;
+      }
+    });
+
+    it("keeps yesterday, the weekday and the date form across the change on 1 Nov", () => {
+      const thursday = new Date(2026, 10, 5, 12).getTime();
+      const since = (at: number): string =>
+        BearText_status(state({ mood: "tired", lastCountedWorkoutAt: at }), thursday);
+      expect(since(new Date(2026, 10, 4, 20).getTime())).to.equal("Your bear hasn't moved since yesterday");
+      expect(since(new Date(2026, 10, 5, 8).getTime())).to.equal("Your bear hasn't moved since today");
+      expect(since(new Date(2026, 9, 31, 12).getTime())).to.equal("Your bear hasn't moved since Saturday");
+      expect(since(new Date(2026, 9, 30, 12).getTime())).to.equal("Your bear hasn't moved since Friday");
+      expect(since(new Date(2026, 9, 29, 12).getTime())).to.equal("Your bear hasn't moved since 29 Oct");
+    });
+  });
+
   it("has a line for every mood", () => {
     expect(BearText_status(state({ mood: "normal" }), now)).to.equal("Fed and rested");
     expect(BearText_status(state({ mood: "hungry" }), now)).to.equal("Your bear is hungry. Log a meal");

@@ -7,7 +7,6 @@ import {
   IFoodEntry,
   IFoodLog,
   IFoodMeal,
-  INutrients,
 } from "./foodLog";
 import { FoodMicroTotals_forDay, IMicroTotals } from "./foodMicroTotals";
 
@@ -69,8 +68,4 @@ export function RecipePhoto_failed(
   return state.src !== remote
     ? { state: { src: remote, isError: false }, marksMissing: true }
     : { state: { ...state, isError: true }, marksMissing: false };
-}
-
-export function FoodDayPage_pillText(totals: INutrients): string {
-  return `🔥 ${Math.round(totals.calories).toLocaleString("en-US")} · C ${Math.round(totals.carbs)} · P ${Math.round(totals.protein)} · F ${Math.round(totals.fat)}`;
 }

@@ -154,7 +154,7 @@ export function WorkoutPost_feedLine(summary: IWorkoutPostSummary): string {
     DurationText_fromMs(summary.durationMs),
     setsText(summary.sets),
     ...(kg != null ? [kg] : []),
-    ...(songCount > 0 ? [`\u{1F3B5} ${songCount} ${songCount === 1 ? "song" : "songs"}`] : []),
+    ...(songCount > 0 ? [`\u{1F3B5} ${songCount} ${StringUtils_pluralize("song", songCount)}`] : []),
   ].join(" · ");
 }
 

@@ -3,7 +3,6 @@ import { expect } from "chai";
 import {
   FoodDayPage_build,
   FoodDayPage_meals,
-  FoodDayPage_pillText,
   RecipePhoto_failed,
   RecipePhoto_initial,
   RecipePhoto_shouldDownload,
@@ -86,18 +85,6 @@ describe("FoodDayPage_build", () => {
       "nextDay",
       "previousDay",
     ]);
-  });
-});
-
-describe("FoodDayPage_pillText", () => {
-  it("rounds each number and groups the calories", () => {
-    expect(FoodDayPage_pillText({ calories: 1234.6, protein: 99.5, carbs: 10.4, fat: 4.5 })).to.equal(
-      "🔥 1,235 · C 10 · P 100 · F 5"
-    );
-  });
-
-  it("shows zeros for an empty day", () => {
-    expect(FoodDayPage_pillText({ calories: 0, protein: 0, carbs: 0, fat: 0 })).to.equal("🔥 0 · C 0 · P 0 · F 0");
   });
 });
 

@@ -4,6 +4,8 @@ import {
   ISetClip,
   SetClips_empty,
   SetClips_find,
+  SetClips_findSet,
+  SetClips_isFilmed,
   SetClips_filmedSets,
   SetClips_groups,
   SetClips_historyGroups,
@@ -107,6 +109,18 @@ describe("SetClips", () => {
     expect(SetClips_groups(sets, true, log, 1234, "squat")).to.deep.equal([sets]);
     expect(SetClips_groups(sets, false, log, 5678, "squat")).to.deep.equal([sets]);
     expect(SetClips_groups(sets, false, undefined, undefined, undefined)).to.deep.equal([sets]);
+  });
+
+  it("tells a filmed set from one with a missing log, workout or exercise", () => {
+    const log = SetClips_put(SetClips_empty(), clip);
+    expect(SetClips_isFilmed(log, 1234, "squat", "set-1")).to.equal(true);
+    expect(SetClips_isFilmed(log, 1234, "squat", "set-2")).to.equal(false);
+    expect(SetClips_isFilmed(log, 1234, "bench", "set-1")).to.equal(false);
+    expect(SetClips_isFilmed(undefined, 1234, "squat", "set-1")).to.equal(false);
+    expect(SetClips_isFilmed(log, undefined, "squat", "set-1")).to.equal(false);
+    expect(SetClips_isFilmed(log, 1234, undefined, "set-1")).to.equal(false);
+    expect(SetClips_findSet(log, 1234, "squat", "set-1")?.timestamp).to.equal(2000);
+    expect(SetClips_findSet(undefined, 1234, "squat", "set-1")).to.equal(undefined);
   });
 
   it("labels downloads separately from Photos", () => {

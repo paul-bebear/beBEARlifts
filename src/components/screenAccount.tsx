@@ -31,7 +31,6 @@ import { Dialog_confirm, Dialog_prompt, Dialog_alert } from "../utils/dialog";
 import { EmailAuthButton } from "./account";
 import { navigateToModal } from "../navigation/navigationService";
 import { Tailwind_colors, Tailwind_semantic } from "../utils/tailwindConfig";
-import { IIapActiveSubscription } from "../utils/iapAdapter";
 import { AccountPlan_accountRowOpens, AccountPlan_settingsRow } from "../models/accountPlan";
 import { AccountPlanStore } from "../utils/accountPlanClient";
 import { Purchases_isAvailable, Purchases_manage } from "../utils/purchases";
@@ -45,8 +44,6 @@ interface IProps {
   userId?: string;
   nosync?: boolean;
   storage: IPartialStorage;
-  subscriptionStatus?: IIapActiveSubscription[];
-  subscriptionStatusLoading?: boolean;
   ownedLifetime?: boolean;
   navCommon: INavCommon;
   dispatch: IDispatch;

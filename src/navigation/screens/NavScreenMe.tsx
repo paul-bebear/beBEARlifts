@@ -77,8 +77,6 @@ export function NavScreenAccount(): JSX.Element {
         userId={state.user?.id}
         nosync={state.nosync}
         storage={state.storage}
-        subscriptionStatus={state.subscriptionStatus}
-        subscriptionStatusLoading={state.subscriptionStatusLoading}
         ownedLifetime={state.ownedLifetime}
       />
     </NavScreenContent>

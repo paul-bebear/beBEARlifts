@@ -14,6 +14,7 @@ import {
   WeekSchedule_todayFor,
   WeekSchedule_workedOutToday,
 } from "./weekSchedule";
+import { StringUtils_pluralize } from "../utils/string";
 
 export type IGymBagItemId = "water" | "belt" | "straps" | "shoes";
 
@@ -124,7 +125,7 @@ export function GymBagCheck_items(
     ? `Rest day · next: ${name}${day.nextWeekday != null ? ` on ${day.nextWeekday}` : ""}`
     : record == null || count === 0
       ? name
-      : `${name} · ${count} ${count === 1 ? "exercise" : "exercises"} · about ${minutes(record)} min`;
+      : `${name} · ${count} ${StringUtils_pluralize("exercise", count)} · about ${minutes(record)} min`;
   return {
     title,
     items: ids.map((id) => ({ id, label: labels[id] })),

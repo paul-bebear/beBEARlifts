@@ -76,6 +76,26 @@ export function SetClips_find(log: ISetClipLog, target: ISetClipTarget): ISetCli
   );
 }
 
+export function SetClips_findSet(
+  log: ISetClipLog | undefined,
+  workoutId: number | undefined,
+  exerciseId: string | undefined,
+  setId: string
+): ISetClip | undefined {
+  return log != null && workoutId != null && exerciseId != null
+    ? SetClips_find(log, { workoutId, exerciseId, setId })
+    : undefined;
+}
+
+export function SetClips_isFilmed(
+  log: ISetClipLog | undefined,
+  workoutId: number | undefined,
+  exerciseId: string | undefined,
+  setId: string
+): boolean {
+  return SetClips_findSet(log, workoutId, exerciseId, setId) != null;
+}
+
 export function SetClips_put(log: ISetClipLog, clip: ISetClip): ISetClipLog {
   const clean = parseClip(clip);
   if (clean == null) {
@@ -108,11 +128,7 @@ export function SetClips_groups(
   exerciseId: string | undefined
 ): ISet[][] {
   return Reps_group(sets, isNext).flatMap((group) =>
-    !isNext &&
-    log != null &&
-    workoutId != null &&
-    exerciseId != null &&
-    group.some((set) => SetClips_find(log, { workoutId, exerciseId, setId: set.id }) != null)
+    !isNext && group.some((set) => SetClips_isFilmed(log, workoutId, exerciseId, set.id))
       ? group.map((set) => [set])
       : [group]
   );
@@ -133,15 +149,10 @@ export function SetClips_historyGroups(
 ): { sets: IDisplaySet[]; clip?: ISetClip }[] {
   return SetClips_groups(sets, isNext, log, workoutId, exerciseId).map((group) => ({
     sets: group.map((set) => Reps_setToDisplaySet(set, isNext, units)),
-    clip:
-      !isNext && log != null && workoutId != null && exerciseId != null && group[0] != null
-        ? SetClips_find(log, { workoutId, exerciseId, setId: group[0].id })
-        : undefined,
+    clip: !isNext && group[0] != null ? SetClips_findSet(log, workoutId, exerciseId, group[0].id) : undefined,
   }));
 }
 
 export function SetClips_filmedSets(sets: ISet[], log?: ISetClipLog, workoutId?: number, exerciseId?: string): ISet[] {
-  return log != null && workoutId != null && exerciseId != null
-    ? sets.filter((set) => SetClips_find(log, { workoutId, exerciseId, setId: set.id }) != null)
-    : [];
+  return sets.filter((set) => SetClips_isFilmed(log, workoutId, exerciseId, set.id));
 }
