@@ -175,6 +175,54 @@ export function MusicLog_disconnect(log: IMusicLog): IMusicLog {
   return { ...log, tokens: undefined, displayName: undefined };
 }
 
+export function MusicLog_sameTokens(a: ISpotifyTokens | undefined, b: ISpotifyTokens | undefined): boolean {
+  if (a == null || b == null) {
+    return a === b;
+  }
+  return a.accessToken === b.accessToken && a.refreshToken === b.refreshToken && a.expiresAt === b.expiresAt;
+}
+
+export interface IMusicTokenMove {
+  tokens?: ISpotifyTokens;
+  copyToSecure?: ISpotifyTokens;
+}
+
+// A token in the plain store is newer than the Keychain one: login and refresh write it there first.
+export function MusicLog_tokenMove(
+  plain: ISpotifyTokens | undefined,
+  secure: ISpotifyTokens | undefined,
+  hasSecureStore: boolean
+): IMusicTokenMove {
+  if (plain == null) {
+    return { tokens: secure };
+  }
+  return hasSecureStore ? { tokens: plain, copyToSecure: plain } : { tokens: plain };
+}
+
+// The Keychain copy must read back the same before the plain one goes, so a failed write never signs the user out.
+export function MusicLog_dropMovedTokens(
+  log: IMusicLog,
+  copied: ISpotifyTokens,
+  readBack: ISpotifyTokens | undefined
+): IMusicLog {
+  if (!MusicLog_sameTokens(copied, readBack) || !MusicLog_sameTokens(log.tokens, copied)) {
+    return log;
+  }
+  return { ...log, tokens: undefined };
+}
+
+export function MusicLog_withTokens(log: IMusicLog, secure: ISpotifyTokens | undefined): IMusicLog {
+  return log.tokens != null || secure == null ? log : { ...log, tokens: secure };
+}
+
+export function MusicLog_signedOut(before: IMusicLog, after: IMusicLog): boolean {
+  return before.tokens != null && after.tokens == null;
+}
+
+export function MusicLog_forPlainStore(next: IMusicLog, secure: ISpotifyTokens | undefined): IMusicLog {
+  return secure != null && MusicLog_sameTokens(next.tokens, secure) ? { ...next, tokens: undefined } : next;
+}
+
 // The export goes to a file the user may share, so the Spotify refresh token stays on the phone.
 export function MusicLog_exportJson(log: IMusicLog): string {
   return JSON.stringify({ ...log, tokens: undefined });
