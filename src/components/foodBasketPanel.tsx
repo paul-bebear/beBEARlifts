@@ -1,10 +1,9 @@
-import { JSX, useState } from "react";
+import { JSX } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodLog_formatNumber, IFoodMeal } from "../models/foodLog";
-import { FoodAddFlow_parseGrams } from "../models/foodAddFlow";
 import { FoodBasket_hasPortion, FoodBasket_nutrients, FoodBasket_totals, IFoodBasketItem } from "../models/foodBasket";
-import { FoodMealPicker, FoodTextInput } from "./foodUi";
+import { FoodGramsField, FoodMealPicker } from "./foodUi";
 import { Button } from "./button";
 import { IconClose2 } from "./icons/iconClose2";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
@@ -34,14 +33,7 @@ function BasketRow(props: {
   onRemove: () => void;
 }): JSX.Element {
   const { item } = props;
-  const [gramsText, setGramsText] = useState(FoodLog_formatNumber(item.grams));
   const nutrients = FoodBasket_nutrients(item);
-  const commit = (): void => {
-    const grams = FoodAddFlow_parseGrams(gramsText);
-    if (grams != null && grams !== item.grams) {
-      props.onGrams(grams);
-    }
-  };
   return (
     <View className="py-3 border-b border-border-neutral" testID="food-basket-item" data-testid="food-basket-item">
       <View className="flex-row items-start">
@@ -66,15 +58,11 @@ function BasketRow(props: {
       {FoodBasket_hasPortion(item) && (
         <View className="flex-row items-center px-4 py-2 mt-3 rounded-2xl bg-background-subtle">
           <Text className="flex-1 text-lg font-semibold">Portion</Text>
-          <FoodTextInput
+          <FoodGramsField
             testID="food-basket-grams"
-            value={gramsText}
-            onChangeText={setGramsText}
-            onBlur={commit}
-            onSubmitEditing={commit}
-            keyboardType="decimal-pad"
-            inputMode="decimal"
-            selectTextOnFocus={true}
+            grams={item.grams}
+            initialText={FoodLog_formatNumber(item.grams)}
+            onCommit={props.onGrams}
             style={{ width: 80, textAlign: "center", color: Tailwind_semantic().text.link }}
           />
           <View className="px-3 py-2.5 ml-2 rounded-xl bg-background-neutral">

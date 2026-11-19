@@ -1,7 +1,8 @@
-import { JSX } from "react";
+import { JSX, useState } from "react";
 import { View, Pressable, TextInput, TextInputProps, useWindowDimensions } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodLog_formatNumber, FoodLog_mealNames, FoodLog_meals, IFoodMeal, INutrients } from "../models/foodLog";
+import { FoodAddFlow_parseGrams } from "../models/foodAddFlow";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
 export function FoodTextInput(props: TextInputProps & { testID?: string }): JSX.Element {
@@ -21,6 +22,36 @@ export function FoodTextInput(props: TextInputProps & { testID?: string }): JSX.
 export function useGramsFieldWidth(digits: number): number {
   const { fontScale } = useWindowDimensions();
   return Math.ceil(26 + digits * 10 * fontScale);
+}
+
+export function FoodGramsField(props: {
+  grams: number;
+  initialText: string;
+  onCommit: (grams: number) => void;
+  testID?: string;
+  style?: TextInputProps["style"];
+}): JSX.Element {
+  const [text, setText] = useState(props.initialText);
+  const width = useGramsFieldWidth(4);
+  const commit = (): void => {
+    const grams = FoodAddFlow_parseGrams(text);
+    if (grams != null && grams !== props.grams) {
+      props.onCommit(grams);
+    }
+  };
+  return (
+    <FoodTextInput
+      testID={props.testID}
+      value={text}
+      onChangeText={setText}
+      onBlur={commit}
+      onSubmitEditing={commit}
+      keyboardType="decimal-pad"
+      inputMode="decimal"
+      selectTextOnFocus={true}
+      style={[{ width, textAlign: "right" }, props.style]}
+    />
+  );
 }
 
 export function FoodMealPicker(props: { meal: IFoodMeal; onChange: (meal: IFoodMeal) => void }): JSX.Element {

@@ -4,7 +4,6 @@ import { IMealShareSwitch } from "../models/mealPost";
 import { Text } from "./primitives/text";
 import { Switch } from "./primitives/switch";
 import { FoodLog_mealNames, IFoodMeal } from "../models/foodLog";
-import { FoodAddFlow_parseGrams } from "../models/foodAddFlow";
 import { FoodBasket_hasPortion, IFoodBasketItem } from "../models/foodBasket";
 import {
   FoodScanSteps_canAdd,
@@ -12,7 +11,7 @@ import {
   FoodScanSteps_totals,
   IScanServing,
 } from "../models/foodScanSteps";
-import { FoodMealPicker, FoodNutrientsRow, FoodTextInput, useGramsFieldWidth } from "./foodUi";
+import { FoodGramsField, FoodMealPicker, FoodNutrientsRow, FoodTextInput } from "./foodUi";
 import { Button } from "./button";
 
 interface IProps {
@@ -34,14 +33,6 @@ function ItemRow(props: {
   onRemove: () => void;
 }): JSX.Element {
   const { item } = props;
-  const [gramsText, setGramsText] = useState(`${item.grams}`);
-  const gramsWidth = useGramsFieldWidth(4);
-  const commit = (): void => {
-    const grams = FoodAddFlow_parseGrams(gramsText);
-    if (grams != null && grams !== item.grams) {
-      props.onGrams(grams);
-    }
-  };
   return (
     <View className="flex-row items-center py-2.5 border-b border-border-neutral" testID="food-serving-item">
       <View className="flex-1 pr-2">
@@ -52,16 +43,11 @@ function ItemRow(props: {
       </View>
       {FoodBasket_hasPortion(item) && (
         <>
-          <FoodTextInput
+          <FoodGramsField
             testID="food-grams"
-            value={gramsText}
-            onChangeText={setGramsText}
-            keyboardType="decimal-pad"
-            inputMode="decimal"
-            selectTextOnFocus={true}
-            style={{ width: gramsWidth, textAlign: "right" }}
-            onBlur={commit}
-            onSubmitEditing={commit}
+            grams={item.grams}
+            initialText={`${item.grams}`}
+            onCommit={props.onGrams}
           />
           <Text className="ml-1 text-sm text-text-secondary">g</Text>
         </>
