@@ -202,6 +202,11 @@ export function JournalDay_sectionFold(
   return { title: parts?.title, detail: parts?.detail, isCollapsed, canHide: parts != null && !isCollapsed };
 }
 
+// The third face would fold the check-in before the reflection is written, so an edit pins it open.
+export function JournalDay_openOnEdit(isOpenByUser: boolean | undefined): boolean {
+  return isOpenByUser ?? true;
+}
+
 function dayOf(timestamp: number): string {
   return FoodLog_dayKey(new Date(timestamp));
 }

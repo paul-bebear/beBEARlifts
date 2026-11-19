@@ -17,6 +17,7 @@ import {
   IJournalSection,
   JournalDay_build,
   JournalDay_header,
+  JournalDay_openOnEdit,
   JournalDay_sectionFold,
   JournalDay_showsSeasonNudge,
 } from "../models/journalDay";
@@ -103,9 +104,10 @@ function FoldableSection(props: {
   journal: IJournalDay;
   section: IJournalSection;
   emptyAction?: ReactNode;
-  children: ReactNode;
+  children: ReactNode | ((onEdit: () => void) => ReactNode);
 }): JSX.Element {
   const [isOpenByUser, setIsOpenByUser] = useState<boolean>();
+  const onEdit = (): void => setIsOpenByUser(JournalDay_openOnEdit(isOpenByUser));
   const fold = JournalDay_sectionFold(props.journal, props.section, isOpenByUser);
   if (fold.isHidden) {
     return <></>;
@@ -138,7 +140,7 @@ function FoldableSection(props: {
   }
   return (
     <>
-      {props.children}
+      {typeof props.children === "function" ? props.children(onEdit) : props.children}
       {fold.canHide && (
         <Pressable
           accessibilityRole="button"
@@ -246,7 +248,11 @@ export function ScreenJournal(): JSX.Element {
   const [day, setDay] = useState(today);
   const [month, setMonth] = useState(() => MonthCalendar_monthOf(today));
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const journal = JournalDay_build({ ...sources, day });
+  const { prs, music, weights, notes, settings } = sources;
+  const journal = useMemo(
+    () => JournalDay_build({ today, history, settings, prs, food, music, weights, notes, day }),
+    [today, history, settings, prs, food, music, weights, notes, day]
+  );
   const header = useMemo(() => JournalDay_header({ history }), [history]);
   const streak = useMemo(
     () => DailyChecklist_streak(DailyChecklist_doneDays({ foodLog: food, workouts: bear.workouts }), today),
@@ -314,7 +320,15 @@ export function ScreenJournal(): JSX.Element {
           {journal.title}
         </Text>
         <FoldableSection key={`${day}-checkIn`} journal={journal} section="checkIn" emptyAction={checkIn}>
-          <JournalCheckIn key={day} day={day} checkIn={journal.checkIn} isEditable={journal.canEditCheckIn} />
+          {(onEdit) => (
+            <JournalCheckIn
+              key={day}
+              day={day}
+              checkIn={journal.checkIn}
+              isEditable={journal.canEditCheckIn}
+              onEdit={onEdit}
+            />
+          )}
         </FoldableSection>
         <FoldableSection key={`${day}-workouts`} journal={journal} section="workouts" emptyAction={allWorkouts}>
           <WorkoutSection journal={journal} allWorkouts={allWorkouts} />
