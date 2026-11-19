@@ -1,9 +1,9 @@
-import { JSX, useState } from "react";
+import { JSX } from "react";
 import { View, Pressable } from "react-native";
 import { Text } from "./primitives/text";
 import { FoodLog_sum } from "../models/foodLog";
-import { FoodAddFlow_parseGrams, FoodAddFlow_setPhotoGrams, IFoodPhotoChoice } from "../models/foodAddFlow";
-import { FoodNutrientsRow, FoodTextInput, useGramsFieldWidth } from "./foodUi";
+import { FoodAddFlow_setPhotoGrams, IFoodPhotoChoice } from "../models/foodAddFlow";
+import { FoodGramsField, FoodNutrientsRow } from "./foodUi";
 import { Button } from "./button";
 import { FoodScanSteps_addLabel } from "../models/foodScanSteps";
 
@@ -13,14 +13,6 @@ function ChoiceRow(props: {
   onGrams: (grams: number) => void;
 }): JSX.Element {
   const { choice } = props;
-  const [gramsText, setGramsText] = useState(`${choice.grams}`);
-  const gramsWidth = useGramsFieldWidth(4);
-  const commitGrams = (): void => {
-    const grams = FoodAddFlow_parseGrams(gramsText);
-    if (grams != null && grams !== choice.grams) {
-      props.onGrams(grams);
-    }
-  };
   return (
     <View className="flex-row items-center py-2.5 border-b border-border-neutral" testID="food-ai-item">
       <Pressable onPress={props.onToggle} className="pr-3" hitSlop={8}>
@@ -46,16 +38,7 @@ function ChoiceRow(props: {
           </Text>
         )}
       </View>
-      <FoodTextInput
-        value={gramsText}
-        onChangeText={setGramsText}
-        keyboardType="decimal-pad"
-        inputMode="decimal"
-        selectTextOnFocus={true}
-        style={{ width: gramsWidth, textAlign: "right" }}
-        onBlur={commitGrams}
-        onSubmitEditing={commitGrams}
-      />
+      <FoodGramsField grams={choice.grams} initialText={`${choice.grams}`} onCommit={props.onGrams} />
       <Text className="ml-1 text-sm text-text-secondary">g</Text>
     </View>
   );
