@@ -85,6 +85,13 @@ export function FoodScanSteps_initial(entry: IScanEntryMode, access: IScanAccess
   return { kind: "camera", mode: "barcode" };
 }
 
+export const FoodScanSteps_shareFailed = "The meal was added, but sharing it with friends failed.";
+
+export function FoodScanSteps_addLabel(choices: IFoodPhotoChoice[]): { count: number; text: string } {
+  const count = choices.filter((choice) => choice.isSelected).length;
+  return { count, text: `Add ${count} item${count === 1 ? "" : "s"}` };
+}
+
 export function FoodScanSteps_canLeave(step: IScanStep): boolean {
   return step.kind === "camera";
 }

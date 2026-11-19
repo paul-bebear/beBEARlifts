@@ -1,7 +1,13 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { FoodCapture_options, FoodCapture_photo, FoodLabel_empty, FoodLabel_reduce } from "../src/models/foodCapture";
+import {
+  FoodCapture_options,
+  FoodCapture_photo,
+  FoodLabel_empty,
+  FoodLabel_reduce,
+  FoodLabel_saveFailed,
+} from "../src/models/foodCapture";
 import { FoodCapture_mealPhoto, FoodCapture_label, IFoodCaptureDependencies } from "../src/utils/foodCaptureRequest";
 import { NutritionLabel_toProduct } from "../src/models/nutritionLabel";
 
@@ -30,6 +36,21 @@ describe("Native food capture", () => {
       maxHeight: 1600,
       assetRepresentationMode: "compatible",
     });
+  });
+
+  it("refuses a GIF before the upload, because the server takes only JPEG, PNG and WebP", () => {
+    expect(FoodCapture_photo({ assets: [{ type: "image/gif", base64: "R0lGOD" }] })).to.deep.equal({
+      kind: "error",
+      error: "Choose a JPEG or PNG photo, or take a new photo.",
+    });
+    expect(FoodCapture_photo({ assets: [{ type: "image/webp", base64: "YWJj" }] })).to.have.property("kind", "photo");
+  });
+
+  it("keeps the form and shows the save error when a label save fails", () => {
+    const form = FoodLabel_reduce(FoodLabel_empty(), { type: "manual" });
+    const failed = FoodLabel_reduce(form, { type: "failed", error: FoodLabel_saveFailed });
+    expect(failed.form).to.equal(form.form);
+    expect(failed.error).to.equal("The food could not be saved. Try again.");
   });
 
   it("accepts image data and handles cancellation, missing data, unsupported formats, and permissions", () => {
