@@ -188,24 +188,10 @@ export function Weight_round(weight: IWeight, settings: ISettings, unit: IUnit, 
   return Weight_calculatePlates(weight, settings, unit, exerciseType).totalWeight;
 }
 
-function exactStepInUnit(
-  step: number,
-  settings: ISettings,
-  exerciseType: IExerciseType | undefined,
-  unit: IUnit
-): number {
-  const stepUnit = Equipment_getUnitOrDefaultForExerciseType(settings, exerciseType);
-  if (stepUnit === unit) {
-    return step;
-  }
-  return stepUnit === "kg" ? step / Weight_kgPerLb : step * Weight_kgPerLb;
-}
-
 export function Weight_increment(weight: IWeight, settings: ISettings, exerciseType?: IExerciseType): IWeight {
   const exactStep = Equipment_exactWeightStep(settings, exerciseType);
   if (exactStep != null) {
-    const step = exactStepInUnit(exactStep, settings, exerciseType, weight.unit);
-    return Weight_roundTo005(Weight_build(weight.value + step, weight.unit));
+    return Weight_roundTo005(Weight_build(weight.value + exactStep, weight.unit));
   }
   const equipmentData = Equipment_getEquipmentDataForExerciseType(settings, exerciseType);
   if (equipmentData) {
@@ -238,8 +224,7 @@ export function Weight_increment(weight: IWeight, settings: ISettings, exerciseT
 export function Weight_decrement(weight: IWeight, settings: ISettings, exerciseType?: IExerciseType): IWeight {
   const exactStep = Equipment_exactWeightStep(settings, exerciseType);
   if (exactStep != null) {
-    const step = exactStepInUnit(exactStep, settings, exerciseType, weight.unit);
-    return Weight_roundTo005(Weight_build(Math.max(0, weight.value - step), weight.unit));
+    return Weight_roundTo005(Weight_build(Math.max(0, weight.value - exactStep), weight.unit));
   }
   const equipmentData = exerciseType ? Equipment_getEquipmentDataForExerciseType(settings, exerciseType) : undefined;
   if (equipmentData) {

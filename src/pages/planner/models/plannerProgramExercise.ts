@@ -75,7 +75,7 @@ export type ICustomProgressionType = {
 };
 export type IBeatProgressionType = {
   type: "beat";
-  increase: IWeight;
+  increase: IProgramState[string];
   maxReps: number;
 };
 export type IProgressionType =
@@ -886,7 +886,7 @@ export function PlannerProgramExercise_beatProgression(
     return undefined;
   }
   const state = PlannerProgramExercise_getState(exercise);
-  return { type: "beat", increase: state.increment as IWeight, maxReps: state.maxReps as number };
+  return { type: "beat", increase: state.increment, maxReps: state.maxReps as number };
 }
 
 export function PlannerProgramExercise_shortNameFromFullName(fullName: string, settings: ISettings): string {
