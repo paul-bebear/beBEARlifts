@@ -1,5 +1,6 @@
 import { IHistoryRecord, ISet, IUnit } from "../types";
 import { IDisplaySet, Reps_group, Reps_setToDisplaySet } from "./set";
+import { UnknownValue_isNonNegative } from "./unknownValue";
 
 export interface ISetClipTarget {
   workoutId: number;
@@ -42,20 +43,16 @@ export function SetClips_thumbnail(value: unknown): string | undefined {
     : undefined;
 }
 
-function nonnegative(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0;
-}
-
 function parseClip(raw: unknown): ISetClip | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   if (
-    !nonnegative(r.workoutId) ||
+    !UnknownValue_isNonNegative(r.workoutId) ||
     typeof r.setId !== "string" ||
     !r.setId ||
     typeof r.exerciseId !== "string" ||
     !r.exerciseId ||
-    !nonnegative(r.timestamp) ||
-    !nonnegative(r.size) ||
+    !UnknownValue_isNonNegative(r.timestamp) ||
+    !UnknownValue_isNonNegative(r.size) ||
     (r.savedVia !== "share" && r.savedVia !== "download")
   ) {
     return undefined;
@@ -67,7 +64,7 @@ function parseClip(raw: unknown): ISetClip | undefined {
     timestamp: r.timestamp,
     size: r.size,
     savedVia: r.savedVia,
-    duration: nonnegative(r.duration) ? r.duration : undefined,
+    duration: UnknownValue_isNonNegative(r.duration) ? r.duration : undefined,
     thumbnail: SetClips_thumbnail(r.thumbnail),
   };
 }

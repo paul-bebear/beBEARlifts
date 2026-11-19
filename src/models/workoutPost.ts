@@ -11,6 +11,7 @@ import {
   History_workoutTime,
   IPersonalRecords,
 } from "./history";
+import { UnknownValue_finite, UnknownValue_text } from "./unknownValue";
 
 export interface IPostSet {
   name: string;
@@ -186,12 +187,8 @@ export function WorkoutPost_setText(set: IPostSet): string {
   return `${set.name}${weight} × ${set.reps}`;
 }
 
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) ? value : undefined;
-}
-
 function text(value: unknown): string | undefined {
-  return typeof value === "string" && value !== "" ? value.slice(0, maxText) : undefined;
+  return UnknownValue_text(value)?.slice(0, maxText);
 }
 
 function songTitles(raw: unknown): string[] {
@@ -207,8 +204,8 @@ function songTitles(raw: unknown): string[] {
 
 function parseBear(raw: unknown, version: 2 | 3): IPostBear | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const level = num(r.level);
-  const countedKg = num(r.countedKg);
+  const level = UnknownValue_finite(r.level);
+  const countedKg = UnknownValue_finite(r.countedKg);
   const mood = moods.find((m) => m === r.mood);
   if (level == null || countedKg == null || mood == null || BearTier_byLevel(level) == null) {
     return undefined;
@@ -220,7 +217,7 @@ function parseBear(raw: unknown, version: 2 | 3): IPostBear | undefined {
 
 function parseWeight(raw: unknown): IWeight | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const value = num(r.value);
+  const value = UnknownValue_finite(r.value);
   return value != null && (r.unit === "kg" || r.unit === "lb") ? { value, unit: r.unit } : undefined;
 }
 
@@ -230,7 +227,7 @@ function postSets(raw: unknown): IPostSet[] {
     const r = (item ?? {}) as Record<string, unknown>;
     const name = text(r.name);
     const weight = parseWeight(r.weight);
-    const reps = num(r.reps);
+    const reps = UnknownValue_finite(r.reps);
     if (name != null && weight != null && reps != null) {
       result.push({ name, weight, reps });
     }
@@ -242,7 +239,7 @@ function postSets(raw: unknown): IPostSet[] {
 export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const dayName = text(r.dayName);
-  const startedAt = num(r.startedAt);
+  const startedAt = UnknownValue_finite(r.startedAt);
   const volume = parseWeight(r.volume);
   if (dayName == null || startedAt == null || volume == null) {
     return undefined;
@@ -253,12 +250,12 @@ export function WorkoutPost_parse(raw: unknown): IWorkoutPostSummary | undefined
     programName: text(r.programName),
     dayName,
     startedAt,
-    durationMs: num(r.durationMs) ?? 0,
+    durationMs: UnknownValue_finite(r.durationMs) ?? 0,
     volume,
-    sets: num(r.sets) ?? 0,
+    sets: UnknownValue_finite(r.sets) ?? 0,
     topSets: postSets(r.topSets),
     prs: postSets(r.prs),
-    keptSongs: num(r.keptSongs),
+    keptSongs: UnknownValue_finite(r.keptSongs),
     bear: version !== 1 ? parseBear(r.bear, version) : undefined,
     songs: version !== 1 ? songTitles(r.songs) : [],
   };

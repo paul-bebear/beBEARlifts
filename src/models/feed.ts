@@ -8,6 +8,7 @@ import {
   MealPost_photoPath,
 } from "./mealPost";
 import { IPostBear, IWorkoutPostSummary, WorkoutPost_parse } from "./workoutPost";
+import { UnknownValue_finite } from "./unknownValue";
 
 export interface IFeedPost {
   id?: number;
@@ -63,18 +64,15 @@ export function Feed_empty(): IFeedState {
   return { version: 1, posts: [], meals: [], outbox: [] };
 }
 
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) ? value : undefined;
-}
-
 function parsePost(raw: unknown): IFeedPost | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   const userId = typeof (r.user_id ?? r.userId) === "string" ? String(r.user_id ?? r.userId) : undefined;
-  const workoutId = num(r.workout_id ?? r.workoutId);
-  const postedAt = typeof r.posted_at === "string" ? Date.parse(r.posted_at) : (num(r.postedAt) ?? Number.NaN);
+  const workoutId = UnknownValue_finite(r.workout_id ?? r.workoutId);
+  const postedAt =
+    typeof r.posted_at === "string" ? Date.parse(r.posted_at) : (UnknownValue_finite(r.postedAt) ?? Number.NaN);
   const summary = WorkoutPost_parse(r.summary);
   return userId != null && workoutId != null && isFinite(postedAt) && summary != null
-    ? { id: num(r.id), userId, workoutId, postedAt, summary }
+    ? { id: UnknownValue_finite(r.id), userId, workoutId, postedAt, summary }
     : undefined;
 }
 
@@ -88,7 +86,7 @@ export function Feed_parseMeals(rows: unknown): IMealPost[] {
 
 function parseOp(raw: unknown): IFeedOp | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const queuedAt = num(r.queuedAt);
+  const queuedAt = UnknownValue_finite(r.queuedAt);
   const userId = typeof r.userId === "string" ? r.userId : undefined;
   if (queuedAt == null || userId == null) {
     return undefined;
@@ -101,7 +99,7 @@ function parseOp(raw: unknown): IFeedOp | undefined {
   if (r.type === "mealRemove") {
     return MealPost_isId(r.mealId) ? { type: "mealRemove", userId, queuedAt, mealId: r.mealId } : undefined;
   }
-  const workoutId = num(r.workoutId);
+  const workoutId = UnknownValue_finite(r.workoutId);
   if (workoutId == null) {
     return undefined;
   }
@@ -119,7 +117,7 @@ export function Feed_parse(raw: unknown): IFeedState {
     state.userId = r.userId;
     state.posts = newestFirst((Array.isArray(r.posts) ? r.posts : []).map(parsePost).filter((p) => p != null));
     state.meals = Feed_parseMeals(r.meals);
-    state.loadedAt = num(r.loadedAt);
+    state.loadedAt = UnknownValue_finite(r.loadedAt);
   }
   state.outbox = (Array.isArray(r.outbox) ? r.outbox : []).map(parseOp).filter((o) => o != null);
   return state;

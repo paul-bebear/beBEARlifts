@@ -9,6 +9,7 @@ import {
 } from "./runTrack";
 import { ILatLon, RunRoute_simplify } from "./runRoute";
 import { IRun } from "./runLog";
+import { UnknownValue_isFinite } from "./unknownValue";
 
 export type IRunRecordingStatus = "recording" | "paused";
 
@@ -285,38 +286,38 @@ export function RunRecording_screenHints(platform: IRunSensorPlatform, screenAwa
   };
 }
 
-function finite(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
 function parsePoint(raw: unknown): IRunPoint | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
   if (
-    !finite(r.t) ||
-    !finite(r.lat) ||
-    !finite(r.lon) ||
-    !finite(r.acc) ||
+    !UnknownValue_isFinite(r.t) ||
+    !UnknownValue_isFinite(r.lat) ||
+    !UnknownValue_isFinite(r.lon) ||
+    !UnknownValue_isFinite(r.acc) ||
     Math.abs(r.lat) > 90 ||
     Math.abs(r.lon) > 180 ||
     r.acc < 0
   ) {
     return undefined;
   }
-  return { t: r.t, lat: r.lat, lon: r.lon, acc: r.acc, ...(finite(r.alt) ? { alt: r.alt } : {}) };
+  return { t: r.t, lat: r.lat, lon: r.lon, acc: r.acc, ...(UnknownValue_isFinite(r.alt) ? { alt: r.alt } : {}) };
 }
 
 function parseSegment(raw: unknown): IRunSegment | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  if (!finite(r.startedAt)) {
+  if (!UnknownValue_isFinite(r.startedAt)) {
     return undefined;
   }
   const points = Array.isArray(r.points) ? r.points.map(parsePoint).filter((p): p is IRunPoint => p != null) : [];
-  return { startedAt: r.startedAt, ...(finite(r.endedAt) ? { endedAt: r.endedAt } : {}), points };
+  return { startedAt: r.startedAt, ...(UnknownValue_isFinite(r.endedAt) ? { endedAt: r.endedAt } : {}), points };
 }
 
 export function RunRecording_parse(raw: unknown): IRunRecording | undefined {
   const r = (raw ?? {}) as Record<string, unknown>;
-  if (!finite(r.startedAt) || (r.status !== "recording" && r.status !== "paused") || !Array.isArray(r.segments)) {
+  if (
+    !UnknownValue_isFinite(r.startedAt) ||
+    (r.status !== "recording" && r.status !== "paused") ||
+    !Array.isArray(r.segments)
+  ) {
     return undefined;
   }
   const segments = r.segments.map(parseSegment).filter((s): s is IRunSegment => s != null);
@@ -328,8 +329,8 @@ export function RunRecording_parse(raw: unknown): IRunRecording | undefined {
     startedAt: r.startedAt,
     status: r.status,
     segments,
-    dropped: finite(r.dropped) ? r.dropped : 0,
-    ...(finite(r.savedAt) ? { savedAt: r.savedAt } : {}),
+    dropped: UnknownValue_isFinite(r.dropped) ? r.dropped : 0,
+    ...(UnknownValue_isFinite(r.savedAt) ? { savedAt: r.savedAt } : {}),
     ...(r.pausedByScreen === true ? { pausedByScreen: true } : {}),
   };
 }
