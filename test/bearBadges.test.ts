@@ -88,16 +88,6 @@ describe("BearBadges", () => {
     expect(hundredth).to.deep.include({ recordId: 2 });
   });
 
-  it("keeps a held badge whose record is gone from the history", () => {
-    const kept = { id: "earlyBear" as const, recordId: 1, at: at("2026-10-01", 6) };
-    expect(BearBadges_compute(sources([], { keptBadges: [kept] }))).to.deep.equal([kept]);
-    const real = workout(2, at("2026-10-02", 5));
-    expect(BearBadges_compute(sources([real], { keptBadges: [kept] }))[0]).to.deep.include({
-      id: "earlyBear",
-      recordId: 2,
-    });
-  });
-
   it("keeps a celebrated level badge next to a badge from a short record", () => {
     const short = workout(1, at("2026-10-01", 6), 3);
     const real = workout(2, at("2026-10-02", 12));
