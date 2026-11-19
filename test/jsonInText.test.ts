@@ -41,6 +41,12 @@ describe("JsonInText_extract", () => {
     expect(JsonInText_extract(text)).to.deep.equal({ builtin: "fierce-5", note: "ok" });
   });
 
+  it("returns undefined for an answer cut off inside a list, never one inner item", () => {
+    const text = '{"items":[{"name":"Montadito","grams":420},{"name":"Potato chips","grams":60},{"name":"Bee';
+    expect(JsonInText_extract(text)).to.equal(undefined);
+    expect(JsonInText_extract("```json\n" + text + "\n```")).to.equal(undefined);
+  });
+
   it("returns undefined for broken JSON", () => {
     expect(JsonInText_extract('{"builtin":"fierce-5",')).to.equal(undefined);
     expect(JsonInText_extract('```json\n{"builtin": fierce-5}\n```')).to.equal(undefined);

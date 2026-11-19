@@ -27,13 +27,17 @@ function parseObject(candidate: string): unknown {
   }
 }
 
+// Only top-level objects: a cut-off answer must stay unparsed, so FoodPhotoEstimate_parse can salvage its items.
 function balancedObjects(body: string): string[] {
   const found: string[] = [];
-  for (let start = body.indexOf("{"); start !== -1; start = body.indexOf("{", start + 1)) {
+  let start = body.indexOf("{");
+  while (start !== -1) {
     const end = matchingBrace(body, start);
-    if (end !== -1) {
-      found.push(body.slice(start, end + 1));
+    if (end === -1) {
+      break;
     }
+    found.push(body.slice(start, end + 1));
+    start = body.indexOf("{", end + 1);
   }
   return found;
 }
