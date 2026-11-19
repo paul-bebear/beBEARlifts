@@ -1,9 +1,14 @@
 import "mocha";
 import { expect } from "chai";
 import {
+  AiCaps_defaults,
+  AiCaps_fromServer,
   AiCaps_message,
+  AiCaps_offerSubtitle,
   AiCaps_parse,
+  AiCaps_plusFeature,
   AiCaps_plusLine,
+  AiCaps_plusOf,
   AiCaps_refusalText,
   AiCaps_usageLine,
 } from "../src/models/aiCaps";
@@ -69,7 +74,40 @@ describe("AiCaps", () => {
     expect(AiCaps_parse({ reason: "report" })).to.equal(undefined);
   });
 
+  it("reads the share and report-day refusals the server sends", () => {
+    const share = { reason: "share", error: "Share used." };
+    expect(AiCaps_parse(share)).to.deep.equal(share);
+    expect(AiCaps_refusalText({ reason: "reportDay", error: "10 reports today." })).to.equal("10 reports today.");
+  });
+
   it("shows the beBEAR+ caps", () => {
     expect(AiCaps_plusLine()).to.equal("beBEAR+: 30 AI uses a day, 150 a week.");
+  });
+
+  const server = { day: 3, week: 10, plusDay: 40, plusWeek: 200, lifetime: 3 };
+
+  it("quotes the caps the server sends", () => {
+    const caps = AiCaps_fromServer(server);
+    expect(AiCaps_plusLine(AiCaps_plusOf(caps))).to.equal("beBEAR+: 40 AI uses a day, 200 a week.");
+    expect(AiCaps_offerSubtitle(caps)).to.equal("40 AI uses a day. Tracking stays free.");
+    expect(AiCaps_plusFeature(caps)).to.deep.equal({
+      title: "200 AI uses a week",
+      description: "40 a day instead of 3. Meal photos, meal text, nutrition labels, body scans and the AI warm-up.",
+    });
+  });
+
+  it("falls back to the app's caps when the server sends none", () => {
+    expect(AiCaps_fromServer(undefined)).to.equal(undefined);
+    expect(AiCaps_fromServer("40")).to.equal(undefined);
+    expect(AiCaps_plusOf(undefined)).to.deep.equal({ day: 30, week: 150 });
+    expect(AiCaps_offerSubtitle(undefined)).to.equal("30 AI uses a day. Tracking stays free.");
+    expect(AiCaps_plusFeature(undefined).title).to.equal("150 AI uses a week");
+  });
+
+  it("replaces each cap that is not a positive whole number", () => {
+    expect(AiCaps_fromServer({ day: 0, week: -1, plusDay: 2.5, plusWeek: "200", lifetime: null })).to.deep.equal(
+      AiCaps_defaults
+    );
+    expect(AiCaps_fromServer({ plusDay: 40 })).to.deep.equal({ ...AiCaps_defaults, plusDay: 40 });
   });
 });

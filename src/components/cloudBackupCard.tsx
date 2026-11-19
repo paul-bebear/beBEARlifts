@@ -17,8 +17,8 @@ import {
 import { Purchases_manage } from "../utils/purchases";
 import { CloudStore, SentCodeStore } from "../utils/supabaseClient";
 import { CloudBackupCommand_run } from "../utils/cloudBackupCommand";
-import { AiCaps_plusLine } from "../models/aiCaps";
-import { AccountPlan_isPlus } from "../models/accountPlan";
+import { AiCaps_plusLine, AiCaps_plusOf } from "../models/aiCaps";
+import { AccountPlan_aiCaps, AccountPlan_isPlus } from "../models/accountPlan";
 import { AccountPlanStore } from "../utils/accountPlanClient";
 import { CloudBackup_olderCopies } from "../models/cloudBackup";
 import { StoreBuild_showsProCodes } from "../models/storeBuild";
@@ -154,7 +154,7 @@ export function CloudBackupCard(props: { dispatch: IDispatch; compact?: boolean 
           )}
           {plus ? (
             <Text className="text-sm font-semibold" testID="cloud-plan-plus">
-              {AiCaps_plusLine()}
+              {AiCaps_plusLine(AiCaps_plusOf(AccountPlan_aiCaps(accountPlan)))}
             </Text>
           ) : (
             StoreBuild_showsProCodes(Platform.OS, StoreReceipt_name(), __DEV__) && (

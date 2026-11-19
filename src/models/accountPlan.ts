@@ -1,9 +1,11 @@
+import { AiCaps_defaults, AiCaps_fromServer, AiCaps_offerSubtitle, IAiCapsPlan } from "./aiCaps";
+
 export type IAccountGrant = "code" | "subscription" | "lifetime";
 
 export type IAccountPlanState =
   | { status: "unknown" }
-  | { status: "known"; userId: string; plan: "free" }
-  | { status: "known"; userId: string; plan: "plus"; grant: IAccountGrant; canManage: boolean }
+  | { status: "known"; userId: string; plan: "free"; aiCaps?: IAiCapsPlan }
+  | { status: "known"; userId: string; plan: "plus"; grant: IAccountGrant; canManage: boolean; aiCaps?: IAiCapsPlan }
   | { status: "activating"; userId: string; tries?: number };
 
 // RevenueCat can answer free for a few seconds after the store reports a purchase. Each return to the app asks again.
@@ -19,23 +21,30 @@ export interface IAccountPlanRow {
 
 const grants: IAccountGrant[] = ["code", "subscription", "lifetime"];
 
-const offerRow: IAccountPlanRow = {
-  title: "beBEAR+",
-  subtitle: "30 AI uses a day. Tracking stays free.",
-  action: "open",
-};
+function offerRow(state: IAccountPlanState): IAccountPlanRow {
+  return { title: "beBEAR+", subtitle: AiCaps_offerSubtitle(AccountPlan_aiCaps(state)), action: "open" };
+}
 
 export function AccountPlan_empty(): IAccountPlanState {
   return { status: "unknown" };
 }
 
+export function AccountPlan_aiCaps(state: IAccountPlanState): IAiCapsPlan {
+  return (state.status === "known" ? state.aiCaps : undefined) ?? AiCaps_defaults;
+}
+
+function withCaps(aiCaps: IAiCapsPlan | undefined): { aiCaps?: IAiCapsPlan } {
+  return aiCaps == null ? {} : { aiCaps };
+}
+
 function known(userId: string, raw: Record<string, unknown>, canManage: unknown): IAccountPlanState | undefined {
+  const caps = withCaps(AiCaps_fromServer(raw.aiCaps));
   if (raw.plan === "free") {
-    return { status: "known", userId, plan: "free" };
+    return { status: "known", userId, plan: "free", ...caps };
   }
   const grant = grants.find((g) => g === raw.grant);
   return raw.plan === "plus" && grant != null
-    ? { status: "known", userId, plan: "plus", grant, canManage: canManage === true }
+    ? { status: "known", userId, plan: "plus", grant, canManage: canManage === true, ...caps }
     : undefined;
 }
 
@@ -56,7 +65,8 @@ export function AccountPlan_parse(raw: unknown): IAccountPlanState {
 export function AccountPlan_codeRedeemed(current: IAccountPlanState, userId: string): IAccountPlanState {
   const subscribed =
     current.status === "known" && current.userId === userId && current.plan === "plus" && current.canManage;
-  return { status: "known", userId, plan: "plus", grant: "code", canManage: subscribed };
+  const caps = withCaps(current.status === "known" ? current.aiCaps : undefined);
+  return { status: "known", userId, plan: "plus", grant: "code", canManage: subscribed, ...caps };
 }
 
 export function AccountPlan_parseSync(userId: string, body: unknown): IAccountPlanState | undefined {
@@ -90,13 +100,13 @@ export function AccountPlan_isPlus(state: IAccountPlanState, userId: string | un
 
 export function AccountPlan_settingsRow(state: IAccountPlanState, userId: string | undefined): IAccountPlanRow {
   if (userId == null || state.status === "unknown" || state.userId !== userId) {
-    return offerRow;
+    return offerRow(state);
   }
   if (state.status === "activating") {
     return { title: "beBEAR+", subtitle: "Purchase done. Activating…", action: "none" };
   }
   if (state.plan === "free") {
-    return offerRow;
+    return offerRow(state);
   }
   if (state.canManage) {
     return { title: "beBEAR+ is on", subtitle: "Manage subscription", action: "manage" };
