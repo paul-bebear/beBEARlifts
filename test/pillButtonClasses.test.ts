@@ -37,4 +37,9 @@ describe("PillButtonClasses", () => {
       expect(PillButtonClasses_for(kind, false).text).to.contain("text-base font-semibold");
     }
   });
+
+  it("does not treat inherited object keys as pill kinds", () => {
+    expect(PillButtonClasses_isPill("constructor")).to.equal(false);
+    expect(PillButtonClasses_isPill("toString")).to.equal(false);
+  });
 });

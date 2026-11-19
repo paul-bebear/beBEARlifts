@@ -17,13 +17,25 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
+export function ImageResize_scaledSize(
+  width: number,
+  height: number,
+  maxSide: number
+): { width: number; height: number } {
+  if (width <= 0 || height <= 0) {
+    throw new Error("The photo could not be read");
+  }
+  const scale = Math.min(1, maxSide / Math.max(width, height));
+  return { width: Math.round(width * scale), height: Math.round(height * scale) };
+}
+
 // Safari applies the EXIF rotation when it draws an <img> on a canvas, so the JPEG comes out upright.
 export async function ImageResize_toJpegDataUrl(file: File, maxSide: number = maxSidePx): Promise<string> {
   const image = await loadImage(file);
-  const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+  const size = ImageResize_scaledSize(image.naturalWidth, image.naturalHeight, maxSide);
   const canvas = document.createElement("canvas");
-  canvas.width = Math.round(image.naturalWidth * scale);
-  canvas.height = Math.round(image.naturalHeight * scale);
+  canvas.width = size.width;
+  canvas.height = size.height;
   const context = canvas.getContext("2d");
   if (context == null) {
     throw new Error("The photo could not be read");

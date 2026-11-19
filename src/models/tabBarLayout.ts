@@ -1,3 +1,5 @@
+export const homeRootScreen = "main";
+
 export interface ITabBarLayout {
   pillHeight: number;
   bottomGap: number;
@@ -10,11 +12,10 @@ const TabBarLayout_pillHeight = 60;
 const minBottomGap = 12;
 const contentGap = 16;
 const plusTab = "home";
-const plusScreen = "main";
 
 // A tab stack that has not mounted yet reports no top screen, and the home stack starts on main.
 export function TabBarLayout_showsPlus(tab: string, topScreen: string | undefined): boolean {
-  return tab === plusTab && (topScreen == null || topScreen === plusScreen);
+  return tab === plusTab && (topScreen == null || topScreen === homeRootScreen);
 }
 
 // With the bar hidden, a screen footer sits at the screen edge and keeps the bar's own gap above it.

@@ -1,7 +1,5 @@
 export type IPillButtonKind = "pill" | "pill-outline" | "pill-danger";
 
-const pillKinds: readonly string[] = ["pill", "pill-outline", "pill-danger"];
-
 const kindClasses: Record<IPillButtonKind, { container: string; text: string }> = {
   pill: { container: "bg-button-primarybackground", text: "text-button-primarylabel" },
   "pill-outline": { container: "border border-button-primarybackground", text: "text-text-link" },
@@ -9,7 +7,7 @@ const kindClasses: Record<IPillButtonKind, { container: string; text: string }> 
 };
 
 export function PillButtonClasses_isPill(kind: string): kind is IPillButtonKind {
-  return pillKinds.includes(kind);
+  return Object.prototype.hasOwnProperty.call(kindClasses, kind);
 }
 
 export function PillButtonClasses_for(kind: IPillButtonKind, disabled: boolean): { container: string; text: string } {

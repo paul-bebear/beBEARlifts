@@ -1,6 +1,7 @@
 import { JSX } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "./primitives/text";
+import { CheckedSet_toggle } from "../models/checkedSet";
 import { Tailwind_semantic } from "../utils/tailwindConfig";
 
 export function TickRow(props: { testID: string; label: string; isTicked: boolean; onPress: () => void }): JSX.Element {
@@ -26,12 +27,4 @@ export function TickRow(props: { testID: string; label: string; isTicked: boolea
   );
 }
 
-export function TickRow_toggle(ticked: ReadonlySet<string>, id: string): ReadonlySet<string> {
-  const next = new Set(ticked);
-  if (next.has(id)) {
-    next.delete(id);
-  } else {
-    next.add(id);
-  }
-  return next;
-}
+export const TickRow_toggle = CheckedSet_toggle;

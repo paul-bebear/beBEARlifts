@@ -8,6 +8,7 @@ import {
   TabRouting_showsBack,
   TabRouting_tabForScreen,
 } from "../src/models/tabRouting";
+import { homeRootScreen } from "../src/models/tabBarLayout";
 import type { IScreen } from "../src/models/screen";
 
 const programScreens: IScreen[] = ["programs", "editProgram", "programPreview", "onerms", "programselect"];
@@ -121,5 +122,15 @@ describe("TabRouting", () => {
   it("opens a workout record on the Journal tab when Journal or History opens it", () => {
     expect(TabRouting_shouldReset("progress", undefined, false, true)).to.equal(false);
     expect(TabRouting_tabForScreen("progress", "food", true)).to.equal("food");
+  });
+
+  it("names the home root screen in the tab bar layout and the back rule", () => {
+    expect(homeRootScreen).to.equal("main");
+    expect(
+      TabRouting_showsBack({ hasStackBack: false, isTabRoot: true, routeName: homeRootScreen, hasLeftButtons: false })
+    ).to.equal(false);
+    expect(
+      TabRouting_showsBack({ hasStackBack: false, isTabRoot: true, routeName: "stats", hasLeftButtons: false })
+    ).to.equal(true);
   });
 });
