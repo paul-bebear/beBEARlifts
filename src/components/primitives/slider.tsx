@@ -20,6 +20,7 @@ export function Slider(props: ISliderProps): JSX.Element {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = parseFloat(e.currentTarget.value);
       if (!isNaN(v)) {
+        props.onSlide?.(v);
         props.onChange(v);
       }
     },

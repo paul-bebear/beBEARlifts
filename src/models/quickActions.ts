@@ -6,7 +6,6 @@ export type IQuickActionId = "food" | "weight" | "run";
 export interface IQuickAction {
   id: IQuickActionId;
   label: string;
-  isSoon: boolean;
 }
 
 export interface IQuickActionsWorkout {
@@ -25,14 +24,12 @@ export interface IQuickActionsInput {
   isBagCheckOn?: boolean;
 }
 
-export const quickActionsSoon = "Soon";
-
 const squareCandidates: { feature: IFeature; action: IQuickAction }[] = [
-  { feature: "food", action: { id: "food", label: "Food", isSoon: false } },
-  { feature: "weight", action: { id: "weight", label: "Weight", isSoon: false } },
+  { feature: "food", action: { id: "food", label: "Food" } },
+  { feature: "weight", action: { id: "weight", label: "Weight" } },
 ];
 
-const runSquare: IQuickAction = { id: "run", label: "Run", isSoon: false };
+const runSquare: IQuickAction = { id: "run", label: "Run" };
 
 // Runs stay behind More in the feature layers, but a run is started at the door, so it gets a square here too.
 export function QuickActions_list(input: IQuickActionsInput): IQuickActions {

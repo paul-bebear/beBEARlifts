@@ -12,8 +12,6 @@ import {
   NativeIdTokenSignIn_tokenPath,
 } from "../models/nativeIdTokenSignIn";
 import { IOAuthProvider, IOAuthReturn, OAuthFlow_notSetUpText } from "../models/oauthFlow";
-import { ForkServices_plan } from "./forkServices";
-import { OfflineOnly_isEnabled } from "./offlineOnly";
 import {
   CloudStore,
   ICloudResult,
@@ -23,7 +21,7 @@ import {
 } from "./supabaseClient";
 
 async function appleCredential(): Promise<INativeIdTokenStep> {
-  if (!appleAuth.isSupported || !ForkServices_plan(OfflineOnly_isEnabled()).appleSignIn) {
+  if (!appleAuth.isSupported) {
     return { kind: "error", error: OAuthFlow_notSetUpText("apple") };
   }
   try {
@@ -41,7 +39,7 @@ async function appleCredential(): Promise<INativeIdTokenStep> {
 
 async function googleCredential(): Promise<INativeIdTokenStep> {
   const config = NativeIdTokenSignIn_googleConfiguration(BebearSignInConfig?.getConstants());
-  if (config == null || !ForkServices_plan(OfflineOnly_isEnabled()).googleSignIn) {
+  if (config == null) {
     return { kind: "error", error: OAuthFlow_notSetUpText("google") };
   }
   try {

@@ -13,7 +13,6 @@ export function OnboardingChip(props: {
   onPress: () => void;
   children: ReactNode;
   role?: "switch";
-  disabled?: boolean;
 }): JSX.Element {
   return (
     <Pressable
@@ -21,7 +20,6 @@ export function OnboardingChip(props: {
       style={{ gap: 12 }}
       accessibilityRole={props.role ?? "button"}
       accessibilityState={props.role === "switch" ? { checked: props.on } : { selected: props.on }}
-      disabled={props.disabled}
       onPress={props.onPress}
     >
       {props.children}
@@ -64,9 +62,9 @@ export function OnboardingField(props: {
   );
 }
 
-export function OnboardingLink(props: { label: string; onPress: () => void; disabled?: boolean }): JSX.Element {
+export function OnboardingLink(props: { label: string; onPress: () => void }): JSX.Element {
   return (
-    <Pressable className="self-start py-2" accessibilityRole="button" disabled={props.disabled} onPress={props.onPress}>
+    <Pressable className="self-start py-2" accessibilityRole="button" onPress={props.onPress}>
       <Text className="text-text-link">{props.label}</Text>
     </Pressable>
   );

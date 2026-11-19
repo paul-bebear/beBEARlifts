@@ -11,8 +11,8 @@ import {
 } from "../models/progressPhotos";
 import { ProgressPhotoStore } from "./progressPhotoStore";
 
-export const ProgressPhotoFiles_dir: string | undefined = `${RNFS.DocumentDirectoryPath}/progress-photos`;
-const dir = ProgressPhotoFiles_dir as string;
+const dir = `${RNFS.DocumentDirectoryPath}/progress-photos`;
+export const ProgressPhotoFiles_dir: string | undefined = dir;
 
 function pathOf(id: number): string {
   return `${dir}/${ProgressPhotos_fileName(id)}`;

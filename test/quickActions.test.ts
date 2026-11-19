@@ -18,11 +18,6 @@ describe("QuickActions", () => {
     expect(list.squares.map((s) => s.id)).to.eql(["food", "weight", "run"]);
   });
 
-  it("marks no square as coming soon", () => {
-    const list = QuickActions_list({ isOngoingProgress: false, canRecordRun: false });
-    expect(list.squares.filter((s) => s.isSoon)).to.eql([]);
-  });
-
   it("starts a workout through the picker when none is ongoing", () => {
     const list = QuickActions_list({ isOngoingProgress: false, canRecordRun: false });
     expect(list.workout.label).to.equal("Start workout");
