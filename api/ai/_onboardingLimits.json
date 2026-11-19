@@ -1,0 +1,9 @@
+{
+  "maxBodyBytes": 4200000,
+  "maxAnswersChars": 12000,
+  "maxImages": 6,
+  "maxImageChars": 3500000,
+  "imageTypes": ["jpeg", "png", "webp"],
+  "maxPreviousAnswerChars": 600000,
+  "maxValidationErrorChars": 8000
+}
