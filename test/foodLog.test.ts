@@ -363,3 +363,26 @@ describe("FoodLog_parseImport damaged and partial files", () => {
     expect(FoodLog_parseImport(JSON.parse(JSON.stringify(log)))?.savedFoods.length).to.equal(1);
   });
 });
+
+describe("FoodLog_parseNutrients table", () => {
+  const base = { calories: 100, protein: 5, carbs: 10, fat: 4 };
+  const cases: [string, unknown, unknown][] = [
+    ["a full set", base, base],
+    ["a negative protein, kept", { ...base, protein: -1 }, { ...base, protein: -1 }],
+    ["a negative calorie count, kept", { ...base, calories: -1 }, { ...base, calories: -1 }],
+    ["a numeric string protein, dropped", { ...base, protein: "5" }, undefined],
+    ["a missing protein, dropped", { calories: 100, carbs: 10, fat: 4 }, undefined],
+    ["a missing calorie count, dropped", { protein: 5, carbs: 10, fat: 4 }, undefined],
+    ["a NaN fat, dropped", { ...base, fat: NaN }, undefined],
+    ["an Infinity calorie count, dropped", { ...base, calories: Infinity }, undefined],
+    ["a very large calorie count, kept", { ...base, calories: 1e9 }, { ...base, calories: 1e9 }],
+    ["micros from the micros field", { ...base, micros: { fiber: 2 } }, { ...base, micros: { fiber: 2 } }],
+    ["micros in core fields, ignored", { ...base, fiber: 2 }, base],
+    ["null", null, undefined],
+  ];
+  for (const [name, input, expected] of cases) {
+    it(name, () => {
+      expect(FoodLog_parseNutrients(input)).to.deep.equal(expected);
+    });
+  }
+});

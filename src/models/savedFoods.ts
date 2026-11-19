@@ -1,6 +1,7 @@
 import { INutrients } from "./foodLog";
-import { FoodMicros_parse } from "./foodMicros";
+import { FoodMicros_fromCoreFields, FoodMicros_parse } from "./foodMicros";
 import { IFoodProduct } from "./openFoodFacts";
+import { UnknownValue_isFinite, UnknownValue_isRecord, UnknownValue_nonNegative } from "./unknownValue";
 
 const maxSavedFoods = 500;
 
@@ -38,21 +39,47 @@ export function SavedFoods_search(saved: IFoodProduct[], query: string): IFoodPr
   });
 }
 
-function num(value: unknown): number | undefined {
-  return typeof value === "number" && isFinite(value) && value >= 0 ? value : undefined;
+export interface INutrientsRule {
+  needs: "allFour" | "calories";
+  micros: "microsField" | "coreFields";
 }
 
-function parseNutrients(raw: unknown): INutrients | undefined {
-  if (raw == null || typeof raw !== "object") {
+function allFour(r: Record<string, unknown>): INutrients | undefined {
+  const { calories, protein, carbs, fat } = r;
+  if (
+    !UnknownValue_isFinite(calories) ||
+    !UnknownValue_isFinite(protein) ||
+    !UnknownValue_isFinite(carbs) ||
+    !UnknownValue_isFinite(fat)
+  ) {
     return undefined;
   }
-  const r = raw as Record<string, unknown>;
-  const calories = num(r.calories);
+  return { calories, protein, carbs, fat };
+}
+
+function caloriesWithDefaults(r: Record<string, unknown>): INutrients | undefined {
+  const calories = UnknownValue_nonNegative(r.calories);
   if (calories == null) {
     return undefined;
   }
-  const nutrients = { calories, protein: num(r.protein) ?? 0, carbs: num(r.carbs) ?? 0, fat: num(r.fat) ?? 0 };
-  const micros = FoodMicros_parse(r.micros);
+  return {
+    calories,
+    protein: UnknownValue_nonNegative(r.protein) ?? 0,
+    carbs: UnknownValue_nonNegative(r.carbs) ?? 0,
+    fat: UnknownValue_nonNegative(r.fat) ?? 0,
+  };
+}
+
+// foodLog.ts imports this file, so the shared reader lives here to keep the import one way.
+export function SavedFoods_parseNutrients(raw: unknown, rule: INutrientsRule): INutrients | undefined {
+  if (!UnknownValue_isRecord(raw)) {
+    return undefined;
+  }
+  const nutrients = rule.needs === "allFour" ? allFour(raw) : caloriesWithDefaults(raw);
+  if (nutrients == null) {
+    return undefined;
+  }
+  const micros = rule.micros === "microsField" ? FoodMicros_parse(raw.micros) : FoodMicros_fromCoreFields(raw);
   return micros != null ? { ...nutrients, micros } : nutrients;
 }
 
@@ -61,7 +88,7 @@ function parseProduct(raw: unknown): IFoodProduct | undefined {
     return undefined;
   }
   const r = raw as Record<string, unknown>;
-  const per100g = parseNutrients(r.per100g);
+  const per100g = SavedFoods_parseNutrients(r.per100g, { needs: "calories", micros: "microsField" });
   if (typeof r.name !== "string" || r.name.trim() === "" || per100g == null) {
     return undefined;
   }
@@ -72,7 +99,7 @@ function parseProduct(raw: unknown): IFoodProduct | undefined {
   if (typeof r.brand === "string" && r.brand !== "") {
     product.brand = r.brand;
   }
-  const servingGrams = num(r.servingGrams);
+  const servingGrams = UnknownValue_nonNegative(r.servingGrams);
   if (servingGrams != null && servingGrams > 0) {
     product.servingGrams = servingGrams;
   }
