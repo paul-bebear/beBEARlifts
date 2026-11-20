@@ -1,11 +1,13 @@
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import { json } from "../_food.mjs";
 import { aiChat, aiProvider, aiUnavailableMessage } from "../_ai.mjs";
 import { AiAuth_check, AiAuth_refund } from "../_auth.mjs";
 
 // The app imports the same file, so a screenshot the phone accepts is never refused here.
-const limits = createRequire(import.meta.url)("./_onboardingLimits.json");
+// Vercel does not bundle a file loaded through createRequire: the route crashed on 2026-11-20 with
+// "Cannot find module './_onboardingLimits.json'". It bundles files named in vercel.json includeFiles.
+const limits = JSON.parse(readFileSync(new URL("./_onboardingLimits.json", import.meta.url), "utf8"));
 export const Onboard_limits = limits;
 const imagePattern = new RegExp(`^data:image\\/(${limits.imageTypes.join("|")});base64,[A-Za-z0-9+/=]+$`);
 
