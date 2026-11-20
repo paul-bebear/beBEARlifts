@@ -7,7 +7,7 @@
   "ignoreCommand": "bash scripts/vercel-ignore-build.sh",
   "functions": {
     "api/ai/onboard.mjs": {
-      "includeFiles": "llms/{program_builder_prompt,programs_guide,liftoscript_llm,exercises}.md"
+      "includeFiles": "{llms/{program_builder_prompt,programs_guide,liftoscript_llm,exercises}.md,api/ai/_onboardingLimits.json}"
     }
   },
   "redirects": [{ "source": "/", "destination": "/app/", "permanent": false }],
