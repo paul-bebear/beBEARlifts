@@ -1,5 +1,5 @@
 # Replaces the stopgap tall rooms and gyms (scripts/house-stopgap-tall.py) with the Codex art from
-# HANDOFF-codex-tall-rooms.md. The Codex files are 1024 by 2304 and live outside the repo, so a missing one is skipped.
+# docs/archive/HANDOFF-codex-tall-rooms.md. The Codex files are 1024 by 2304 and live outside the repo, so a missing one is skipped.
 # The gym pictures come from scripts/painted-gyms-art.py now. This script no longer writes them.
 # Run it with `python3 -I scripts/house-tall-art.py`.
 import os

@@ -2,7 +2,7 @@
 
 Written 2026-10-22 on branch `share-cards-bear`, against master at a5153e38 plus the uncommitted share-card and bear-tier files on this branch (`src/models/bearTier.ts`, `src/models/bearBadges.ts`, `src/models/shareAchievements.ts`, `src/components/shareCards/`). The plan builds on those files, so they land before any batch below. It also assumes review batch J (invite, onboarding, friends) has merged.
 
-Inputs: the 41 photos in `/Users/paulbebear/Downloads/photos inspo/`, the owner's notes and the 2026-10-22 addendum in `HANDOFF-redesign-plan.md`, `REVIEW-2026-10.md` (finding codes U1 to U34, P1 to P10, S1 to S14), and `CLAUDE.md`. Finding codes below point at the review. Hours are for one builder who knows the code, tests run one file at a time with `npm run onetest`.
+Inputs: the 41 photos in `/Users/paulbebear/Downloads/photos inspo/`, the owner's notes and the 2026-10-22 addendum in `docs/archive/HANDOFF-redesign-plan.md`, `REVIEW-2026-10.md` (finding codes U1 to U34, P1 to P10, S1 to S14), and `CLAUDE.md`. Finding codes below point at the review. Hours are for one builder who knows the code, tests run one file at a time with `npm run onetest`.
 
 No photo shows a bear. The bear reference is the app icon from commit 912a642d and its vector copy in `src/components/shareCards/bearMark.tsx`: round ears, a flat muzzle mask, two colours.
 
