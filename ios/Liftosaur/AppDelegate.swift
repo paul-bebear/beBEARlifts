@@ -4,7 +4,6 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import RollbarNotifier
-import GoogleAdsOnDeviceConversion
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -40,10 +39,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       let config = Rollbar.configuration().mutableCopy()
       config.setPersonId(cachedUserId, username: nil, email: nil)
       Rollbar.update(withConfiguration: config)
-    }
-
-    if !AppConfiguration.offlineOnly {
-      ConversionManager.sharedInstance.setFirstLaunchTime(Date())
     }
 
     RCTFastTextRegistrar.registerComponent()
