@@ -1,6 +1,6 @@
 # App Store checklist for beBEAR V1
 
-Status on 2026-10-24: `./scripts/release-ios-production.sh --dry-run` built `ios/build/archive/export/beBEAR.ipa`, 44.5 MB. It is signed by "Apple Distribution: Victor Backouche (GKY9GR7VHG)" and holds the watch app and the widget. The upload waits for the App Store Connect app record for `com.paulbebear.bebear`, which does not exist yet.
+Status on 2026-11-24: build 1.0 (21) is uploaded and attached to App Store version 1.0 (app id `6826578682`). `scripts/appstore-listing.mjs` pushed the text in `docs/appstore-listing.md`, the category, the age rating, the review notes and all 175 countries. The price is Free. Left for the owner on the website: screenshots, the App Privacy label, the copyright line, then Submit.
 
 V1 ships with no paywall. Tracking is free. AI runs under the caps in `api/_auth.mjs`: 3 uses a day, 10 a week. beBEAR+ billing comes in a later release. Until then the owner grants beBEAR+ by hand, as the section on making someone beBEAR+ shows.
 
@@ -11,7 +11,7 @@ Anton Astashov agreed to the release on 2026-10-21. His one condition was to sto
 The app ships from Victor Backouche's Individual team `GKY9GR7VHG`. The owner is an App Store Connect Admin.
 
 1. Create the app record by hand. App Store Connect, Apps, +, New App. Platform iOS, name beBEAR, primary language English (U.S.), bundle ID `com.paulbebear.bebear`, SKU `bebear`, full access.
-2. Check the version. `MARKETING_VERSION` is `124` in `ios/Liftosaur.xcodeproj/project.pbxproj`, the upstream Liftosaur number. The store shows it as "Version 124". Change it to `1.0` in all 8 build configurations before the first upload if the owner wants that. App Store Connect never accepts a lower version after the first one.
+2. Check the version. `MARKETING_VERSION` is `1.0` in all 8 build configurations of `ios/Liftosaur.xcodeproj/project.pbxproj`, matching App Store version 1.0. Builds 18 to 20 went up as version `124` and cannot attach to it.
 3. Run a TestFlight upload: `./scripts/release-ios-production.sh --testflight`.
 4. Each later upload needs a higher `CURRENT_PROJECT_VERSION`. The script reads the last uploaded build number from App Store Connect and stops early when the number is not higher.
 5. Submit for review: `./scripts/release-ios-production.sh` asks for release notes, uploads, waits for processing, and submits. `--no-submit` stops before the submission. `--skip-build` submits a build that is already uploaded.
@@ -76,8 +76,6 @@ Usage Data, Diagnostics, Purchases, Financial Info, Browsing History, Search His
 
 ### Still to settle before review
 
-- The phone app still links the AppsFlyer and Google Ads on-device conversion SDKs (`ios/Podfile`), and `Info.plist` lists about 50 `SKAdNetworkItems`. The offline build never starts them. `SceneDelegate.swift` still calls `AppsFlyerLib.handleOpen` without the offline check. App Review reads the privacy manifests of linked SDKs, so removing both pods and the SKAdNetwork entries is safer than explaining them.
-- `ios/Liftosaur/PrivacyInfo.xcprivacy` declares no collected data types. Add the rows above so the manifest matches the label.
 - The privacy policy at `https://lifts.paulbebear.com/privacy.html` says sign-in uses an email code. It does not mention Apple or Google sign-in. Check that it covers meal posts with photos and the body scan photo sent to AI.
 - Check which AI provider production uses and how long it keeps prompts. Vercel AI Gateway offers zero data retention.
 
@@ -99,7 +97,7 @@ The watch app strings live in `ios/LiftosaurWatch/Info.plist` and the `INFOPLIST
 
 `ITSAppUsesNonExemptEncryption` is `false` in both plists, so App Store Connect asks no export compliance question.
 
-The phone `Info.plist` still carries upstream's AppsFlyer entries: `NSAdvertisingAttributionReportEndpoint` set to `https://appsflyer-skadnetwork.com/` and a `SKAdNetworkItems` list. They only matter if an ad network SDK runs. See the tracking answer in the privacy section.
+The AppsFlyer and Google Ads on-device conversion SDKs, `NSAdvertisingAttributionReportEndpoint` and the `SKAdNetworkItems` list were removed for 1.0. `PrivacyInfo.xcprivacy` declares the 9 data types listed under "Data linked to you".
 
 ## Age rating
 

@@ -9,7 +9,6 @@
   "reactNativePodPrefixes": ["React", "RCT", "Yoga", "FBLazyVector", "FBReactNativeSpec"],
 
   "podToNpm": {
-    "react-native-appsflyer": "react-native-appsflyer",
     "react-native-blur": "@react-native-community/blur",
     "react-native-document-picker": "@react-native-documents/picker",
     "react-native-image-picker": "react-native-image-picker",
@@ -140,16 +139,6 @@
       "copyright": "Copyright 2023 Google LLC",
       "platforms": ["ios"],
       "pods": ["GoogleSignIn", "GoogleUtilities", "GTMSessionFetcher", "AppCheckCore", "PromisesObjC"],
-      "gradle": []
-    },
-    {
-      "id": "nanopb",
-      "name": "nanopb",
-      "url": "https://github.com/nanopb/nanopb",
-      "license": "Zlib",
-      "copyright": "Copyright (c) 2011 Petteri Aimonen <jpa at nanopb.mail.kapsi.fi>",
-      "platforms": ["ios"],
-      "pods": ["nanopb"],
       "gradle": []
     },
     {
@@ -303,28 +292,6 @@
       "pods": [],
       "gradle": ["io.github.Rosemoe.sora-editor:"],
       "lgplNotice": true
-    },
-    {
-      "id": "appsflyer",
-      "name": "AppsFlyer SDK",
-      "url": "https://www.appsflyer.com/",
-      "license": "Proprietary",
-      "copyright": "Copyright AppsFlyer Ltd.",
-      "licenseNotice": "Closed-source SDK, redistributed as part of this application under the AppsFlyer Services Agreement — https://www.appsflyer.com/legal/services-agreement/",
-      "platforms": ["ios", "android"],
-      "pods": ["AppsFlyerFramework"],
-      "gradle": ["com.appsflyer:"]
-    },
-    {
-      "id": "google-ads-on-device-conversion",
-      "name": "Google Ads On-Device Conversion Measurement",
-      "url": "https://developers.google.com/ads/on-device-conversion",
-      "license": "Proprietary",
-      "copyright": "Copyright Google LLC",
-      "licenseNotice": "Closed-source SDK, redistributed under Google's developer terms — https://developers.google.com/terms",
-      "platforms": ["ios"],
-      "pods": ["GoogleAdsOnDeviceConversion"],
-      "gradle": []
     },
     {
       "id": "tiktok-open-sdk",

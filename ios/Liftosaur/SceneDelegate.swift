@@ -1,7 +1,6 @@
 import UIKit
 import React
 import TikTokOpenSDKCore
-import AppsFlyerLib
 import GoogleSignIn
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -66,7 +65,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     if let sourceApplication {
       options[.sourceApplication] = sourceApplication
     }
-    AppsFlyerLib.shared().handleOpen(url, options: options)
     if TikTokURLHandler.handleOpenURL(url) {
       return
     }
@@ -74,7 +72,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 
   private func handleContinue(_ userActivity: NSUserActivity) {
-    AppsFlyerLib.shared().continue(userActivity, restorationHandler: nil)
     if TikTokURLHandler.handleOpenURL(userActivity.webpageURL) {
       return
     }
