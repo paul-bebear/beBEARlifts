@@ -6,80 +6,65 @@ import {
   ReportsHub_rows,
   ReportsHub_title,
 } from "../src/models/reportsHub";
-import { FeatureLayer_of } from "../src/models/featureLayer";
 
 const today = "2026-10-23";
+const REMOVED_IDS = ["friends", "add-friend", "badges", "music", "photos"];
 
-function ids(input: { isOffline: boolean; hasRunSensors: boolean }, group: "numbers" | "extras"): string[] {
+function ids(input: { isOffline: boolean; hasRunSensors: boolean }, group: "training" | "body" | "daily"): string[] {
   const found = ReportsHub_groups({ ...input, today }).find((g) => g.id === group);
   return (found?.rows ?? []).map((r) => r.id);
 }
 
 describe("ReportsHub", () => {
-  it("is called More", () => {
-    expect(ReportsHub_title).to.equal("More");
+  it("is called Stats", () => {
+    expect(ReportsHub_title).to.equal("Stats");
   });
 
-  it("has two groups, Your numbers then Extras", () => {
+  it("has three groups: Training, Body, Daily", () => {
     const groups = ReportsHub_groups({ isOffline: true, hasRunSensors: true, today });
-    expect(groups.map((g) => g.title)).to.deep.equal(["Your numbers", "Extras"]);
-    expect(groups.map((g) => g.layer)).to.deep.equal([2, 3]);
-    expect(groups.map((g) => g.hasStatsSections)).to.deep.equal([true, false]);
+    expect(groups.map((g) => g.title)).to.deep.equal(["Training", "Body", "Daily"]);
   });
 
-  it("shows the program card first in Your numbers in the offline build", () => {
-    expect(ReportsHub_groups({ isOffline: true, hasRunSensors: false, today })[0].hasProgramCard).to.equal(true);
+  it("keeps the program card and stats sections on Training only", () => {
+    const groups = ReportsHub_groups({ isOffline: true, hasRunSensors: false, today });
+    expect(groups.map((g) => g.hasStatsSections)).to.deep.equal([true, false, false]);
+    expect(groups.map((g) => g.hasProgramCard)).to.deep.equal([true, false, false]);
     expect(ReportsHub_groups({ isOffline: false, hasRunSensors: false, today })[0].hasProgramCard).to.equal(false);
   });
 
-  it("puts every row in the group of its feature layer", () => {
-    for (const group of ReportsHub_groups({ isOffline: true, hasRunSensors: true, today })) {
-      for (const row of group.rows) {
-        expect(FeatureLayer_of(row.feature)).to.equal(group.layer);
-      }
+  it("orders the rows of each group", () => {
+    const input = { isOffline: true, hasRunSensors: true };
+    expect(ids(input, "training")).to.deep.equal(["graphs", "exercise-stats", "reports", "runs"]);
+    expect(ids(input, "body")).to.deep.equal(["measurements", "body-scans", "steps", "seasons"]);
+    expect(ids(input, "daily")).to.deep.equal(["check-ins", "notes"]);
+  });
+
+  it("no longer lists the five rows that repeat phone tiles", () => {
+    for (const input of [
+      { isOffline: true, hasRunSensors: true },
+      { isOffline: false, hasRunSensors: false },
+    ]) {
+      const all = ReportsHub_rows({ ...input, today }).map((r) => r.id);
+      expect(all).to.not.include.members(REMOVED_IDS);
+      expect(all).to.have.length(input.isOffline ? 10 : 8);
     }
   });
 
-  it("holds graphs and exercise stats under Your numbers", () => {
-    expect(ids({ isOffline: true, hasRunSensors: true }, "numbers")).to.deep.equal(["graphs", "exercise-stats"]);
-  });
-
-  it("holds every extra in the offline build with run sensors", () => {
-    expect(ids({ isOffline: true, hasRunSensors: true }, "extras")).to.deep.equal([
-      "friends",
-      "add-friend",
-      "badges",
-      "notes",
-      "check-ins",
-      "music",
-      "runs",
+  it("hides Runs when the device has no run sensors", () => {
+    expect(ids({ isOffline: true, hasRunSensors: false }, "training")).to.deep.equal([
+      "graphs",
+      "exercise-stats",
       "reports",
-      "measurements",
-      "body-scans",
-      "steps",
-      "photos",
-      "seasons",
     ]);
   });
 
-  it("drops Runs without sensors", () => {
-    expect(ids({ isOffline: true, hasRunSensors: false }, "extras")).to.not.include("runs");
-    expect(ids({ isOffline: true, hasRunSensors: false }, "extras")).to.include.members(["music", "reports"]);
+  it("hides Runs and reports online", () => {
+    expect(ids({ isOffline: false, hasRunSensors: true }, "training")).to.deep.equal(["graphs", "exercise-stats"]);
   });
 
-  it("drops Runs, music and reports online", () => {
-    const extras = ids({ isOffline: false, hasRunSensors: true }, "extras");
-    expect(extras).to.not.include.members(["runs", "music", "reports"]);
-    expect(extras).to.include.members(["friends", "notes", "check-ins", "seasons"]);
-  });
-
-  it("reaches each feature that left the front screens", () => {
+  it("reaches the other features from their rows", () => {
     const rows = ReportsHub_rows({ isOffline: true, hasRunSensors: true, today });
     const action = (id: string): unknown => rows.find((r) => r.id === id)?.action;
-    expect(action("friends")).to.deep.equal({ kind: "screen", screen: "friends", tab: "friends" });
-    expect(action("add-friend")).to.deep.equal({ kind: "addFriend" });
-    expect(action("honey")).to.equal(undefined);
-    expect(action("badges")).to.deep.equal({ kind: "screen", screen: "streak", tab: undefined });
     expect(action("notes")).to.deep.equal({ kind: "newNote", day: today });
     expect(action("check-ins")).to.deep.equal({ kind: "checkIn" });
     expect(action("runs")).to.deep.equal({ kind: "screen", screen: "runs", tab: undefined });
@@ -92,9 +77,7 @@ describe("ReportsHub", () => {
       const row = rows.find((r) => r.id === id);
       return row == null ? undefined : ReportsHub_actionEffect(row);
     };
-    expect(effect("friends")).to.deep.equal({ type: "pushScreen", screen: "friends", opts: { tab: "friends" } });
-    expect(effect("badges")).to.deep.equal({ type: "pushScreen", screen: "streak", opts: undefined });
-    expect(effect("add-friend")).to.deep.equal({ type: "modal", name: "addFriendModal" });
+    expect(effect("graphs")).to.deep.equal({ type: "pushScreen", screen: "graphsList", opts: undefined });
     expect(effect("seasons")).to.deep.equal({ type: "modal", name: "foodGoalsModal" });
     expect(effect("notes")).to.deep.equal({ type: "noteModal", day: today });
     expect(effect("check-ins")).to.deep.equal({ type: "toggleCheckIn" });
