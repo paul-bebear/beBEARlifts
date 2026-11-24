@@ -1,4 +1,4 @@
-import { FeatureLayer_of, IFeature, IFeatureLayer } from "./featureLayer";
+import type { IFeature } from "./featureLayer";
 import type { ITab } from "./screen";
 
 export type IReportsHubScreen =
@@ -30,9 +30,8 @@ export interface IReportsHubRow {
 }
 
 export interface IReportsHubGroup {
-  id: "numbers" | "extras";
+  id: "training" | "body" | "daily";
   title: string;
-  layer: IFeatureLayer;
   hasProgramCard: boolean;
   hasStatsSections: boolean;
   rows: IReportsHubRow[];
@@ -44,7 +43,7 @@ export interface IReportsHubInput {
   today: string;
 }
 
-export const ReportsHub_title = "More";
+export const ReportsHub_title = "Stats";
 
 function screenRow(
   id: string,
@@ -61,15 +60,6 @@ export function ReportsHub_rows(input: IReportsHubInput): IReportsHubRow[] {
   const rows: IReportsHubRow[] = [
     screenRow("graphs", "Graphs", "Lifts and body over time", "graphs", "graphsList"),
     screenRow("exercise-stats", "Exercise stats", "History for each exercise", "exerciseStats", "exercises"),
-    screenRow("friends", "Friends", "The feed and your friends list", "friends", "friends", "friends"),
-    {
-      id: "add-friend",
-      title: "Add a friend",
-      subtitle: "Share your code or enter one",
-      feature: "friends",
-      action: { kind: "addFriend" },
-    },
-    screenRow("badges", "Badges and streak", "Every badge and your day streak", "badges", "streak"),
     {
       id: "notes",
       title: "New note",
@@ -85,9 +75,6 @@ export function ReportsHub_rows(input: IReportsHubInput): IReportsHubRow[] {
       action: { kind: "checkIn" },
     },
   ];
-  if (input.isOffline) {
-    rows.push(screenRow("music", "Workout music", "Songs from your workouts", "music", "music"));
-  }
   if (input.isOffline && input.hasRunSensors) {
     rows.push(screenRow("runs", "Runs", "Start a run or see your logged runs", "runs", "runs"));
   }
@@ -98,7 +85,6 @@ export function ReportsHub_rows(input: IReportsHubInput): IReportsHubRow[] {
     screenRow("measurements", "Body measurements", "Waist, arms and more", "measurements", "measurements"),
     screenRow("body-scans", "Body composition", "Body fat and muscle from scans", "bodyScans", "bodyScans"),
     screenRow("steps", "Daily steps", "Your steps and your goal", "steps", "steps"),
-    screenRow("photos", "Progress photos", "Photos of you over time", "photos", "progressPhotos"),
     {
       id: "seasons",
       title: "Seasons",
@@ -110,26 +96,21 @@ export function ReportsHub_rows(input: IReportsHubInput): IReportsHubRow[] {
   return rows;
 }
 
+const GROUP_LAYOUT: { id: IReportsHubGroup["id"]; title: string; rowIds: string[] }[] = [
+  { id: "training", title: "Training", rowIds: ["graphs", "exercise-stats", "reports", "runs"] },
+  { id: "body", title: "Body", rowIds: ["measurements", "body-scans", "steps", "seasons"] },
+  { id: "daily", title: "Daily", rowIds: ["check-ins", "notes"] },
+];
+
 export function ReportsHub_groups(input: IReportsHubInput): IReportsHubGroup[] {
   const rows = ReportsHub_rows(input);
-  return [
-    {
-      id: "numbers",
-      title: "Your numbers",
-      layer: 2,
-      hasProgramCard: input.isOffline,
-      hasStatsSections: true,
-      rows: rows.filter((row) => FeatureLayer_of(row.feature) === 2),
-    },
-    {
-      id: "extras",
-      title: "Extras",
-      layer: 3,
-      hasProgramCard: false,
-      hasStatsSections: false,
-      rows: rows.filter((row) => FeatureLayer_of(row.feature) === 3),
-    },
-  ];
+  return GROUP_LAYOUT.map((layout, index) => ({
+    id: layout.id,
+    title: layout.title,
+    hasProgramCard: index === 0 && input.isOffline,
+    hasStatsSections: index === 0,
+    rows: layout.rowIds.flatMap((rowId) => rows.filter((row) => row.id === rowId)),
+  })).filter((group) => group.rows.length > 0);
 }
 
 export type IReportsHubEffect =
