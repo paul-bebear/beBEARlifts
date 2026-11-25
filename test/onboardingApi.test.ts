@@ -116,11 +116,12 @@ describe("Onboarding API", () => {
     const fetchStub = sinon.stub(globalThis, "fetch");
     fetchStub.onFirstCall().resolves(new Response(JSON.stringify({ plan: "free", lifetime: 0, userId: "u1" })));
     fetchStub.onSecondCall().resolves(new Response("{}", { status: 500 }));
-    fetchStub.onThirdCall().resolves(new Response("true"));
+    fetchStub.onThirdCall().resolves(new Response("{}", { status: 500 }));
+    fetchStub.onCall(3).resolves(new Response("true"));
     expect((await POST(request(payload, true))).status).to.equal(502);
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-    expect(fetchStub.thirdCall.args[0]).to.match(/rpc\/ai_usage_refund$/);
-    expect(JSON.parse((fetchStub.thirdCall.args[1] as RequestInit).body as string)).to.deep.equal({
+    expect(fetchStub.getCall(3).args[0]).to.match(/rpc\/ai_usage_refund$/);
+    expect(JSON.parse((fetchStub.getCall(3).args[1] as RequestInit).body as string)).to.deep.equal({
       p_user: "u1",
       p_kind: "onboard",
       p_ref: null,

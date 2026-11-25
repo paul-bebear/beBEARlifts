@@ -84,10 +84,16 @@ Example: {"weight":80,"bodyFatPct":18,"muscleMass":62,"waterPct":55,"boneMass":3
 
 const tasks = {
   meal: { system: mealPrompt, user: "Estimate this meal.", needsImage: true, maxTokens: 4000 },
-  label: { system: labelPrompt, user: "Read this nutrition label.", needsImage: true, maxTokens: 1500 },
+  label: { system: labelPrompt, user: "Read this nutrition label.", needsImage: true, maxTokens: 4000 },
   describe: { system: describePrompt, user: "Estimate this meal.", needsImage: false, maxTokens: 4000 },
   bodyscan: { system: bodyScanPrompt, user: "Read this body-composition printout.", needsImage: true, maxTokens: 1500 },
 };
+
+export const labelUnreadableMessage = "The label could not be read. Try again or type the numbers in.";
+
+export function Photo_errorText(kind, result) {
+  return kind === "label" && result.empty === true ? labelUnreadableMessage : result.error;
+}
 
 function userContent(task, image, text) {
   const words = text ? `${task.user}\nThe user says: ${text}` : task.user;
@@ -134,7 +140,8 @@ export async function POST(request) {
     },
     45000
   );
-  return result.ok
-    ? json({ text: result.text, finishReason: result.finishReason })
-    : json({ error: result.error }, result.status);
+  if (result.ok) {
+    return json({ text: result.text, finishReason: result.finishReason });
+  }
+  return json({ error: Photo_errorText(body?.kind, result) }, result.status);
 }
