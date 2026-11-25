@@ -19,31 +19,60 @@ function providerError(answer, raw) {
   return answer?.error?.message ?? answer?.[0]?.error?.message ?? raw.slice(0, 200);
 }
 
-export async function aiChat(ai, { messages, maxTokens, temperature }, timeoutMs) {
+const minRetryMs = 8000;
+
+export function AiChat_shouldRetry(status, empty, tried, remainingMs) {
+  if (tried >= 2 || remainingMs < minRetryMs) {
+    return false;
+  }
+  return empty || status >= 500;
+}
+
+async function aiChatOnce(ai, { messages, maxTokens, temperature }, timeoutMs) {
+  const result = await fetchJson(
+    ai.url,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${ai.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: ai.model, messages, max_tokens: maxTokens, temperature, ...ai.extraBody }),
+    },
+    timeoutMs
+  );
+  if (result.status !== 200) {
+    console.error("AI provider failed", ai.name, ai.model, result.status, providerError(result.body, result.text));
+    return { ok: false, status: 502, error: aiUnavailableMessage, providerStatus: result.status };
+  }
+  const choice = result.body?.choices?.[0];
+  const content = choice?.message?.content;
+  if (typeof content !== "string" || content.trim() === "") {
+    console.error(
+      "AI provider sent an empty answer",
+      ai.name,
+      ai.model,
+      choice?.finish_reason,
+      JSON.stringify(result.body?.usage)
+    );
+    return { ok: false, status: 502, error: aiUnavailableMessage, providerStatus: 200, empty: true };
+  }
+  return { ok: true, text: content, finishReason: choice?.finish_reason };
+}
+
+export async function aiChat(ai, options, timeoutMs) {
   if (!ai.token) {
     return { ok: false, status: 503, error: aiUnavailableMessage };
   }
+  const startedAt = Date.now();
+  let tried = 0;
   try {
-    const result = await fetchJson(
-      ai.url,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${ai.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: ai.model, messages, max_tokens: maxTokens, temperature, ...ai.extraBody }),
-      },
-      timeoutMs
-    );
-    if (result.status !== 200) {
-      console.error("AI provider failed", ai.name, result.status, providerError(result.body, result.text));
-      return { ok: false, status: 502, error: aiUnavailableMessage };
+    for (;;) {
+      tried += 1;
+      const remaining = timeoutMs - (Date.now() - startedAt);
+      const { providerStatus, ...result } = await aiChatOnce(ai, options, remaining);
+      const left = timeoutMs - (Date.now() - startedAt);
+      if (result.ok || !AiChat_shouldRetry(providerStatus, result.empty === true, tried, left)) {
+        return result;
+      }
     }
-    const choice = result.body?.choices?.[0];
-    const content = choice?.message?.content;
-    if (typeof content !== "string" || content.trim() === "") {
-      console.error("AI provider sent an empty answer", ai.name);
-      return { ok: false, status: 502, error: aiUnavailableMessage };
-    }
-    return { ok: true, text: content, finishReason: choice?.finish_reason };
   } catch (error) {
     console.error("AI provider request failed", ai.name, error);
     return { ok: false, status: 504, error: aiUnavailableMessage };

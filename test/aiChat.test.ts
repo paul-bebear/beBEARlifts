@@ -1,12 +1,12 @@
 import "mocha";
 import { expect } from "chai";
 import sinon from "sinon";
-import { aiChat, aiProvider, aiUnavailableMessage, Gateway_anthropicOnly } from "../api/_ai.mjs";
+import { aiChat, AiChat_shouldRetry, aiProvider, aiUnavailableMessage, Gateway_anthropicOnly } from "../api/_ai.mjs";
 import { AiAuth_check, AiAuth_signInMessage } from "../api/_auth.mjs";
 import { POST as report } from "../api/ai/report.mjs";
 import { POST as warmup } from "../api/ai/warmup.mjs";
 import { POST as onboard } from "../api/ai/onboard.mjs";
-import { POST as photo } from "../api/food/photo.mjs";
+import { POST as photo, labelUnreadableMessage } from "../api/food/photo.mjs";
 
 const ai = { name: "Test provider", url: "https://provider.test/chat", token: "provider-key", model: "test-model" };
 const options = { messages: [{ role: "user", content: "Hello" }], maxTokens: 300, temperature: 0.4 };
@@ -102,9 +102,72 @@ describe("aiChat", () => {
     const fetchStub = sinon.stub(globalThis, "fetch");
     sinon.stub(console, "error");
     for (const raw of ["{}", "not JSON", JSON.stringify({ choices: [{ message: { content: " " } }] })]) {
-      fetchStub.resolves(new Response(raw));
+      fetchStub.callsFake(async () => new Response(raw));
       expect(await aiChat(ai, options, 30000)).to.include({ ok: false, status: 502, error: aiUnavailableMessage });
     }
+  });
+
+  it("retries once on an empty answer or a 5xx and never on a 4xx", async () => {
+    sinon.stub(console, "error");
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub.onFirstCall().resolves(answer(" "));
+    fetchStub.onSecondCall().resolves(answer("Second try"));
+    expect(await aiChat(ai, options, 30000)).to.include({ ok: true, text: "Second try" });
+    fetchStub.reset();
+    fetchStub.onFirstCall().resolves(new Response("{}", { status: 503 }));
+    fetchStub.onSecondCall().resolves(answer("After 503"));
+    expect(await aiChat(ai, options, 30000)).to.include({ ok: true, text: "After 503" });
+    fetchStub.reset();
+    fetchStub.callsFake(async () => new Response("{}", { status: 429 }));
+    await aiChat(ai, options, 30000);
+    sinon.assert.calledOnce(fetchStub);
+    fetchStub.reset();
+    fetchStub.callsFake(async () => answer(""));
+    expect(await aiChat(ai, options, 30000)).to.include({ ok: false, status: 502, empty: true });
+    sinon.assert.calledTwice(fetchStub);
+  });
+
+  it("logs the model, finish reason and usage of an empty answer and no prompt text", async () => {
+    const logStub = sinon.stub(console, "error");
+    const usage = { prompt_tokens: 10, completion_tokens: 0 };
+    sinon
+      .stub(globalThis, "fetch")
+      .callsFake(
+        async () =>
+          new Response(JSON.stringify({ choices: [{ message: { content: "" }, finish_reason: "length" }], usage }))
+      );
+    await aiChat(ai, options, 30000);
+    expect(logStub.firstCall.args).to.deep.equal([
+      "AI provider sent an empty answer",
+      ai.name,
+      ai.model,
+      "length",
+      JSON.stringify(usage),
+    ]);
+    expect(JSON.stringify(logStub.args)).to.not.include("Hello");
+  });
+
+  it("decides retries from the status, the try count and the time left", () => {
+    expect(AiChat_shouldRetry(200, true, 1, 30000)).to.equal(true);
+    expect(AiChat_shouldRetry(500, false, 1, 30000)).to.equal(true);
+    expect(AiChat_shouldRetry(429, false, 1, 30000)).to.equal(false);
+    expect(AiChat_shouldRetry(400, false, 1, 30000)).to.equal(false);
+    expect(AiChat_shouldRetry(200, true, 2, 30000)).to.equal(false);
+    expect(AiChat_shouldRetry(200, true, 1, 7999)).to.equal(false);
+  });
+
+  it("gives the second try only the time the first one left", async () => {
+    sinon.stub(console, "error");
+    const timer = sinon.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    const fetchStub = sinon.stub(globalThis, "fetch").callsFake(async () => {
+      await timer.tickAsync(20000);
+      return answer("");
+    });
+    await aiChat(ai, options, 45000);
+    sinon.assert.calledTwice(fetchStub);
+    fetchStub.resetHistory();
+    await aiChat(ai, options, 25000);
+    sinon.assert.calledOnce(fetchStub);
   });
 
   it("aborts a timed-out fetch and hides network errors", async () => {
@@ -317,6 +380,42 @@ describe("AI routes", () => {
     expect(response.status).to.equal(429);
     expect(await response.json()).to.include({ reason: "day" });
     sinon.assert.calledOnce(fetchStub);
+  });
+
+  it("tells the user the label could not be read after an empty answer, and keeps the usual text elsewhere", async () => {
+    sinon.stub(console, "error");
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    for (const [kind, text] of [
+      ["label", labelUnreadableMessage],
+      ["meal", aiUnavailableMessage],
+    ]) {
+      fetchStub.reset();
+      fetchStub.onFirstCall().resolves(allowance());
+      fetchStub.onSecondCall().resolves(answer(""));
+      fetchStub.onThirdCall().resolves(answer(""));
+      const response = await photo(request({ kind, image }));
+      expect(response.status).to.equal(502);
+      expect(await response.json()).to.deep.equal({ error: text });
+    }
+    fetchStub.reset();
+    fetchStub.onFirstCall().resolves(allowance());
+    fetchStub.onSecondCall().resolves(new Response("{}", { status: 400 }));
+    expect(await (await photo(request({ kind: "label", image }))).json()).to.deep.equal({
+      error: aiUnavailableMessage,
+    });
+  });
+
+  it("gives the label task the same token limit as a meal and charges quota once", async () => {
+    const fetchStub = sinon.stub(globalThis, "fetch");
+    fetchStub.onFirstCall().resolves(allowance());
+    fetchStub.onSecondCall().resolves(answer(""));
+    fetchStub.onThirdCall().resolves(answer("{}"));
+    sinon.stub(console, "error");
+    expect((await photo(request({ kind: "label", image }))).status).to.equal(200);
+    sinon.assert.calledThrice(fetchStub);
+    expect(fetchStub.firstCall.args[0]).to.include("/rpc/ai_usage_take");
+    expect(fetchStub.secondCall.args[0]).to.equal(fetchStub.thirdCall.args[0]);
+    expect(JSON.parse((fetchStub.thirdCall.args[1] as RequestInit).body as string).max_tokens).to.equal(4000);
   });
 
   it("treats prototype properties as the default meal task", async () => {
