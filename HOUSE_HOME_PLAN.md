@@ -111,7 +111,7 @@ The owner arranges the room on the phone and sends the positions back as text.
 
 Four pieces of code and one Codex art handoff. Each code piece is one branch and one PR titled with `[skip deploy]`, not merged by the session. No session runs the simulator or the browser. Each PR body gives the owner a phone checklist. Models follow the owner's rule: Opus for design calls, Sonnet for a fully specified batch.
 
-Piece A, the full-screen frame and the phone. Opus. 16 hours. First. The brief is `HANDOFF-house-a-frame.md`.
+Piece A, the full-screen frame and the phone. Opus. 16 hours. First. The brief is `docs/archive/HANDOFF-house-a-frame.md`.
 
 - Modules: new `src/models/houseFrame.ts` and `test/houseFrame.test.ts`. `src/models/bearScene.ts` takes the canvas as an argument and `test/bearScene.test.ts` covers both canvases. New `src/models/phoneSheet.ts` and `test/phoneSheet.test.ts`. `src/models/bearHouse.ts` moves the phone to day 0 with target `{ kind: "phone" }` and reads the wall colour; `test/bearHouse.test.ts` follows.
 - Data: `images/bear/house/manifest.json` rewritten for the 1024 by 2304 canvas by a one-off script, `scripts/house-manifest-tall.ts`, which adds 448 to every y and sets `canvas` to `[1024, 2304]`. Stopgap tall rooms and gyms made with `cwebp` and ImageMagick padding until the Codex files land.
@@ -119,23 +119,23 @@ Piece A, the full-screen frame and the phone. Opus. 16 hours. First. The brief i
 - Views, the rest: new `src/components/phoneSheet.tsx`, `src/navigation/AppNavigator.native.tsx` and `AppNavigator.tsx` (the `phoneSheetModal` route), `src/components/screenProgressDashboard.tsx` (`MyBearSections` and `TodayMacros` deleted), `src/components/progressHubCards.tsx` (`ProgressGoalCard` deleted if nothing else renders it), `src/components/seasonNudgeCard.tsx` (moved into the Journal day), `src/utils/imagePreloader.tsx` and `.native.tsx`.
 - Design calls: the wall colours, the stopgap strip, the status bar style per room, the phone sheet's look.
 
-Piece B, the whiteboard. Sonnet. 5 hours. After A merges, because both touch `bearSceneParts.tsx` and `screenHome.tsx`. The brief is `HANDOFF-house-b-board.md`.
+Piece B, the whiteboard. Sonnet. 5 hours. After A merges, because both touch `bearSceneParts.tsx` and `screenHome.tsx`. The brief is `docs/archive/HANDOFF-house-b-board.md`.
 
 - Modules: `src/models/bearBoard.ts` (`goal` target, `BearBoard_goalLines`) and `test/bearBoard.test.ts`.
 - Views: `src/components/bearSceneParts.tsx` (`BoardLine` with `TextRaw`, the marker font, the drawn check), `src/components/screenHome.tsx` (`goal` opens the wizard).
 - Files: the font in the three folders, `Info.plist`, the licence text.
 
-Piece C, labels and the house tour. Sonnet. 7 hours. After A merges, because both touch `bearHouse.ts` and `bearHouseScene.tsx`. The brief is `HANDOFF-house-c-labels-tour.md`.
+Piece C, labels and the house tour. Sonnet. 7 hours. After A merges, because both touch `bearHouse.ts` and `bearHouseScene.tsx`. The brief is `docs/archive/HANDOFF-house-c-labels-tour.md`.
 
 - Modules: `src/models/bearHouse.ts` (`pill` optional) and `test/bearHouse.test.ts`. New `src/models/houseTour.ts` and `test/houseTour.test.ts`. `src/models/state.ts` (`ITourId` gains `"house"`).
 - Views: `src/components/bearHouseScene.tsx` (pills only when set), new `src/components/tour/houseTourConfig.tsx`, `src/components/tour/tourConfigs.ts`.
 
-Piece D, the arrange tool. Sonnet. 6 hours. After A merges, because the canvas changes shape. The brief is `HANDOFF-house-d-arrange.md`.
+Piece D, the arrange tool. Sonnet. 6 hours. After A merges, because the canvas changes shape. The brief is `docs/archive/HANDOFF-house-d-arrange.md`.
 
 - Modules: new `src/models/houseArrange.ts` and `test/houseArrange.test.ts`.
 - Views: new `src/components/houseArrange.tsx` and `houseArrange.native.tsx`, new `src/utils/houseArrangeFlag.ts` and `.native.ts`, one mount line in `src/components/bearHouseScene.tsx`.
 
-The Codex art, in parallel with A. GPT-5.6 Sol, never Astra. The brief is `HANDOFF-codex-tall-rooms.md`.
+The Codex art, in parallel with A. GPT-5.6 Sol, never Astra. The brief is `docs/archive/HANDOFF-codex-tall-rooms.md`.
 
 - Fourteen files: the seven rooms and the seven gyms, each extended to 1024 by 2304 with the old picture unchanged at y 448 to 1984. The handoff asks for a pixel check that the old region is identical, and a `check-<room>.png` contact sheet.
 - Until the files land, piece A ships the stopgap. Whichever session is open when the files arrive converts them with the `cwebp` settings in the handoff and replaces the stopgap.

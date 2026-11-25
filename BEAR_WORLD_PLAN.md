@@ -1,6 +1,6 @@
 # beBEAR world plan
 
-Planning pass of 2026-10-26, revised the same day with the owner's answers. Nothing in this file is built. It follows `REDESIGN_PLAN.md`, whose V1 batches have merged up to master `2fd8e74b` (iOS build 124). Opus 5.5 builds from `HANDOFF-opus-bear-world.md`, which points here. Codex draws from `docs/bear-art/codex/`.
+Planning pass of 2026-10-26, revised the same day with the owner's answers. Nothing in this file is built. It follows `REDESIGN_PLAN.md`, whose V1 batches have merged up to master `2fd8e74b` (iOS build 124). Opus 5.5 builds from `docs/archive/HANDOFF-opus-bear-world.md`, which points here. Codex draws from `docs/bear-art/codex/`.
 
 Every pace below assumes the owner's pace for `src/models/bearTier.ts`: 6,000 kg counted per workout, 3 workouts a week, 18,000 kg a week. The female thresholds are 60 percent of the male ones. A female bear at 3,600 kg a workout reaches each level in the same week.
 
@@ -369,7 +369,7 @@ V2.
 
 ## 11. Build batches
 
-Every batch: goal, files, pure modules and tests, Opus or Codex, hours, and what runs beside it. "Codex" means the batch is specified here. "Opus" means it holds design calls. Hours assume the art is on disk; waiting for art is not counted. `HANDOFF-opus-bear-world.md` is the brief for group A.
+Every batch: goal, files, pure modules and tests, Opus or Codex, hours, and what runs beside it. "Codex" means the batch is specified here. "Opus" means it holds design calls. Hours assume the art is on disk; waiting for art is not counted. `docs/archive/HANDOFF-opus-bear-world.md` is the brief for group A.
 
 Group A, V1. G1 and G2 run beside each other now. T3 runs beside them. H1 follows T3.
 
@@ -424,4 +424,4 @@ Answered later the same day, and now in the plan.
 
 No question is open. Group A starts.
 
-Next action: paste `docs/bear-art/codex/10-home-rooms.md` into Codex, then open `HANDOFF-opus-bear-world.md` in an Opus session.
+Next action: paste `docs/bear-art/codex/10-home-rooms.md` into Codex, then open `docs/archive/HANDOFF-opus-bear-world.md` in an Opus session.
